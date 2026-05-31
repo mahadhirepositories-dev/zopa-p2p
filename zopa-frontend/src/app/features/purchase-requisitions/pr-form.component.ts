@@ -1,0 +1,346 @@
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { MatCardModule } from '@angular/material/card';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { environment } from '../../../environments/environment';
+import { Budget } from '../../core/models';
+import { NotificationService } from '../../core/services/notification.service';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+
+@Component({
+  selector: 'app-pr-form',
+  standalone: true,
+  imports: [
+    ReactiveFormsModule, DecimalPipe,
+    MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
+    MatSelectModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule,
+    MatDatepickerModule, MatNativeDateModule,
+  ],
+  template: `
+    <div class="page-wrapper">
+      <div class="page-header">
+        <div>
+          <h2>New Purchase Requisition</h2>
+          <p>Request items for procurement</p>
+        </div>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save(false)" class="form-grid">
+
+        <!-- Left column -->
+        <div class="left-col">
+          <mat-card class="form-card">
+            <mat-card-header><mat-card-title>Requisition Details</mat-card-title></mat-card-header>
+            <mat-card-content>
+
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Title *</mat-label>
+                <input matInput formControlName="title" placeholder="e.g. Office Supplies Q3" />
+              </mat-form-field>
+
+              <div class="two-col">
+                <mat-form-field appearance="outline">
+                  <mat-label>Cost Center *</mat-label>
+                  <mat-select formControlName="cost_center_id" (selectionChange)="onCostCenterChange()">
+                    @for (cc of costCenters(); track cc.id) {
+                      <mat-option [value]="cc.id">{{ cc.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Priority</mat-label>
+                  <mat-select formControlName="priority">
+                    <mat-option value="low">Low</mat-option>
+                    <mat-option value="normal">Normal</mat-option>
+                    <mat-option value="high">High</mat-option>
+                    <mat-option value="urgent">Urgent</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              @if (budget()) {
+                <div class="budget-banner" [class.budget-warn]="budgetWarn()">
+                  <mat-icon>{{ budgetWarn() ? 'warning' : 'account_balance_wallet' }}</mat-icon>
+                  <div style="flex:1;">
+                    <div style="font-size:12px;">
+                      <strong>Budget:</strong> ₹{{ budget()!.available | number:'1.0-0' }} available
+                      of ₹{{ budget()!.annual | number:'1.0-0' }}
+                    </div>
+                    <div style="font-size:11px;opacity:.8;">
+                      Frozen: ₹{{ budget()!.frozen | number:'1.0-0' }} &nbsp;·&nbsp;
+                      Consumed: ₹{{ budget()!.consumed | number:'1.0-0' }}
+                    </div>
+                    <mat-progress-bar mode="determinate" [value]="budgetUsed()"
+                      [color]="budgetWarn() ? 'warn' : 'primary'"
+                      style="margin-top:4px;" />
+                  </div>
+                </div>
+              }
+
+              <div class="two-col">
+                <mat-form-field appearance="outline">
+                  <mat-label>Project</mat-label>
+                  <mat-select formControlName="project_id">
+                    <mat-option [value]="null">— None —</mat-option>
+                    @for (p of projects(); track p.id) {
+                      <mat-option [value]="p.id">{{ p.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Delivery Location</mat-label>
+                  <mat-select formControlName="location_id">
+                    <mat-option [value]="null">— None —</mat-option>
+                    @for (l of locations(); track l.id) {
+                      <mat-option [value]="l.id">{{ l.name }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <div class="two-col">
+                <mat-form-field appearance="outline">
+                  <mat-label>Required By Date</mat-label>
+                  <input matInput [matDatepicker]="picker" formControlName="required_by_date" />
+                  <mat-datepicker-toggle matIconSuffix [for]="picker" />
+                  <mat-datepicker #picker />
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Required By Person</mat-label>
+                  <input matInput formControlName="required_by_person" placeholder="Who needs this?" />
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="full">
+                <mat-label>Description / Justification</mat-label>
+                <textarea matInput formControlName="description" rows="3"
+                          placeholder="Provide context for the procurement team"></textarea>
+              </mat-form-field>
+
+            </mat-card-content>
+          </mat-card>
+        </div>
+
+        <!-- Right: Items -->
+        <div class="right-col">
+          <mat-card class="form-card">
+            <mat-card-header>
+              <mat-card-title>Line Items</mat-card-title>
+              <button type="button" mat-stroked-button (click)="addItem()" style="margin-left:auto;">
+                <mat-icon>add</mat-icon> Add Item
+              </button>
+            </mat-card-header>
+            <mat-card-content>
+
+              <div formArrayName="items">
+                @for (item of items.controls; track $index) {
+                  <div [formGroupName]="$index" class="item-row">
+                    <div class="item-num">{{ $index + 1 }}</div>
+
+                    <div class="item-fields">
+                      <mat-form-field appearance="outline" class="full">
+                        <mat-label>Description *</mat-label>
+                        <input matInput formControlName="description" />
+                      </mat-form-field>
+
+                      <div class="three-col">
+                        <mat-form-field appearance="outline">
+                          <mat-label>Qty *</mat-label>
+                          <input matInput type="number" formControlName="qty" min="0.001" step="1" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                          <mat-label>Unit</mat-label>
+                          <input matInput formControlName="unit" placeholder="nos" />
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline">
+                          <mat-label>Est. Price (₹)</mat-label>
+                          <input matInput type="number" formControlName="estimated_price" min="0" />
+                        </mat-form-field>
+                      </div>
+
+                      <mat-form-field appearance="outline" class="full">
+                        <mat-label>Remarks</mat-label>
+                        <input matInput formControlName="remarks" />
+                      </mat-form-field>
+                    </div>
+
+                    <button type="button" mat-icon-button (click)="removeItem($index)" class="remove-btn"
+                            [disabled]="items.length <= 1">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+
+              <!-- Totals -->
+              <div class="totals-row">
+                <span>Estimated Total</span>
+                <strong>₹{{ estimatedTotal() | number:'1.0-0' }}</strong>
+              </div>
+
+            </mat-card-content>
+          </mat-card>
+
+          <!-- Actions -->
+          <div class="action-row">
+            <button type="button" mat-stroked-button (click)="cancel()">Cancel</button>
+            <button type="submit" mat-raised-button color="primary" [disabled]="saving()">
+              @if (saving()) { <mat-spinner diameter="16" style="margin-right:6px;" /> }
+              Save as Draft
+            </button>
+            <button type="button" mat-raised-button style="background:#16a34a;color:white;"
+                    (click)="save(true)" [disabled]="saving()">
+              <mat-icon>send</mat-icon> Submit PR
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  `,
+  styles: [`
+    .page-wrapper { padding:28px; }
+    .page-header { margin-bottom:24px; }
+    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
+    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
+    .form-grid { display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:start; }
+    @media (max-width:900px) { .form-grid { grid-template-columns:1fr; } }
+    .form-card mat-card-content { display:flex;flex-direction:column;gap:12px;padding-top:16px!important; }
+    .form-card mat-card-header { padding-bottom:0!important;display:flex;align-items:center; }
+    .full { width:100%; }
+    .two-col { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
+    .three-col { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px; }
+    .item-row { display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border); }
+    .item-row:last-of-type { border-bottom:none; }
+    .item-num { width:24px;height:24px;border-radius:6px;background:var(--brand-light);color:var(--brand);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:12px; }
+    .item-fields { flex:1;display:flex;flex-direction:column;gap:6px; }
+    .remove-btn { flex-shrink:0;margin-top:4px;color:var(--text-3)!important; }
+    .totals-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:2px solid var(--border);font-size:14px;font-weight:600;color:var(--text-1); }
+    .action-row { display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap; }
+    .left-col, .right-col { display:flex;flex-direction:column;gap:16px; }
+    .budget-banner {
+      display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
+      border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;
+      font-size:13px;margin-bottom:4px;
+    }
+    .budget-banner.budget-warn { background:#fff7ed;border-color:#fed7aa;color:#c2410c; }
+    .budget-banner mat-icon { flex-shrink:0;margin-top:2px;font-size:18px;width:18px;height:18px; }
+  `],
+})
+export class PrFormComponent implements OnInit {
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private fb = inject(FormBuilder);
+  private notify = inject(NotificationService);
+
+  costCenters = signal<any[]>([]);
+  projects    = signal<any[]>([]);
+  locations   = signal<any[]>([]);
+  saving      = signal(false);
+  budget      = signal<Budget | null>(null);
+
+  budgetWarn = computed(() => {
+    const b = this.budget();
+    if (!b || !b.annual) return false;
+    return b.available / b.annual < 0.1;
+  });
+
+  budgetUsed = computed(() => {
+    const b = this.budget();
+    if (!b || !b.annual) return 0;
+    return Math.min(100, ((b.consumed + b.frozen) / b.annual) * 100);
+  });
+
+  form = this.fb.group({
+    title: ['', Validators.required],
+    cost_center_id: [null as number|null, Validators.required],
+    project_id: [null as number|null],
+    location_id: [null as number|null],
+    priority: ['normal'],
+    required_by_date: [null as Date|null],
+    required_by_person: [''],
+    description: [''],
+    items: this.fb.array([this.newItem()]),
+  });
+
+  get items(): FormArray { return this.form.get('items') as FormArray; }
+
+  estimatedTotal(): number {
+    return this.items.controls.reduce((sum, ctrl) => {
+      const qty = Number(ctrl.get('qty')?.value ?? 0);
+      const price = Number(ctrl.get('estimated_price')?.value ?? 0);
+      return sum + qty * price;
+    }, 0);
+  }
+
+  ngOnInit() {
+    this.http.get<any>(`${environment.apiUrl}/cost-centers`).subscribe(r => this.costCenters.set(r.data ?? r));
+    this.http.get<any>(`${environment.apiUrl}/projects`).subscribe(r => this.projects.set(r));
+    this.http.get<any>(`${environment.apiUrl}/locations`).subscribe(r => this.locations.set(r));
+  }
+
+  onCostCenterChange() {
+    const ccId = this.form.value.cost_center_id;
+    if (!ccId) { this.budget.set(null); return; }
+    this.http.get<Budget>(`${environment.apiUrl}/cost-centers/${ccId}/budget`)
+      .subscribe(b => this.budget.set(b));
+  }
+
+  newItem() {
+    return this.fb.group({
+      description: ['', Validators.required],
+      qty: [1, [Validators.required, Validators.min(0.001)]],
+      unit: ['nos'],
+      estimated_price: [0],
+      remarks: [''],
+    });
+  }
+
+  addItem() { this.items.push(this.newItem()); }
+  removeItem(i: number) { if (this.items.length > 1) this.items.removeAt(i); }
+
+  save(submit: boolean) {
+    if (this.form.invalid) { this.form.markAllAsTouched(); return; }
+    this.saving.set(true);
+
+    const body = {
+      ...this.form.value,
+      items: this.items.value,
+    };
+
+    this.http.post<any>(`${environment.apiUrl}/purchase-requisitions`, body).subscribe({
+      next: pr => {
+        if (submit) {
+          this.http.post(`${environment.apiUrl}/purchase-requisitions/${pr.id}/submit`, {}).subscribe({
+            next: () => {
+              this.notify.success('PR submitted successfully');
+              this.router.navigate(['/purchase-requisitions', pr.id]);
+            },
+            error: e => { this.notify.error(e.error?.error ?? 'Submit failed'); this.saving.set(false); },
+          });
+        } else {
+          this.notify.success('PR saved as draft');
+          this.router.navigate(['/purchase-requisitions', pr.id]);
+        }
+      },
+      error: e => { this.notify.error(e.error?.error ?? 'Save failed'); this.saving.set(false); },
+    });
+  }
+
+  cancel() { this.router.navigate(['/purchase-requisitions']); }
+}

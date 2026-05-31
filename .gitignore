@@ -1,0 +1,24 @@
+# ── Root-level junk that must never go into the repo ──────────────
+# (zopa-backend/ and zopa-frontend/ keep their own .gitignore files too)
+
+# Logs & big build artifacts
+*.log
+*.zip
+zopa-po-md.pdf
+
+# Old "copy the app into a zip" deploy folder — not needed with CI/CD
+/deploy/app/
+
+# Local tooling / editor / OS
+.claude/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Safety nets (these are also ignored inside each subproject)
+zopa-backend/.env
+zopa-backend/vendor/
+zopa-frontend/node_modules/
+zopa-frontend/dist/
+zopa-frontend/.angular/

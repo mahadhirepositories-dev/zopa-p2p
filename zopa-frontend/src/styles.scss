@@ -1,0 +1,431 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme((
+    color: (
+      primary: mat.$orange-palette,
+      tertiary: mat.$blue-palette,
+    ),
+    typography: Roboto,
+    density: 0,
+  ));
+}
+
+/* ── Design tokens ──────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --brand:        #f97316;
+  --brand-hover:  #ea580c;
+  --brand-light:  #fff7ed;
+  --brand-mid:    #fed7aa;
+
+  /* Surface */
+  --bg:      #f0f4f8;
+  --surface: #ffffff;
+  --border:  #e8edf3;
+
+  /* Typography */
+  --text-1: #1a2332;
+  --text-2: #4a5568;
+  --text-3: #94a3b8;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 3px rgba(0,0,0,.04);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+  --shadow-lg: 0 12px 32px rgba(0,0,0,.10), 0 4px 10px rgba(0,0,0,.06);
+  --shadow-card: 0 2px 12px rgba(0,0,0,.07), 0 1px 4px rgba(0,0,0,.04);
+
+  /* Radius — more curved to match Purity style */
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  /* ── Neutralise Material 3 orange surface tints completely ── */
+  --mat-sys-surface:                   #ffffff;
+  --mat-sys-surface-dim:               #f0f4f8;
+  --mat-sys-surface-bright:            #ffffff;
+  --mat-sys-surface-container-lowest:  #ffffff;
+  --mat-sys-surface-container-low:     #f8fafc;
+  --mat-sys-surface-container:         #f1f5f9;
+  --mat-sys-surface-container-high:    #edf1f7;
+  --mat-sys-surface-container-highest: #e2e8f0;
+  --mat-sys-surface-tint:              transparent;
+  --mat-sys-on-surface:                #1a2332;
+  --mat-sys-on-surface-variant:        #4a5568;
+
+  /* MDC card/dialog colours */
+  --mdc-elevated-card-container-color: #ffffff;
+  --mdc-filled-card-container-color:   #ffffff;
+  --mdc-outlined-card-container-color: #ffffff;
+  --mdc-dialog-container-color:        #ffffff;
+
+  /* MDC text-field shape */
+  --mdc-outlined-text-field-container-shape: 12px;
+  --mdc-filled-text-field-container-shape:   12px;
+  --mdc-outlined-text-field-focus-outline-width: 1.5px;
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+body {
+  color-scheme: light;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: 'Inter', 'Roboto', sans-serif;
+  margin: 0;
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Global animations ──────────────────────────────────────── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px) scale(.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes slideRight {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.page-wrapper {
+  animation: pageIn .32s cubic-bezier(.25,.46,.45,.94) both;
+}
+
+/* ── Material overrides ─────────────────────────────────────── */
+
+/* Cards — forced white, no tint */
+.mat-mdc-card {
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-card) !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  overflow: visible;
+  transition: box-shadow .2s ease, transform .2s ease;
+
+  &:not(.no-hover):hover {
+    box-shadow: var(--shadow-md) !important;
+  }
+}
+.mat-mdc-card-header {
+  padding: 18px 20px 0 !important;
+}
+.mat-mdc-card-title {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--text-1) !important;
+}
+.mat-mdc-card-subtitle {
+  color: var(--text-3) !important;
+  font-size: 12px !important;
+}
+.mat-mdc-card-content {
+  padding: 0 20px 20px !important;
+}
+
+/* Tables */
+.mat-mdc-table {
+  width: 100%;
+  border-radius: var(--r) !important;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  overflow: hidden;
+}
+.mat-mdc-header-row {
+  background: #f8fafc !important;
+  min-height: 42px !important;
+}
+.mat-mdc-header-cell {
+  color: var(--text-3) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0 16px !important;
+}
+.mat-mdc-row {
+  min-height: 52px !important;
+  transition: background .12s ease;
+  background: #ffffff !important;
+}
+.mat-mdc-row:hover .mat-mdc-cell {
+  background: #f8faff !important;
+  cursor: pointer;
+}
+.mat-mdc-cell {
+  border-bottom-color: var(--border) !important;
+  color: var(--text-1) !important;
+  font-size: 13px !important;
+  padding: 0 16px !important;
+  background: transparent;
+}
+
+/* Chips */
+mat-chip, .mat-mdc-chip {
+  border-radius: 8px !important;
+  height: 22px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+}
+.mdc-evolution-chip__text-label {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: .02em !important;
+}
+
+/* Form fields — clean, curved, no orange tint */
+.mat-mdc-form-field {
+  /* Remove any surface tint on the wrapper */
+  .mat-mdc-text-field-wrapper,
+  .mdc-text-field {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
+  .mat-mdc-form-field-focus-overlay {
+    background: transparent !important;
+    opacity: 0 !important;
+  }
+
+  /* Outline shape — leading/trailing radii */
+  .mdc-notched-outline__leading {
+    border-color: var(--border) !important;
+    border-radius: 12px 0 0 12px !important;
+    min-width: 12px !important;
+    transition: border-color .18s ease !important;
+  }
+  .mdc-notched-outline__notch {
+    border-color: var(--border) !important;
+    border-radius: 0 !important;
+    transition: border-color .18s ease !important;
+  }
+  .mdc-notched-outline__trailing {
+    border-color: var(--border) !important;
+    border-radius: 0 12px 12px 0 !important;
+    transition: border-color .18s ease !important;
+  }
+
+  /* Hover */
+  &:hover:not(.mat-focused) {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: #94a3b8 !important;
+    }
+  }
+
+  /* Focus */
+  &.mat-focused {
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__notch,
+    .mdc-notched-outline__trailing {
+      border-color: var(--brand) !important;
+      border-width: 1.5px !important;
+    }
+  }
+
+  /* Label */
+  .mat-mdc-floating-label { color: var(--text-3) !important; font-size: 13px !important; }
+  &.mat-focused .mat-mdc-floating-label { color: var(--brand) !important; }
+
+  /* Input text */
+  .mat-mdc-input-element { color: var(--text-1) !important; font-size: 13px !important; }
+}
+
+/* Buttons */
+.mat-mdc-raised-button.mat-primary,
+.mat-mdc-unelevated-button.mat-primary {
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  letter-spacing: .01em !important;
+  box-shadow: 0 2px 8px rgba(249,115,22,.3) !important;
+  transition: box-shadow .2s ease, transform .15s ease !important;
+  &:hover:not(:disabled) {
+    box-shadow: 0 4px 14px rgba(249,115,22,.4) !important;
+    transform: translateY(-1px) !important;
+  }
+  &:active { transform: translateY(0) !important; }
+}
+.mat-mdc-stroked-button {
+  border-radius: 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  transition: background .15s ease !important;
+}
+.mat-mdc-button {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+}
+.mat-mdc-icon-button {
+  border-radius: 10px !important;
+  transition: background .15s ease !important;
+}
+
+/* Icon + text vertical alignment for ALL text buttons.
+   The default mat-icon box (24px) is taller than the button label, so it
+   floats above the text baseline. Normalize the icon to the label size and
+   let flex `gap` own the spacing (icon-only buttons are excluded). */
+.mat-mdc-button,
+.mat-mdc-raised-button,
+.mat-mdc-unelevated-button,
+.mat-mdc-stroked-button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px;
+  line-height: 1 !important;
+
+  .mat-icon {
+    width: 18px !important;
+    height: 18px !important;
+    font-size: 18px !important;
+    line-height: 18px !important;
+    margin: 0 !important;          /* spacing handled by the button's gap */
+    vertical-align: middle;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Keep the MDC label baseline in line with the centered icon */
+  .mdc-button__label {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Dialog */
+.mat-mdc-dialog-container,
+.mdc-dialog__surface {
+  border-radius: var(--r-xl) !important;
+  background: #ffffff !important;
+  overflow: hidden !important;
+}
+
+/* Progress bar */
+.mat-mdc-progress-bar {
+  border-radius: 99px !important;
+  --mdc-linear-progress-track-height: 5px;
+  --mdc-linear-progress-active-indicator-height: 5px;
+  overflow: hidden;
+}
+
+/* Select panel */
+.mat-mdc-select-panel {
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--border) !important;
+  background: #ffffff !important;
+}
+
+/* Tabs */
+.mat-mdc-tab-list {
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tooltip */
+.mat-mdc-tooltip {
+  border-radius: 8px !important;
+  font-size: 11px !important;
+}
+
+/* ── Snackbar ───────────────────────────────────────────────── */
+.snack-success .mdc-snackbar__surface {
+  background: #16a34a !important;
+  border-radius: var(--r) !important;
+}
+.snack-error .mdc-snackbar__surface {
+  background: #dc2626 !important;
+  border-radius: var(--r) !important;
+}
+
+/* ── Page layout helpers ────────────────────────────────────── */
+.page-wrapper {
+  padding: 28px;
+  max-width: 1300px;
+}
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  h2, h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-1);
+  }
+  p {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--text-3);
+  }
+}
+.full-width { width: 100%; }
+
+/* Table card — flush to card edges */
+.table-card {
+  mat-card-content { padding: 0 !important; }
+  .mat-mdc-table { border-radius: 0 !important; }
+}
+
+/* ── Status badges ──────────────────────────────────────────── */
+.status-draft         { background: #f1f5f9 !important; color: #64748b !important; }
+.status-pending_l1,
+.status-pending_l2,
+.status-pending_l3    { background: #fff7ed !important; color: #ea580c !important; }
+.status-approved      { background: #f0fdf4 !important; color: #16a34a !important; }
+.status-released      { background: #eff6ff !important; color: #2563eb !important; }
+.status-cancelled     { background: #fff1f2 !important; color: #e11d48 !important; }
+.status-returned      { background: #fffbeb !important; color: #d97706 !important; }
+.status-rejected      { background: #fff1f2 !important; color: #e11d48 !important; }
+.status-confirmed     { background: #f0fdf4 !important; color: #16a34a !important; }
+.status-pending       { background: #fff7ed !important; color: #ea580c !important; }
+.status-approved-bg   { background: #f0fdf4 !important; color: #16a34a !important; }
+.status-closed            { background: #f1f5f9 !important; color: #64748b !important; }
+.status-delivered         { background: #ecfdf5 !important; color: #065f46 !important; }
+.status-invoiced          { background: #fef9c3 !important; color: #92400e !important; }
+.status-payment_released  { background: #eef2ff !important; color: #3730a3 !important; }
+.status-submitted         { background: #fff7ed !important; color: #d97706 !important; }
+.status-rfq_created       { background: #eff6ff !important; color: #2563eb !important; }
+.status-rfq_approved      { background: #ecfdf5 !important; color: #059669 !important; }
+.status-converted         { background: #f0fdf4 !important; color: #16a34a !important; }
+
+/* ── Utilities ──────────────────────────────────────────────── */
+.text-muted    { color: var(--text-3); }
+.text-sm       { font-size: 12px; }
+.font-bold     { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--brand);
+  color: white;
+}
+
+/* ── Stagger helpers for cards ──────────────────────────────── */
+.anim-1 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .05s both; }
+.anim-2 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .10s both; }
+.anim-3 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .15s both; }
+.anim-4 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .20s both; }
+.anim-5 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .25s both; }
+.anim-6 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .30s both; }

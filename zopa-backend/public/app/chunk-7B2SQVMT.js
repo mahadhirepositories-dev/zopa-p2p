@@ -1,0 +1,1 @@
+var n=/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;var o=/^[6-9]\d{9}$/;function e(){return r=>{let t=String(r.value??"").toUpperCase().trim();return t?n.test(t)?null:{gstin:!0}:null}}function l(){return r=>{let t=String(r.value??"").trim().replace(/\s/g,"");return t?o.test(t)?null:{phone:!0}:null}}export{e as a,l as b};

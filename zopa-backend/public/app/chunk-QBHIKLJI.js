@@ -1,0 +1,1 @@
+import"./chunk-7CGTOI24.js";var o=[{path:"",loadComponent:()=>import("./chunk-VZ7Q7VRJ.js").then(t=>t.CostCenterListComponent)},{path:":id",loadComponent:()=>import("./chunk-NWNBPB4P.js").then(t=>t.CostCenterDetailComponent)}];export{o as costCenterRoutes};

@@ -1,0 +1,83 @@
+name: Deploy to Linode
+
+# ── When does this run? ───────────────────────────────────────────────
+# Every time you push to the `main` branch (i.e. every time you finish a
+# change), GitHub does the work and ships it to your server automatically.
+# You can also press "Run workflow" by hand from the Actions tab.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) Grab a fresh copy of your code on GitHub's free computer
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2) Install Node so we can build the Angular app
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: zopa-frontend/package-lock.json
+
+      # 3) Build the Angular app into plain HTML/CSS/JS (production)
+      - name: Build frontend
+        working-directory: zopa-frontend
+        run: |
+          npm ci
+          npm run build -- --configuration=production
+
+      # 4) Zip the built site so it travels as one tidy package
+      - name: Package frontend
+        run: tar -czf frontend.tar.gz -C zopa-frontend/dist/zopa-frontend/browser .
+
+      # 5) Copy that package to the server's /tmp folder
+      - name: Copy frontend to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: frontend.tar.gz
+          target: /tmp
+
+      # 6) SSH into the server and do the rest:
+      #    - update the backend code + dependencies + database
+      #    - unpack the new frontend into the web folder
+      - name: Deploy on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -e
+
+            echo "── Backend ─────────────────────────────"
+            cd /var/www/zopa
+            git pull origin main
+            cd zopa-backend
+            composer install --no-dev --optimize-autoloader --no-interaction
+            php artisan migrate --force
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan storage:link || true
+
+            echo "── Frontend ────────────────────────────"
+            rm -rf /var/www/zopa-frontend/*
+            tar -xzf /tmp/frontend.tar.gz -C /var/www/zopa-frontend
+            rm -f /tmp/frontend.tar.gz
+
+            echo "── Restart PHP ─────────────────────────"
+            sudo systemctl reload php8.2-fpm
+
+            echo "✅ Deploy complete."
