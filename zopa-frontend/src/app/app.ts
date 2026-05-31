@@ -62,6 +62,9 @@ import { filter } from 'rxjs/operators';
                  [routerLinkActiveOptions]="{exact:true}">
                 <mat-icon>dashboard</mat-icon><span>Dashboard</span>
               </a>
+              <a class="nav-link" routerLink="/help" routerLinkActive="nav-link--active">
+                <mat-icon>help_outline</mat-icon><span>Help &amp; Manual</span>
+              </a>
             </div>
 
             @if (auth.canDo('purchase_requisitions','view') || auth.canDo('purchase_orders','view') ||
@@ -199,10 +202,13 @@ import { filter } from 'rxjs/operators';
             }
             <div class="topbar-spacer"></div>
             <div class="topbar-actions">
+              <a mat-icon-button matTooltip="Help & User Manual" class="topbar-btn" routerLink="/help">
+                <mat-icon>help_outline</mat-icon>
+              </a>
               <button mat-icon-button matTooltip="Notifications" class="topbar-btn">
                 <mat-icon>notifications_none</mat-icon>
               </button>
-              <div class="topbar-avatar">{{ auth.user()?.name?.[0]?.toUpperCase() }}</div>
+              <a class="topbar-avatar" routerLink="/profile" matTooltip="My Profile">{{ auth.user()?.name?.[0]?.toUpperCase() }}</a>
             </div>
           </header>
           <main class="page-content" [@routePage]="routeUrl()">
@@ -427,6 +433,8 @@ import { filter } from 'rxjs/operators';
       font-size: 12px;
       font-weight: 700;
       margin-left: 4px;
+      text-decoration: none;
+      cursor: pointer;
     }
 
     /* Page content */
