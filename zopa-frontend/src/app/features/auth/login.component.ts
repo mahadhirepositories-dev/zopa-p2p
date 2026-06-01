@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/auth/auth.service';
   selector: 'app-login',
   standalone: true,
   imports: [
-    ReactiveFormsModule,
+    ReactiveFormsModule, RouterLink,
     MatFormFieldModule, MatInputModule, MatButtonModule,
     MatIconModule, MatProgressSpinnerModule,
   ],
@@ -89,6 +89,10 @@ import { AuthService } from '../../core/auth/auth.service';
                 <mat-icon>{{ showPass() ? 'visibility_off' : 'visibility' }}</mat-icon>
               </button>
             </mat-form-field>
+
+            <div class="forgot-row">
+              <a routerLink="/forgot-password" class="forgot-link">Forgot password?</a>
+            </div>
 
             @if (error()) {
               <div class="error-banner">
@@ -176,6 +180,10 @@ import { AuthService } from '../../core/auth/auth.service';
     .login-form { display: flex; flex-direction: column; gap: 6px; }
     .full-width { width: 100%; }
     .login-form mat-icon[matSuffix] { color: #94a3b8; font-size: 19px; }
+
+    .forgot-row { display: flex; justify-content: flex-end; margin: -2px 0 2px; }
+    .forgot-link { font-size: 13px; color: #ea580c; font-weight: 600; text-decoration: none; }
+    .forgot-link:hover { text-decoration: underline; }
 
     .error-banner {
       display: flex; align-items: center; gap: 8px;

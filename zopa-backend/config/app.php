@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | Base URL of the Angular SPA. Used to build links that point back into the
+    | app from emails (e.g. the password-reset link). Read via config() (not
+    | env()) so it survives `php artisan config:cache` in production.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4201'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

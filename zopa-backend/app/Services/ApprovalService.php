@@ -55,14 +55,10 @@ class ApprovalService
 
     public function routeForApproval(PurchaseOrder $po): void
     {
-        $configs = ApprovalConfig::where('cost_center_id', $po->cost_center_id)
-            ->where('type', 'po')
-            ->where('is_active', true)
-            ->orderBy('level')
-            ->get();
+        $required = $this->requiredPoConfigs($po->cost_center_id, (float) $po->grand_total);
 
         // No PO approval config → auto-approve immediately (same pattern as invoices).
-        if ($configs->isEmpty()) {
+        if ($required->isEmpty()) {
             $po->update([
                 'status'      => 'approved',
                 'po_date'     => $po->po_date ?? now()->toDateString(),
@@ -73,21 +69,9 @@ class ApprovalService
             return;
         }
 
-        $amount = $po->grand_total;
-        $requiredLevels = [];
-
-        foreach ($configs as $config) {
-            $requiredLevels[] = $config;
-            if (is_null($config->amount_limit) || $amount <= $config->amount_limit) {
-                break;
-            }
-        }
-
-        $firstLevel = $requiredLevels[0];
+        $firstLevel = $required->first();
         $this->createApprovalRecords('PO', $po->id, $firstLevel);
-
-        $nextStatus = 'pending_l' . $firstLevel->level;
-        $po->update(['status' => $nextStatus]);
+        $po->update(['status' => 'pending_l' . $firstLevel->level]);
 
         // Notify all assigned approvers at this level
         $this->notifyLevelApprovers('PO', $po->id, $firstLevel, $po->load('items.product', 'vendor', 'costCenter'));
@@ -250,6 +234,38 @@ class ApprovalService
         }
     }
 
+    /**
+     * The ordered set of PO approval levels actually REQUIRED for a given amount.
+     *
+     * Walks active PO configs low→high and stops at the first level that can
+     * finalize this amount — a level with no amount_limit (unlimited) or whose
+     * amount_limit covers the PO. The LAST level returned is therefore the FINAL
+     * approver. Consequences (matches the configured-levels-are-authoritative rule):
+     *   • Only L1 configured          → [L1]       (L1 is final)
+     *   • L1+L2 configured, amt ≤ L1  → [L1]       (L1 is final; no escalation to L2)
+     *   • L1+L2+L3, amt ≤ L2          → [L1, L2]   (L2 is final)
+     *   • L1+L2 configured, amt > L2  → [L1, L2]   (highest configured level is final)
+     * Returns an empty collection when no levels are configured (caller auto-approves).
+     * Applies uniformly regardless of who created/approves the PO (ZOPA or client).
+     */
+    private function requiredPoConfigs(int $costCenterId, float $amount): \Illuminate\Support\Collection
+    {
+        $configs = ApprovalConfig::where('cost_center_id', $costCenterId)
+            ->where('type', 'po')
+            ->where('is_active', true)
+            ->orderBy('level')
+            ->get();
+
+        $required = collect();
+        foreach ($configs as $config) {
+            $required->push($config);
+            if (is_null($config->amount_limit) || $amount <= (float) $config->amount_limit) {
+                break;
+            }
+        }
+        return $required;
+    }
+
     private function advanceOrComplete(Approval $approval): void
     {
         if ($approval->entity_type === 'PO') {
@@ -289,22 +305,15 @@ class ApprovalService
     {
         $po = PurchaseOrder::with('costCenter.tenant')->findOrFail($approval->entity_id);
 
-        $configs = ApprovalConfig::where('cost_center_id', $po->cost_center_id)
-            ->where('type', 'po')
-            ->where('is_active', true)
-            ->where('level', '>', $approval->level)
-            ->orderBy('level')
-            ->get();
-
-        $amount = $po->grand_total;
-        $nextConfig = null;
-
-        foreach ($configs as $config) {
-            if (is_null($config->amount_limit) || $amount <= $config->amount_limit) {
-                $nextConfig = $config;
-                break;
-            }
-        }
+        // requiredPoConfigs is the single source of truth for which levels this
+        // PO's amount needs. The next approver is simply the next required level
+        // above the one that just approved; if there is none, the highest
+        // required level has signed off → the PO is fully approved.
+        // This is why a PO with only L1 (or L1+L2 with no L3) finalizes at its
+        // top configured level, and why a low-value PO within L1's limit is NOT
+        // pushed up to L2/L3.
+        $required   = $this->requiredPoConfigs($po->cost_center_id, (float) $po->grand_total);
+        $nextConfig = $required->first(fn ($c) => $c->level > $approval->level);
 
         if ($nextConfig) {
             $this->createApprovalRecords('PO', $po->id, $nextConfig);

@@ -24,11 +24,17 @@ use App\Http\Controllers\Admin\ClientUserController;
 use App\Http\Controllers\Admin\ZopaStaffController;
 use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Http\Controllers\Admin\RolePermissionsController;
+use App\Http\Controllers\Admin\EmailTemplatesController;
 use App\Http\Middleware\TenantScopeMiddleware;
 use Illuminate\Support\Facades\Route;
 
 // Public — login is rate-limited (brute-force protection): 6 attempts/min per IP.
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
+
+// Public password reset (rate-limited). forgot-password emails a one-time link;
+// reset-password completes it with the emailed token.
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
+Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
 
 // Unauthenticated one-time-token PDF download (token issued by authenticated pdfUrl endpoint)
 // Uses a plain integer {id} — NO route-model binding — so no middleware or global scope can fire.
@@ -86,6 +92,9 @@ Route::middleware('auth:sanctum')->group(function () {
         // Access Control — role × module permission matrix management
         Route::get('role-permissions', [RolePermissionsController::class, 'index']);
         Route::put('role-permissions/{role}', [RolePermissionsController::class, 'update']);
+
+        // Email templates — read-only preview catalogue
+        Route::get('email-templates', [EmailTemplatesController::class, 'index']);
 
         Route::get('clients/{tenant}/users', [ClientUserController::class, 'index']);
         Route::post('clients/{tenant}/users', [ClientUserController::class, 'store']);
@@ -153,6 +162,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('purchase-orders', PurchaseOrderController::class);
         Route::post('purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit']);
         Route::post('purchase-orders/{purchaseOrder}/release', [PurchaseOrderController::class, 'release']);
+        Route::post('purchase-orders/{purchaseOrder}/send-to-vendor', [PurchaseOrderController::class, 'sendToVendor']);
         Route::post('purchase-orders/{purchaseOrder}/deliver', [PurchaseOrderController::class, 'deliver']);
         Route::post('purchase-orders/{purchaseOrder}/release-payment', [PurchaseOrderController::class, 'releasePayment']);
         Route::post('purchase-orders/{purchaseOrder}/upload', [PurchaseOrderController::class, 'upload']);

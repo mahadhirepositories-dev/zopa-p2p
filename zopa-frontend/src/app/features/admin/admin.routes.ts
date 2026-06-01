@@ -38,5 +38,11 @@ export const adminRoutes: Routes = [
     data: { roles: ['zopa_super_admin'] },
     loadComponent: () => import('./access-control/access-control.component').then(m => m.AccessControlComponent),
   },
+  {
+    path: 'email-templates',
+    canActivate: [roleGuard],
+    data: { roles: ['zopa_super_admin'] },
+    loadComponent: () => import('./email-templates/email-templates.component').then(m => m.EmailTemplatesComponent),
+  },
   { path: '', redirectTo: 'clients', pathMatch: 'full' }
 ];

@@ -189,6 +189,9 @@ import { filter } from 'rxjs/operators';
                 <a class="nav-link" routerLink="/admin/access-control" routerLinkActive="nav-link--active">
                   <mat-icon>admin_panel_settings</mat-icon><span>Access Control</span>
                 </a>
+                <a class="nav-link" routerLink="/admin/email-templates" routerLinkActive="nav-link--active">
+                  <mat-icon>mail</mat-icon><span>Email Templates</span>
+                </a>
               </div>
             }
 

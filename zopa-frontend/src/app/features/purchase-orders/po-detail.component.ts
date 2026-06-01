@@ -85,6 +85,15 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             }
 
+            @if (['released','delivered','invoiced','payment_released'].includes(po()!.status) && auth.canTransact()) {
+              <button mat-stroked-button [disabled]="acting()" (click)="sendToVendor()"
+                      matTooltip="Email this PO (with the PDF) to the vendor">
+                @if (acting() === 'sendVendor') { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>forward_to_inbox</mat-icon> }
+                Send to Vendor
+              </button>
+            }
+
             <button mat-stroked-button [disabled]="downloading()" (click)="downloadPdf()"
                     matTooltip="Opens PDF in a new tab — use browser controls to save">
               @if (downloading()) { <mat-spinner diameter="18" /> }
@@ -420,8 +429,22 @@ export class PoDetailComponent implements OnInit {
   releasePo() {
     this.acting.set('release');
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release`, {}).subscribe({
-      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO released to vendor.'); },
+      next: po => {
+        this.po.set(po);
+        this.acting.set(false);
+        this.notify.success(po?.emailed_to_vendor
+          ? 'PO released and emailed to the vendor.'
+          : 'PO released. No vendor email on file — add one, then use “Send to Vendor”.');
+      },
       error: err => { this.notify.error(err.error?.error ?? 'Release failed.'); this.acting.set(false); },
+    });
+  }
+
+  sendToVendor() {
+    this.acting.set('sendVendor');
+    this.http.post<{ message: string }>(`${environment.apiUrl}/purchase-orders/${this.id()}/send-to-vendor`, {}).subscribe({
+      next: res => { this.acting.set(false); this.notify.success(res?.message ?? 'PO emailed to vendor.'); },
+      error: err => { this.notify.error(err.error?.error ?? 'Could not email the vendor.'); this.acting.set(false); },
     });
   }
 

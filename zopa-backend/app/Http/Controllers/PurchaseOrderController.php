@@ -16,7 +16,9 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use App\Mail\PurchaseOrderIssuedMail;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 
 class PurchaseOrderController extends Controller
@@ -345,7 +347,72 @@ class PurchaseOrderController extends Controller
         $this->tat->stamp($purchaseOrder->id, 'po_released_at', now());
         $this->actLog->log('PO', $purchaseOrder->id, 'released');
 
-        return response()->json($purchaseOrder->fresh());
+        // Issue the PO to the vendor by email (PO PDF attached). Non-fatal:
+        // a missing vendor email or any mail error never blocks the release.
+        $emailed = $this->emailPoToVendor($purchaseOrder);
+        if ($emailed) {
+            $this->actLog->log('PO', $purchaseOrder->id, 'emailed_to_vendor', [
+                'email' => optional($purchaseOrder->vendor)->email,
+            ]);
+        }
+
+        $fresh = $purchaseOrder->fresh();
+        $fresh->setAttribute('emailed_to_vendor', $emailed);
+        return response()->json($fresh);
+    }
+
+    /**
+     * Manually (re-)send the PO to the vendor by email — used by the
+     * "Send to Vendor" button, e.g. after adding the vendor's email address
+     * or to re-issue the document.
+     */
+    public function sendToVendor(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $this->requireTransactRole();
+        $this->authorizePoAccess($purchaseOrder);
+
+        if (!in_array($purchaseOrder->status, ['approved', 'released', 'delivered', 'invoiced', 'payment_released'])) {
+            return response()->json(['error' => 'Only approved or issued POs can be emailed to the vendor.'], 422);
+        }
+
+        $purchaseOrder->loadMissing('vendor');
+        if (!optional($purchaseOrder->vendor)->email) {
+            return response()->json(['error' => 'This vendor has no email address on file. Add one on the vendor record first.'], 422);
+        }
+
+        if (!$this->emailPoToVendor($purchaseOrder)) {
+            return response()->json(['error' => 'Could not send the email. Please try again.'], 500);
+        }
+
+        $this->actLog->log('PO', $purchaseOrder->id, 'emailed_to_vendor', [
+            'email' => $purchaseOrder->vendor->email,
+        ]);
+
+        return response()->json(['message' => "Purchase order emailed to {$purchaseOrder->vendor->email}."]);
+    }
+
+    /**
+     * Queue the PO-issued email to the vendor. Returns false (without throwing)
+     * when the vendor has no email or the mail layer errors, so callers in the
+     * release flow are never blocked by mail problems.
+     */
+    private function emailPoToVendor(PurchaseOrder $po): bool
+    {
+        $po->loadMissing(['items.product', 'vendor', 'vendorAddress', 'costCenter', 'tenant']);
+
+        $email = optional($po->vendor)->email;
+        if (!$email) {
+            return false;
+        }
+
+        try {
+            Mail::to($email)->queue(new PurchaseOrderIssuedMail($po));
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
+
+        return true;
     }
 
     public function deliver(PurchaseOrder $purchaseOrder): JsonResponse

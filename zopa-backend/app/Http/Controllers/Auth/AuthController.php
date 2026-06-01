@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\PasswordResetMail;
+use App\Models\User;
 use App\Models\UserTenantRole;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -121,6 +125,65 @@ class AuthController extends Controller
         $user->tokens()->where('id', '!=', $currentTokenId)->delete();
 
         return response()->json(['message' => 'Password changed successfully.']);
+    }
+
+    /**
+     * Send a password-reset link to the user's email.
+     *
+     * Always responds 200 with a generic message — we never reveal whether an
+     * account exists for the given address (prevents email enumeration).
+     */
+    public function forgotPassword(Request $request): JsonResponse
+    {
+        $request->validate(['email' => 'required|email']);
+
+        $user = User::where('email', $request->email)->where('is_active', true)->first();
+
+        if ($user) {
+            $token    = Password::createToken($user);
+            $resetUrl = rtrim((string) config('app.frontend_url'), '/')
+                . '/reset-password?token=' . $token
+                . '&email=' . urlencode($user->email);
+
+            try {
+                Mail::to($user->email)->queue(new PasswordResetMail($user, $resetUrl));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        return response()->json([
+            'message' => 'If an account exists for that email, a password reset link has been sent.',
+        ]);
+    }
+
+    /**
+     * Complete a password reset using the token from the emailed link.
+     */
+    public function resetPassword(Request $request): JsonResponse
+    {
+        $request->validate([
+            'token'    => 'required|string',
+            'email'    => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function (User $user, string $password) {
+                $user->forceFill(['password' => Hash::make($password)])->save();
+                // Revoke all existing API tokens so any old sessions can't continue.
+                $user->tokens()->delete();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json(['message' => 'Your password has been reset. You can now sign in.']);
+        }
+
+        throw ValidationException::withMessages([
+            'email' => [__($status)],
+        ]);
     }
 
     /**

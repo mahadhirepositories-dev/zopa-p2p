@@ -215,6 +215,16 @@ export class AuthService {
     return this.http.put<{ message: string }>(`${environment.apiUrl}/auth/password`, data);
   }
 
+  /** Request a password-reset link be emailed (public, no auth). */
+  forgotPassword(email: string) {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/forgot-password`, { email });
+  }
+
+  /** Complete a password reset using the token from the emailed link (public, no auth). */
+  resetPassword(data: { token: string; email: string; password: string; password_confirmation: string }) {
+    return this.http.post<{ message: string }>(`${environment.apiUrl}/auth/reset-password`, data);
+  }
+
   hasRole(...roles: string[]): boolean {
     return roles.includes(this.currentRole() ?? '');
   }
