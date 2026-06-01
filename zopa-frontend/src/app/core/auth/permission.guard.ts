@@ -14,9 +14,11 @@ import { AuthService } from './auth.service';
  * locked out by a transient loading state — enforcement applies once the
  * matrix is available and is fully reflected in the sidebar menu.
  */
-export const permissionGuard: CanActivateFn = (route) => {
+export const permissionGuard: CanActivateFn = async (route) => {
   const auth = inject(AuthService);
   const router = inject(Router);
+
+  await auth.ensureReady();
 
   if (!auth.isLoggedIn()) {
     return router.parseUrl('/login');

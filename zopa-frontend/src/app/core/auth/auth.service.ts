@@ -63,8 +63,17 @@ export class AuthService {
   /** Expose the loaded matrix (read-only) for the admin access-control screen. */
   readonly permissionsMatrix = this._permissionsMatrix.asReadonly();
 
+  /** Resolves once the initial /auth/me session-restore attempt has finished. */
+  private _ready: Promise<void>;
+
   constructor(private http: HttpClient, private router: Router) {
-    this.restoreSession();
+    this._ready = this.restoreSession();
+  }
+
+  /** Guards await this so a full page reload doesn't bounce to /login before the
+   *  user is restored from the saved token. */
+  ensureReady(): Promise<void> {
+    return this._ready;
   }
 
   login(email: string, password: string) {
@@ -201,31 +210,35 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
-  private restoreSession() {
+  private restoreSession(): Promise<void> {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) return Promise.resolve();
 
-    this.http.get<{ user: User; clients: TenantContext[] }>(`${environment.apiUrl}/auth/me`).subscribe({
-      next: res => {
-        this._user.set(res.user);
-        this._clients.set(res.clients);
-        const saved = localStorage.getItem('activeTenant');
-        if (saved && res.clients.some(c => c.tenant_id === +saved)) {
-          this._currentTenantId.set(+saved);
-        } else if (res.clients[0]) {
-          this._currentTenantId.set(res.clients[0].tenant_id);
-        }
-        // Reload permission matrix on session restore (e.g. page refresh).
-        this.loadPermissions();
-      },
-      error: (err) => {
-        // Only clear token on actual auth rejection (401) — NOT on network errors
-        // (e.g. server temporarily down during restart). A network error (status 0)
-        // should leave the token intact so the next request after recovery works.
-        if (err.status === 401 || err.status === 403) {
-          this.clearSession();
-        }
-      },
+    return new Promise<void>((resolve) => {
+      this.http.get<{ user: User; clients: TenantContext[] }>(`${environment.apiUrl}/auth/me`).subscribe({
+        next: res => {
+          this._user.set(res.user);
+          this._clients.set(res.clients);
+          const saved = localStorage.getItem('activeTenant');
+          if (saved && res.clients.some(c => c.tenant_id === +saved)) {
+            this._currentTenantId.set(+saved);
+          } else if (res.clients[0]) {
+            this._currentTenantId.set(res.clients[0].tenant_id);
+          }
+          // Reload permission matrix on session restore (e.g. page refresh).
+          this.loadPermissions();
+          resolve();
+        },
+        error: (err) => {
+          // Only clear token on actual auth rejection (401/403) — NOT on network
+          // errors (e.g. server temporarily down). A network error (status 0)
+          // leaves the token intact so the next request after recovery works.
+          if (err.status === 401 || err.status === 403) {
+            this.clearSession();
+          }
+          resolve();
+        },
+      });
     });
   }
 

@@ -2,9 +2,12 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from './auth.service';
 
-export const roleGuard: CanActivateFn = (route, state) => {
+export const roleGuard: CanActivateFn = async (route, state) => {
   const auth = inject(AuthService);
   const router = inject(Router);
+
+  // Wait for session restore on a full reload before deciding.
+  await auth.ensureReady();
 
   // If user is not logged in at all, redirect to login
   if (!auth.isLoggedIn()) {
