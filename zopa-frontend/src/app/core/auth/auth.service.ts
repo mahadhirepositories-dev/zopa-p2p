@@ -95,6 +95,8 @@ export class AuthService {
 
         // Load fine-grained permission matrix after successful login.
         this.loadPermissions();
+        // Super admins can act on any organization — populate the switcher.
+        this.loadAllOrgsForSuperAdmin();
       })
     );
   }
@@ -216,17 +218,16 @@ export class AuthService {
 
     return new Promise<void>((resolve) => {
       this.http.get<{ user: User; clients: TenantContext[] }>(`${environment.apiUrl}/auth/me`).subscribe({
-        next: res => {
+        next: async res => {
           this._user.set(res.user);
           this._clients.set(res.clients);
-          const saved = localStorage.getItem('activeTenant');
-          if (saved && res.clients.some(c => c.tenant_id === +saved)) {
-            this._currentTenantId.set(+saved);
-          } else if (res.clients[0]) {
-            this._currentTenantId.set(res.clients[0].tenant_id);
-          }
           // Reload permission matrix on session restore (e.g. page refresh).
           this.loadPermissions();
+          // For super admins, pull in every org BEFORE restoring the active
+          // tenant — otherwise a saved client-org id wouldn't be found in the
+          // (ZOPA-only) list and we'd silently fall back to the home tenant.
+          await this.loadAllOrgsForSuperAdmin();
+          this.restoreActiveTenant();
           resolve();
         },
         error: (err) => {
@@ -238,6 +239,44 @@ export class AuthService {
           }
           resolve();
         },
+      });
+    });
+  }
+
+  /** Restore the active tenant from localStorage against the current org list. */
+  private restoreActiveTenant(): void {
+    const saved = localStorage.getItem('activeTenant');
+    const clients = this._clients();
+    if (saved && clients.some(c => c.tenant_id === +saved)) {
+      this._currentTenantId.set(+saved);
+    } else if (clients[0]) {
+      this._currentTenantId.set(clients[0].tenant_id);
+      localStorage.setItem('activeTenant', String(clients[0].tenant_id));
+    }
+  }
+
+  /**
+   * Super admins can operate on ANY organization (the backend authorizes them
+   * for every tenant). Load all orgs into the clients list — each as
+   * zopa_super_admin — so the org switcher offers every organization.
+   * No-op for everyone else. Resolves even on failure so it never blocks login.
+   */
+  private loadAllOrgsForSuperAdmin(): Promise<void> {
+    if (!this.isSuperAdmin()) return Promise.resolve();
+
+    return new Promise<void>((resolve) => {
+      this.http.get<Array<{ id: number; name: string }>>(`${environment.apiUrl}/admin/clients`).subscribe({
+        next: tenants => {
+          const merged = [...this._clients()];
+          for (const t of tenants) {
+            if (!merged.some(c => c.tenant_id === t.id)) {
+              merged.push({ tenant_id: t.id, tenant_name: t.name, role: 'zopa_super_admin' });
+            }
+          }
+          this._clients.set(merged);
+          resolve();
+        },
+        error: () => resolve(),
       });
     });
   }
