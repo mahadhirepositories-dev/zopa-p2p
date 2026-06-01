@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -1011,10 +1011,22 @@ interface DashboardStats {
     .error-state mat-icon { font-size:48px; width:48px; height:48px; opacity:.4; }
   `],
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent {
   auth    = inject(AuthService);
   router  = inject(Router);
   private http = inject(HttpClient);
+
+  constructor() {
+    // Load on creation AND whenever the active organization changes. Using an
+    // effect (instead of ngOnInit) means an org switch performed while already
+    // on the dashboard — where router navigation is a no-op — still refetches
+    // tenant-scoped data. The tenant interceptor reads currentTenantId() live,
+    // so the request carries the new X-Tenant-ID.
+    effect(() => {
+      this.auth.currentTenantId();   // track the active org
+      this.reload();
+    });
+  }
 
   stats        = signal<DashboardStats | null>(null);
   loading      = signal(true);
@@ -1095,8 +1107,6 @@ export class DashboardComponent implements OnInit {
     const maxVal = Math.max(1, ...items.map(i => i.count));
     return items.map(s => ({ ...s, pct: Math.min(100, (s.count / maxVal) * 100) }));
   });
-
-  ngOnInit() { this.reload(); }
 
   reload() {
     this.loading.set(true);

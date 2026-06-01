@@ -502,12 +502,20 @@ export class App {
     this.router.navigate(['/admin/clients']);
   }
 
-  /** Switch the active organization and reload cleanly into its context. */
+  /** Switch the active organization and re-enter its context — IN-APP.
+   *
+   * Deliberately NOT a full browser reload (window.location). A full reload
+   * re-fetches index.html, which after a deploy may be a stale browser-cached
+   * copy pointing at hashed JS bundles that no longer exist on the server →
+   * the app fails to boot and the user lands on /login. Angular router
+   * navigation keeps the already-loaded bundle and the in-memory session, so
+   * switching orgs can never bounce to login. The tenant interceptor reads
+   * currentTenantId() live, so every subsequent request carries the new
+   * X-Tenant-ID, and routed components refetch on (re-)entry. */
   switchOrg(tenantId: number) {
     if (tenantId === this.auth.currentTenantId()) return;
     this.auth.switchClient(tenantId);
-    // Full reload so every screen re-fetches data for the new organization.
-    window.location.assign('/dashboard');
+    this.router.navigate(['/dashboard']);
   }
 
   roleLabel(role: string): string {

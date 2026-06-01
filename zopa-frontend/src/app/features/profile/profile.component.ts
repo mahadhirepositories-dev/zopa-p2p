@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
@@ -251,6 +252,7 @@ export class ProfileComponent {
   auth = inject(AuthService);
   private fb = inject(FormBuilder);
   private notify = inject(NotificationService);
+  private router = inject(Router);
 
   savingProfile = signal(false);
   savingPassword = signal(false);
@@ -322,10 +324,11 @@ export class ProfileComponent {
       .replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  /** Switch active organization and reload cleanly into its context. */
+  /** Switch active organization and re-enter its context — IN-APP (no browser
+   *  reload, which could load a stale cached index.html and bounce to login). */
   switchOrg(tenantId: number): void {
     if (tenantId === this.auth.currentTenantId()) return;
     this.auth.switchClient(tenantId);
-    window.location.assign('/dashboard');
+    this.router.navigate(['/dashboard']);
   }
 }
