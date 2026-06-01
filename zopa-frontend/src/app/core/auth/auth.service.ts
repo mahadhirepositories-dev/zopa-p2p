@@ -65,9 +65,18 @@ export class AuthService {
 
   /** Resolves once the initial /auth/me session-restore attempt has finished. */
   private _ready: Promise<void>;
+  /** True while session restore is in progress — guards the error interceptor
+   *  from treating bootstrap 401s (from /role-permissions or /admin/clients)
+   *  as a genuine token-revocation and forcing an unwanted logout. */
+  private _restoring = false;
 
   constructor(private http: HttpClient, private router: Router) {
     this._ready = this.restoreSession();
+  }
+
+  /** Returns true while the initial session-restore is in flight. */
+  isRestoring(): boolean {
+    return this._restoring;
   }
 
   /** Guards await this so a full page reload doesn't bounce to /login before the
@@ -178,13 +187,19 @@ export class AuthService {
 
   /**
    * Load the full role-permissions matrix from the API.
-   * Called after login and after session restore. Errors are silently
-   * swallowed — canDo() falls back gracefully when the matrix is null.
+   * Called after login (fire-and-forget) and during session restore (awaited).
+   * Errors are silently swallowed — canDo() falls back gracefully when null.
    */
   loadPermissions(): void {
-    this.http.get<PermissionsMatrix>(`${environment.apiUrl}/role-permissions`).subscribe({
-      next: matrix => this._permissionsMatrix.set(matrix),
-      error: () => { /* non-fatal — canDo() falls back to coarse checks */ },
+    this.loadPermissionsAsync();
+  }
+
+  private loadPermissionsAsync(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.http.get<PermissionsMatrix>(`${environment.apiUrl}/role-permissions`).subscribe({
+        next: matrix => { this._permissionsMatrix.set(matrix); resolve(); },
+        error: () => resolve(),
+      });
     });
   }
 
@@ -216,18 +231,21 @@ export class AuthService {
     const token = localStorage.getItem('token');
     if (!token) return Promise.resolve();
 
+    this._restoring = true;
     return new Promise<void>((resolve) => {
       this.http.get<{ user: User; clients: TenantContext[] }>(`${environment.apiUrl}/auth/me`).subscribe({
         next: async res => {
           this._user.set(res.user);
           this._clients.set(res.clients);
-          // Reload permission matrix on session restore (e.g. page refresh).
-          this.loadPermissions();
-          // For super admins, pull in every org BEFORE restoring the active
-          // tenant — otherwise a saved client-org id wouldn't be found in the
-          // (ZOPA-only) list and we'd silently fall back to the home tenant.
-          await this.loadAllOrgsForSuperAdmin();
+          // Run permission load and super-admin org load in parallel.
+          // allSettled ensures both finish (success or error) before we clear
+          // _restoring — so no 401 from either can trigger a spurious logout.
+          await Promise.allSettled([
+            this.loadPermissionsAsync(),
+            this.loadAllOrgsForSuperAdmin(),
+          ]);
           this.restoreActiveTenant();
+          this._restoring = false;
           resolve();
         },
         error: (err) => {
@@ -237,6 +255,7 @@ export class AuthService {
           if (err.status === 401 || err.status === 403) {
             this.clearSession();
           }
+          this._restoring = false;
           resolve();
         },
       });

@@ -10,13 +10,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError(err => {
-      // Only force a logout when an ALREADY-logged-in user's token is rejected.
-      // During bootstrap / session-restore (isLoggedIn() === false) a stray 401
-      // must NOT clear the token, otherwise a page reload (e.g. after switching
-      // organization) could cascade into an unwanted logout.
+      // Only force a logout when:
+      //  • the user IS logged in (not during pre-auth bootstrap)
+      //  • the session restore is fully complete (_restoring = false) so that
+      //    a 401 from /role-permissions or /admin/clients during the bootstrap
+      //    window doesn't cascade into a spurious logout after an org switch
+      //  • the failing request is not the login or me endpoint itself
       if (
         err.status === 401 &&
         auth.isLoggedIn() &&
+        !auth.isRestoring() &&
         !req.url.includes('/auth/login') &&
         !req.url.includes('/auth/me')
       ) {
