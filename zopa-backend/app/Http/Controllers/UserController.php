@@ -4,10 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserTenantRole;
+use App\Services\UserProvisioningService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -52,30 +51,18 @@ class UserController extends Controller
             return response()->json(['message' => 'Only a Client Admin can add users.'], 403);
         }
 
+        // email is intentionally NOT `unique:users,email` — the provisioner
+        // reactivates a previously-removed user / attaches an existing account
+        // instead of failing when the users row still exists.
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'email'    => 'required|email',
             'password' => 'required|string|min:8',
             'role'     => 'required|string|starts_with:client_',
         ]);
 
-        $utr = DB::transaction(function () use ($validated, $tenant, $request) {
-            $user = User::create([
-                'name'          => $validated['name'],
-                'email'         => $validated['email'],
-                'password'      => Hash::make($validated['password']),
-                'is_zopa_staff' => false,
-                'is_active'     => true,
-            ]);
-
-            return UserTenantRole::create([
-                'user_id'     => $user->id,
-                'tenant_id'   => $tenant->id,
-                'role'        => $validated['role'],
-                'assigned_by' => $request->user()->id,
-                'is_active'   => true,
-            ]);
-        });
+        $utr = app(UserProvisioningService::class)
+            ->provisionClientUser($tenant, $validated, $request->user()->id);
 
         $utr->load('user');
 

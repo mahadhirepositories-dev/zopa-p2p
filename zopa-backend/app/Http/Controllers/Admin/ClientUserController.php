@@ -6,9 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserTenantRole;
+use App\Services\UserProvisioningService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class ClientUserController extends Controller
 {
@@ -30,34 +29,21 @@ class ClientUserController extends Controller
     /**
      * Create a new client-native user and assign them to this tenant.
      */
-    public function store(Request $request, $tenantId)
+    public function store(Request $request, $tenantId, UserProvisioningService $provisioner)
     {
         $tenant = Tenant::findOrFail($tenantId);
 
+        // NOTE: email is intentionally NOT `unique:users,email` — the provisioner
+        // reactivates a previously-removed user or attaches an existing account,
+        // rather than failing when the users row still exists (see service docs).
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email',
             'password' => 'required|string|min:8',
             'role' => 'required|string|starts_with:client_',
         ]);
 
-        $userTenantRole = DB::transaction(function () use ($validated, $tenant, $request) {
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-                'is_zopa_staff' => false,
-                'is_active' => true,
-            ]);
-
-            return UserTenantRole::create([
-                'user_id' => $user->id,
-                'tenant_id' => $tenant->id,
-                'role' => $validated['role'],
-                'assigned_by' => $request->user()->id,
-                'is_active' => true,
-            ]);
-        });
+        $userTenantRole = $provisioner->provisionClientUser($tenant, $validated, $request->user()->id);
 
         return response()->json($userTenantRole->load('user'), 201);
     }
