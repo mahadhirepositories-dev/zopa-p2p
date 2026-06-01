@@ -60,10 +60,12 @@ class RolePermissionSeeder extends Seeder
         $p('zopa_buyer', 'purchase_orders',       true,  true,  true,  false);
         $p('zopa_buyer', 'grns',                  true,  true,  true,  false);
         $p('zopa_buyer', 'invoices',              true,  true,  true,  false);
+        // ZOPA buyers set up client master data on their behalf, so they can
+        // create & edit masters (not just view).
         $p('zopa_buyer', 'vendors',               true,  true,  true,  false);
-        $p('zopa_buyer', 'products',              true,  false, false, false);
-        $p('zopa_buyer', 'cost_centers',          true,  false, false, false);
-        $p('zopa_buyer', 'org_masters',           true,  false, false, false);
+        $p('zopa_buyer', 'products',              true,  true,  true,  false);
+        $p('zopa_buyer', 'cost_centers',          true,  true,  true,  false);
+        $p('zopa_buyer', 'org_masters',           true,  true,  true,  false);
         $p('zopa_buyer', 'approvals',             true,  true,  true,  false);
         $p('zopa_buyer', 'reports',               true,  false, false, false);
         $p('zopa_buyer', 'org_staff',             true,  false, false, false);

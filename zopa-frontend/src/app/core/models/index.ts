@@ -137,14 +137,17 @@ export interface Product {
   id: number;
   code?: string;
   name: string;
+  description?: string | null;
   unit: string;
   net_rate: number;
   gst_rate: number;
   hsn_code?: string;
   warranty_months: number;
   is_active: boolean;
-  category_id?: number;
-  category?: { id: number; name: string };
+  category_id?: number | null;
+  subcategory_id?: number | null;
+  category?: { id: number; name: string } | null;
+  subcategory?: { id: number; name: string } | null;
 }
 
 export interface PoItem {

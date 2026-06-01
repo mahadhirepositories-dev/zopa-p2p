@@ -73,10 +73,9 @@ import { NotificationService } from '../../core/services/notification.service';
             <mat-hint>End of budget period</mat-hint>
           </mat-form-field>
         </div>
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Current Fiscal Year *</mat-label>
-          <input matInput type="number" formControlName="current_fiscal_year" />
-        </mat-form-field>
+        @if (form.value.budget_from) {
+          <p class="fy-note">Fiscal year is set automatically to <strong>{{ derivedFiscalYear() }}</strong> from the budget start date.</p>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -90,6 +89,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .dialog-form { display: flex; flex-direction: column; gap: 4px; padding-top: 8px; }
     .full-width { width: 100%; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .fy-note { font-size: 12px; color: var(--text-3); margin: 4px 2px 0; }
   `],
 })
 export class CostCenterFormDialogComponent implements OnInit {
@@ -112,8 +112,14 @@ export class CostCenterFormDialogComponent implements OnInit {
     annual_budget:       [this.data?.annual_budget ?? 0, [Validators.required, Validators.min(0)]],
     budget_from:         [this.data?.budget_from ?? null],
     budget_to:           [this.data?.budget_to ?? null],
-    current_fiscal_year: [this.data?.current_fiscal_year ?? new Date().getFullYear(), [Validators.required]],
   });
+
+  /** Fiscal year auto-derived from the budget start date (no manual entry). */
+  derivedFiscalYear(): number {
+    const from = this.form.value.budget_from;
+    return from ? new Date(from).getFullYear()
+                : (this.data?.current_fiscal_year ?? new Date().getFullYear());
+  }
 
   ngOnInit() {
     const api = environment.apiUrl;
@@ -125,9 +131,10 @@ export class CostCenterFormDialogComponent implements OnInit {
   save() {
     if (this.form.invalid) return;
     this.saving.set(true);
+    const payload = { ...this.form.value, current_fiscal_year: this.derivedFiscalYear() };
     const req = this.data
-      ? this.http.put(`${environment.apiUrl}/cost-centers/${this.data.id}`, this.form.value)
-      : this.http.post(`${environment.apiUrl}/cost-centers`, this.form.value);
+      ? this.http.put(`${environment.apiUrl}/cost-centers/${this.data.id}`, payload)
+      : this.http.post(`${environment.apiUrl}/cost-centers`, payload);
 
     req.subscribe({
       next: () => { this.notify.success('Cost center saved.'); this.dialogRef.close(true); },

@@ -155,17 +155,25 @@ import { NotificationService } from '../../core/services/notification.service';
           </mat-card-header>
           <mat-card-content>
             @if (auth.clients().length) {
+              @if (auth.clients().length > 1) {
+                <p class="hint" style="margin-bottom:8px;">Click another organization to switch into it.</p>
+              }
               <div class="access-list">
                 @for (c of auth.clients(); track c.tenant_id) {
-                  <div class="access-row" [class.current]="c.tenant_id === auth.currentTenantId()">
+                  @let isCurrent = c.tenant_id === auth.currentTenantId();
+                  <div class="access-row" [class.current]="isCurrent" [class.switchable]="!isCurrent"
+                       (click)="!isCurrent && switchOrg(c.tenant_id)">
                     <div class="org-avatar">{{ c.tenant_name?.[0]?.toUpperCase() }}</div>
                     <div class="org-info">
                       <div class="org-name">
                         {{ c.tenant_name }}
-                        @if (c.tenant_id === auth.currentTenantId()) { <span class="active-tag">Active</span> }
+                        @if (isCurrent) { <span class="active-tag">Active</span> }
                       </div>
                       <div class="org-role">{{ roleLabel(c.role) }}</div>
                     </div>
+                    @if (!isCurrent) {
+                      <span class="switch-hint"><mat-icon>swap_horiz</mat-icon> Switch</span>
+                    }
                   </div>
                 }
               </div>
@@ -224,6 +232,11 @@ import { NotificationService } from '../../core/services/notification.service';
     .access-row { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-radius: 10px; transition: background .12s; }
     .access-row:hover { background: #f8fafc; }
     .access-row.current { background: #fff7ed; }
+    .access-row.switchable { cursor: pointer; }
+    .access-row.switchable:hover { background: var(--brand-light, #fff1e6); }
+    .switch-hint { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand, #f97316); opacity: 0; transition: opacity .12s; }
+    .access-row.switchable:hover .switch-hint { opacity: 1; }
+    .switch-hint mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .org-avatar {
       width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
       background: var(--brand-light, #fff1e6); color: var(--brand, #f97316);
@@ -307,5 +320,12 @@ export class ProfileComponent {
       .replace(/_/g, ' ')
       .replace(/\bl(\d)\b/i, 'L$1')
       .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  /** Switch active organization and reload cleanly into its context. */
+  switchOrg(tenantId: number): void {
+    if (tenantId === this.auth.currentTenantId()) return;
+    this.auth.switchClient(tenantId);
+    window.location.assign('/dashboard');
   }
 }

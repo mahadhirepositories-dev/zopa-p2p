@@ -79,6 +79,16 @@ return [
             'transport' => 'array',
         ],
 
+        // ZeptoMail via HTTP API (port 443) — works even when SMTP ports
+        // (25/465/587) are blocked by the host (e.g. fresh Linode accounts).
+        'zeptomail' => [
+            'transport' => 'zeptomail',
+            'token' => env('ZEPTOMAIL_TOKEN'),
+            // NB: key is "endpoint", not "url" — Laravel treats a "url" key as a
+            // DSN and would mis-parse its scheme (https) as the transport name.
+            'endpoint' => env('ZEPTOMAIL_URL', 'https://api.zeptomail.in/v1.1/email'),
+        ],
+
         'failover' => [
             'transport' => 'failover',
             'mailers' => [

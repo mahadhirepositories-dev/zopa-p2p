@@ -3,6 +3,7 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } fro
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 import { animate, query, style, transition, trigger } from '@angular/animations';
 import { AuthService } from './core/auth/auth.service';
 import { filter } from 'rxjs/operators';
@@ -12,7 +13,7 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    MatIconModule, MatButtonModule, MatTooltipModule,
+    MatIconModule, MatButtonModule, MatTooltipModule, MatMenuModule,
   ],
   animations: [
     trigger('routePage', [
@@ -45,8 +46,31 @@ import { filter } from 'rxjs/operators';
             </div>
           </div>
 
-          <!-- Tenant context (label only — switch via Client Management) -->
-          @if (auth.currentTenantName()) {
+          <!-- Tenant context — a switcher when the user belongs to >1 org -->
+          @if (auth.clients().length > 1) {
+            <button class="tenant-switcher" [matMenuTriggerFor]="orgMenu"
+                    matTooltip="Switch organization">
+              <mat-icon class="tenant-icon">corporate_fare</mat-icon>
+              <span class="tenant-name">{{ auth.currentTenantName() }}</span>
+              <mat-icon class="tenant-caret">unfold_more</mat-icon>
+            </button>
+            <mat-menu #orgMenu="matMenu" class="org-menu" xPosition="before">
+              <div class="org-menu-head">Switch organization</div>
+              @for (c of auth.clients(); track c.tenant_id) {
+                <button mat-menu-item (click)="switchOrg(c.tenant_id)"
+                        [disabled]="c.tenant_id === auth.currentTenantId()">
+                  <span class="org-mini-avatar">{{ c.tenant_name?.[0]?.toUpperCase() }}</span>
+                  <span class="org-mini-info">
+                    <span class="org-mini-name">{{ c.tenant_name }}</span>
+                    <span class="org-mini-role">{{ roleLabel(c.role) }}</span>
+                  </span>
+                  @if (c.tenant_id === auth.currentTenantId()) {
+                    <mat-icon class="org-check">check_circle</mat-icon>
+                  }
+                </button>
+              }
+            </mat-menu>
+          } @else if (auth.currentTenantName()) {
             <div class="tenant-label">
               <mat-icon class="tenant-icon">corporate_fare</mat-icon>
               <span>{{ auth.currentTenantName() }}</span>
@@ -278,6 +302,23 @@ import { filter } from 'rxjs/operators';
     .tenant-select { flex: 1; font-size: 12px; }
     .tenant-label span { font-size: 12px; color: var(--text-2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+    /* Organization switcher */
+    .tenant-switcher {
+      display: flex; align-items: center; gap: 6px; width: 100%;
+      padding: 10px 16px; border: 0; border-bottom: 1px solid var(--border);
+      background: #fafafa; cursor: pointer; text-align: left; transition: background .12s;
+    }
+    .tenant-switcher:hover { background: var(--brand-light, #fff1e6); }
+    .tenant-switcher .tenant-name { flex: 1; font-size: 12px; color: var(--text-1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tenant-caret { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); flex-shrink: 0; }
+    .org-menu-head { padding: 8px 16px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
+    ::ng-deep .org-menu .mat-mdc-menu-item { min-height: 52px; }
+    .org-mini-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light, #fff1e6); color: var(--brand, #f97316); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
+    .org-mini-info { display: inline-flex; flex-direction: column; vertical-align: middle; }
+    .org-mini-name { font-size: 13px; font-weight: 600; color: var(--text-1); line-height: 1.2; }
+    .org-mini-role { font-size: 11px; color: var(--text-3); }
+    .org-check { color: #16a34a; margin-left: auto; }
+
     /* Nav */
     .sidebar-nav {
       flex: 1;
@@ -459,5 +500,22 @@ export class App {
   exitImpersonation() {
     this.auth.exitImpersonation();
     this.router.navigate(['/admin/clients']);
+  }
+
+  /** Switch the active organization and reload cleanly into its context. */
+  switchOrg(tenantId: number) {
+    if (tenantId === this.auth.currentTenantId()) return;
+    this.auth.switchClient(tenantId);
+    // Full reload so every screen re-fetches data for the new organization.
+    window.location.assign('/dashboard');
+  }
+
+  roleLabel(role: string): string {
+    return role
+      .replace(/^zopa_/, 'ZOPA ')
+      .replace(/^client_/, '')
+      .replace(/_/g, ' ')
+      .replace(/\bl(\d)\b/i, 'L$1')
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
 }

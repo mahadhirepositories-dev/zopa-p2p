@@ -16,7 +16,7 @@ class ProductController extends Controller
     {
         $tenant = app('currentTenant');
         return response()->json(
-            Product::where('tenant_id', $tenant->id)->with('category')->get()
+            Product::where('tenant_id', $tenant->id)->with('category', 'subcategory')->get()
         );
     }
 
@@ -26,15 +26,18 @@ class ProductController extends Controller
         $this->requirePermission('products', 'create');
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'unit' => 'required|string|max:30',
-            'net_rate' => 'required|numeric|min:0',
-            'gst_rate' => 'required|numeric|min:0|max:100',
+            'name'           => 'required|string|max:255',
+            'unit'           => 'required|string|max:30',
+            'net_rate'       => 'required|numeric|min:0',
+            'gst_rate'       => 'required|numeric|min:0|max:100',
+            'description'    => 'nullable|string',
+            'category_id'    => 'nullable|integer|exists:categories,id',
+            'subcategory_id' => 'nullable|integer|exists:categories,id',
         ]);
 
         $tenant = app('currentTenant');
         $product = Product::create([
-            ...$request->only('code', 'name', 'description', 'category_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months'),
+            ...$request->only('code', 'name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months'),
             'tenant_id' => $tenant->id,
         ]);
 
@@ -44,7 +47,7 @@ class ProductController extends Controller
     public function show(Product $product): JsonResponse
     {
         $this->authorizeProduct($product);
-        return response()->json($product->load('category'));
+        return response()->json($product->load('category', 'subcategory'));
     }
 
     public function update(Request $request, Product $product): JsonResponse

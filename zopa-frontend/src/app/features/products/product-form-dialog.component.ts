@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -7,10 +7,11 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { Product, Category } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
+
+interface FlatCat { id: number; name: string; parent_id: number | null; }
 
 @Component({
   selector: 'app-product-form-dialog',
@@ -33,19 +34,45 @@ import { NotificationService } from '../../core/services/notification.service';
             <input matInput formControlName="hsn_code" />
           </mat-form-field>
         </div>
+
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Product Name *</mat-label>
           <input matInput formControlName="name" />
         </mat-form-field>
+
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Category</mat-label>
-          <mat-select formControlName="category_id">
-            <mat-option [value]="null">— None —</mat-option>
-            @for (cat of flatCategories(); track cat.id) {
-              <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
-            }
-          </mat-select>
+          <mat-label>Description</mat-label>
+          <textarea matInput formControlName="description" rows="2"
+                    placeholder="Optional details about this product"></textarea>
         </mat-form-field>
+
+        <!-- Primary + Secondary category -->
+        <div class="row-2">
+          <mat-form-field appearance="outline">
+            <mat-label>Primary Category</mat-label>
+            <mat-select formControlName="category_id">
+              <mat-option [value]="null">— None —</mat-option>
+              @for (c of primaryCategories(); track c.id) {
+                <mat-option [value]="c.id">{{ c.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Secondary Category</mat-label>
+            <mat-select formControlName="subcategory_id">
+              <mat-option [value]="null">— None —</mat-option>
+              @for (c of subcategories(); track c.id) {
+                <mat-option [value]="c.id">{{ c.name }}</mat-option>
+              }
+            </mat-select>
+            @if (form.value.category_id && subcategories().length === 0) {
+              <mat-hint>No sub-categories under this primary</mat-hint>
+            } @else if (!form.value.category_id) {
+              <mat-hint>Pick a primary category first</mat-hint>
+            }
+          </mat-form-field>
+        </div>
+
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Unit *</mat-label>
@@ -97,36 +124,74 @@ export class ProductFormDialogComponent implements OnInit {
   data: Product | null = inject(MAT_DIALOG_DATA);
 
   saving = signal(false);
-  categories = signal<Category[]>([]);
   units = ['Nos', 'Kg', 'Ltr', 'Mtr', 'Box', 'Set', 'Pair', 'Sq.Ft', 'Hours'];
   gstRates = [0, 5, 12, 18, 28];
 
-  flatCategories = signal<{ id: number; name: string }[]>([]);
+  allCategories = signal<FlatCat[]>([]);
+  subcategories = signal<FlatCat[]>([]);
+  primaryCategories = computed(() => this.allCategories().filter(c => !c.parent_id));
 
   form = this.fb.group({
     code:            [this.data?.code ?? ''],
     name:            [this.data?.name ?? '', Validators.required],
+    description:     [this.data?.description ?? ''],
     unit:            [this.data?.unit ?? 'Nos', Validators.required],
     hsn_code:        [this.data?.hsn_code ?? ''],
-    category_id:     [this.data?.category_id ?? null],
+    category_id:     [this.data?.category_id ?? null],     // primary
+    subcategory_id:  [this.data?.subcategory_id ?? null],  // secondary
     net_rate:        [this.data?.net_rate ?? 0, [Validators.required, Validators.min(0)]],
     gst_rate:        [this.data?.gst_rate ?? 18, Validators.required],
     warranty_months: [this.data?.warranty_months ?? 0],
   });
 
   ngOnInit() {
+    // When the primary category changes, refresh the sub-category list and drop
+    // any secondary that no longer belongs to the chosen primary.
+    this.form.controls.category_id.valueChanges.subscribe(pid => {
+      this.refreshSubcategories(pid ?? null);
+      const sub = this.form.controls.subcategory_id.value;
+      if (sub && !this.subcategories().some(s => s.id === sub)) {
+        this.form.controls.subcategory_id.setValue(null);
+      }
+    });
+
     this.http.get<Category[]>(`${environment.apiUrl}/categories`).subscribe(cats => {
-      const flat: { id: number; name: string }[] = [];
-      const prefixes = ['', '↳ ', '↳↳ '];
-      const flatten = (list: Category[], depth = 0) => {
+      const flat: FlatCat[] = [];
+      const walk = (list: Category[], parentId: number | null) => {
         for (const c of list) {
-          flat.push({ id: c.id, name: (prefixes[depth] ?? '↳↳ ') + c.name });
-          if (c.children?.length) flatten(c.children, depth + 1);
+          flat.push({ id: c.id, name: c.name, parent_id: c.parent_id ?? parentId });
+          if (c.children?.length) walk(c.children, c.id);
         }
       };
-      flatten(cats);
-      this.flatCategories.set(flat);
+      walk(cats, null);
+      this.allCategories.set(flat);
+      this.resolveEditSelection();
     });
+  }
+
+  /**
+   * Resolve primary/secondary on edit. Handles legacy products where the single
+   * category_id may have actually pointed at a sub-category: in that case we
+   * auto-tag the primary (parent) and move the value to secondary.
+   */
+  private resolveEditSelection() {
+    let primary = this.form.controls.category_id.value ?? null;
+    let secondary = this.form.controls.subcategory_id.value ?? null;
+
+    if (!secondary && primary) {
+      const cat = this.allCategories().find(c => c.id === primary);
+      if (cat?.parent_id) {           // legacy: category_id was a child
+        secondary = primary;
+        primary = cat.parent_id;      // auto-tag the primary parent
+      }
+    }
+
+    this.form.patchValue({ category_id: primary, subcategory_id: secondary }, { emitEvent: false });
+    this.refreshSubcategories(primary);
+  }
+
+  private refreshSubcategories(primaryId: number | null) {
+    this.subcategories.set(primaryId ? this.allCategories().filter(c => c.parent_id === primaryId) : []);
   }
 
   save() {
