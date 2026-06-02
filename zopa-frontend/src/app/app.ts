@@ -1,11 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive, NavigationEnd } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
 import { animate, query, style, transition, trigger } from '@angular/animations';
 import { AuthService } from './core/auth/auth.service';
+import { OrgSwitcherDialogComponent } from './shared/components/org-switcher-dialog.component';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -13,7 +14,7 @@ import { filter } from 'rxjs/operators';
   standalone: true,
   imports: [
     RouterOutlet, RouterLink, RouterLinkActive,
-    MatIconModule, MatButtonModule, MatTooltipModule, MatMenuModule,
+    MatIconModule, MatButtonModule, MatTooltipModule,
   ],
   animations: [
     trigger('routePage', [
@@ -48,8 +49,8 @@ import { filter } from 'rxjs/operators';
 
           <!-- Tenant context — a switcher when the user belongs to >1 org -->
           @if (auth.clients().length > 1) {
-            <button class="tenant-switcher" [matMenuTriggerFor]="orgMenu"
-                    matTooltip="Switch organization">
+            <button class="tenant-switcher" (click)="openOrgSwitcher()"
+                    matTooltip="Switch organization (Ctrl/⌘ + K)">
               <mat-icon class="tenant-icon">corporate_fare</mat-icon>
               <span class="tenant-col">
                 <span class="tenant-name">{{ auth.currentTenantName() }}</span>
@@ -59,22 +60,6 @@ import { filter } from 'rxjs/operators';
               </span>
               <mat-icon class="tenant-caret">unfold_more</mat-icon>
             </button>
-            <mat-menu #orgMenu="matMenu" class="org-menu" xPosition="before">
-              <div class="org-menu-head">Switch organization</div>
-              @for (c of auth.clients(); track c.tenant_id) {
-                <button mat-menu-item (click)="switchOrg(c.tenant_id)"
-                        [disabled]="c.tenant_id === auth.currentTenantId()">
-                  <span class="org-mini-avatar">{{ c.tenant_name?.[0]?.toUpperCase() }}</span>
-                  <span class="org-mini-info">
-                    <span class="org-mini-name">{{ c.tenant_name }}</span>
-                    <span class="org-mini-role">{{ roleLabel(c.role) }} · {{ c.is_internal ? 'ZOPA Internal' : 'Client' }}</span>
-                  </span>
-                  @if (c.tenant_id === auth.currentTenantId()) {
-                    <mat-icon class="org-check">check_circle</mat-icon>
-                  }
-                </button>
-              }
-            </mat-menu>
           } @else if (auth.currentTenantName()) {
             <div class="tenant-label">
               <mat-icon class="tenant-icon">corporate_fare</mat-icon>
@@ -530,10 +515,40 @@ import { filter } from 'rxjs/operators';
 })
 export class App {
   readonly routeUrl = signal('');
+  private dialog = inject(MatDialog);
+  private orgSwitcherOpen = false;
 
   constructor(public auth: AuthService, private router: Router) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: NavigationEnd) => this.routeUrl.set(e.urlAfterRedirects));
+  }
+
+  /** Open the searchable organization switcher (scales to 100s of orgs). */
+  openOrgSwitcher() {
+    if (this.orgSwitcherOpen || this.auth.clients().length <= 1) return;
+    this.orgSwitcherOpen = true;
+    const ref = this.dialog.open(OrgSwitcherDialogComponent, {
+      width: '460px',
+      maxWidth: '92vw',
+      autoFocus: 'input',
+      position: { top: '12vh' },
+      panelClass: 'org-switcher-panel',
+    });
+    ref.afterClosed().subscribe((tenantId?: number) => {
+      this.orgSwitcherOpen = false;
+      if (tenantId) this.switchOrg(tenantId);
+    });
+  }
+
+  /** Ctrl/⌘ + K opens the org switcher from anywhere. */
+  @HostListener('document:keydown', ['$event'])
+  onGlobalKeydown(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+      if (this.auth.isLoggedIn() && this.auth.clients().length > 1) {
+        e.preventDefault();
+        this.openOrgSwitcher();
+      }
+    }
   }
 
   exitImpersonation() {
