@@ -6,7 +6,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { animate, query, style, transition, trigger } from '@angular/animations';
 import { AuthService } from './core/auth/auth.service';
-import { OrgSwitcherDialogComponent } from './shared/components/org-switcher-dialog.component';
+import { SearchSelectDialogComponent, SearchSelectOption } from './shared/components/search-select-dialog.component';
 import { filter } from 'rxjs/operators';
 
 @Component({
@@ -527,12 +527,24 @@ export class App {
   openOrgSwitcher() {
     if (this.orgSwitcherOpen || this.auth.clients().length <= 1) return;
     this.orgSwitcherOpen = true;
-    const ref = this.dialog.open(OrgSwitcherDialogComponent, {
+    const options: SearchSelectOption[] = this.auth.clients().map(c => ({
+      id: c.tenant_id,
+      name: c.tenant_name,
+      sub: this.roleLabel(c.role),
+      badge: c.is_internal ? 'ZOPA Internal' : 'Client',
+      badgeAccent: c.is_internal ? 'purple' : 'orange',
+    }));
+    const ref = this.dialog.open(SearchSelectDialogComponent, {
       width: '460px',
       maxWidth: '92vw',
       autoFocus: 'input',
       position: { top: '12vh' },
-      panelClass: 'org-switcher-panel',
+      data: {
+        title: 'Switch organization',
+        options,
+        currentId: this.auth.currentTenantId(),
+        searchPlaceholder: 'Search organizations…',
+      },
     });
     ref.afterClosed().subscribe((tenantId?: number) => {
       this.orgSwitcherOpen = false;

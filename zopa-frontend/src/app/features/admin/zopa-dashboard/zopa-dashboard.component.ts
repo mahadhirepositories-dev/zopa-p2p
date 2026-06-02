@@ -6,12 +6,13 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
-import { MatSelectModule } from '@angular/material/select';
-import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { environment } from '../../../../environments/environment';
+import { SearchSelectDialogComponent, SearchSelectOption } from '../../../shared/components/search-select-dialog.component';
 
 interface TenantSummary {
   id: number; name: string; plan: string; is_active: boolean; created_at: string;
@@ -22,9 +23,9 @@ interface TenantSummary {
   selector: 'app-zopa-dashboard',
   standalone: true,
   imports: [
-    DecimalPipe, FormsModule, RouterLink,
-    MatButtonModule, MatIconModule, MatCardModule, MatSelectModule,
-    MatFormFieldModule, MatProgressSpinnerModule, MatTableModule, MatChipsModule,
+    DecimalPipe, RouterLink,
+    MatButtonModule, MatIconModule, MatCardModule,
+    MatProgressSpinnerModule, MatTableModule, MatChipsModule, MatTooltipModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -34,15 +35,15 @@ interface TenantSummary {
           <p>Consolidated procurement intelligence across all organizations</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <mat-form-field appearance="outline" style="min-width:220px;margin:0;">
-            <mat-label>Organization</mat-label>
-            <mat-select [(ngModel)]="selectedTenantId" (ngModelChange)="onTenantChange()">
-              <mat-option [value]="0">All Organizations</mat-option>
-              @for (t of tenants(); track t.id) {
-                <mat-option [value]="t.id">{{ t.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <button class="org-filter-btn" (click)="openOrgPicker()"
+                  matTooltip="Filter by organization — searchable">
+            <mat-icon class="ofb-lead">corporate_fare</mat-icon>
+            <span class="ofb-col">
+              <span class="ofb-cap">Organization</span>
+              <span class="ofb-name">{{ selectedTenantName() }}</span>
+            </span>
+            <mat-icon class="ofb-caret">expand_more</mat-icon>
+          </button>
         </div>
       </div>
 
@@ -379,7 +380,18 @@ interface TenantSummary {
     .page-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:24px; }
     .page-header h2 { margin:0;font-size:20px;font-weight:700; }
     .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    ::ng-deep .page-wrapper .mat-mdc-form-field-infix { padding-top:8px!important;padding-bottom:8px!important; }
+
+    .org-filter-btn {
+      display:flex;align-items:center;gap:10px;min-width:240px;
+      padding:8px 14px;border:1px solid var(--border,#e2e8f0);border-radius:10px;
+      background:#fff;cursor:pointer;text-align:left;transition:border-color .12s,box-shadow .12s;
+    }
+    .org-filter-btn:hover { border-color:var(--brand,#f97316);box-shadow:0 1px 6px rgba(249,115,22,.12); }
+    .ofb-lead { color:var(--brand,#f97316);flex-shrink:0; }
+    .ofb-col { display:flex;flex-direction:column;flex:1;min-width:0; }
+    .ofb-cap { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8; }
+    .ofb-name { font-size:13.5px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+    .ofb-caret { color:#94a3b8;flex-shrink:0; }
 
     .kpi-band { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px; }
     @media (max-width:1200px) { .kpi-band { grid-template-columns:repeat(3,1fr); } }
@@ -464,12 +476,51 @@ interface TenantSummary {
 })
 export class ZopaDashboardComponent implements OnInit {
   private http = inject(HttpClient);
+  private dialog = inject(MatDialog);
 
   loading         = signal(true);
   stats           = signal<any>(null);
   tenants         = signal<TenantSummary[]>([]);
   selectedTenantId = 0;
   tenantCols      = ['name', 'pos', 'prs', 'value', 'pending', 'status', 'actions'];
+
+  /** Label shown on the organization filter button. */
+  selectedTenantName(): string {
+    if (!this.selectedTenantId) return 'All Organizations';
+    return this.tenants().find(t => t.id === this.selectedTenantId)?.name ?? 'All Organizations';
+  }
+
+  /** Open the searchable organization picker (scales to 100s of orgs). */
+  openOrgPicker() {
+    const options: SearchSelectOption[] = [
+      { id: 0, name: 'All Organizations', badge: 'All', badgeAccent: 'gray' },
+      ...this.tenants().map(t => ({
+        id: t.id,
+        name: t.name,
+        sub: t.plan,
+        badge: t.is_active ? 'Active' : 'Inactive',
+        badgeAccent: (t.is_active ? 'green' : 'gray') as SearchSelectOption['badgeAccent'],
+      })),
+    ];
+    const ref = this.dialog.open(SearchSelectDialogComponent, {
+      width: '460px',
+      maxWidth: '92vw',
+      autoFocus: 'input',
+      position: { top: '12vh' },
+      data: {
+        title: 'Select organization',
+        options,
+        currentId: this.selectedTenantId,
+        searchPlaceholder: 'Search organizations…',
+      },
+    });
+    ref.afterClosed().subscribe((id?: number) => {
+      if (id !== undefined && id !== null && id !== this.selectedTenantId) {
+        this.selectedTenantId = id;
+        this.loadStats();
+      }
+    });
+  }
 
   poDonutSegments = computed(() => {
     const po = this.stats()?.po;
