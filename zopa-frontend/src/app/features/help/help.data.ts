@@ -181,8 +181,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     modules: ['purchase_orders'],
     body: `<ol>
         <li>Go to <strong>Purchase Orders → New Purchase Order</strong> (or convert from a PR).</li>
-        <li>Choose the <strong>vendor</strong>, vendor address, <strong>cost center</strong> and validity date.</li>
-        <li>Add line items — the system computes <strong>GST</strong> (IGST vs CGST+SGST) and totals automatically.</li>
+        <li>Choose the <strong>vendor</strong>, vendor address, <strong>cost center</strong>, <strong>Bill-to</strong> and <strong>Ship-to</strong> locations and validity date — a preview shows the exact address that will print on the PO.</li>
+        <li>Add line items — the system computes <strong>GST</strong> (IGST vs CGST+SGST) and totals automatically. (Tip: use <strong>BOQ Template → Upload BOQ</strong> to import line items from Excel.)</li>
         <li>Add payment terms, freight and terms &amp; conditions (an AI helper can suggest terms).</li>
         <li><strong>Submit</strong> — it routes through the PO approval chain (respecting amount limits).</li>
       </ol>
@@ -196,8 +196,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Send the approved PO to the vendor.',
     keywords: ['release', 'pdf', 'download', 'vendor', 'send', 'po'],
     modules: ['purchase_orders'],
-    body: `<p>Once a PO is fully approved it gets a <strong>PO number</strong>. Open the PO and use <strong>Release</strong> to mark it sent to the vendor, and <strong>Download PDF</strong> to get a printable copy.</p>
-      <p>The PDF shows the full line items and the <strong>preparer</strong> and <strong>approver</strong> names on the signature block.</p>`,
+    body: `<p>Once a PO is fully approved it gets a <strong>PO number</strong>. Open the PO and use <strong>Release</strong> — the PO is then <strong>automatically emailed to the vendor</strong> with the PO PDF. Use <strong>Send to Vendor</strong> to (re-)send it, e.g. after adding the vendor's email address.</p>
+      <p><strong>Download PDF</strong> gives a printable copy showing the line items, the <strong>preparer</strong> and <strong>approver</strong> names, and the full <strong>Bill-to / Ship-to</strong> addresses.</p>`,
   },
   {
     id: 'grn',
@@ -309,7 +309,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ['approval', 'config', 'rules', 'levels', 'limit', 'chain', 'l1', 'l2', 'l3'],
     modules: ['cost_centers'],
     adminOnly: true,
-    body: `<p>Inside each <strong>Cost Center</strong>, configure <strong>Approval Configs</strong>: which user(s) approve at L1/L2/L3, and optional <strong>amount limits</strong> (e.g., POs over ₹1,00,000 also require L2). You can set separate chains for <strong>PR</strong>, <strong>PO</strong> and <strong>Invoice</strong>.</p>`,
+    body: `<p>Inside each <strong>Cost Center</strong>, configure <strong>Approval Configs</strong>: which user(s) approve at L1/L2/L3, and optional <strong>amount limits</strong> (e.g., POs over ₹1,00,000 also require L2). You can set separate chains for <strong>PR</strong>, <strong>PO</strong> and <strong>Invoice</strong>.</p>
+      <p>The <strong>highest level you configure is the final approver</strong>. If you set only L1, approving at L1 completes the document; amount limits only <em>add</em> higher levels — a document never gets stuck waiting for a level you didn't set up.</p>`,
   },
   {
     id: 'org-masters',
@@ -319,7 +320,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'The organizational building blocks.',
     keywords: ['department', 'project', 'location', 'org', 'master', 'gst'],
     modules: ['org_masters'],
-    body: `<p><strong>Org Masters</strong> holds your Departments, Projects and Locations. These tag PRs/POs and drive GST calculation (based on location state codes).</p>`,
+    body: `<p><strong>Org Masters</strong> holds your Departments, Projects and Locations. A <strong>Location</strong> records a full address — <strong>Address, City, State, State Code, Pincode, Country</strong> and GSTIN — which flows into the <strong>Bill-to / Ship-to</strong> blocks printed on POs (and a PR's delivery location) and drives GST calculation (via state codes).</p>`,
   },
 
   // ── Dashboards & Reports ──────────────────────────────────────────────────
@@ -356,7 +357,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Consolidated KPIs across all organizations.',
     keywords: ['zopa', 'admin', 'dashboard', 'consolidated', 'all organizations'],
     superAdminOnly: true,
-    body: `<p>The <strong>ZOPA Dashboard</strong> consolidates every organization. Filter to <em>All Organizations</em> or one. It shows the headline band (POs, PRs, GRNs, Invoices, Pending Approvals, PO Value), a PO status donut, value comparisons, PO value by organization, the PR pipeline, invoice &amp; GRN summaries, and an organization overview table.</p>`,
+    body: `<p>The <strong>ZOPA Dashboard</strong> consolidates every organization. Filter to <em>All Organizations</em> or any one using the <strong>searchable organization picker</strong> (type to find an org; ↑/↓/Enter). It shows the headline band (POs, PRs, GRNs, Invoices, Pending Approvals, PO Value), a PO status donut, value comparisons, PO value by organization, the PR pipeline, invoice &amp; GRN summaries, and an organization overview table.</p>`,
   },
 
   // ── Administration ────────────────────────────────────────────────────────
@@ -405,5 +406,63 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ['settings', 'logo', 'branding', 'platform'],
     superAdminOnly: true,
     body: `<p>(<strong>ZOPA Super Admin</strong>) Upload the parent-company logo, used in PDF footers and as a header fallback when a client has no logo of their own.</p>`,
+  },
+  {
+    id: 'email-templates',
+    title: 'Email Templates (preview)',
+    category: 'Administration',
+    icon: 'mail',
+    summary: 'Preview the emails the system sends.',
+    keywords: ['email', 'templates', 'preview', 'notifications', 'mail'],
+    superAdminOnly: true,
+    body: `<p>(<strong>ZOPA Super Admin</strong>) <strong>Email Templates</strong> shows a live preview of every automated email — Password Reset, PO Issued to Vendor, Approval Request, and Status Update — rendered with sample data, so you can see exactly what recipients receive.</p>`,
+  },
+
+  // ── New-feature articles ──────────────────────────────────────────────────
+  {
+    id: 'forgot-password',
+    title: 'Reset a forgotten password',
+    category: 'My Account',
+    icon: 'lock_reset',
+    summary: 'Get back in if you forgot your password.',
+    keywords: ['forgot', 'reset', 'password', 'recover', 'email', 'login', 'locked out'],
+    body: `<p>On the login page click <strong>Forgot password?</strong>, enter your account email, and submit. You'll receive an email with a <strong>Reset Password</strong> link, valid for <strong>60 minutes</strong> and usable once.</p>
+      <p>For security, the confirmation message is the same whether or not the email is registered.</p>`,
+  },
+  {
+    id: 'switch-org',
+    title: 'Switch organization (multi-org users)',
+    category: 'Getting Started',
+    icon: 'corporate_fare',
+    summary: 'Move between organizations you belong to.',
+    keywords: ['switch', 'organization', 'org', 'tenant', 'change', 'context', 'ctrl k', 'cmd k'],
+    body: `<p>If you belong to more than one organization, use the <strong>organization switcher</strong> at the top of the sidebar — or press <strong>Ctrl / ⌘ + K</strong>. It's a searchable picker: type to filter, then ↑/↓ and Enter to switch (built for hundreds of organizations).</p>
+      <p>The <strong>context bar</strong> under the top bar always shows which organization you're working in, and whether it's a <strong>Client</strong> or <strong>ZOPA Internal</strong> org — so anything you add belongs to that organization.</p>`,
+  },
+  {
+    id: 'bulk-upload',
+    title: 'Bulk-upload products & vendors (Excel)',
+    category: 'Master Data',
+    icon: 'upload_file',
+    summary: 'Import many products or vendors at once.',
+    keywords: ['bulk', 'upload', 'import', 'excel', 'template', 'products', 'vendors', 'csv', 'xlsx'],
+    modules: ['products', 'vendors'],
+    adminOnly: true,
+    body: `<p>On the <strong>Products</strong> and <strong>Vendors</strong> lists use <strong>Template</strong> to download a ready-to-fill Excel file, then <strong>Bulk Upload</strong> to import it.</p>
+      <ul>
+        <li>The template includes a <strong>Categories (reference)</strong> sheet — enter category names exactly as listed. (Add categories first; they're matched by name.)</li>
+        <li>The Vendor template also has an <strong>Allowed Values</strong> sheet for vendor type, entity type and GST status.</li>
+        <li>Valid rows are created; any skipped rows are listed with the reason so you can fix and re-upload.</li>
+      </ul>`,
+  },
+  {
+    id: 'boq-upload',
+    title: 'Bulk-add line items with BOQ upload',
+    category: 'Procurement',
+    icon: 'request_quote',
+    summary: 'Import PO/PR line items from Excel.',
+    keywords: ['boq', 'bill of quantities', 'line items', 'upload', 'excel', 'import', 'po', 'pr'],
+    modules: ['purchase_orders', 'purchase_requisitions'],
+    body: `<p>On a new <strong>PO</strong> or <strong>PR</strong>, use <strong>BOQ Template</strong> to download the line-item Excel template, fill it in, then <strong>Upload BOQ</strong>. The rows populate the line-items grid so you can <strong>review and edit before submitting</strong>.</p>`,
   },
 ];
