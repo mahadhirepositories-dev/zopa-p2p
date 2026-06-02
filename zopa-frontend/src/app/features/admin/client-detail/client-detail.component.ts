@@ -481,7 +481,10 @@ import { gstinValidator } from '../../../core/validators';
       width:22px!important; height:22px!important;
       background:white!important; border:1px solid var(--border)!important;
       border-radius:50%!important; box-shadow:0 1px 4px rgba(0,0,0,.15);
-      display:flex!important; align-items:center; justify-content:center;
+      display:inline-flex!important; align-items:center!important; justify-content:center!important;
+    }
+    .logo-upload-btn .mat-icon {
+      font-size:13px!important; width:13px!important; height:13px!important; line-height:13px!important;
     }
     h2 { margin:0; font-size:20px; font-weight:700; }
     .client-meta { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }

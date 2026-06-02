@@ -43,7 +43,7 @@ import { filter } from 'rxjs/operators';
             </svg>
             <div>
               <div class="brand-name">ZOPA</div>
-              <div class="brand-sub">Procurement Suite</div>
+              <div class="brand-sub">P2P Suite</div>
             </div>
           </div>
 

@@ -271,6 +271,25 @@ mat-chip, .mat-mdc-chip {
 .mat-mdc-icon-button {
   border-radius: 10px !important;
   transition: background .15s ease !important;
+
+  /* Keep the glyph dead-centre in EVERY icon button, including custom-resized
+     round ones (e.g. the logo-upload camera). MDC's default 8px padding + 24px
+     icon line-height pushes the icon off-centre once a button is smaller than
+     40px; flex-centring with zero padding fixes it at any size (standard 40px
+     buttons render identically). */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+
+  .mat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    margin: 0;
+  }
 }
 
 /* Icon + text vertical alignment for ALL text buttons.

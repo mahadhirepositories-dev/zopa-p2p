@@ -44,7 +44,7 @@ import { AuthService } from '../../core/auth/auth.service';
           </ul>
         </div>
 
-        <div class="brand-bottom">&copy; {{ year }} ZOPA Procurement Suite</div>
+        <div class="brand-bottom">&copy; {{ year }} ZOPA P2P Suite</div>
 
         <!-- decorative glows -->
         <div class="glow glow-1"></div>
