@@ -12,9 +12,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { environment } from '../../../environments/environment';
 import { Budget } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
+import { BulkImportService } from '../../core/services/bulk-import.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
@@ -24,7 +26,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     ReactiveFormsModule, DecimalPipe,
     MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule,
-    MatDatepickerModule, MatNativeDateModule,
+    MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -139,7 +141,17 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
           <mat-card class="form-card">
             <mat-card-header>
               <mat-card-title>Line Items</mat-card-title>
-              <button type="button" mat-stroked-button (click)="addItem()" style="margin-left:auto;">
+              <button type="button" mat-stroked-button (click)="downloadBoqTemplate()"
+                      matTooltip="Download the BOQ (line items) Excel template" style="margin-left:auto;">
+                <mat-icon>download</mat-icon> BOQ Template
+              </button>
+              <button type="button" mat-stroked-button [disabled]="boqUploading()" (click)="boqInput.click()"
+                      matTooltip="Bulk upload line items from a filled-in BOQ template" style="margin-left:8px;">
+                @if (boqUploading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>upload_file</mat-icon> }
+                Upload BOQ
+              </button>
+              <input #boqInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="uploadBoq($event)" />
+              <button type="button" mat-stroked-button (click)="addItem()" style="margin-left:8px;">
                 <mat-icon>add</mat-icon> Add Item
               </button>
             </mat-card-header>
@@ -247,6 +259,8 @@ export class PrFormComponent implements OnInit {
   private router = inject(Router);
   private fb = inject(FormBuilder);
   private notify = inject(NotificationService);
+  private bulk = inject(BulkImportService);
+  boqUploading = signal(false);
 
   costCenters = signal<any[]>([]);
   projects    = signal<any[]>([]);
@@ -313,6 +327,53 @@ export class PrFormComponent implements OnInit {
 
   addItem() { this.items.push(this.newItem()); }
   removeItem(i: number) { if (this.items.length > 1) this.items.removeAt(i); }
+
+  downloadBoqTemplate() {
+    this.bulk.downloadTemplate('boq/template?type=pr', 'pr-boq-template.xlsx').subscribe({
+      next: blob => this.bulk.saveBlob(blob, 'pr-boq-template.xlsx'),
+      error: () => this.notify.error('Could not download the BOQ template.'),
+    });
+  }
+
+  uploadBoq(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.boqUploading.set(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('type', 'pr');
+    this.http.post<{ items: any[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
+      next: res => {
+        this.boqUploading.set(false);
+        // Drop the initial blank row if it's still empty, then append parsed rows.
+        if (this.items.length === 1 && !this.items.at(0).value.description) {
+          this.items.removeAt(0);
+        }
+        (res.items ?? []).forEach(it => {
+          const g = this.newItem();
+          g.patchValue({
+            description: it.description,
+            qty: it.qty,
+            unit: it.unit ?? 'nos',
+            estimated_price: it.estimated_price ?? 0,
+            remarks: it.remarks ?? '',
+          });
+          this.items.push(g);
+        });
+        if (this.items.length === 0) this.items.push(this.newItem());
+        const added = res.items?.length ?? 0;
+        this.notify.success(`${added} line item(s) added from BOQ.`
+          + (res.errors?.length ? ` ${res.errors.length} row(s) skipped.` : ''));
+        if (res.errors?.length) this.notify.error(res.errors.slice(0, 5).join(' | '));
+      },
+      error: err => {
+        this.boqUploading.set(false);
+        this.notify.error(err.error?.message ?? 'Could not read the BOQ file.');
+      },
+    });
+    input.value = '';
+  }
 
   save(submit: boolean) {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }

@@ -15,6 +15,7 @@ import { MatCardModule } from '@angular/material/card';
 import { environment } from '../../../environments/environment';
 import { Vendor } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
+import { BulkImportService } from '../../core/services/bulk-import.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
@@ -40,12 +41,32 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search vendors…" />
           @if (auth.isAdmin()) {
+            <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Download the Excel import template">
+              <mat-icon>download</mat-icon> Template
+            </button>
+            <button mat-stroked-button [disabled]="uploading()" (click)="fileInput.click()"
+                    matTooltip="Bulk upload vendors from a filled-in template">
+              @if (uploading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>upload_file</mat-icon> }
+              Bulk Upload
+            </button>
+            <input #fileInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" />
             <button mat-raised-button color="primary" class="cta-btn" (click)="router.navigate(['/vendors/create'])">
               <mat-icon>add</mat-icon> New Vendor
             </button>
           }
         </div>
       </div>
+
+      @if (importErrors().length) {
+        <div class="import-errors">
+          <div class="import-errors-head">
+            <mat-icon>warning_amber</mat-icon>
+            <span>{{ importErrors().length }} row(s) were skipped during import</span>
+            <button mat-icon-button (click)="importErrors.set([])"><mat-icon>close</mat-icon></button>
+          </div>
+          <ul>@for (e of importErrors(); track e) { <li>{{ e }}</li> }</ul>
+        </div>
+      }
 
       <!-- Filter chips -->
       <div class="filter-row">
@@ -224,11 +245,19 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
     .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
     .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
+
+    .import-errors { background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:12px 16px; margin-bottom:16px; }
+    .import-errors-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#9a3412; font-size:13px; }
+    .import-errors-head mat-icon { color:#ea580c; }
+    .import-errors-head button { margin-left:auto; }
+    .import-errors ul { margin:8px 0 0; padding-left:34px; }
+    .import-errors li { font-size:12.5px; color:#7c2d12; margin:2px 0; }
   `],
 })
 export class VendorListComponent implements OnInit {
   private http = inject(HttpClient);
   private notify = inject(NotificationService);
+  private bulk = inject(BulkImportService);
   readonly router = inject(Router);
   readonly auth = inject(AuthService);
 
@@ -237,6 +266,8 @@ export class VendorListComponent implements OnInit {
   loading = signal(true);
   search = signal('');
   statusFilter = signal('');
+  uploading = signal(false);
+  importErrors = signal<string[]>([]);
 
   filtered = computed(() => {
     const q = this.search().toLowerCase();
@@ -261,6 +292,34 @@ export class VendorListComponent implements OnInit {
   }
 
   goDetail(id: number) { this.router.navigate(['/vendors', id]); }
+
+  downloadTemplate() {
+    this.bulk.downloadTemplate('vendors/template', 'vendor-import-template.xlsx').subscribe({
+      next: blob => this.bulk.saveBlob(blob, 'vendor-import-template.xlsx'),
+      error: () => this.notify.error('Could not download the template.'),
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.importErrors.set([]);
+    this.bulk.import('vendors/import', file).subscribe({
+      next: res => {
+        this.uploading.set(false);
+        this.notify.success(res.message);
+        this.importErrors.set(res.errors ?? []);
+        this.load();
+      },
+      error: err => {
+        this.uploading.set(false);
+        this.notify.error(err.error?.message ?? 'Import failed.');
+      },
+    });
+    input.value = '';
+  }
 
   toggleStatus(vendor: Vendor) {
     this.http.put(`${environment.apiUrl}/vendors/${vendor.id}`, { is_active: !vendor.is_active }).subscribe({

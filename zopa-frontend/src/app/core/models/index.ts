@@ -11,6 +11,7 @@ export interface TenantContext {
   tenant_id: number;
   tenant_name: string;
   role: string;
+  is_internal?: boolean;
 }
 
 export interface Tenant {

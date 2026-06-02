@@ -15,6 +15,7 @@ import { MatCardModule } from '@angular/material/card';
 import { environment } from '../../../environments/environment';
 import { Product } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
+import { BulkImportService } from '../../core/services/bulk-import.service';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
@@ -41,12 +42,32 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search products…" />
           @if (auth.isAdmin()) {
+            <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Download the Excel import template">
+              <mat-icon>download</mat-icon> Template
+            </button>
+            <button mat-stroked-button [disabled]="uploading()" (click)="fileInput.click()"
+                    matTooltip="Bulk upload products from a filled-in template">
+              @if (uploading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>upload_file</mat-icon> }
+              Bulk Upload
+            </button>
+            <input #fileInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" />
             <button mat-raised-button color="primary" class="cta-btn" (click)="openForm()">
               <mat-icon>add</mat-icon> New Product
             </button>
           }
         </div>
       </div>
+
+      @if (importErrors().length) {
+        <div class="import-errors">
+          <div class="import-errors-head">
+            <mat-icon>warning_amber</mat-icon>
+            <span>{{ importErrors().length }} row(s) were skipped during import</span>
+            <button mat-icon-button (click)="importErrors.set([])"><mat-icon>close</mat-icon></button>
+          </div>
+          <ul>@for (e of importErrors(); track e) { <li>{{ e }}</li> }</ul>
+        </div>
+      }
 
       <!-- Status filter chips -->
       <div class="filter-row">
@@ -200,12 +221,20 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
     .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
     .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
+
+    .import-errors { background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:12px 16px; margin-bottom:16px; }
+    .import-errors-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#9a3412; font-size:13px; }
+    .import-errors-head mat-icon { color:#ea580c; }
+    .import-errors-head button { margin-left:auto; }
+    .import-errors ul { margin:8px 0 0; padding-left:34px; }
+    .import-errors li { font-size:12.5px; color:#7c2d12; margin:2px 0; }
   `],
 })
 export class ProductListComponent implements OnInit {
   private http = inject(HttpClient);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
+  private bulk = inject(BulkImportService);
   readonly auth = inject(AuthService);
 
   columns = ['name', 'unit', 'hsn_code', 'net_rate', 'gst_rate', 'status', 'actions'];
@@ -213,6 +242,8 @@ export class ProductListComponent implements OnInit {
   loading = signal(true);
   search = signal('');
   statusFilter = signal('');
+  uploading = signal(false);
+  importErrors = signal<string[]>([]);
 
   filtered = computed(() => {
     const q = this.search().toLowerCase();
@@ -237,5 +268,33 @@ export class ProductListComponent implements OnInit {
   openForm(product?: Product) {
     const ref = this.dialog.open(ProductFormDialogComponent, { width: '540px', data: product ?? null });
     ref.afterClosed().subscribe(saved => { if (saved) this.load(); });
+  }
+
+  downloadTemplate() {
+    this.bulk.downloadTemplate('products/template', 'product-import-template.xlsx').subscribe({
+      next: blob => this.bulk.saveBlob(blob, 'product-import-template.xlsx'),
+      error: () => this.notify.error('Could not download the template.'),
+    });
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.uploading.set(true);
+    this.importErrors.set([]);
+    this.bulk.import('products/import', file).subscribe({
+      next: res => {
+        this.uploading.set(false);
+        this.notify.success(res.message);
+        this.importErrors.set(res.errors ?? []);
+        this.load();
+      },
+      error: err => {
+        this.uploading.set(false);
+        this.notify.error(err.error?.message ?? 'Import failed.');
+      },
+    });
+    input.value = '';
   }
 }

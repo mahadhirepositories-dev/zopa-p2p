@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\ProductTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Imports\ProductsImport;
 use App\Models\Product;
 use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProductController extends Controller
 {
@@ -66,6 +70,35 @@ class ProductController extends Controller
         $this->authorizeProduct($product);
         $product->update(['is_active' => false]);
         return response()->json(null, 204);
+    }
+
+    /** Download the Excel bulk-import template (with a Categories reference sheet). */
+    public function template(): BinaryFileResponse
+    {
+        $this->requirePermission('products', 'view');
+        return Excel::download(
+            new ProductTemplateExport(app('currentTenant')->id),
+            'product-import-template.xlsx'
+        );
+    }
+
+    /** Bulk-import products from a filled-in template. */
+    public function import(Request $request): JsonResponse
+    {
+        $this->requireAdminRole();
+        $this->requirePermission('products', 'create');
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv|max:5120']);
+
+        $import = new ProductsImport(app('currentTenant')->id);
+        Excel::import($import, $request->file('file'));
+
+        return response()->json([
+            'created' => $import->created,
+            'skipped' => count($import->errors),
+            'errors'  => $import->errors,
+            'message' => "Imported {$import->created} product(s)."
+                . (count($import->errors) ? ' ' . count($import->errors) . ' row(s) skipped — see details.' : ''),
+        ]);
     }
 
     private function authorizeProduct(Product $product): void

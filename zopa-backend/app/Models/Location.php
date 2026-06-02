@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Location extends Model
 {
     protected $fillable = [
-        'tenant_id', 'name', 'address', 'gstin', 'state', 'state_code', 'is_active',
+        'tenant_id', 'name', 'address', 'city', 'gstin',
+        'state', 'state_code', 'pincode', 'country', 'is_active',
     ];
 
     protected $casts = ['is_active' => 'boolean'];

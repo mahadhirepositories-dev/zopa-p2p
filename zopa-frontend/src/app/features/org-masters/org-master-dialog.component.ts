@@ -39,14 +39,28 @@ export interface OrgMasterDialogData {
           </mat-form-field>
           <div class="row-2">
             <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Pincode</mat-label>
+              <input matInput formControlName="pincode" inputmode="numeric" maxlength="6" />
+            </mat-form-field>
+          </div>
+          <div class="row-2">
+            <mat-form-field appearance="outline">
               <mat-label>State</mat-label>
               <input matInput formControlName="state" />
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>State Code</mat-label>
-              <input matInput formControlName="state_code" />
+              <input matInput formControlName="state_code" maxlength="2" />
             </mat-form-field>
           </div>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Country</mat-label>
+            <input matInput formControlName="country" />
+          </mat-form-field>
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>GSTIN</mat-label>
             <input matInput formControlName="gstin" style="text-transform:uppercase" />
@@ -90,8 +104,11 @@ export class OrgMasterDialogComponent implements OnInit {
 
     if (this.data.type === 'location') {
       this.form.addControl('address', this.fb.control(this.data.entity?.address || ''));
+      this.form.addControl('city', this.fb.control(this.data.entity?.city || ''));
+      this.form.addControl('pincode', this.fb.control(this.data.entity?.pincode || ''));
       this.form.addControl('state', this.fb.control(this.data.entity?.state || ''));
       this.form.addControl('state_code', this.fb.control(this.data.entity?.state_code || ''));
+      this.form.addControl('country', this.fb.control(this.data.entity?.country || 'India'));
       this.form.addControl('gstin', this.fb.control(this.data.entity?.gstin || '', gstinValidator()));
     }
   }

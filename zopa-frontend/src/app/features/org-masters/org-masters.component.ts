@@ -225,8 +225,8 @@ import { AuthService } from '../../core/auth/auth.service';
                           <div class="entity-icon loc"><mat-icon>location_on</mat-icon></div>
                           <div>
                             <div class="name-primary">{{ row.name }}</div>
-                            @if (row.state) {
-                              <div class="name-sub">{{ row.state }}{{ row.state_code ? ' (' + row.state_code + ')' : '' }}</div>
+                            @if (row.city || row.state) {
+                              <div class="name-sub">{{ row.city ? row.city + ', ' : '' }}{{ row.state }}{{ row.state_code ? ' (' + row.state_code + ')' : '' }}{{ row.pincode ? ' - ' + row.pincode : '' }}</div>
                             }
                           </div>
                         </div>

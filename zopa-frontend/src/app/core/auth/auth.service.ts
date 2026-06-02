@@ -34,6 +34,17 @@ export class AuthService {
     return this._clients().find(c => c.tenant_id === tid)?.tenant_name ?? null;
   });
 
+  /** True when the active organization is the ZOPA internal tenant (vs a client). */
+  readonly currentTenantIsInternal = computed(() => {
+    const tid = this._currentTenantId();
+    return this._clients().find(c => c.tenant_id === tid)?.is_internal ?? false;
+  });
+
+  /** Human label for the active org type — drives the context badge/banner. */
+  readonly currentOrgType = computed(() =>
+    this.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client',
+  );
+
   readonly isLoggedIn = computed(() => !!this._user());
 
   /** Roles that may create/submit transactional documents (PR, PO, GRN, Invoice) */
@@ -294,12 +305,12 @@ export class AuthService {
     if (!this.isSuperAdmin()) return Promise.resolve();
 
     return new Promise<void>((resolve) => {
-      this.http.get<Array<{ id: number; name: string }>>(`${environment.apiUrl}/admin/clients`).subscribe({
+      this.http.get<Array<{ id: number; name: string; is_internal?: boolean }>>(`${environment.apiUrl}/admin/clients`).subscribe({
         next: tenants => {
           const merged = [...this._clients()];
           for (const t of tenants) {
             if (!merged.some(c => c.tenant_id === t.id)) {
-              merged.push({ tenant_id: t.id, tenant_name: t.name, role: 'zopa_super_admin' });
+              merged.push({ tenant_id: t.id, tenant_name: t.name, role: 'zopa_super_admin', is_internal: !!t.is_internal });
             }
           }
           this._clients.set(merged);

@@ -42,6 +42,7 @@ class AuthController extends Controller
                 'tenant_id' => $r->tenant_id,
                 'tenant_name' => $r->tenant->name,
                 'role' => $r->role,
+                'is_internal' => (bool) $r->tenant->is_internal,
             ]);
 
         return response()->json([
@@ -69,6 +70,7 @@ class AuthController extends Controller
                 'tenant_id' => $r->tenant_id,
                 'tenant_name' => $r->tenant->name,
                 'role' => $r->role,
+                'is_internal' => (bool) $r->tenant->is_internal,
             ]);
 
         return response()->json([

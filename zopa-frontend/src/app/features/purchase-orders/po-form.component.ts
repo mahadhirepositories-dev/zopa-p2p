@@ -19,6 +19,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { environment } from '../../../environments/environment';
 import { Vendor, VendorAddress, Product, CostCenter, Location, Budget, PaymentTerm, Category } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
+import { BulkImportService } from '../../core/services/bulk-import.service';
 
 @Component({
   selector: 'app-po-form',
@@ -239,6 +240,16 @@ import { NotificationService } from '../../core/services/notification.service';
         <mat-card-header>
           <mat-card-title>Line Items</mat-card-title>
           <div style="flex:1"></div>
+          <button mat-stroked-button type="button" (click)="downloadBoqTemplate()"
+                  matTooltip="Download the BOQ (line items) Excel template" style="margin-right:8px;">
+            <mat-icon>download</mat-icon> BOQ Template
+          </button>
+          <button mat-stroked-button type="button" [disabled]="boqUploading()" (click)="boqInput.click()"
+                  matTooltip="Bulk upload line items from a filled-in BOQ template" style="margin-right:8px;">
+            @if (boqUploading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>upload_file</mat-icon> }
+            Upload BOQ
+          </button>
+          <input #boqInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="uploadBoq($event)" />
           <button mat-raised-button color="primary" (click)="addItem()">
             <mat-icon>add</mat-icon> Add Item
           </button>
@@ -608,6 +619,8 @@ export class PoFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private notify = inject(NotificationService);
+  private bulk = inject(BulkImportService);
+  boqUploading = signal(false);
 
   // Master data
   vendors = signal<Vendor[]>([]);
@@ -852,6 +865,41 @@ export class PoFormComponent implements OnInit {
   }
 
   removeItem(i: number) { this.items.removeAt(i); this.recalc(); }
+
+  downloadBoqTemplate() {
+    this.bulk.downloadTemplate('boq/template?type=po', 'po-boq-template.xlsx').subscribe({
+      next: blob => this.bulk.saveBlob(blob, 'po-boq-template.xlsx'),
+      error: () => this.notify.error('Could not download the BOQ template.'),
+    });
+  }
+
+  uploadBoq(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.boqUploading.set(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('type', 'po');
+    this.http.post<{ items: any[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
+      next: res => {
+        this.boqUploading.set(false);
+        (res.items ?? []).forEach(it => this.items.push(this.buildItem(it)));
+        this.recalc();
+        const added = res.items?.length ?? 0;
+        this.notify.success(`${added} line item(s) added from BOQ.`
+          + (res.errors?.length ? ` ${res.errors.length} row(s) skipped.` : ''));
+        if (res.errors?.length) {
+          this.notify.error(res.errors.slice(0, 5).join(' | '));
+        }
+      },
+      error: err => {
+        this.boqUploading.set(false);
+        this.notify.error(err.error?.message ?? 'Could not read the BOQ file.');
+      },
+    });
+    input.value = '';
+  }
 
   onProductSelect(i: number) {
     const productId = (this.items.at(i).value as any).product_id;

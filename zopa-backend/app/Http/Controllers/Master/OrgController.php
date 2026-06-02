@@ -114,13 +114,18 @@ class OrgController extends Controller
         $this->requirePermission('org_masters', 'create');
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'state' => 'nullable|string|max:100',
+            'name'       => 'required|string|max:255',
+            'address'    => 'nullable|string|max:500',
+            'city'       => 'nullable|string|max:100',
+            'state'      => 'nullable|string|max:100',
             'state_code' => 'nullable|string|max:2',
+            'pincode'    => 'nullable|string|max:12',
+            'country'    => 'nullable|string|max:100',
         ]);
         $loc = Location::create([
             'tenant_id' => app('currentTenant')->id,
-            ...$request->only('name', 'address', 'state', 'state_code', 'gstin'),
+            ...$request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin'),
+            'country'   => $request->input('country') ?: 'India',
             'is_active' => true,
         ]);
         return response()->json($loc, 201);
@@ -131,7 +136,7 @@ class OrgController extends Controller
         $this->requireAdminRole();
         $this->requirePermission('org_masters', 'edit');
         abort_if($location->tenant_id !== app('currentTenant')->id, 403);
-        $location->update($request->only('name', 'address', 'state', 'state_code', 'gstin', 'is_active'));
+        $location->update($request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'is_active'));
         return response()->json($location);
     }
 

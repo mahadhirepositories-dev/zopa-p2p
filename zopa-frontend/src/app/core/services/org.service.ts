@@ -9,8 +9,11 @@ export interface OrgEntity {
   is_active: boolean;
   // For Location:
   address?: string;
+  city?: string;
   state?: string;
   state_code?: string;
+  pincode?: string;
+  country?: string;
   gstin?: string;
 }
 

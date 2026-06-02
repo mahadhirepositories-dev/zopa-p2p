@@ -4,6 +4,7 @@ use App\Http\Controllers\ApprovalConfigController;
 use App\Http\Controllers\PincodeController;
 use App\Http\Controllers\PublicApprovalController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\BoqController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\DashboardController;
@@ -131,6 +132,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('users/{userId}', [UserController::class, 'destroy']);
 
         // Vendors
+        // Bulk upload routes MUST come before apiResource so /template & /import
+        // aren't captured by the {vendor} wildcard.
+        Route::get('vendors/template', [VendorController::class, 'template']);
+        Route::post('vendors/import', [VendorController::class, 'import']);
         Route::apiResource('vendors', VendorController::class);
         Route::get('vendors/{vendor}/addresses', [VendorController::class, 'addresses']);
         Route::post('vendors/{vendor}/addresses', [VendorController::class, 'storeAddress']);
@@ -141,6 +146,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Categories & Products
         Route::apiResource('categories', CategoryController::class);
+        // Bulk upload routes before apiResource so /template & /import aren't
+        // captured by the {product} wildcard.
+        Route::get('products/template', [ProductController::class, 'template']);
+        Route::post('products/import', [ProductController::class, 'import']);
         Route::apiResource('products', ProductController::class);
 
         // Cost Centers & Budget
@@ -157,6 +166,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // AI
         Route::post('ai/suggest-terms', [AiController::class, 'suggestTerms']);
+
+        // BOQ (line-item) bulk upload for PO / PR creation
+        Route::get('boq/template', [BoqController::class, 'template']);
+        Route::post('boq/parse', [BoqController::class, 'parse']);
 
         // Purchase Orders
         Route::apiResource('purchase-orders', PurchaseOrderController::class);

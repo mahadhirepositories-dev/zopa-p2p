@@ -51,7 +51,12 @@ import { filter } from 'rxjs/operators';
             <button class="tenant-switcher" [matMenuTriggerFor]="orgMenu"
                     matTooltip="Switch organization">
               <mat-icon class="tenant-icon">corporate_fare</mat-icon>
-              <span class="tenant-name">{{ auth.currentTenantName() }}</span>
+              <span class="tenant-col">
+                <span class="tenant-name">{{ auth.currentTenantName() }}</span>
+                <span class="tenant-type" [class.tenant-type--internal]="auth.currentTenantIsInternal()">
+                  {{ auth.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client' }}
+                </span>
+              </span>
               <mat-icon class="tenant-caret">unfold_more</mat-icon>
             </button>
             <mat-menu #orgMenu="matMenu" class="org-menu" xPosition="before">
@@ -62,7 +67,7 @@ import { filter } from 'rxjs/operators';
                   <span class="org-mini-avatar">{{ c.tenant_name?.[0]?.toUpperCase() }}</span>
                   <span class="org-mini-info">
                     <span class="org-mini-name">{{ c.tenant_name }}</span>
-                    <span class="org-mini-role">{{ roleLabel(c.role) }}</span>
+                    <span class="org-mini-role">{{ roleLabel(c.role) }} · {{ c.is_internal ? 'ZOPA Internal' : 'Client' }}</span>
                   </span>
                   @if (c.tenant_id === auth.currentTenantId()) {
                     <mat-icon class="org-check">check_circle</mat-icon>
@@ -238,6 +243,20 @@ import { filter } from 'rxjs/operators';
               <a class="topbar-avatar" routerLink="/profile" matTooltip="My Profile">{{ auth.user()?.name?.[0]?.toUpperCase() }}</a>
             </div>
           </header>
+
+          <!-- Active-organization context bar (multi-org / super admin) so it's
+               always clear WHICH org the data you add/edit belongs to. -->
+          @if (auth.clients().length > 1) {
+            <div class="org-context-bar" [class.org-context-bar--internal]="auth.currentTenantIsInternal()">
+              <mat-icon>corporate_fare</mat-icon>
+              <span class="ctx-text">Working in <strong>{{ auth.currentTenantName() }}</strong></span>
+              <span class="ctx-chip" [class.ctx-chip--internal]="auth.currentTenantIsInternal()">
+                {{ auth.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client Organization' }}
+              </span>
+              <span class="ctx-note">Anything you add here belongs to this organization.</span>
+            </div>
+          }
+
           <main class="page-content" [@routePage]="routeUrl()">
             <router-outlet />
           </main>
@@ -312,8 +331,25 @@ import { filter } from 'rxjs/operators';
       background: #fafafa; cursor: pointer; text-align: left; transition: background .12s;
     }
     .tenant-switcher:hover { background: var(--brand-light, #fff1e6); }
-    .tenant-switcher .tenant-name { flex: 1; font-size: 12px; color: var(--text-1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tenant-switcher .tenant-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .tenant-switcher .tenant-name { font-size: 12px; color: var(--text-1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tenant-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #b45309; }
+    .tenant-type--internal { color: #6d28d9; }
     .tenant-caret { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); flex-shrink: 0; }
+
+    /* Active-org context bar */
+    .org-context-bar {
+      display: flex; align-items: center; gap: 10px; padding: 8px 22px;
+      background: #fff7ed; border-bottom: 1px solid #fed7aa; color: #9a3412; font-size: 13px;
+    }
+    .org-context-bar--internal { background: #f5f3ff; border-bottom-color: #ddd6fe; color: #5b21b6; }
+    .org-context-bar mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+    .org-context-bar .ctx-text strong { font-weight: 700; }
+    .ctx-chip { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      background: #fdba74; color: #7c2d12; padding: 2px 9px; border-radius: 999px; }
+    .ctx-chip--internal { background: #c4b5fd; color: #4c1d95; }
+    .ctx-note { color: inherit; opacity: .72; font-size: 12px; margin-left: auto; }
+    @media (max-width: 760px) { .org-context-bar .ctx-note { display: none; } }
     .org-menu-head { padding: 8px 16px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
     ::ng-deep .org-menu .mat-mdc-menu-item { min-height: 52px; }
     .org-mini-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light, #fff1e6); color: var(--brand, #f97316); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }

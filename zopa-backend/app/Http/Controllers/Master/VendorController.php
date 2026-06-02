@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Master;
 
+use App\Exports\VendorTemplateExport;
 use App\Http\Controllers\Controller;
+use App\Imports\VendorsImport;
 use App\Models\Vendor;
 use App\Models\VendorAddress;
 use App\Models\VendorCategory;
@@ -11,6 +13,8 @@ use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VendorController extends Controller
 {
@@ -253,6 +257,35 @@ class VendorController extends Controller
                 ]);
             }
         }
+    }
+
+    /** Download the Excel bulk-import template (categories + allowed values sheets). */
+    public function template(): BinaryFileResponse
+    {
+        $this->requirePermission('vendors', 'view');
+        return Excel::download(
+            new VendorTemplateExport(app('currentTenant')->id),
+            'vendor-import-template.xlsx'
+        );
+    }
+
+    /** Bulk-import vendors from a filled-in template. */
+    public function import(Request $request): JsonResponse
+    {
+        $this->requireAdminRole();
+        $this->requirePermission('vendors', 'create');
+        $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv|max:5120']);
+
+        $import = new VendorsImport(app('currentTenant')->id);
+        Excel::import($import, $request->file('file'));
+
+        return response()->json([
+            'created' => $import->created,
+            'skipped' => count($import->errors),
+            'errors'  => $import->errors,
+            'message' => "Imported {$import->created} vendor(s)."
+                . (count($import->errors) ? ' ' . count($import->errors) . ' row(s) skipped — see details.' : ''),
+        ]);
     }
 
     private function authorizeVendor(Vendor $vendor): void
