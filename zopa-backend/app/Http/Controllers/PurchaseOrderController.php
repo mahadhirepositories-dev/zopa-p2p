@@ -398,7 +398,10 @@ class PurchaseOrderController extends Controller
      */
     private function emailPoToVendor(PurchaseOrder $po): bool
     {
-        $po->loadMissing(['items.product', 'vendor', 'vendorAddress', 'costCenter', 'tenant']);
+        $po->loadMissing([
+            'items.product', 'vendor', 'vendorAddress', 'costCenter', 'tenant',
+            'billToLocation', 'shipToLocation',
+        ]);
 
         $email = optional($po->vendor)->email;
         if (!$email) {

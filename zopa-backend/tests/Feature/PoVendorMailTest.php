@@ -98,6 +98,42 @@ class PoVendorMailTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_vendor_email_is_vendor_facing(): void
+    {
+        $bill = \App\Models\Location::create([
+            'tenant_id' => $this->acme->id, 'name' => 'Acme HO', 'address' => '12 MG Road',
+            'city' => 'Bengaluru', 'state' => 'Karnataka', 'state_code' => '29',
+            'pincode' => '560001', 'country' => 'India', 'is_active' => true,
+        ]);
+        $ship = \App\Models\Location::create([
+            'tenant_id' => $this->acme->id, 'name' => 'Acme Warehouse', 'address' => 'Plot 7',
+            'city' => 'Bengaluru', 'state' => 'Karnataka', 'pincode' => '560099',
+            'country' => 'India', 'is_active' => true,
+        ]);
+
+        $po = $this->makeApprovedPo('vendor@example.com');
+        $po->update(['bill_to_location_id' => $bill->id, 'ship_to_location_id' => $ship->id]);
+        \App\Models\PoItem::create([
+            'po_id' => $po->id, 'sno' => 1, 'description' => 'Laptop', 'qty' => 2,
+            'net_rate' => 50000, 'gst_rate' => 18, 'gross_rate' => 59000, 'amount' => 118000,
+            'required_by' => now()->addDays(15)->toDateString(),
+        ]);
+
+        $html = (new PurchaseOrderIssuedMail($po->fresh()))->render();
+
+        // Vendor-relevant info present
+        $this->assertStringContainsString('Issued By', $html);
+        $this->assertStringContainsString('Needed By', $html);
+        $this->assertStringContainsString('Bill To', $html);
+        $this->assertStringContainsString('Ship To', $html);
+        $this->assertStringContainsString('Acme HO', $html);
+        $this->assertStringContainsString('Acme Warehouse', $html);
+        // Internal-only field must NOT appear
+        $this->assertStringNotContainsString('Cost Center', $html);
+        // State Code must not leak into the printed address
+        $this->assertStringNotContainsString('(29)', $html);
+    }
+
     public function test_send_to_vendor_sends_when_email_present(): void
     {
         $po = $this->makeApprovedPo('vendor@example.com');
