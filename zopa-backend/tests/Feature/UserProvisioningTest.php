@@ -112,6 +112,46 @@ class UserProvisioningTest extends TestCase
         ], $this->admin()->id);
     }
 
+    public function test_re_adding_a_removed_zopa_staff_reactivates_them(): void
+    {
+        $zopa = Tenant::where('is_internal', true)->firstOrFail();
+
+        $user = $this->svc->provisionZopaStaff($zopa, [
+            'name' => 'Staff One', 'email' => 'staffone@zopa.com',
+            'password' => 'Secret@123', 'role' => 'zopa_buyer',
+        ], $this->admin()->id);
+        $id = $user->id;
+
+        // Remove staff the way the controller does: deactivate user + roles.
+        $user->update(['is_active' => false]);
+        UserTenantRole::where('user_id', $id)->update(['is_active' => false]);
+
+        // Re-add with the same email → reactivates the account + role.
+        $again = $this->svc->provisionZopaStaff($zopa, [
+            'name' => 'Staff One', 'email' => 'staffone@zopa.com',
+            'password' => 'Secret@123', 'role' => 'zopa_approver_l1',
+        ], $this->admin()->id);
+
+        $this->assertEquals($id, $again->id);
+        $this->assertTrue($again->fresh()->is_active);
+        $this->assertEquals(1, User::where('email', 'staffone@zopa.com')->count());
+        $this->assertTrue(
+            UserTenantRole::where('user_id', $id)->where('tenant_id', $zopa->id)
+                ->where('role', 'zopa_approver_l1')->where('is_active', true)->exists()
+        );
+    }
+
+    public function test_client_email_cannot_be_added_as_zopa_staff(): void
+    {
+        $zopa = Tenant::where('is_internal', true)->firstOrFail();
+
+        $this->expectException(ValidationException::class);
+        $this->svc->provisionZopaStaff($zopa, [
+            'name' => 'Client Person', 'email' => 'cbuyer@acmetest.com',  // seeded client user
+            'password' => 'Secret@123', 'role' => 'zopa_buyer',
+        ], $this->admin()->id);
+    }
+
     public function test_endpoint_re_add_after_remove_succeeds(): void
     {
         // End-to-end through the Super Admin client-users endpoints.

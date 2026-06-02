@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\UserTenantRole;
+use App\Services\UserProvisioningService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class ZopaStaffController extends Controller
 {
@@ -52,36 +52,18 @@ class ZopaStaffController extends Controller
     /**
      * Create a new ZOPA staff member and enrol them in the ZOPA internal tenant.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, UserProvisioningService $provisioner): JsonResponse
     {
+        // email is intentionally NOT `unique:users,email` — the provisioner
+        // reactivates a previously-removed staff account instead of failing.
         $validated = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
+            'email'    => 'required|email',
             'password' => 'required|string|min:8',
             'role'     => 'required|string|in:zopa_super_admin,zopa_buyer,zopa_approver_l1,zopa_approver_l2,zopa_approver_l3',
         ]);
 
-        $zopaTenant = $this->zopaTenant();
-
-        $user = DB::transaction(function () use ($validated, $zopaTenant, $request) {
-            $user = User::create([
-                'name'          => $validated['name'],
-                'email'         => $validated['email'],
-                'password'      => Hash::make($validated['password']),
-                'is_zopa_staff' => true,
-                'is_active'     => true,
-            ]);
-
-            UserTenantRole::create([
-                'user_id'     => $user->id,
-                'tenant_id'   => $zopaTenant->id,
-                'role'        => $validated['role'],
-                'assigned_by' => $request->user()->id,
-                'is_active'   => true,
-            ]);
-
-            return $user;
-        });
+        $user = $provisioner->provisionZopaStaff($this->zopaTenant(), $validated, $request->user()->id);
 
         return response()->json([
             'id'        => $user->id,
