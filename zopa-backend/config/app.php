@@ -63,9 +63,15 @@ return [
     | app from emails (e.g. the password-reset link). Read via config() (not
     | env()) so it survives `php artisan config:cache` in production.
     |
+    | Falls back to APP_URL — the SPA and API share one domain in production, so
+    | APP_URL is the single source of truth for every link in outgoing email.
+    | This guarantees email links never silently point to a dev localhost when
+    | FRONTEND_URL is unset on a server. Set FRONTEND_URL only if the frontend is
+    | ever hosted on a different domain than the API.
+    |
     */
 
-    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4201'),
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost:4201')),
 
     /*
     |--------------------------------------------------------------------------
