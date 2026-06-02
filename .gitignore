@@ -10,7 +10,6 @@ zopa-po-md.pdf
 /deploy/app/
 
 # Local tooling / editor / OS
-.claude/
 .idea/
 .vscode/
 .DS_Store
