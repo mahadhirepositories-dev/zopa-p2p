@@ -68,7 +68,7 @@ export interface Category {
 
 export interface Department { id: number; name: string; is_active: boolean; }
 export interface Project { id: number; name: string; is_active: boolean; }
-export interface Location { id: number; name: string; state?: string; state_code?: string; address?: string; gstin?: string; is_active: boolean; }
+export interface Location { id: number; name: string; address?: string; city?: string; state?: string; state_code?: string; pincode?: string; country?: string; gstin?: string; is_active: boolean; }
 
 export interface VendorCategoryEntry {
   id?: number;

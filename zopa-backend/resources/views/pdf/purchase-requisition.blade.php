@@ -45,7 +45,14 @@
           <tr><td class="k">Title</td><td>{{ $pr->title }}</td></tr>
           <tr><td class="k">Cost Center</td><td>{{ optional($pr->costCenter)->name ?? '-' }}</td></tr>
           <tr><td class="k">Project</td><td>{{ optional($pr->project)->name ?? '-' }}</td></tr>
-          <tr><td class="k">Location</td><td>{{ optional($pr->location)->name ?? '-' }}</td></tr>
+          <tr><td class="k">Location</td><td>
+            @if($pr->location)
+              {{ $pr->location->name }}
+              @include('pdf.partials.location-address', ['loc' => $pr->location])
+            @else
+              -
+            @endif
+          </td></tr>
         </table>
       </td>
       <td style="width:50%;">

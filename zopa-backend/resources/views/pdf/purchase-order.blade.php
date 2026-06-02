@@ -266,7 +266,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       @if($po->billToLocation)
         <div style="font-size:9px; color:#475569; margin-top:4px; line-height:1.6;">
           <strong>{{ $po->billToLocation->name }}</strong>
-          @if($po->billToLocation->address)<br>{{ $po->billToLocation->address }}@endif
+          @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
         </div>
       @endif
       @if(!$po->costCenter && !$po->billToLocation)
@@ -284,11 +284,9 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:11px; font-weight:bold; color:#1e293b; margin-bottom:3px;">
           {{ $po->shipToLocation->name }}
         </div>
-        @if($po->shipToLocation->address)
-          <div style="font-size:9px; color:#475569; line-height:1.6;">
-            {{ $po->shipToLocation->address }}
-          </div>
-        @endif
+        <div style="font-size:9px; color:#475569; line-height:1.6;">
+          @include('pdf.partials.location-address', ['loc' => $po->shipToLocation])
+        </div>
       @elseif($po->billToLocation)
         <div style="font-size:9px; color:#64748b; font-style:italic;">Same as Bill To</div>
       @endif

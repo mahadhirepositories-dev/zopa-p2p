@@ -170,7 +170,7 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
 
               <mat-form-field appearance="outline" class="field-wide">
                 <mat-label>Ship-to Location</mat-label>
-                <mat-select formControlName="ship_to_location_id">
+                <mat-select formControlName="ship_to_location_id" (selectionChange)="onShipToChange()">
                   @for (l of locations(); track l.id) {
                     <mat-option [value]="l.id">{{ l.name }}</mat-option>
                   }
@@ -196,19 +196,36 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
                     </span>
                   </span>
                 }
-                @if (selectedBillTo()) {
-                  <span class="info-chip accent">
-                    <mat-icon>apartment</mat-icon>
-                    <span>
-                      Bill-to: {{ selectedBillTo()!.name }}
-                      @if (selectedBillTo()!.gstin) {
-                        &nbsp;·&nbsp; GSTIN: <strong>{{ selectedBillTo()!.gstin }}</strong>
-                      }
-                      @if (selectedBillTo()!.state) {
-                        &nbsp;·&nbsp; {{ selectedBillTo()!.state }}
-                      }
-                    </span>
-                  </span>
+              </div>
+            }
+
+            <!-- Full Bill-to / Ship-to address preview (exactly what prints on the PO) -->
+            @if (selectedBillTo() || selectedShipTo()) {
+              <div class="addr-preview">
+                @if (selectedBillTo(); as b) {
+                  <div class="addr-card">
+                    <div class="addr-head"><mat-icon>apartment</mat-icon> Bill To</div>
+                    <div class="addr-name">{{ b.name }}</div>
+                    @if (b.address) { <div>{{ b.address }}</div> }
+                    @if (addrLine(b)) { <div>{{ addrLine(b) }}</div> }
+                    @if (b.country) { <div>{{ b.country }}</div> }
+                    @if (b.gstin) { <div class="addr-gstin">GSTIN: {{ b.gstin }}</div> }
+                  </div>
+                }
+                @if (selectedShipTo(); as s) {
+                  <div class="addr-card">
+                    <div class="addr-head"><mat-icon>local_shipping</mat-icon> Ship To</div>
+                    <div class="addr-name">{{ s.name }}</div>
+                    @if (s.address) { <div>{{ s.address }}</div> }
+                    @if (addrLine(s)) { <div>{{ addrLine(s) }}</div> }
+                    @if (s.country) { <div>{{ s.country }}</div> }
+                    @if (s.gstin) { <div class="addr-gstin">GSTIN: {{ s.gstin }}</div> }
+                  </div>
+                } @else if (selectedBillTo()) {
+                  <div class="addr-card addr-card--muted">
+                    <div class="addr-head"><mat-icon>local_shipping</mat-icon> Ship To</div>
+                    <div>Same as Bill To</div>
+                  </div>
                 }
               </div>
             }
@@ -542,6 +559,15 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
     .info-chip.accent { background: #eff6ff; border-color: #bfdbfe; }
     .info-chip.accent mat-icon { color: #2563eb; }
 
+    .addr-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 14px; }
+    .addr-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #475569; line-height: 1.55; }
+    .addr-card--muted { color: #94a3b8; font-style: italic; }
+    .addr-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #1565c0; margin-bottom: 6px; }
+    .addr-head mat-icon { font-size: 15px; width: 15px; height: 15px; }
+    .addr-name { font-weight: 700; color: #1e293b; font-size: 13px; }
+    .addr-gstin { margin-top: 3px; font-weight: 600; color: #334155; }
+    @media (max-width: 720px) { .addr-preview { grid-template-columns: 1fr; } }
+
     .budget-banner {
       display: flex; align-items: center; gap: 12px;
       background: #f0fdf4; border: 1px solid #86efac;
@@ -637,6 +663,7 @@ export class PoFormComponent implements OnInit {
   selectedAddress = signal<VendorAddress | null>(null);
   selectedCostCenter = signal<CostCenter | null>(null);
   selectedBillTo = signal<Location | null>(null);
+  selectedShipTo = signal<Location | null>(null);
 
   // PR pre-fill
   prSource = signal<number|null>(null);
@@ -755,9 +782,10 @@ export class PoFormComponent implements OnInit {
         this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === po.cost_center_id) ?? null);
       }, 300);
     }
-    if (po.bill_to_location_id) {
+    if (po.bill_to_location_id || po.ship_to_location_id) {
       setTimeout(() => {
         this.selectedBillTo.set(this.locations().find(l => l.id === po.bill_to_location_id) ?? null);
+        this.selectedShipTo.set(this.locations().find(l => l.id === po.ship_to_location_id) ?? null);
       }, 300);
     }
 
@@ -828,7 +856,20 @@ export class PoFormComponent implements OnInit {
     this.selectedBillTo.set(this.locations().find(l => l.id === lid) ?? null);
     if (lid && !this.headerForm.value.ship_to_location_id) {
       this.headerForm.patchValue({ ship_to_location_id: lid });
+      this.onShipToChange();
     }
+  }
+
+  onShipToChange() {
+    const lid = this.headerForm.value.ship_to_location_id;
+    this.selectedShipTo.set(this.locations().find(l => l.id === lid) ?? null);
+  }
+
+  /** "City, State - Pincode" line for an address preview (State Code is omitted). */
+  addrLine(loc: Location | null): string {
+    if (!loc) return '';
+    const cityState = [loc.city, loc.state].filter(Boolean).join(', ');
+    return loc.pincode ? (cityState ? `${cityState} - ${loc.pincode}` : `${loc.pincode}`) : cityState;
   }
 
   private loadVendorAddresses(vendorId: number) {

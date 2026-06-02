@@ -14,7 +14,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { environment } from '../../../environments/environment';
-import { Budget } from '../../core/models';
+import { Budget, Location } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { BulkImportService } from '../../core/services/bulk-import.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -103,7 +103,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 
                 <mat-form-field appearance="outline">
                   <mat-label>Delivery Location</mat-label>
-                  <mat-select formControlName="location_id">
+                  <mat-select formControlName="location_id" (selectionChange)="onLocationChange()">
                     <mat-option [value]="null">— None —</mat-option>
                     @for (l of locations(); track l.id) {
                       <mat-option [value]="l.id">{{ l.name }}</mat-option>
@@ -111,6 +111,17 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                   </mat-select>
                 </mat-form-field>
               </div>
+
+              @if (selectedLocation(); as d) {
+                <div class="addr-card">
+                  <div class="addr-head"><mat-icon>place</mat-icon> Delivery Address</div>
+                  <div class="addr-name">{{ d.name }}</div>
+                  @if (d.address) { <div>{{ d.address }}</div> }
+                  @if (addrLine(d)) { <div>{{ addrLine(d) }}</div> }
+                  @if (d.country) { <div>{{ d.country }}</div> }
+                  @if (d.gstin) { <div class="addr-gstin">GSTIN: {{ d.gstin }}</div> }
+                </div>
+              }
 
               <div class="two-col">
                 <mat-form-field appearance="outline">
@@ -252,6 +263,12 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     }
     .budget-banner.budget-warn { background:#fff7ed;border-color:#fed7aa;color:#c2410c; }
     .budget-banner mat-icon { flex-shrink:0;margin-top:2px;font-size:18px;width:18px;height:18px; }
+
+    .addr-card { background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#475569;line-height:1.55; }
+    .addr-head { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#1565c0;margin-bottom:6px; }
+    .addr-head mat-icon { font-size:15px;width:15px;height:15px; }
+    .addr-name { font-weight:700;color:#1e293b;font-size:13px; }
+    .addr-gstin { margin-top:3px;font-weight:600;color:#334155; }
   `],
 })
 export class PrFormComponent implements OnInit {
@@ -264,7 +281,8 @@ export class PrFormComponent implements OnInit {
 
   costCenters = signal<any[]>([]);
   projects    = signal<any[]>([]);
-  locations   = signal<any[]>([]);
+  locations   = signal<Location[]>([]);
+  selectedLocation = signal<Location | null>(null);
   saving      = signal(false);
   budget      = signal<Budget | null>(null);
 
@@ -327,6 +345,18 @@ export class PrFormComponent implements OnInit {
 
   addItem() { this.items.push(this.newItem()); }
   removeItem(i: number) { if (this.items.length > 1) this.items.removeAt(i); }
+
+  onLocationChange() {
+    const id = this.form.get('location_id')!.value;
+    this.selectedLocation.set(this.locations().find(l => l.id === id) ?? null);
+  }
+
+  /** "City, State - Pincode" line for the address preview (State Code omitted). */
+  addrLine(loc: Location | null): string {
+    if (!loc) return '';
+    const cityState = [loc.city, loc.state].filter(Boolean).join(', ');
+    return loc.pincode ? (cityState ? `${cityState} - ${loc.pincode}` : `${loc.pincode}`) : cityState;
+  }
 
   downloadBoqTemplate() {
     this.bulk.downloadTemplate('boq/template?type=pr', 'pr-boq-template.xlsx').subscribe({
