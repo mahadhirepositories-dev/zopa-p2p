@@ -24,10 +24,23 @@ trait AuthorizesRoles
         'client_buyer',
     ];
 
-    /** May manage master data, payment release, manual approval overrides */
+    /** May perform admin/financial actions — payment release, budget adjustments,
+     *  approval-config governance, platform/access administration. */
     protected const ADMIN_ROLES = [
         'zopa_super_admin',
         'client_admin',
+    ];
+
+    /** May manage master-data RECORDS (vendors, products, categories, org masters,
+     *  cost-centre records). Broader than ADMIN: it also includes the ZOPA Buyer,
+     *  who sets up a client's masters on their behalf. The fine-grained Access
+     *  Control matrix (requirePermission) still governs precisely within this group,
+     *  so toggling a role's create/edit/delete in Access Control is authoritative. */
+    protected const MASTER_ROLES = [
+        'zopa_super_admin',
+        'client_admin',
+        'zopa_buyer',
+        'client_buyer',
     ];
 
     protected function requireTransactRole(): void
@@ -38,6 +51,11 @@ trait AuthorizesRoles
     protected function requireAdminRole(): void
     {
         $this->requireRole(...self::ADMIN_ROLES);
+    }
+
+    protected function requireMasterRole(): void
+    {
+        $this->requireRole(...self::MASTER_ROLES);
     }
 
     protected function requireRole(string ...$roles): void

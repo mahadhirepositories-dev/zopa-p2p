@@ -40,7 +40,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search cost centers…" />
-          @if (auth.isAdmin()) {
+          @if (auth.canDo('cost_centers','create')) {
             <button mat-raised-button color="primary" class="cta-btn" (click)="openForm()">
               <mat-icon>add</mat-icon> New Cost Center
             </button>
@@ -60,7 +60,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <mat-icon>account_balance_wallet</mat-icon>
               <h3>No cost centers found</h3>
               <p>{{ search() ? 'Try a different search term.' : 'Create a cost center to start tracking budgets.' }}</p>
-              @if (!search() && auth.isAdmin()) {
+              @if (!search() && auth.canDo('cost_centers','create')) {
                 <button mat-raised-button color="primary" (click)="openForm()">
                   <mat-icon>add</mat-icon> New Cost Center
                 </button>

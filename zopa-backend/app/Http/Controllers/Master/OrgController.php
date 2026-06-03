@@ -26,7 +26,7 @@ class OrgController extends Controller
 
     public function storeDepartment(Request $request): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'create');
 
         $request->validate(['name' => 'required|string|max:255']);
@@ -40,7 +40,7 @@ class OrgController extends Controller
 
     public function updateDepartment(Request $request, Department $department): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'edit');
         abort_if($department->tenant_id !== app('currentTenant')->id, 403);
         $department->update($request->only('name', 'is_active'));
@@ -49,7 +49,7 @@ class OrgController extends Controller
 
     public function destroyDepartment(Department $department): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'delete');
         abort_if($department->tenant_id !== app('currentTenant')->id, 403);
         $department->update(['is_active' => false]);
@@ -68,7 +68,7 @@ class OrgController extends Controller
 
     public function storeProject(Request $request): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'create');
 
         $request->validate(['name' => 'required|string|max:255']);
@@ -82,7 +82,7 @@ class OrgController extends Controller
 
     public function updateProject(Request $request, Project $project): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'edit');
         abort_if($project->tenant_id !== app('currentTenant')->id, 403);
         $project->update($request->only('name', 'is_active'));
@@ -91,7 +91,7 @@ class OrgController extends Controller
 
     public function destroyProject(Project $project): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'delete');
         abort_if($project->tenant_id !== app('currentTenant')->id, 403);
         $project->update(['is_active' => false]);
@@ -110,7 +110,7 @@ class OrgController extends Controller
 
     public function storeLocation(Request $request): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'create');
 
         $request->validate([
@@ -133,7 +133,7 @@ class OrgController extends Controller
 
     public function updateLocation(Request $request, Location $location): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'edit');
         abort_if($location->tenant_id !== app('currentTenant')->id, 403);
         $location->update($request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'is_active'));
@@ -142,7 +142,7 @@ class OrgController extends Controller
 
     public function destroyLocation(Location $location): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('org_masters', 'delete');
         abort_if($location->tenant_id !== app('currentTenant')->id, 403);
         $location->update(['is_active' => false]);

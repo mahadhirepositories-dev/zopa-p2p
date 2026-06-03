@@ -44,7 +44,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <div class="tab-content">
             <div class="tab-toolbar">
               <span class="tab-count">{{ departments.data.length }} department{{ departments.data.length !== 1 ? 's' : '' }}</span>
-              @if (auth.isAdmin()) {
+              @if (auth.canDo('org_masters','create')) {
                 <button mat-raised-button color="primary" class="cta-btn" (click)="openDialog('department')">
                   <mat-icon>add</mat-icon> New Department
                 </button>
@@ -60,7 +60,7 @@ import { AuthService } from '../../core/auth/auth.service';
                     <mat-icon>domain_disabled</mat-icon>
                     <h3>No departments yet</h3>
                     <p>Departments help organise your cost centers and PO workflows.</p>
-                    @if (auth.isAdmin()) {
+                    @if (auth.canDo('org_masters','create')) {
                       <button mat-raised-button color="primary" (click)="openDialog('department')">
                         <mat-icon>add</mat-icon> New Department
                       </button>
@@ -119,7 +119,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <div class="tab-content">
             <div class="tab-toolbar">
               <span class="tab-count">{{ projects.data.length }} project{{ projects.data.length !== 1 ? 's' : '' }}</span>
-              @if (auth.isAdmin()) {
+              @if (auth.canDo('org_masters','create')) {
                 <button mat-raised-button color="primary" class="cta-btn" (click)="openDialog('project')">
                   <mat-icon>add</mat-icon> New Project
                 </button>
@@ -135,7 +135,7 @@ import { AuthService } from '../../core/auth/auth.service';
                     <mat-icon>work_off</mat-icon>
                     <h3>No projects yet</h3>
                     <p>Projects allow you to group cost centers and track spend by initiative.</p>
-                    @if (auth.isAdmin()) {
+                    @if (auth.canDo('org_masters','create')) {
                       <button mat-raised-button color="primary" (click)="openDialog('project')">
                         <mat-icon>add</mat-icon> New Project
                       </button>
@@ -194,7 +194,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <div class="tab-content">
             <div class="tab-toolbar">
               <span class="tab-count">{{ locations.data.length }} location{{ locations.data.length !== 1 ? 's' : '' }}</span>
-              @if (auth.isAdmin()) {
+              @if (auth.canDo('org_masters','create')) {
                 <button mat-raised-button color="primary" class="cta-btn" (click)="openDialog('location')">
                   <mat-icon>add</mat-icon> New Location
                 </button>
@@ -210,7 +210,7 @@ import { AuthService } from '../../core/auth/auth.service';
                     <mat-icon>location_off</mat-icon>
                     <h3>No locations yet</h3>
                     <p>Locations represent your company's offices and warehouses for billing and shipping.</p>
-                    @if (auth.isAdmin()) {
+                    @if (auth.canDo('org_masters','create')) {
                       <button mat-raised-button color="primary" (click)="openDialog('location')">
                         <mat-icon>add</mat-icon> New Location
                       </button>

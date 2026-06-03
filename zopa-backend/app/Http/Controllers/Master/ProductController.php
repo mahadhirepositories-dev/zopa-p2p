@@ -26,7 +26,7 @@ class ProductController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('products', 'create');
 
         $request->validate([
@@ -56,7 +56,7 @@ class ProductController extends Controller
 
     public function update(Request $request, Product $product): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('products', 'edit');
         $this->authorizeProduct($product);
         $product->update($request->except('tenant_id'));
@@ -65,7 +65,7 @@ class ProductController extends Controller
 
     public function destroy(Product $product): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('products', 'delete');
         $this->authorizeProduct($product);
         $product->update(['is_active' => false]);
@@ -85,7 +85,7 @@ class ProductController extends Controller
     /** Bulk-import products from a filled-in template. */
     public function import(Request $request): JsonResponse
     {
-        $this->requireAdminRole();
+        $this->requireMasterRole();
         $this->requirePermission('products', 'create');
         $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv|max:5120']);
 

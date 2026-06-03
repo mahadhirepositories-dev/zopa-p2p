@@ -41,7 +41,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search products…" />
-          @if (auth.isAdmin()) {
+          @if (auth.canDo('products','create')) {
             <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Download the Excel import template">
               <mat-icon>download</mat-icon> Template
             </button>
@@ -88,7 +88,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <mat-icon>inventory_2</mat-icon>
               <h3>No products found</h3>
               <p>{{ search() ? 'Try a different search term.' : 'Add your first product to get started.' }}</p>
-              @if (!search() && auth.isAdmin()) {
+              @if (!search() && auth.canDo('products','create')) {
                 <button mat-raised-button color="primary" (click)="openForm()">
                   <mat-icon>add</mat-icon> New Product
                 </button>

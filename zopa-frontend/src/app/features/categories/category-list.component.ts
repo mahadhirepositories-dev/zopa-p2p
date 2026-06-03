@@ -39,7 +39,7 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()"
                             (valueChange)="search.set($event); onSearch()" placeholder="Search…" />
-          @if (auth.isAdmin()) {
+          @if (auth.canDo('products','create')) {
             <button mat-raised-button color="primary" class="cta-btn" (click)="openForm()">
               <mat-icon>add</mat-icon> New Category
             </button>
@@ -56,7 +56,7 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
               <mat-icon>category</mat-icon>
               <h3>No categories found</h3>
               <p>{{ search() ? 'Try a different search term.' : 'Add your first category to organise products and services.' }}</p>
-              @if (!search() && auth.isAdmin()) {
+              @if (!search() && auth.canDo('products','create')) {
                 <button mat-raised-button color="primary" (click)="openForm()"><mat-icon>add</mat-icon> New Category</button>
               }
             </div>

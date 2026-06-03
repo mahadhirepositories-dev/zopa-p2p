@@ -40,7 +40,7 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
           </mat-card-header>
           <mat-card-content style="padding-top:16px;">
             <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-              @if (auth.isAdmin()) {
+              @if (auth.canDo('vendors','edit')) {
                 <button mat-stroked-button [routerLink]="['/vendors', vendor()!.id, 'edit']">
                   <mat-icon>edit</mat-icon> Edit Vendor Details
                 </button>
@@ -110,14 +110,14 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
           <mat-card-header>
             <mat-card-title>Addresses</mat-card-title>
             <div style="flex:1;"></div>
-            @if (auth.isAdmin()) {
+            @if (auth.canDo('vendors','edit')) {
               <button mat-raised-button color="primary" (click)="openAddressForm(null)">
                 <mat-icon>add</mat-icon> Add Address
               </button>
             }
           </mat-card-header>
           <mat-card-content style="padding-top:16px;">
-            @if (showAddressForm() && auth.isAdmin()) {
+            @if (showAddressForm() && auth.canDo('vendors','edit')) {
               <form [formGroup]="addressForm" (ngSubmit)="saveAddress()" class="addr-form">
                 <div class="addr-form-title">
                   {{ editingAddress() ? 'Edit Address' : 'New Address' }}
@@ -219,7 +219,7 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef style="text-align:right;width:96px;">Actions</th>
                 <td mat-cell *matCellDef="let a" style="text-align:right;">
-                  @if (auth.isAdmin()) {
+                  @if (auth.canDo('vendors','edit')) {
                     <button mat-icon-button color="primary" title="Edit" (click)="openAddressForm(a)">
                       <mat-icon style="font-size:18px;">edit</mat-icon>
                     </button>
