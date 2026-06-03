@@ -16,24 +16,23 @@ export const roleGuard: CanActivateFn = async (route, state) => {
 
   // Get allowed roles from route data
   const allowedRoles = route.data['roles'] as string[];
-  
+
   if (!allowedRoles || allowedRoles.length === 0) {
     return true; // No roles defined, allow access
   }
 
-  // Super-admin-only routes: must be an actual ZOPA Super Admin.
-  // (Previously any ZOPA staff — e.g. zopa_buyer — incorrectly passed here.)
-  if (allowedRoles.includes('zopa_super_admin')) {
-    return auth.isSuperAdmin() ? true : router.parseUrl('/dashboard');
-  }
-
-  // Check if current role matches any allowed role
-  const hasAccess = allowedRoles.some(role => auth.hasRole(role));
-
-  if (hasAccess) {
+  // A ZOPA Super Admin can enter any role-gated route (their assignments allow it).
+  if (auth.isSuperAdmin()) {
     return true;
   }
 
-  // Redirect to dashboard if unauthorized
-  return router.parseUrl('/dashboard');
+  // Otherwise the user must hold one of the explicitly-listed roles.
+  // NOTE: routes listing ONLY 'zopa_super_admin' stay super-admin-only (a
+  // non-super user won't match it). Routes listing several roles — e.g. the
+  // create/edit forms for PR/PO/GRN/Invoice/Vendor — correctly allow any of
+  // those roles. Previously the mere PRESENCE of 'zopa_super_admin' in the list
+  // made the whole route super-admin-only, bouncing buyers/admins to /dashboard.
+  const hasAccess = allowedRoles.some(role => auth.hasRole(role));
+
+  return hasAccess ? true : router.parseUrl('/dashboard');
 };
