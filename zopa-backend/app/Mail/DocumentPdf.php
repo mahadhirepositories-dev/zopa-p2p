@@ -22,6 +22,7 @@ class DocumentPdf
                     'items.product', 'vendor', 'vendorAddress',
                     'costCenter.department', 'costCenter.project', 'costCenter.location',
                     'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant',
+                    'creator', 'approver',
                 ]);
                 $pdf  = Pdf::loadView('pdf.purchase-order', ['po' => $entity])->setPaper('a4');
                 $name = 'PO-' . ($entity->po_number ?: $entity->id) . '.pdf';
