@@ -76,7 +76,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <mat-icon>receipt_long</mat-icon>
               <h3>No purchase orders found</h3>
               <p>{{ search() || statusFilter() ? 'Try adjusting your search filters.' : 'Create your first purchase order to get started.' }}</p>
-              @if (!search() && !statusFilter() && auth.canTransact()) {
+              @if (!search() && !statusFilter() && auth.canDo('purchase_orders','create')) {
                 <button mat-raised-button color="primary" routerLink="create">
                   <mat-icon>add</mat-icon> Create PO
                 </button>

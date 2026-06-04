@@ -24,7 +24,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <h2>Invoices</h2>
           <p>{{ invoices().length }} invoice{{ invoices().length !== 1 ? 's' : '' }}</p>
         </div>
-        @if (auth.canTransact()) {
+        @if (auth.canDo('invoices','create')) {
           <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
             <mat-icon>add</mat-icon> New Invoice
           </button>
@@ -42,7 +42,7 @@ import { AuthService } from '../../core/auth/auth.service';
               <mat-icon>receipt_long</mat-icon>
               <h3>No invoices yet</h3>
               <p>Create an invoice once goods have been received against a PO.</p>
-              @if (auth.canTransact()) {
+              @if (auth.canDo('invoices','create')) {
                 <button mat-raised-button color="primary" routerLink="create">
                   <mat-icon>add</mat-icon> New Invoice
                 </button>

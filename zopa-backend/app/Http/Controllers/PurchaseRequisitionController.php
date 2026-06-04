@@ -303,7 +303,9 @@ class PurchaseRequisitionController extends Controller
 
     public function destroy(PurchaseRequisition $purchaseRequisition): JsonResponse
     {
-        $this->requireAdminRole();
+        // Transactional family + matrix 'delete' permission (authoritative) — a
+        // coarse admin-only gate would override a delete granted in Access Control.
+        $this->requireTransactRole();
         $this->requirePermission('purchase_requisitions', 'delete');
         $this->authorize($purchaseRequisition);
 

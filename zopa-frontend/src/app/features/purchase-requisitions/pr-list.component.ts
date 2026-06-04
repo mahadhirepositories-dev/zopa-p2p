@@ -30,7 +30,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <h2>Purchase Requisitions</h2>
           <p>{{ filtered().length }} requisition{{ filtered().length !== 1 ? 's' : '' }} found</p>
         </div>
-        @if (auth.canTransact()) {
+        @if (auth.canDo('purchase_requisitions','create')) {
           <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
             <mat-icon>add</mat-icon> New PR
           </button>
@@ -62,7 +62,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <mat-icon>description</mat-icon>
               <h3>No requisitions found</h3>
               <p>{{ search() || statusFilter() ? 'Try adjusting your filters.' : 'Create your first purchase requisition.' }}</p>
-              @if (!search() && !statusFilter() && auth.canTransact()) {
+              @if (!search() && !statusFilter() && auth.canDo('purchase_requisitions','create')) {
                 <button mat-raised-button color="primary" routerLink="create">
                   <mat-icon>add</mat-icon> Create PR
                 </button>

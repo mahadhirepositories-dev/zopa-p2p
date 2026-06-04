@@ -27,7 +27,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <h2>Goods Received Notes</h2>
           <p>{{ grns().length }} receipt{{ grns().length !== 1 ? 's' : '' }}</p>
         </div>
-        @if (auth.canTransact()) {
+        @if (auth.canDo('grns','create')) {
           <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
             <mat-icon>add</mat-icon> New GRN
           </button>
@@ -45,7 +45,7 @@ import { AuthService } from '../../core/auth/auth.service';
               <mat-icon>inventory_2</mat-icon>
               <h3>No GRNs yet</h3>
               <p>Create a GRN when goods arrive against a released PO.</p>
-              @if (auth.canTransact()) {
+              @if (auth.canDo('grns','create')) {
                 <button mat-raised-button color="primary" routerLink="create">
                   <mat-icon>add</mat-icon> Create GRN
                 </button>
