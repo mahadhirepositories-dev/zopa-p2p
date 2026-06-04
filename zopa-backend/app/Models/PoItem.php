@@ -9,7 +9,7 @@ class PoItem extends Model
 {
     protected $fillable = [
         'po_id', 'sno', 'pr_item_id', 'product_id', 'description', 'category_id',
-        'qty', 'net_rate', 'gst_rate', 'gross_rate', 'amount', 'required_by', 'warranty_months',
+        'qty', 'unit', 'net_rate', 'gst_rate', 'gross_rate', 'amount', 'required_by', 'warranty_months',
     ];
 
     protected $casts = [

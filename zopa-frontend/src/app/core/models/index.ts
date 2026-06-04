@@ -157,10 +157,11 @@ export interface PoItem {
   pr_item_id?: number | null;
   pr_item?: { id: number; description: string; qty: number } | null;
   product_id?: number;
-  product?: { id: number; name: string; code?: string; hsn_code?: string };
+  product?: { id: number; name: string; code?: string; hsn_code?: string; unit?: string };
   description: string;
   category_id?: number;
   qty: number;
+  unit?: string | null;
   net_rate: number;
   gst_rate: number;
   gross_rate?: number;

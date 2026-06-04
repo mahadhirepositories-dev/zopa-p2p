@@ -335,6 +335,11 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
                          min="0.001" (input)="recalcItem(i)" />
                 </mat-form-field>
 
+                <mat-form-field appearance="outline" class="field-xs">
+                  <mat-label>UOM</mat-label>
+                  <input matInput formControlName="unit" placeholder="Nos" maxlength="20" />
+                </mat-form-field>
+
                 <mat-form-field appearance="outline" class="field-rate">
                   <mat-label>Net Rate *</mat-label>
                   <span matPrefix>₹&nbsp;</span>
@@ -898,6 +903,7 @@ export class PoFormComponent implements OnInit {
       description:     [data?.description ?? '', Validators.required],
       category_id:     [data?.category_id ?? null],
       qty:             [data?.qty ?? 1, [Validators.required, Validators.min(0.001)]],
+      unit:            [data?.unit ?? null],
       net_rate:        [data?.net_rate ?? 0, [Validators.required, Validators.min(0)]],
       gst_rate:        [data?.gst_rate ?? 18, Validators.required],
       warranty_months: [data?.warranty_months ?? 0],
@@ -953,6 +959,7 @@ export class PoFormComponent implements OnInit {
       gst_rate:        product.gst_rate,
       category_id:     product.category_id ?? null,
       warranty_months: product.warranty_months ?? 0,
+      unit:            product.unit ?? null,
     });
     this.recalcItem(i);
   }

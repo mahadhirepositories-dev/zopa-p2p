@@ -87,6 +87,7 @@ class PurchaseOrderController extends Controller
             'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
             'items.*.qty' => 'required|numeric|min:0.001',
+            'items.*.unit' => 'nullable|string|max:20',
             'items.*.net_rate' => 'required|numeric|min:0',
             'items.*.gst_rate' => 'required|numeric|min:0',
             'items.*.required_by' => 'nullable|date',
@@ -154,6 +155,7 @@ class PurchaseOrderController extends Controller
                     'description' => $item['description'],
                     'category_id' => $item['category_id'] ?? null,
                     'qty' => $item['qty'],
+                    'unit' => $item['unit'] ?? null,
                     'net_rate' => $item['net_rate'],
                     'gst_rate' => $item['gst_rate'],
                     'gross_rate' => $grossRate,
@@ -247,12 +249,33 @@ class PurchaseOrderController extends Controller
         $this->requirePermission('purchase_orders', 'edit');
         $this->authorizePoAccess($purchaseOrder);
 
-        if (!in_array($purchaseOrder->status, ['draft'])) {
+        if ($purchaseOrder->status !== 'draft') {
             return response()->json(['error' => 'Only draft POs can be edited.'], 422);
         }
 
-        $po = DB::transaction(function () use ($request, $purchaseOrder) {
-            if ($request->has('items')) {
+        $request->validate([
+            'items' => 'required|array|min:1',
+            'items.*.description' => 'required|string',
+            'items.*.qty' => 'required|numeric|min:0.001',
+            'items.*.unit' => 'nullable|string|max:20',
+            'items.*.net_rate' => 'required|numeric|min:0',
+            'items.*.gst_rate' => 'required|numeric|min:0',
+            'items.*.required_by' => 'nullable|date',
+        ]);
+
+        try {
+            $po = DB::transaction(function () use ($request, $purchaseOrder) {
+                // Recompute totals from the edited lines (IGST vs CGST+SGST by state)
+                // — a draft edit must not keep the original stale totals.
+                $vendorAddress  = \App\Models\VendorAddress::find($request->vendor_address_id);
+                $billToLocation = \App\Models\Location::find($request->bill_to_location_id);
+                $totals = $this->gst->calculatePoTotals(
+                    $request->items,
+                    (float) ($request->freight ?? 0),
+                    $vendorAddress?->state_code ?? '',
+                    $billToLocation?->state_code ?? '',
+                );
+
                 $purchaseOrder->items()->delete();
                 foreach ($request->items as $i => $item) {
                     $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
@@ -263,18 +286,34 @@ class PurchaseOrderController extends Controller
                         'description' => $item['description'],
                         'category_id' => $item['category_id'] ?? null,
                         'qty' => $item['qty'],
+                        'unit' => $item['unit'] ?? null,
                         'net_rate' => $item['net_rate'],
                         'gst_rate' => $item['gst_rate'],
                         'gross_rate' => $grossRate,
                         'amount' => $grossRate * $item['qty'],
                         'required_by' => $item['required_by'] ?? null,
+                        'warranty_months' => $item['warranty_months'] ?? 0,
                     ]);
                 }
-            }
 
-            $purchaseOrder->update($request->except(['items', 'tenant_id', 'po_number', 'status']));
-            return $purchaseOrder->fresh('items');
-        });
+                $purchaseOrder->update([
+                    ...$request->only([
+                        'pr_reference', 'vendor_id', 'vendor_address_id', 'cost_center_id',
+                        'bill_to_location_id', 'ship_to_location_id', 'po_valid_till',
+                        'payment_terms_json', 'warranty_months', 'terms_conditions',
+                    ]),
+                    'freight' => $request->freight ?? 0,
+                    ...$totals,
+                ]);
+
+                return $purchaseOrder->fresh('items');
+            });
+        } catch (\Throwable $e) {
+            report($e);
+            return response()->json([
+                'error' => 'Could not save the purchase order: ' . $e->getMessage(),
+            ], 422);
+        }
 
         return response()->json($po);
     }

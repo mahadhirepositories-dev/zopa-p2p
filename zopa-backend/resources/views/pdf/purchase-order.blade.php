@@ -168,7 +168,7 @@ $amtWords = _poNumWords((int) round($po->grand_total)) . ' Rupees Only';
 /* ── Item-level flags for optional columns ────────────── */
 $hasCode = $po->items->contains(fn($i) => !empty($i->product?->code));
 $hasHSN  = $po->items->contains(fn($i) => !empty($i->product?->hsn_code));
-$hasUOM  = $po->items->contains(fn($i) => !empty($i->product?->unit));
+$hasUOM  = $po->items->contains(fn($i) => !empty($i->unit) || !empty($i->product?->unit));
 $hasWar  = $po->items->contains(fn($i) => ($i->warranty_months ?? 0) > 0);
 $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
 @endphp
@@ -312,7 +312,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         @endif
       </td>
       @if($hasHSN)<td class="c" style="font-size:8.5px; color:#475569;">{{ $item->product?->hsn_code ?? '—' }}</td>@endif
-      @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->product?->unit ?? '—' }}</td>@endif
+      @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->unit ?? $item->product?->unit ?? '—' }}</td>@endif
       <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($item->qty, 3),'0'),'.') }}</td>
       <td class="r" style="font-size:9px;">&#8377;{{ number_format($item->net_rate, 2) }}</td>
       <td class="r" style="font-size:9px; color:#475569;">
