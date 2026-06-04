@@ -11,9 +11,12 @@
  *  - NO emoji (DejaVu Sans has no emoji glyphs);  Rupee = &#8377;
  *  - Layout via tables/<td>, NOT flex/grid (unsupported by DomPDF)
  *  - Near-monochrome: charcoal ink + grays, one accent = charcoal; bordered tables
- *  - Page margins via @page; per-page footer via position:fixed + counter(page)
+ *  - MARGINS: this dompdf build honours BODY margin (NOT @page) — set on body{}.
+ *  - PAGINATION: long sections (Terms, Approval) are MULTI-ROW tables so dompdf
+ *    breaks BETWEEN rows. A single-row table can't split (-> blank pages) and
+ *    free block flow overflows the bottom margin — both were real bugs here.
  */
-@page { margin: 1.25cm 1.15cm 1.7cm 1.15cm; }
+@page { margin: 1.5cm 1.3cm; }   /* kept as a hint; the body margin does the work */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -22,6 +25,7 @@ body {
   color: #374151;
   background: #fff;
   line-height: 1.45;
+  margin: 1.5cm 1.3cm;   /* dompdf applies body margin on page 1 / sides every page */
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
@@ -87,14 +91,24 @@ table.approv td { padding: 5px 8px; border: 1px solid #d1d5db; font-size: 9px; v
 .c-no  { color: #991b1b; font-weight: bold; }
 .c-ret { color: #92400e; font-weight: bold; }
 .c-pnd { color: #6b7280; }
+table.approv thead { display: table-header-group; }   /* repeat header when split */
 
-/* ── Per-page fixed footer ────────────────────────────── */
-.pdf-footer {
-  position: fixed; left: 1.15cm; right: 1.15cm; bottom: 0.5cm; height: 0.9cm;
-  border-top: 1px solid #cbd5e1; padding-top: 5px;
+/* ── Standalone section header — for long sections that MUST be able to
+      break across pages (Terms, Approval Trail). NEVER wrap such sections in a
+      single-row <table>: DomPDF can't split a <tr>, which yields blank pages. ── */
+.sec-h {
+  font-size: 8px; font-weight: bold;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: #1f2937; padding-bottom: 4px; margin: 4px 0 7px;
+  border-bottom: 1.5px solid #1f2937;
 }
-.pdf-footer td { font-size: 7px; color: #6b7280; vertical-align: top; }
-.pageinfo:before { content: "Page " counter(page); }
+/* Long terms render as a MULTI-ROW table — DomPDF paginates by breaking BETWEEN
+   rows (a single-row table can't split → blank pages; free-flowing blocks
+   overflow the bottom margin). One <tr> per line is the reliable pattern. */
+.terms-tbl { width: 100%; border-collapse: collapse; }
+.terms-tbl td { border: none; font-size: 9px; color: #374151; line-height: 1.5; padding: 1px 2px; vertical-align: top; }
+.terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
+
 </style>
 </head>
 <body>
@@ -159,20 +173,6 @@ $hasWar  = $po->items->contains(fn($i) => ($i->warranty_months ?? 0) > 0);
 $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
 @endphp
 
-{{-- ═══════════ PER-PAGE FOOTER (repeats on every page) ═══════════ --}}
-<div class="pdf-footer">
-  <table style="width:100%; border-collapse:collapse;">
-    <tr>
-      <td style="text-align:left;">
-        This is a system-generated document. Generated on {{ $generatedAt }}. No signature required.
-      </td>
-      <td style="text-align:right; white-space:nowrap;">
-        @if($po->po_number){{ $po->po_number }}&nbsp;&middot;&nbsp;@endif ZOPA Procurement Platform
-        &nbsp;&middot;&nbsp; <span class="pageinfo"></span>
-      </td>
-    </tr>
-  </table>
-</div>
 
 {{-- ═══════════ HEADER ═══════════ --}}
 <table style="width:100%; border-collapse:collapse; border-bottom:2px solid #1f2937; margin-bottom:10px;">
@@ -392,41 +392,34 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   </tr>
 </table>
 
-{{-- ═══════════ TERMS & CONDITIONS ═══════════ --}}
+{{-- ═══════════ TERMS & CONDITIONS ═══════════
+     Rendered as flowing blocks (NOT a wrapping single-row table) so long
+     free-text terms break across pages cleanly with no blank pages. --}}
 @if(($po->payment_terms_json && count($po->payment_terms_json)) || $po->terms_conditions)
-<table class="sec">
-  <tr>
-    <td class="cell">
-      <div class="sl">Terms &amp; Conditions</div>
-      @if($po->payment_terms_json && count($po->payment_terms_json))
-        <div style="font-size:9px; font-weight:bold; color:#1f2937; margin-bottom:3px;">Payment Terms:</div>
-        @foreach($po->payment_terms_json as $idx => $pt)
-          <div style="font-size:9px; color:#374151; line-height:1.6; padding-left:12px;">
-            {{ $idx + 1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%
-            @if(!empty($pt['credit_days']) && $pt['credit_days'] > 0)({{ $pt['credit_days'] }} days credit)@endif
-          </div>
-        @endforeach
-        @if($po->terms_conditions)<div style="margin-top:7px;"></div>@endif
-      @endif
-      @if($po->terms_conditions)
-        <div style="font-size:9px; font-weight:bold; color:#1f2937; margin-bottom:3px;">{{ ($po->payment_terms_json && count($po->payment_terms_json)) ? 'Special Terms:' : 'Payment Terms:' }}</div>
-        @php $tcLines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $po->terms_conditions)))); @endphp
-        @foreach($tcLines as $i => $line)
-          <div style="font-size:9px; color:#374151; line-height:1.6; padding-left:12px;">{{ $i + 1 }}.&nbsp;{{ $line }}</div>
-        @endforeach
-      @endif
-    </td>
-  </tr>
+<div class="sec-h">Terms &amp; Conditions</div>
+<table class="terms-tbl">
+  @if($po->payment_terms_json && count($po->payment_terms_json))
+    <tr><td class="sub">Payment Schedule</td></tr>
+    @foreach($po->payment_terms_json as $idx => $pt)
+      <tr><td>{{ $idx + 1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%@if(!empty($pt['credit_days']) && $pt['credit_days'] > 0)&nbsp;({{ $pt['credit_days'] }} days credit)@endif</td></tr>
+    @endforeach
+  @endif
+  @if($po->terms_conditions)
+    @if($po->payment_terms_json && count($po->payment_terms_json))<tr><td class="sub">General Terms</td></tr>@endif
+    @php $tcLines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $po->terms_conditions)))); @endphp
+    @foreach($tcLines as $line)
+      {{-- Each line is its own row: preserve the buyer's own numbering / bullets (no auto-numbering). --}}
+      <tr><td>{{ $line }}</td></tr>
+    @endforeach
+  @endif
 </table>
+<div style="margin-bottom:8px;"></div>
 @endif
 
 {{-- ═══════════ APPROVAL TRAIL (multilevel approvers + date & time) ═══════════ --}}
 @if($po->approvals && $po->approvals->count())
-<table class="sec">
-  <tr>
-    <td style="padding:0; border:1px solid #cbd5e1; border-top:2px solid #1f2937;">
-      <div class="sl" style="padding:7px 11px 5px; margin-bottom:0;">Approval Trail</div>
-      <table class="approv">
+<div class="sec-h">Approval Trail</div>
+<table class="approv" style="margin-bottom:8px;">
         <thead>
           <tr>
             <th style="width:34px;" class="c">Level</th>
@@ -455,9 +448,6 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
           </tr>
           @endforeach
         </tbody>
-      </table>
-    </td>
-  </tr>
 </table>
 @endif
 
