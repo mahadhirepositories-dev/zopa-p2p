@@ -34,7 +34,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('invoices', 'create');
 
         $request->validate([
@@ -97,11 +96,10 @@ class InvoiceController extends Controller
     {
         abort_if($invoice->tenant_id !== app('currentTenant')->id, 403);
 
-        // Status overrides (approve/reject) are admin-only; field edits are transact-level
+        // Approving/rejecting an invoice is an admin-only financial action; plain
+        // field edits are governed by the Access Control matrix (invoices.edit).
         if ($request->has('status') && in_array($request->status, ['approved', 'rejected'])) {
             $this->requireAdminRole();
-        } else {
-            $this->requireTransactRole();
         }
         $this->requirePermission('invoices', 'edit');
 

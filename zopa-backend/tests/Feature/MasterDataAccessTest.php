@@ -91,6 +91,22 @@ class MasterDataAccessTest extends TestCase
             ->assertStatus(201);
     }
 
+    public function test_matrix_grant_lets_any_role_create_master_data(): void
+    {
+        // Grant an APPROVER (outside the usual master-role family) create on vendors.
+        // The Access Control matrix must be authoritative for EVERY role.
+        RolePermission::updateOrCreate(
+            ['role' => 'client_approver_l1', 'module' => 'vendors'],
+            ['can_view' => true, 'can_create' => true, 'can_edit' => false, 'can_delete' => false],
+        );
+        Cache::flush();
+
+        $this->actAs('cl1@acmetest.com')
+            ->withHeaders($this->tenantHeaders())
+            ->postJson('/api/vendors', ['name' => 'Approver-added Vendor'])
+            ->assertStatus(201);
+    }
+
     public function test_client_approver_cannot_create_master_data(): void
     {
         $this->actAs('cl1@acmetest.com')

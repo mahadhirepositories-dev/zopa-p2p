@@ -164,13 +164,14 @@ export class AuthService {
    * Fine-grained permission check.
    *
    * Returns true if the current role is allowed to perform `action` on `module`.
-   * Falls back to the existing coarse checks (canTransact / isAdmin) when the
-   * permissions matrix has not loaded yet or has no entry for this combination,
-   * so existing behaviour is fully preserved during the migration period.
+   * The Access Control matrix is AUTHORITATIVE and FAIL-CLOSED: once loaded, a
+   * role can do exactly what the matrix grants — no coarse-role fallback that
+   * could over-show actions. While the matrix is still loading, only `view` is
+   * allowed (avoids a brief lockout flash); mutations are denied until known.
    *
    * Example:
-   *   auth.canDo('purchase_orders', 'delete')  → false for client_buyer
-   *   auth.canDo('vendors', 'create')           → true  for zopa_buyer
+   *   auth.canDo('purchase_orders', 'delete')  → matrix value for the role
+   *   auth.canDo('vendors', 'create')           → matrix value for the role
    */
   canDo(module: string, action: PermissionAction): boolean {
     const role = this.currentRole();
@@ -180,13 +181,12 @@ export class AuthService {
     if (role === 'zopa_super_admin') return true;
 
     const matrix = this._permissionsMatrix();
-    const perms  = matrix?.[role]?.[module];
+    // Matrix not loaded yet: allow view (avoid lockout flash), deny mutations.
+    if (!matrix) return action === 'view';
 
-    if (!perms) {
-      // Matrix not yet loaded or no entry for this role/module:
-      // fall back to existing coarse-grained checks to avoid regressions.
-      return action === 'view' ? true : this.canTransact();
-    }
+    const perms = matrix[role]?.[module];
+    // Matrix loaded but no entry → deny (fail-closed; matrix is authoritative).
+    if (!perms) return false;
 
     switch (action) {
       case 'view':   return perms.can_view;

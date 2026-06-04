@@ -26,7 +26,6 @@ class CostCenterController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('cost_centers', 'create');
 
         $request->validate([
@@ -55,7 +54,6 @@ class CostCenterController extends Controller
 
     public function update(Request $request, CostCenter $costCenter): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('cost_centers', 'edit');
         $this->authorizeCostCenter($costCenter);
         $costCenter->update($request->except('tenant_id'));
@@ -64,7 +62,6 @@ class CostCenterController extends Controller
 
     public function destroy(CostCenter $costCenter): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('cost_centers', 'delete');
         $this->authorizeCostCenter($costCenter);
         $costCenter->update(['is_active' => false]);

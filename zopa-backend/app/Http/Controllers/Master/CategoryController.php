@@ -25,7 +25,6 @@ class CategoryController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('products', 'create');
 
         $request->validate(['name' => 'required|string|max:255']);
@@ -45,7 +44,6 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('products', 'edit');
         abort_if($category->tenant_id !== app('currentTenant')->id, 403);
         $category->update($request->only('name', 'parent_id'));
@@ -54,7 +52,6 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('products', 'delete');
         abort_if($category->tenant_id !== app('currentTenant')->id, 403);
         $category->delete();

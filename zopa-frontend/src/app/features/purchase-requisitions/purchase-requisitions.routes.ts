@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/auth/role.guard';
-
-const TRANSACT_ROLES = ['zopa_super_admin', 'zopa_buyer', 'client_admin', 'client_buyer'];
+import { permissionGuard } from '../../core/auth/permission.guard';
 
 export const prRoutes: Routes = [
   {
@@ -10,8 +8,8 @@ export const prRoutes: Routes = [
   },
   {
     path: 'create',
-    canActivate: [roleGuard],
-    data: { roles: TRANSACT_ROLES },
+    canActivate: [permissionGuard],
+    data: { module: 'purchase_requisitions', action: 'create' },
     loadComponent: () => import('./pr-form.component').then(m => m.PrFormComponent),
   },
   {

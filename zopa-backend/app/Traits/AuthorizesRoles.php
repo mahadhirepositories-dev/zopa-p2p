@@ -31,18 +31,6 @@ trait AuthorizesRoles
         'client_admin',
     ];
 
-    /** May manage master-data RECORDS (vendors, products, categories, org masters,
-     *  cost-centre records). Broader than ADMIN: it also includes the ZOPA Buyer,
-     *  who sets up a client's masters on their behalf. The fine-grained Access
-     *  Control matrix (requirePermission) still governs precisely within this group,
-     *  so toggling a role's create/edit/delete in Access Control is authoritative. */
-    protected const MASTER_ROLES = [
-        'zopa_super_admin',
-        'client_admin',
-        'zopa_buyer',
-        'client_buyer',
-    ];
-
     protected function requireTransactRole(): void
     {
         $this->requireRole(...self::TRANSACT_ROLES);
@@ -51,11 +39,6 @@ trait AuthorizesRoles
     protected function requireAdminRole(): void
     {
         $this->requireRole(...self::ADMIN_ROLES);
-    }
-
-    protected function requireMasterRole(): void
-    {
-        $this->requireRole(...self::MASTER_ROLES);
     }
 
     protected function requireRole(string ...$roles): void
@@ -114,14 +97,9 @@ trait AuthorizesRoles
             return true;
         }
 
-        $service = app(\App\Services\PermissionService::class);
-
-        // Restrict-only: if the matrix isn't configured for this role, defer to
-        // the coarse checks that the caller already applied (no-op here).
-        if (!$service->roleHasAnyConfig($role)) {
-            return true;
-        }
-
-        return $service->roleCanDo($role, $module, $action);
+        // The Access Control matrix is AUTHORITATIVE and fail-closed:
+        // roleCanDo() returns false when no row grants the action, so a role
+        // can do exactly what the matrix says — no more, no less.
+        return app(\App\Services\PermissionService::class)->roleCanDo($role, $module, $action);
     }
 }

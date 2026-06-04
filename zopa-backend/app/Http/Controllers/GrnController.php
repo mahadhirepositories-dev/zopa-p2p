@@ -38,7 +38,6 @@ class GrnController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('grns', 'create');
 
         $request->validate([

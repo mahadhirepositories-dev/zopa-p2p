@@ -43,7 +43,6 @@ class VendorController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'create');
         $this->validateVendor($request);
 
@@ -72,7 +71,6 @@ class VendorController extends Controller
 
     public function update(Request $request, Vendor $vendor): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
         $this->validateVendor($request, partial: true);
@@ -91,7 +89,6 @@ class VendorController extends Controller
 
     public function destroy(Vendor $vendor): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'delete');
         $this->authorizeVendor($vendor);
         $vendor->update(['is_active' => false]);
@@ -102,7 +99,6 @@ class VendorController extends Controller
 
     public function uploadDocument(Request $request, Vendor $vendor): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
 
@@ -138,7 +134,6 @@ class VendorController extends Controller
 
     public function deleteDocument(Vendor $vendor, VendorDocument $document): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
         abort_if($document->vendor_id !== $vendor->id, 404);
@@ -157,7 +152,6 @@ class VendorController extends Controller
 
     public function storeAddress(Request $request, Vendor $vendor): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
 
@@ -187,7 +181,6 @@ class VendorController extends Controller
 
     public function updateAddress(Request $request, Vendor $vendor, VendorAddress $address): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
         abort_if($address->vendor_id !== $vendor->id, 404);
@@ -218,7 +211,6 @@ class VendorController extends Controller
 
     public function destroyAddress(Vendor $vendor, VendorAddress $address): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
         abort_if($address->vendor_id !== $vendor->id, 404);
@@ -275,7 +267,6 @@ class VendorController extends Controller
     /** Bulk-import vendors from a filled-in template. */
     public function import(Request $request): JsonResponse
     {
-        $this->requireMasterRole();
         $this->requirePermission('vendors', 'create');
         $request->validate(['file' => 'required|file|mimes:xlsx,xls,csv|max:5120']);
 

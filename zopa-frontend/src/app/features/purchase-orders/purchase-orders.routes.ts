@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/auth/role.guard';
-
-const TRANSACT_ROLES = ['zopa_super_admin', 'zopa_buyer', 'client_admin', 'client_buyer'];
+import { permissionGuard } from '../../core/auth/permission.guard';
 
 export const purchaseOrderRoutes: Routes = [
   {
@@ -10,14 +8,14 @@ export const purchaseOrderRoutes: Routes = [
   },
   {
     path: 'create',
-    canActivate: [roleGuard],
-    data: { roles: TRANSACT_ROLES },
+    canActivate: [permissionGuard],
+    data: { module: 'purchase_orders', action: 'create' },
     loadComponent: () => import('./po-form.component').then(m => m.PoFormComponent),
   },
   {
     path: ':id/edit',
-    canActivate: [roleGuard],
-    data: { roles: TRANSACT_ROLES },
+    canActivate: [permissionGuard],
+    data: { module: 'purchase_orders', action: 'edit' },
     loadComponent: () => import('./po-form.component').then(m => m.PoFormComponent),
   },
   {

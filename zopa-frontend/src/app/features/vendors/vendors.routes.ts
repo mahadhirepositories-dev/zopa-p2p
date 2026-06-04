@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
-import { roleGuard } from '../../core/auth/role.guard';
-
-const ADMIN_ROLES = ['zopa_super_admin', 'zopa_buyer', 'client_admin', 'client_buyer'];
+import { permissionGuard } from '../../core/auth/permission.guard';
 
 export const vendorRoutes: Routes = [
   {
@@ -10,13 +8,15 @@ export const vendorRoutes: Routes = [
   },
   {
     path: 'create',
+    canActivate: [permissionGuard],
+    data: { module: 'vendors', action: 'create' },
     loadComponent: () => import('./vendor-form.component').then(m => m.VendorFormComponent),
-    canActivate: [roleGuard], data: { roles: ADMIN_ROLES },
   },
   {
     path: ':id/edit',
+    canActivate: [permissionGuard],
+    data: { module: 'vendors', action: 'edit' },
     loadComponent: () => import('./vendor-form.component').then(m => m.VendorFormComponent),
-    canActivate: [roleGuard], data: { roles: ADMIN_ROLES },
   },
   {
     path: ':id',

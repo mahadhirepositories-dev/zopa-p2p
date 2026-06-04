@@ -46,7 +46,6 @@ class PurchaseRequisitionController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('purchase_requisitions', 'create');
 
         $request->validate([
@@ -144,7 +143,6 @@ class PurchaseRequisitionController extends Controller
 
     public function update(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('purchase_requisitions', 'edit');
         $this->authorize($purchaseRequisition);
 
@@ -305,7 +303,6 @@ class PurchaseRequisitionController extends Controller
     {
         // Transactional family + matrix 'delete' permission (authoritative) — a
         // coarse admin-only gate would override a delete granted in Access Control.
-        $this->requireTransactRole();
         $this->requirePermission('purchase_requisitions', 'delete');
         $this->authorize($purchaseRequisition);
 

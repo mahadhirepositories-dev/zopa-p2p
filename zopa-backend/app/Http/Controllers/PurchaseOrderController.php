@@ -78,7 +78,6 @@ class PurchaseOrderController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('purchase_orders', 'create');
 
         $request->validate([
@@ -245,7 +244,6 @@ class PurchaseOrderController extends Controller
 
     public function update(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
-        $this->requireTransactRole();
         $this->requirePermission('purchase_orders', 'edit');
         $this->authorizePoAccess($purchaseOrder);
 
