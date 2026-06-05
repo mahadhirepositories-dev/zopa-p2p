@@ -902,11 +902,14 @@ export class PoFormComponent implements OnInit {
       product_id:      [data?.product_id ?? null],
       description:     [data?.description ?? '', Validators.required],
       category_id:     [data?.category_id ?? null],
-      qty:             [data?.qty ?? 1, [Validators.required, Validators.min(0.001)]],
+      // Coerce numeric fields: the API returns decimal-cast columns as STRINGS
+      // ("18.00"), which won't match the numeric <mat-select> options (18) — so
+      // the GST/Warranty dropdowns render blank on edit unless we cast to Number.
+      qty:             [data?.qty != null ? +data.qty : 1, [Validators.required, Validators.min(0.001)]],
       unit:            [data?.unit ?? null],
-      net_rate:        [data?.net_rate ?? 0, [Validators.required, Validators.min(0)]],
-      gst_rate:        [data?.gst_rate ?? 18, Validators.required],
-      warranty_months: [data?.warranty_months ?? 0],
+      net_rate:        [data?.net_rate != null ? +data.net_rate : 0, [Validators.required, Validators.min(0)]],
+      gst_rate:        [data?.gst_rate != null ? +data.gst_rate : 18, Validators.required],
+      warranty_months: [data?.warranty_months != null ? +data.warranty_months : 0],
       required_by:     [data?.required_by ? new Date(data.required_by) : null],
     });
   }

@@ -195,6 +195,10 @@ import { AuthService } from '../../core/auth/auth.service';
                     <th mat-header-cell *matHeaderCellDef>Qty</th>
                     <td mat-cell *matCellDef="let i">{{ i.qty }}</td>
                   </ng-container>
+                  <ng-container matColumnDef="unit">
+                    <th mat-header-cell *matHeaderCellDef>UOM</th>
+                    <td mat-cell *matCellDef="let i">{{ i.unit || i.product?.unit || '—' }}</td>
+                  </ng-container>
                   <ng-container matColumnDef="net_rate">
                     <th mat-header-cell *matHeaderCellDef>Net Rate</th>
                     <td mat-cell *matCellDef="let i">₹{{ i.net_rate | number:'1.2-2' }}</td>
@@ -409,7 +413,7 @@ export class PoDetailComponent implements OnInit {
     return pending?.assigned_to?.name ? `${pending.assigned_to.name}` : 'approval';
   });
 
-  itemCols = ['sno', 'description', 'hsn', 'qty', 'net_rate', 'gst_rate', 'warranty', 'amount', 'required_by'];
+  itemCols = ['sno', 'description', 'hsn', 'qty', 'unit', 'net_rate', 'gst_rate', 'warranty', 'amount', 'required_by'];
 
   ngOnInit() {
     this.http.get<PurchaseOrder>(`${environment.apiUrl}/purchase-orders/${this.id()}`).subscribe({
