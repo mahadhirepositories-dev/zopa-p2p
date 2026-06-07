@@ -475,6 +475,25 @@ class PurchaseOrderController extends Controller
         return response()->json($purchaseOrder->fresh());
     }
 
+    /**
+     * Super-admin tool: reset a non-draft PO back to draft, reversing all
+     * lifecycle side effects (budget freeze, GRNs, invoices, approvals, TAT)
+     * so the approval workflow can be re-run after (re)configuring approvers.
+     */
+    public function resetToDraft(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $this->requireRole('zopa_super_admin');
+        $this->authorizePoAccess($purchaseOrder);
+
+        if ($purchaseOrder->status === 'draft') {
+            return response()->json(['error' => 'This PO is already a draft.'], 422);
+        }
+
+        app(\App\Services\PoResetService::class)->resetToDraft($purchaseOrder);
+
+        return response()->json($purchaseOrder->fresh('items'));
+    }
+
     public function releasePayment(PurchaseOrder $purchaseOrder): JsonResponse
     {
         $this->requireAdminRole();   // financial action — admin only

@@ -94,6 +94,15 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             }
 
+            @if (auth.isSuperAdmin() && po()!.status !== 'draft') {
+              <button mat-stroked-button color="warn" [disabled]="acting()" (click)="resetToDraft()"
+                      matTooltip="Revert this PO to draft — reverses the budget freeze and removes goods receipts, invoices & approvals so the approval flow can be re-run">
+                @if (acting() === 'reset') { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>restart_alt</mat-icon> }
+                Reset to Draft
+              </button>
+            }
+
             <button mat-stroked-button [disabled]="downloading()" (click)="downloadPdf()"
                     matTooltip="Opens PDF in a new tab — use browser controls to save">
               @if (downloading()) { <mat-spinner diameter="18" /> }
@@ -465,6 +474,20 @@ export class PoDetailComponent implements OnInit {
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release-payment`, {}).subscribe({
       next: po => { this.po.set(po); this.acting.set(false); this.notify.success('Payment released.'); },
       error: err => { this.notify.error(err.error?.error ?? 'Payment release failed.'); this.acting.set(false); },
+    });
+  }
+
+  /** Super-admin only: revert a non-draft PO to draft, reversing all side effects. */
+  resetToDraft() {
+    if (!confirm(
+      'Reset this PO back to draft?\n\nThis reverses the budget freeze and removes any goods receipts, '
+      + 'invoices and approvals for this PO so you can re-run the approval flow. The PO number is cleared '
+      + 'and regenerated on the next submit.\n\nContinue?'
+    )) return;
+    this.acting.set('reset');
+    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/reset-to-draft`, {}).subscribe({
+      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO reset to draft. Configure approvers, then Submit for Approval.'); },
+      error: err => { this.notify.error(err.error?.error ?? 'Reset failed.'); this.acting.set(false); },
     });
   }
 

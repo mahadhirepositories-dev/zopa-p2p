@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\{PurchaseOrder, BudgetLedger, Grn, GrnItem, Invoice, Approval, EmailActionToken, TatRecord};
-use App\Services\{BudgetService, ActivityLogService};
+use App\Services\{BudgetService, PoResetService};
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -70,35 +70,7 @@ class ResetPoToDraft extends Command
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($po, $approvalIds, $grnIds) {
-            EmailActionToken::whereIn('approval_id', $approvalIds)->delete();
-            Approval::where('entity_type', 'PO')->where('entity_id', $po->id)->delete();
-            GrnItem::whereIn('grn_id', $grnIds)->delete();
-            Grn::where('po_id', $po->id)->delete();
-            Invoice::where('po_id', $po->id)->delete();
-            BudgetLedger::where('reference_type', 'PO')->where('reference_id', $po->id)->delete();
-            TatRecord::where('po_id', $po->id)->update([
-                'po_approved_at'      => null,
-                'po_released_at'      => null,
-                'po_delivered_at'     => null,
-                'invoice_approved_at' => null,
-            ]);
-            $po->update([
-                'status'              => 'draft',
-                'po_number'           => null,
-                'po_date'             => null,
-                'approved_by'         => null,
-                'approved_by_role'    => null,
-                'approved_at'         => null,
-                'released_at'         => null,
-                'delivered_at'        => null,
-                'invoiced_at'         => null,
-                'payment_released_at' => null,
-            ]);
-            app(ActivityLogService::class)->log('PO', $po->id, 'updated', [
-                'note' => 'Reset to draft to re-run the approval flow',
-            ], $po->tenant_id);
-        });
+        app(PoResetService::class)->resetToDraft($po);
 
         $after = ($po->cost_center_id && $fy !== null)
             ? $budget->getAvailable($po->cost_center_id, $fy)['available'] : null;

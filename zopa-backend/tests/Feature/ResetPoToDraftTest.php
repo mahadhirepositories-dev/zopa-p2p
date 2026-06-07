@@ -8,6 +8,7 @@ use App\Services\BudgetService;
 use Database\Seeders\TestDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class ResetPoToDraftTest extends TestCase
@@ -94,5 +95,44 @@ class ResetPoToDraftTest extends TestCase
         $this->artisan('po:reset-to-draft', ['id' => $po->id])->assertExitCode(0);
 
         $this->assertSame('delivered', $po->refresh()->status);  // unchanged without --force
+    }
+
+    private function deliveredPo(Tenant $acme, CostCenter $cc, string $no): PurchaseOrder
+    {
+        return PurchaseOrder::create([
+            'tenant_id' => $acme->id, 'cost_center_id' => $cc->id, 'vendor_id' => Vendor::query()->value('id'),
+            'status' => 'delivered', 'po_number' => $no, 'grand_total' => 100, 'freight' => 0,
+            'created_by' => User::where('email', 'cadmin@acmetest.com')->value('id'),
+        ]);
+    }
+
+    public function test_endpoint_resets_as_super_admin(): void
+    {
+        $this->seed(TestDataSeeder::class);
+        $acme = Tenant::where('code', 'ACME')->firstOrFail();
+        $cc   = CostCenter::where('tenant_id', $acme->id)->firstOrFail();
+        $po   = $this->deliveredPo($acme, $cc, 'Z/1');
+
+        Sanctum::actingAs(User::where('email', 'superadmin@zopatest.com')->firstOrFail());
+        $this->withHeaders(['X-Tenant-ID' => (string) $acme->id])
+            ->postJson("/api/purchase-orders/{$po->id}/reset-to-draft")
+            ->assertStatus(200);
+
+        $this->assertSame('draft', $po->refresh()->status);
+    }
+
+    public function test_endpoint_forbidden_for_non_super_admin(): void
+    {
+        $this->seed(TestDataSeeder::class);
+        $acme = Tenant::where('code', 'ACME')->firstOrFail();
+        $cc   = CostCenter::where('tenant_id', $acme->id)->firstOrFail();
+        $po   = $this->deliveredPo($acme, $cc, 'Z/2');
+
+        Sanctum::actingAs(User::where('email', 'cadmin@acmetest.com')->firstOrFail());
+        $this->withHeaders(['X-Tenant-ID' => (string) $acme->id])
+            ->postJson("/api/purchase-orders/{$po->id}/reset-to-draft")
+            ->assertStatus(403);
+
+        $this->assertSame('delivered', $po->refresh()->status);
     }
 }
