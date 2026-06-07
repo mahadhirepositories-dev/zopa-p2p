@@ -156,4 +156,30 @@ class PoEditTest extends TestCase
         $this->assertEquals(54.0,  (float) $po->tax_amount);   // 18% of 300
         $this->assertEquals(354.0, (float) $po->grand_total);
     }
+
+    /** PO numbers can contain '/' (from the org code) — the PDF download must not
+     *  500 on an invalid Content-Disposition filename. */
+    public function test_pdf_download_handles_slashed_po_number(): void
+    {
+        $po = PurchaseOrder::create([
+            'tenant_id' => $this->acme->id, 'cost_center_id' => $this->ccId,
+            'vendor_id' => $this->vendorId, 'status' => 'approved',
+            'po_number' => '2605/03/ACME-PO-2026-0001',
+            'po_date' => now(), 'net_total' => 200, 'tax_amount' => 36, 'grand_total' => 236,
+            'freight' => 0, 'round_off' => 0,
+            'created_by' => User::where('email', 'cadmin@acmetest.com')->value('id'),
+        ]);
+        PoItem::create([
+            'po_id' => $po->id, 'sno' => 1, 'description' => 'Item A',
+            'qty' => 2, 'unit' => 'Nos', 'net_rate' => 100, 'gst_rate' => 18,
+            'gross_rate' => 118, 'amount' => 236, 'warranty_months' => 0,
+        ]);
+
+        Sanctum::actingAs(User::where('email', 'cadmin@acmetest.com')->firstOrFail());
+        $resp = $this->withHeaders(['X-Tenant-ID' => (string) $this->acme->id])
+            ->get("/api/purchase-orders/{$po->id}/pdf");
+
+        $resp->assertStatus(200);
+        $this->assertSame('application/pdf', $resp->headers->get('content-type'));
+    }
 }

@@ -25,7 +25,7 @@ class DocumentPdf
                     'creator', 'approver',
                 ]);
                 $pdf  = Pdf::loadView('pdf.purchase-order', ['po' => $entity])->setPaper('a4');
-                $name = 'PO-' . ($entity->po_number ?: $entity->id) . '.pdf';
+                $name = 'PO-' . str_replace(['/', '\\'], '-', (string) ($entity->po_number ?: $entity->id)) . '.pdf';
                 return [self::attachment($pdf, $name)];
             }
 
@@ -34,7 +34,7 @@ class DocumentPdf
                     'items', 'costCenter', 'project', 'location', 'requestedBy', 'tenant',
                 ]);
                 $pdf  = Pdf::loadView('pdf.purchase-requisition', ['pr' => $entity])->setPaper('a4');
-                $name = 'PR-' . ($entity->pr_number ?: $entity->id) . '.pdf';
+                $name = 'PR-' . str_replace(['/', '\\'], '-', (string) ($entity->pr_number ?: $entity->id)) . '.pdf';
                 return [self::attachment($pdf, $name)];
             }
         } catch (\Throwable $e) {

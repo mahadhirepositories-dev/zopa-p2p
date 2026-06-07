@@ -521,7 +521,10 @@ class PurchaseOrderController extends Controller
 
         $pdf = Pdf::loadView('pdf.purchase-order', compact('po'))->setPaper('a4');
 
-        return $pdf->stream("PO-{$po->po_number}.pdf");
+        // PO numbers can contain '/' (from the org code) — Symfony rejects '/'
+        // and '\' in a Content-Disposition filename, so sanitise before streaming.
+        $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
+        return $pdf->stream("PO-{$safeNo}.pdf");
     }
 
     /**
@@ -570,7 +573,10 @@ class PurchaseOrderController extends Controller
 
         $pdf = Pdf::loadView('pdf.purchase-order', compact('po'))->setPaper('a4');
 
-        return $pdf->stream("PO-{$po->po_number}.pdf");
+        // PO numbers can contain '/' (from the org code) — Symfony rejects '/'
+        // and '\' in a Content-Disposition filename, so sanitise before streaming.
+        $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
+        return $pdf->stream("PO-{$safeNo}.pdf");
     }
 
     private function authorizePoAccess(PurchaseOrder $po): void
