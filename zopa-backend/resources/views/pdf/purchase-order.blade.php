@@ -138,13 +138,14 @@ $platLd = ($platLp && file_exists($platLp))
 /* ── Status badge ─────────────────────────────────────── */
 $statusLabel = strtoupper(str_replace('_', ' ', $po->status));
 
-/* ── Audit timestamps ─────────────────────────────────── */
-$createdAt   = $po->created_at  ? \Carbon\Carbon::parse($po->created_at)->format('d M Y, H:i')  : null;
-$approvedAt  = $po->approved_at ? \Carbon\Carbon::parse($po->approved_at)->format('d M Y, H:i') : null;
-$releasedAt  = $po->released_at ? \Carbon\Carbon::parse($po->released_at)->format('d M Y, H:i') : null;
+/* ── Audit timestamps — DB stores UTC; display in IST (Asia/Kolkata) ───── */
+$tz = 'Asia/Kolkata';
+$createdAt   = $po->created_at  ? \Carbon\Carbon::parse($po->created_at)->timezone($tz)->format('d M Y, H:i')  : null;
+$approvedAt  = $po->approved_at ? \Carbon\Carbon::parse($po->approved_at)->timezone($tz)->format('d M Y, H:i') : null;
+$releasedAt  = $po->released_at ? \Carbon\Carbon::parse($po->released_at)->timezone($tz)->format('d M Y, H:i') : null;
 $creatorRole = $po->created_by_role  ? ucwords(str_replace('_', ' ', $po->created_by_role))  : null;
 $approverRole= $po->approved_by_role ? ucwords(str_replace('_', ' ', $po->approved_by_role)) : null;
-$generatedAt = now()->format('d M Y, H:i');
+$generatedAt = now()->timezone($tz)->format('d M Y, H:i') . ' IST';
 
 /* ── Amount in words (Indian numbering) ───────────────── */
 if (!function_exists('_poNumWords')) {
@@ -416,40 +417,6 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
 <div style="margin-bottom:8px;"></div>
 @endif
 
-{{-- ═══════════ APPROVAL TRAIL (multilevel approvers + date & time) ═══════════ --}}
-@if($po->approvals && $po->approvals->count())
-<div class="sec-h">Approval Trail</div>
-<table class="approv" style="margin-bottom:8px;">
-        <thead>
-          <tr>
-            <th style="width:34px;" class="c">Level</th>
-            <th>Approver</th>
-            <th style="width:74px;">Decision</th>
-            <th style="width:96px;">Date &amp; Time</th>
-            <th>Remarks</th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach($po->approvals as $a)
-          <tr>
-            <td class="c b ink">{{ $a->level }}</td>
-            <td>{{ $a->assignedTo?->name ?? '—' }}</td>
-            <td>
-              @if($a->action==='approved')     <span class="c-ok">Approved</span>
-              @elseif($a->action==='rejected') <span class="c-no">Rejected</span>
-              @elseif($a->action==='returned') <span class="c-ret">Returned</span>
-              @else                            <span class="c-pnd">Pending</span>
-              @endif
-            </td>
-            <td style="color:#6b7280; font-size:8.5px;">
-              {{ $a->acted_at ? \Carbon\Carbon::parse($a->acted_at)->format('d M Y, H:i') : '—' }}
-            </td>
-            <td style="font-size:9px; color:#475569; font-style:italic;">{{ $a->comments ?? '—' }}</td>
-          </tr>
-          @endforeach
-        </tbody>
-</table>
-@endif
 
 {{-- ═══════════ AUTHORISATION & AUDIT (replaces signatures) ═══════════ --}}
 <table class="sec nobrk">
@@ -492,7 +459,6 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
 
       <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
         This is a system-generated document. Generated on {{ $generatedAt }}. No signature required.
-        @if($po->approvals && $po->approvals->count() > 1)&nbsp;Multi-level approvals are recorded in the Approval Trail above.@endif
       </div>
     </td>
   </tr>
