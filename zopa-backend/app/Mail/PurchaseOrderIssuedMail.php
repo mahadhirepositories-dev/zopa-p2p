@@ -33,13 +33,18 @@ class PurchaseOrderIssuedMail extends Mailable
     /** @var array{name:string,lines:array<int,string>}|null */
     public ?array $billTo;
     public ?array $shipTo;
+    /** Buyer who raised the PO — CC'd on this vendor communication. @var array<int,string> */
+    public array $ccList = [];
 
     public function __construct(public object $po)
     {
         $po->loadMissing([
             'items.product', 'vendor', 'costCenter', 'tenant',
-            'billToLocation', 'shipToLocation',
+            'billToLocation', 'shipToLocation', 'creator',
         ]);
+
+        // CC the buyer who raised the PO on all vendor communication.
+        $this->ccList = array_values(array_filter([optional($po->creator)->email]));
 
         // DocumentPresenter only supplies the title/number/line-items here; the
         // header rows below are intentionally VENDOR-facing, not the approver view.
@@ -67,6 +72,7 @@ class PurchaseOrderIssuedMail extends Mailable
     {
         return new Envelope(
             subject: "Purchase Order {$this->docNumber} from {$this->buyerOrg}",
+            cc: $this->ccList,
         );
     }
 

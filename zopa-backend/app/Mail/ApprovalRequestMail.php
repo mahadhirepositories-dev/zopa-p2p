@@ -31,6 +31,8 @@ class ApprovalRequestMail extends Mailable
     public array $headerRows;
     /** @var array<int,array<string,mixed>> */
     public array $items;
+    /** Buyer/requester who raised the document — CC'd so they see the routing. @var array<int,string> */
+    public array $ccList = [];
 
     public function __construct(
         public Approval $approval,
@@ -45,6 +47,18 @@ class ApprovalRequestMail extends Mailable
 
         $this->approverName = $approval->assignedTo?->name ?? 'Approver';
 
+        // CC the person who raised the document (PO creator / PR requester) so the
+        // buyer is kept in the loop — but not if they are the approver themselves.
+        if ($entityType === 'PO') {
+            $entity->loadMissing('creator');
+            $raiserEmail = optional($entity->creator)->email;
+        } else {
+            $entity->loadMissing('requestedBy');
+            $raiserEmail = optional($entity->requestedBy)->email;
+        }
+        $approverEmail = $approval->assignedTo?->email;
+        $this->ccList  = ($raiserEmail && $raiserEmail !== $approverEmail) ? [$raiserEmail] : [];
+
         [$this->docTitle, $this->docNumber, $this->headerRows, $this->items]
             = DocumentPresenter::present($entity, $entityType);
     }
@@ -53,6 +67,7 @@ class ApprovalRequestMail extends Mailable
     {
         return new Envelope(
             subject: "Action Required: {$this->docTitle} {$this->docNumber} — Level {$this->approval->level} Approval",
+            cc: $this->ccList,
         );
     }
 
