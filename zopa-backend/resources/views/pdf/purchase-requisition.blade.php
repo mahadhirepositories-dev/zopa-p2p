@@ -32,7 +32,7 @@
       </td>
       <td class="right" style="vertical-align:top;">
         <div style="font-size:13px;font-weight:bold;">{{ $pr->pr_number ?: 'DRAFT' }}</div>
-        <div class="muted" style="margin-top:3px;">{{ \Illuminate\Support\Carbon::parse($pr->created_at)->format('d M Y') }}</div>
+        <div class="muted" style="margin-top:3px;">{{ \Illuminate\Support\Carbon::parse($pr->created_at)->timezone('Asia/Kolkata')->format('d M Y') }}</div>
         <div style="margin-top:4px;"><span class="badge">{{ str_replace('_',' ', $pr->status) }}</span></div>
       </td>
     </tr>
