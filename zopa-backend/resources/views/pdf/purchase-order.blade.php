@@ -245,7 +245,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->costCenter->name }}</div>
         @if($po->costCenter->department)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Dept: {{ $po->costCenter->department->name }}</div>@endif
         @if($po->costCenter->project)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Project: {{ $po->costCenter->project->name }}</div>@endif
-        @if($po->costCenter->location)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
+        @if($po->costCenter->location && !$po->billToLocation)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
       @endif
       @if($po->billToLocation)
         <div style="font-size:9px; color:#374151; margin-top:3px; line-height:1.55;">
@@ -426,7 +426,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <tr>
           <td style="vertical-align:middle;"><div class="sl" style="border:none; margin:0; padding:0;">Authorisation &amp; Audit Trail</div></td>
           <td style="text-align:right; vertical-align:middle;">
-            @if($platLd)<img src="{{ $platLd }}" alt="ZOPA" style="max-height:16px; max-width:60px;" />@endif
+            <span style="font-size:7.5px; color:#9ca3af; font-style:italic;">System generated document.&nbsp;Generated in ZOPA P2P.</span>
           </td>
         </tr>
       </table>
