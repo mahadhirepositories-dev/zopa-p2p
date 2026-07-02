@@ -958,10 +958,10 @@ export class PoFormComponent implements OnInit {
     if (!product) return;
     this.items.at(i).patchValue({
       description:     product.name,
-      net_rate:        product.net_rate,
-      gst_rate:        product.gst_rate,
+      net_rate:        product.net_rate != null ? +product.net_rate : 0,
+      gst_rate:        product.gst_rate != null ? +product.gst_rate : 0,
       category_id:     product.category_id ?? null,
-      warranty_months: product.warranty_months ?? 0,
+      warranty_months: product.warranty_months != null ? +product.warranty_months : 0,
       unit:            product.unit ?? null,
     });
     this.recalcItem(i);
