@@ -241,11 +241,11 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   <tr>
     <td class="cell" style="width:50%;">
       <div class="sl">Bill To</div>
-      @if($po->costCenter)
+      @if($po->costCenter && !$po->billToLocation)
         <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->costCenter->name }}</div>
         @if($po->costCenter->department)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Dept: {{ $po->costCenter->department->name }}</div>@endif
         @if($po->costCenter->project)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Project: {{ $po->costCenter->project->name }}</div>@endif
-        @if($po->costCenter->location && !$po->billToLocation)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
+        @if($po->costCenter->location)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
       @endif
       @if($po->billToLocation)
         <div style="font-size:9px; color:#374151; margin-top:3px; line-height:1.55;">
@@ -457,9 +457,6 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         </tr>
       </table>
 
-      <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
-        This is a system-generated document. Generated on {{ $generatedAt }}. No signature required.
-      </div>
     </td>
   </tr>
 </table>
