@@ -425,9 +425,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       <table style="width:100%; border-collapse:collapse; margin-bottom:6px;">
         <tr>
           <td style="vertical-align:middle;"><div class="sl" style="border:none; margin:0; padding:0;">Authorisation &amp; Audit Trail</div></td>
-          <td style="text-align:right; vertical-align:middle;">
-            <span style="font-size:7.5px; color:#9ca3af; font-style:italic;">System generated document.&nbsp;Generated in ZOPA P2P.</span>
-          </td>
+          <td></td>
         </tr>
       </table>
 
@@ -457,6 +455,9 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         </tr>
       </table>
 
+      <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
+        System generated document. Generated in ZOPA P2P on {{ $generatedAt }}. No signature required.
+      </div>
     </td>
   </tr>
 </table>
