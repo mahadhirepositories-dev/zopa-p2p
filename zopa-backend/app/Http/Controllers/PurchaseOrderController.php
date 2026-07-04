@@ -504,14 +504,43 @@ class PurchaseOrderController extends Controller
         $this->authorizePoAccess($purchaseOrder);
 
         $po = $purchaseOrder->load('costCenter');
-        $configs = \App\Models\ApprovalConfig::where('cost_center_id', $po->cost_center_id)
-            ->orderBy('type')
-            ->orderBy('level')
-            ->get();
 
-        $allTenantConfigs = \App\Models\ApprovalConfig::whereHas('costCenter', fn ($q) =>
-            $q->where('tenant_id', $po->tenant_id)
-        )->with('costCenter:id,name')->orderBy('type')->orderBy('level')->get();
+        // Every config on this PO's cost center (all types), with resolved approver IDs.
+        $configs = \App\Models\ApprovalConfig::where('cost_center_id', $po->cost_center_id)
+            ->orderBy('type')->orderBy('level')->get()
+            ->map(fn ($c) => [
+                'id'                 => $c->id,
+                'type'               => $c->type,
+                'level'              => $c->level,
+                'is_active'          => $c->is_active,
+                'amount_limit'       => $c->amount_limit,
+                'user_id'            => $c->user_id,
+                'user_ids'           => $c->user_ids,
+                'resolved_user_ids'  => $c->resolved_user_ids,
+            ]);
+
+        // The exact set requiredPoConfigs() would return for this PO's amount.
+        $poConfigs = \App\Models\ApprovalConfig::where('cost_center_id', $po->cost_center_id)
+            ->where('type', 'po')->where('is_active', true)->orderBy('level')->get();
+        $required = collect();
+        foreach ($poConfigs as $c) {
+            $required->push('L' . $c->level);
+            if (is_null($c->amount_limit) || (float) $po->grand_total <= (float) $c->amount_limit) break;
+        }
+
+        // Actual approval records currently on this PO.
+        $approvals = \App\Models\Approval::where('entity_type', 'PO')
+            ->where('entity_id', $po->id)
+            ->with('assignedTo:id,name,email')
+            ->orderBy('level')->orderBy('id')
+            ->get(['id', 'level', 'assigned_to_user_id', 'action', 'acted_at', 'created_at']);
+
+        $poConfigCount = $poConfigs->count();
+        $verdict = $poConfigCount === 0
+            ? '❌ NO active PO approval config on this cost center → routeForApproval auto-approves. '
+              . 'The L1 approver you set was NOT saved against THIS cost center + type=po.'
+            : '✅ ' . $poConfigCount . ' active PO config(s) found → this PO SHOULD route to '
+              . $required->implode(' → ') . ', not auto-approve.';
 
         return response()->json([
             'po_id'            => $po->id,
@@ -520,8 +549,10 @@ class PurchaseOrderController extends Controller
             'cost_center_id'   => $po->cost_center_id,
             'cost_center_name' => $po->costCenter?->name,
             'grand_total'      => $po->grand_total,
+            'VERDICT'          => $verdict,
+            'would_route_to'   => $required->values(),
             'configs_for_this_cost_center' => $configs,
-            'all_po_configs_for_tenant'    => $allTenantConfigs->where('type', 'po')->values(),
+            'approval_records_on_this_po'  => $approvals,
         ]);
     }
 
