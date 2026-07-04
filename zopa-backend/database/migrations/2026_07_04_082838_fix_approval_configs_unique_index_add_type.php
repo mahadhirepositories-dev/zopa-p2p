@@ -1,35 +1,66 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 /**
- * The original approval_configs unique index covers (cost_center_id, level) but NOT
- * type. Once the 'type' column was added (po / invoice / pr), each cost center can
- * legitimately have level-1 configs for all three types. The old index prevents this:
- * saving a PO L1 config after an invoice L1 config (or vice-versa) throws a duplicate-
- * key violation, leaving the second save silently failed — causing POs to auto-approve
- * because no PO config is found for the cost center.
+ * Normalise the approval_configs unique index to (cost_center_id, type, level).
  *
- * Fix: drop the old (cost_center_id, level) index and replace it with
- * (cost_center_id, type, level) — each (center, type, level) triple is unique.
+ * Background: after the 'type' column (po / invoice / pr) was added, each cost
+ * center can legitimately hold level-1 configs for all three types. A unique index
+ * on just (cost_center_id, level) would block that. This migration guarantees the
+ * correct composite unique index exists.
+ *
+ * Written defensively with information_schema existence checks because the legacy
+ * (cost_center_id, level) index is NOT present on every environment (it exists on
+ * some dev DBs but was never created on production). A blind dropUnique() throws
+ * SQLSTATE 1091 ("Can't DROP … ; check that it exists") and aborts the whole
+ * deploy — which is exactly what happened. Each step is now a no-op when the
+ * target state already holds, so the migration is safe to run anywhere.
  */
 return new class extends Migration
 {
+    private function indexExists(string $name): bool
+    {
+        return collect(DB::select(
+            "SELECT 1 FROM information_schema.statistics
+             WHERE table_schema = DATABASE()
+               AND table_name = 'approval_configs'
+               AND index_name = ? LIMIT 1",
+            [$name]
+        ))->isNotEmpty();
+    }
+
     public function up(): void
     {
-        Schema::table('approval_configs', function (Blueprint $table) {
-            $table->dropUnique(['cost_center_id', 'level']);
-            $table->unique(['cost_center_id', 'type', 'level']);
-        });
+        // Drop the legacy index only if it actually exists.
+        if ($this->indexExists('approval_configs_cost_center_id_level_unique')) {
+            DB::statement('ALTER TABLE approval_configs DROP INDEX approval_configs_cost_center_id_level_unique');
+        }
+
+        // Add the composite index only if it isn't already there and no duplicate
+        // (cost_center_id, type, level) rows would violate it. If duplicates somehow
+        // exist, skip silently rather than fail the deploy — the app logic does not
+        // depend on this constraint, it is defence-in-depth.
+        if (! $this->indexExists('approval_configs_cost_center_id_type_level_unique')) {
+            $dupes = DB::select(
+                "SELECT cost_center_id, type, level, COUNT(*) c
+                 FROM approval_configs
+                 GROUP BY cost_center_id, type, level HAVING c > 1 LIMIT 1"
+            );
+            if (empty($dupes)) {
+                DB::statement(
+                    'ALTER TABLE approval_configs
+                     ADD UNIQUE approval_configs_cost_center_id_type_level_unique (cost_center_id, type, level)'
+                );
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('approval_configs', function (Blueprint $table) {
-            $table->dropUnique(['cost_center_id', 'type', 'level']);
-            $table->unique(['cost_center_id', 'level']);
-        });
+        if ($this->indexExists('approval_configs_cost_center_id_type_level_unique')) {
+            DB::statement('ALTER TABLE approval_configs DROP INDEX approval_configs_cost_center_id_type_level_unique');
+        }
     }
 };

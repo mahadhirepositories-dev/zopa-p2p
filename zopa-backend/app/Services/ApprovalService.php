@@ -59,13 +59,6 @@ class ApprovalService
 
         // No PO approval config → auto-approve immediately (same pattern as invoices).
         if ($required->isEmpty()) {
-            \Log::warning('PO auto-approved: no active PO approval config found', [
-                'po_id'          => $po->id,
-                'cost_center_id' => $po->cost_center_id,
-                'grand_total'    => $po->grand_total,
-                'po_config_count' => ApprovalConfig::where('cost_center_id', $po->cost_center_id)
-                    ->where('type', 'po')->where('is_active', true)->count(),
-            ]);
             $po->update([
                 'status'      => 'approved',
                 'po_date'     => $po->po_date ?? now()->toDateString(),
