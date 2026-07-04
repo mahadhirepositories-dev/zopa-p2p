@@ -20,6 +20,7 @@ import { environment } from '../../../environments/environment';
 import { Vendor, VendorAddress, Product, CostCenter, Location, Budget, PaymentTerm, Category } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { BulkImportService } from '../../core/services/bulk-import.service';
+import { RichTextEditorComponent } from '../../shared/components/rich-text-editor.component';
 
 @Component({
   selector: 'app-po-form',
@@ -30,6 +31,7 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
     MatSelectModule, MatDatepickerModule, MatNativeDateModule,
     MatCardModule, MatDividerModule, MatProgressSpinnerModule,
     MatTooltipModule, MatProgressBarModule, MatChipsModule,
+    RichTextEditorComponent,
   ],
   template: `
     <div class="page-wrapper">
@@ -494,10 +496,8 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
           </button>
         </mat-card-header>
         <mat-card-content style="padding-top:12px;">
-          <mat-form-field appearance="outline" class="full-width">
-            <textarea matInput [formControl]="tcControl" rows="8"
-                      placeholder="Enter or paste terms and conditions, or click 'Ask AI' to auto-generate…"></textarea>
-          </mat-form-field>
+          <app-rich-text-editor [formControl]="tcControl"
+            placeholder="Enter or paste terms and conditions, use the toolbar to format, or click 'Ask AI'…" />
         </mat-card-content>
       </mat-card>
 

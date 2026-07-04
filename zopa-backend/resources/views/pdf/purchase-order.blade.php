@@ -166,6 +166,40 @@ if (!function_exists('_poNumWords')) {
 }
 $amtWords = _poNumWords((int) round($po->grand_total)) . ' Rupees Only';
 
+/* ── Terms → paginatable lines ─────────────────────────────
+   terms_conditions may be rich HTML (from the WYSIWYG editor) or legacy plain
+   text. Normalise to an array of lines so each renders as its own table ROW —
+   the only reliable way DomPDF paginates long terms. Inline bold/italic/underline
+   are preserved; every other tag + all attributes are stripped, so the output is
+   safe to print with {!! !!} (DomPDF has PHP execution disabled). */
+if (!function_exists('_poTermsLines')) {
+  function _poTermsLines(?string $raw): array {
+    if (!$raw || trim($raw) === '') return [];
+    $isHtml = (bool) preg_match('/<[a-z][\s\S]*>/i', $raw);
+    $s = $raw;
+    if ($isHtml) {
+      $s = preg_replace('/<li[^>]*>/i', "\n\u{2022} ", $s);         // <li> → bullet line
+      $s = preg_replace('/<\/(p|div|li|ul|ol|h[1-6]|tr)>/i', "\n", $s);
+      $s = preg_replace('/<br\s*\/?>/i', "\n", $s);
+    }
+    $lines = preg_split('/\r?\n/', $s);
+    $out = [];
+    foreach ($lines as $line) {
+      if ($isHtml) {
+        // Keep inline formatting only + drop attributes. Text runs are already
+        // entity-encoded by the browser, so this is safe to print with {!! !!}.
+        $line = strip_tags($line, '<b><strong><i><em><u>');
+        $line = preg_replace('/<(b|strong|i|em|u)\b[^>]*>/i', '<$1>', $line);
+      } else {
+        // Legacy plain text — escape so it prints literally.
+        $line = htmlspecialchars($line, ENT_QUOTES);
+      }
+      if (trim(strip_tags($line)) !== '') $out[] = trim($line);     // skip blank lines
+    }
+    return $out;
+  }
+}
+
 /* ── Item-level flags for optional columns ──────────────
    Prefer the values SNAPSHOTTED on the po_item at creation; fall back to the
    live product only for legacy rows created before snapshotting existed. This
@@ -198,7 +232,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     </td>
 
     <td style="width:48%; padding:0 0 8px 8px; vertical-align:bottom; text-align:right;">
-      <div style="font-size:21px; font-weight:bold; color:#1f2937; letter-spacing:2px;">PURCHASE ORDER</div>
+      <div style="font-size:16px; font-weight:bold; color:#1f2937; letter-spacing:1.5px;">PURCHASE ORDER</div>
       <div style="margin-top:5px;">
         <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;{{ $po->po_number ?? 'DRAFT' }}</span>
         &nbsp;&nbsp;<span class="badge">{{ $statusLabel }}</span>
@@ -229,10 +263,20 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:8.5px; color:#6b7280; margin-bottom:2px;">GSTIN: {{ $vgstin }}</div>
       @endif
       @if($po->vendorAddress)
+        @php
+          $va = $po->vendorAddress;
+          $vLine2 = collect([$va->city, $va->state])->filter()->implode(', ');
+          if ($va->state_code) { $vLine2 .= ' ('.$va->state_code.')'; }
+          if ($va->pincode)    { $vLine2 = trim($vLine2).' - '.$va->pincode; }
+        @endphp
         <div style="font-size:9px; color:#374151; line-height:1.6;">
-          @if($po->vendorAddress->label)<strong>{{ $po->vendorAddress->label }}</strong>&nbsp;&mdash;&nbsp;@endif
-          @if($po->vendorAddress->address){{ $po->vendorAddress->address }}@endif
-          @if($po->vendorAddress->state), {{ $po->vendorAddress->state }}@if($po->vendorAddress->state_code) ({{ $po->vendorAddress->state_code }})@endif @endif
+          @if($va->label)<strong>{{ $va->label }}</strong>&nbsp;&mdash;&nbsp;@endif
+          @if($va->address){{ $va->address }}@endif
+          @if($vLine2)<br>{{ $vLine2 }}@endif
+          @if($va->country)<br>{{ $va->country }}@endif
+          @if($va->contact_name || $va->contact_phone)
+            <br><span style="color:#6b7280;">Contact: {{ trim(($va->contact_name ?? '').($va->contact_phone ? ' · '.$va->contact_phone : '')) }}</span>
+          @endif
         </div>
       @endif
     </td>
@@ -251,8 +295,8 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         @if($po->costCenter->location)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
       @endif
       @if($po->billToLocation)
-        <div style="font-size:9px; color:#374151; margin-top:3px; line-height:1.55;">
-          <strong>{{ $po->billToLocation->name }}</strong>
+        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
+        <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
         </div>
       @endif
@@ -422,10 +466,9 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   @endif
   @if($po->terms_conditions)
     @if($po->payment_terms_json && count($po->payment_terms_json))<tr><td class="sub">General Terms</td></tr>@endif
-    @php $tcLines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $po->terms_conditions)))); @endphp
-    @foreach($tcLines as $line)
-      {{-- Each line is its own row: preserve the buyer's own numbering / bullets (no auto-numbering). --}}
-      <tr><td>{{ $line }}</td></tr>
+    @foreach(_poTermsLines($po->terms_conditions) as $line)
+      {{-- One row per line so DomPDF paginates; inline bold/italic/underline preserved. --}}
+      <tr><td>{!! $line !!}</td></tr>
     @endforeach
   @endif
 </table>

@@ -239,7 +239,7 @@ import { AuthService } from '../../core/auth/auth.service';
             @if (po()!.terms_conditions) {
               <mat-card style="margin-bottom:16px;">
                 <mat-card-header><mat-card-title>Terms &amp; Conditions</mat-card-title></mat-card-header>
-                <mat-card-content style="padding:16px;white-space:pre-wrap;font-size:13px;color:#555;">{{ po()!.terms_conditions }}</mat-card-content>
+                <mat-card-content style="padding:16px;white-space:pre-wrap;font-size:13px;color:#555;" [innerHTML]="po()!.terms_conditions"></mat-card-content>
               </mat-card>
             }
           </div>
