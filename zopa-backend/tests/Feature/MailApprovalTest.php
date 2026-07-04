@@ -150,11 +150,35 @@ class MailApprovalTest extends TestCase
         $approval = $this->pendingApproval($pr, 'cl1@acmetest.com');
         $token    = app(TokenService::class)->generate($approval, 'approve');
 
+        // GET shows a confirmation page and must NOT approve — email security
+        // scanners / link prefetchers auto-fetch URLs on GET and would otherwise
+        // silently approve the document.
         $this->get("/api/email/approval/{$token}/approve")
+            ->assertStatus(200)
+            ->assertSee('Approve this document');
+        $this->assertEquals('pending', $approval->fresh()->action);
+
+        // POST (the human clicking Confirm Approval) performs the approval.
+        $this->post("/api/email/approval/{$token}/approve")
             ->assertStatus(200)
             ->assertSee('Approved');
 
         $this->assertEquals('approved', $approval->fresh()->action);
+    }
+
+    public function test_public_approve_get_does_not_mutate_state(): void
+    {
+        // Explicit guard against the "email scanner auto-approves" regression:
+        // hitting the GET link any number of times must never change the action.
+        $pr       = $this->makePr('pending_l1');
+        $approval = $this->pendingApproval($pr, 'cl1@acmetest.com');
+        $token    = app(TokenService::class)->generate($approval, 'approve');
+
+        $this->get("/api/email/approval/{$token}/approve")->assertStatus(200);
+        $this->get("/api/email/approval/{$token}/approve")->assertStatus(200);
+
+        $this->assertEquals('pending', $approval->fresh()->action);
+        $this->assertEquals('pending_l1', $pr->fresh()->status);
     }
 
     public function test_public_approve_link_is_single_use(): void
@@ -163,10 +187,10 @@ class MailApprovalTest extends TestCase
         $approval = $this->pendingApproval($pr, 'cl1@acmetest.com');
         $token    = app(TokenService::class)->generate($approval, 'approve');
 
-        $this->get("/api/email/approval/{$token}/approve")->assertStatus(200);
+        $this->post("/api/email/approval/{$token}/approve")->assertStatus(200);
 
         // Second use is rejected with a friendly page; action stays 'approved'.
-        $this->get("/api/email/approval/{$token}/approve")
+        $this->post("/api/email/approval/{$token}/approve")
             ->assertStatus(200)
             ->assertSee('expired');
 

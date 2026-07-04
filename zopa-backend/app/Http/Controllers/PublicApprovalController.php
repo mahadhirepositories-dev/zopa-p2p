@@ -32,7 +32,32 @@ class PublicApprovalController extends Controller
         private ActivityLogService $actLog,
     ) {}
 
-    /** GET /api/email/approval/{token}/approve */
+    /**
+     * GET /api/email/approval/{token}/approve — show a confirmation page. Does NOT act.
+     *
+     * ⚠️ State-changing actions MUST NOT happen on GET. Email security scanners and
+     * link prefetchers (Microsoft Defender Safe Links, Gmail, Mimecast, Barracuda,
+     * antivirus, chat unfurlers) automatically issue a GET to every URL in an email
+     * to check for malware. When approve acted on GET, that automated fetch silently
+     * approved the document the instant the email was delivered — the "auto-approve"
+     * bug. Reject was always two-step (GET form → POST) which is why only approve was
+     * ever auto-triggered. Approve now mirrors reject: the human must click Confirm,
+     * which POSTs. Prefetchers do not submit POST forms, so they cannot approve.
+     */
+    public function showApprove(string $token): View
+    {
+        $record = $this->lookup($token, 'approve');
+        if (!$record instanceof EmailActionToken) {
+            return $record; // already a rendered error/info page
+        }
+
+        return view('emails.public.approve-form', [
+            'token'    => $token,
+            'docLabel' => $this->docLabel($record->approval),
+        ]);
+    }
+
+    /** POST /api/email/approval/{token}/approve — perform the approval. */
     public function approve(string $token): View
     {
         $record = $this->lookup($token, 'approve');

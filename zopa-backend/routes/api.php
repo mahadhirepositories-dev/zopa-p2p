@@ -48,9 +48,12 @@ Route::middleware('auth:sanctum')->get('/pincode/{pincode}', [PincodeController:
 // The unguessable single-use token in the URL is the authorization. Throttled
 // as defence-in-depth against token guessing. Renders friendly HTML pages.
 Route::middleware('throttle:30,1')->group(function () {
-    Route::get('/email/approval/{token}/approve', [PublicApprovalController::class, 'approve'])->where('token', '[A-Za-z0-9]+');
-    Route::get('/email/approval/{token}/reject',  [PublicApprovalController::class, 'showReject'])->where('token', '[A-Za-z0-9]+');
-    Route::post('/email/approval/{token}/reject', [PublicApprovalController::class, 'reject'])->where('token', '[A-Za-z0-9]+');
+    // Approve is two-step (GET confirmation page → POST) so email security scanners /
+    // link prefetchers that auto-fetch URLs on GET cannot silently approve.
+    Route::get('/email/approval/{token}/approve',  [PublicApprovalController::class, 'showApprove'])->where('token', '[A-Za-z0-9]+');
+    Route::post('/email/approval/{token}/approve', [PublicApprovalController::class, 'approve'])->where('token', '[A-Za-z0-9]+');
+    Route::get('/email/approval/{token}/reject',   [PublicApprovalController::class, 'showReject'])->where('token', '[A-Za-z0-9]+');
+    Route::post('/email/approval/{token}/reject',  [PublicApprovalController::class, 'reject'])->where('token', '[A-Za-z0-9]+');
 });
 
 // Authenticated (no tenant scope)
