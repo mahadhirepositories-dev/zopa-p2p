@@ -166,9 +166,12 @@ if (!function_exists('_poNumWords')) {
 }
 $amtWords = _poNumWords((int) round($po->grand_total)) . ' Rupees Only';
 
-/* ── Item-level flags for optional columns ────────────── */
-$hasCode = $po->items->contains(fn($i) => !empty($i->product?->code));
-$hasHSN  = $po->items->contains(fn($i) => !empty($i->product?->hsn_code));
+/* ── Item-level flags for optional columns ──────────────
+   Prefer the values SNAPSHOTTED on the po_item at creation; fall back to the
+   live product only for legacy rows created before snapshotting existed. This
+   keeps a printed PO fixed even if the product master is edited later. ── */
+$hasCode = $po->items->contains(fn($i) => !empty($i->product_code ?? $i->product?->code));
+$hasHSN  = $po->items->contains(fn($i) => !empty($i->hsn_code ?? $i->product?->hsn_code));
 $hasUOM  = $po->items->contains(fn($i) => !empty($i->unit) || !empty($i->product?->unit));
 $hasWar  = $po->items->contains(fn($i) => ($i->warranty_months ?? 0) > 0);
 $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
@@ -299,20 +302,25 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     @endphp
     <tr>
       <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
-      @if($hasCode)<td style="font-size:8px; color:#6b7280;">{{ $item->product?->code ?? '—' }}</td>@endif
+      @php
+        $itCode = $item->product_code ?? $item->product?->code;
+        $itName = $item->product_name ?? $item->product?->name;
+        $itHsn  = $item->hsn_code ?? $item->product?->hsn_code;
+      @endphp
+      @if($hasCode)<td style="font-size:8px; color:#6b7280;">{{ $itCode ?? '—' }}</td>@endif
       <td>
         <div style="font-weight:bold; color:#1f2937; font-size:9.5px; white-space:pre-wrap;">{{ $item->description }}</div>
-        @if($item->product && $item->product->name !== $item->description)
-          <div style="font-size:7.5px; color:#6b7280; margin-top:2px;">Product: {{ $item->product->name }}</div>
+        @if($itName && $itName !== $item->description)
+          <div style="font-size:7.5px; color:#6b7280; margin-top:2px;">Product: {{ $itName }}</div>
         @endif
-        @if(!$hasCode && $item->product?->code && $item->product->code !== $item->description)
-          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">{{ $item->product->code }}</div>
+        @if(!$hasCode && $itCode && $itCode !== $item->description)
+          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">{{ $itCode }}</div>
         @endif
-        @if(!$hasHSN && $item->product?->hsn_code)
-          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">HSN: {{ $item->product->hsn_code }}</div>
+        @if(!$hasHSN && $itHsn)
+          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">HSN: {{ $itHsn }}</div>
         @endif
       </td>
-      @if($hasHSN)<td class="c" style="font-size:8.5px; color:#475569;">{{ $item->product?->hsn_code ?? '—' }}</td>@endif
+      @if($hasHSN)<td class="c" style="font-size:8.5px; color:#475569;">{{ $itHsn ?? '—' }}</td>@endif
       @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->unit ?? $item->product?->unit ?? '—' }}</td>@endif
       <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($item->qty, 3),'0'),'.') }}</td>
       <td class="r" style="font-size:9px;">&#8377;{{ number_format($item->net_rate, 2) }}</td>

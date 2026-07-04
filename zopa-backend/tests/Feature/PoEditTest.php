@@ -157,6 +157,46 @@ class PoEditTest extends TestCase
         $this->assertEquals(354.0, (float) $po->grand_total);
     }
 
+    /** A created PO is an immutable snapshot: editing the product master afterwards
+     *  (GST %, HSN, code, name) must NOT change the already-created PO's line item. */
+    public function test_po_item_snapshots_product_and_survives_master_change(): void
+    {
+        $product = \App\Models\Product::create([
+            'tenant_id' => $this->acme->id, 'code' => 'PRD-001', 'name' => 'Original Name',
+            'unit' => 'Nos', 'net_rate' => 100, 'gst_rate' => 18, 'hsn_code' => '1111', 'is_active' => true,
+        ]);
+
+        $payload = [
+            'vendor_id' => $this->vendorId, 'cost_center_id' => $this->ccId,
+            'po_valid_till' => now()->addDays(20)->toDateString(), 'freight' => 0,
+            'items' => [[
+                'product_id' => $product->id, 'description' => 'Original Name',
+                'qty' => 2, 'net_rate' => 100, 'gst_rate' => 18,
+            ]],
+        ];
+
+        Sanctum::actingAs(User::where('email', 'cadmin@acmetest.com')->firstOrFail());
+        $created = $this->withHeaders(['X-Tenant-ID' => (string) $this->acme->id])
+            ->withoutExceptionHandling()
+            ->postJson('/api/purchase-orders', $payload)
+            ->assertStatus(201)->json();
+
+        // Now change the product master.
+        $product->update(['gst_rate' => 5, 'hsn_code' => '9999', 'code' => 'PRD-NEW', 'name' => 'Renamed']);
+
+        // The po_item keeps the values captured at creation.
+        $this->assertDatabaseHas('po_items', [
+            'po_id' => $created['id'],
+            'gst_rate' => 18.00,
+            'product_code' => 'PRD-001',
+            'product_name' => 'Original Name',
+            'hsn_code' => '1111',
+        ]);
+
+        // And the stored totals reflect 18%, not the new 5%.
+        $this->assertEquals(36.0, (float) PurchaseOrder::find($created['id'])->tax_amount);
+    }
+
     /** PO numbers can contain '/' (from the org code) — the PDF download must not
      *  500 on an invalid Content-Disposition filename. */
     public function test_pdf_download_handles_slashed_po_number(): void

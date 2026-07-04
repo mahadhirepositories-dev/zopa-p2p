@@ -149,13 +149,23 @@ class PurchaseOrderController extends Controller
                 )
             ));
 
+            // Snapshot product master fields at creation so the document never
+            // changes if the product is later edited (renamed / re-coded / new HSN).
+            $productMap = \App\Models\Product::whereIn(
+                'id', collect($request->items)->pluck('product_id')->filter()->unique()
+            )->get()->keyBy('id');
+
             foreach ($request->items as $i => $item) {
                 $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
+                $product = isset($item['product_id']) ? $productMap->get($item['product_id']) : null;
                 PoItem::create([
                     'po_id' => $po->id,
                     'sno' => $i + 1,
                     'pr_item_id' => $item['pr_item_id'] ?? null,
                     'product_id' => $item['product_id'] ?? null,
+                    'product_code' => $product?->code,
+                    'product_name' => $product?->name,
+                    'hsn_code' => $product?->hsn_code,
                     'description' => $item['description'],
                     'category_id' => $item['category_id'] ?? null,
                     'qty' => $item['qty'],
@@ -283,13 +293,21 @@ class PurchaseOrderController extends Controller
                     (float) ($request->freight_gst_rate ?? 0),
                 );
 
+                $productMap = \App\Models\Product::whereIn(
+                    'id', collect($request->items)->pluck('product_id')->filter()->unique()
+                )->get()->keyBy('id');
+
                 $purchaseOrder->items()->delete();
                 foreach ($request->items as $i => $item) {
                     $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
+                    $product = isset($item['product_id']) ? $productMap->get($item['product_id']) : null;
                     PoItem::create([
                         'po_id' => $purchaseOrder->id,
                         'sno' => $i + 1,
                         'product_id' => $item['product_id'] ?? null,
+                        'product_code' => $product?->code,
+                        'product_name' => $product?->name,
+                        'hsn_code' => $product?->hsn_code,
                         'description' => $item['description'],
                         'category_id' => $item['category_id'] ?? null,
                         'qty' => $item['qty'],

@@ -158,6 +158,10 @@ export interface PoItem {
   pr_item?: { id: number; description: string; qty: number } | null;
   product_id?: number;
   product?: { id: number; name: string; code?: string; hsn_code?: string; unit?: string };
+  // Snapshotted from the product master at creation — the document of record.
+  product_code?: string | null;
+  product_name?: string | null;
+  hsn_code?: string | null;
   description: string;
   category_id?: number;
   qty: number;

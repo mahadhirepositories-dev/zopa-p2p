@@ -180,14 +180,14 @@ import { AuthService } from '../../core/auth/auth.service';
                     <th mat-header-cell *matHeaderCellDef>Description / Specification</th>
                     <td mat-cell *matCellDef="let i">
                       <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
-                      @if (i.product?.name && i.product?.name !== i.description) {
+                      @if ((i.product_name || i.product?.name) && (i.product_name || i.product?.name) !== i.description) {
                         <div style="font-size:11px;color:var(--text-3);margin-top:2px;">
-                          Product: {{ i.product?.name }}
+                          Product: {{ i.product_name || i.product?.name }}
                         </div>
                       }
-                      @if (i.product?.code) {
+                      @if (i.product_code || i.product?.code) {
                         <div style="font-size:11px;color:var(--text-3);">
-                          Code: {{ i.product?.code }}
+                          Code: {{ i.product_code || i.product?.code }}
                         </div>
                       }
                     </td>
@@ -195,8 +195,8 @@ import { AuthService } from '../../core/auth/auth.service';
                   <ng-container matColumnDef="hsn">
                     <th mat-header-cell *matHeaderCellDef>HSN</th>
                     <td mat-cell *matCellDef="let i">
-                      @if (i.product?.hsn_code) {
-                        <span class="hsn-tag">{{ i.product?.hsn_code }}</span>
+                      @if (i.hsn_code || i.product?.hsn_code) {
+                        <span class="hsn-tag">{{ i.hsn_code || i.product?.hsn_code }}</span>
                       } @else { <span style="color:#ccc;">—</span> }
                     </td>
                   </ng-container>
