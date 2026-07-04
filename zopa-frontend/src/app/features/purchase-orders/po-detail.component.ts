@@ -296,6 +296,43 @@ import { AuthService } from '../../core/auth/auth.service';
               </mat-card-content>
             </mat-card>
 
+            <!-- Approval routing diagnostic (super admin only) -->
+            @if (auth.isSuperAdmin() && diag()) {
+              <mat-card style="margin-bottom:16px;border:1px solid #fed7aa;">
+                <mat-card-header>
+                  <mat-card-title style="font-size:14px;display:flex;align-items:center;gap:6px;">
+                    <mat-icon style="color:#c2410c;font-size:18px;">policy</mat-icon>
+                    Approval Routing (diagnostic)
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content style="padding-top:12px;font-size:12px;">
+                  <div style="padding:8px 10px;border-radius:6px;margin-bottom:10px;line-height:1.5;"
+                       [style.background]="diag().would_route_to?.length ? '#ecfdf5' : '#fef2f2'"
+                       [style.color]="diag().would_route_to?.length ? '#065f46' : '#b91c1c'">
+                    {{ diag().VERDICT }}
+                  </div>
+                  <div class="diag-row"><span>Cost Center</span><strong>{{ diag().cost_center_name }} (#{{ diag().cost_center_id }})</strong></div>
+                  <div class="diag-row"><span>Grand Total</span><strong>₹{{ diag().grand_total | number:'1.2-2' }}</strong></div>
+                  <div class="diag-row"><span>Would route to</span>
+                    <strong>{{ diag().would_route_to?.length ? diag().would_route_to.join(' → ') : 'Auto-approve (no config)' }}</strong>
+                  </div>
+                  <div style="margin-top:10px;font-weight:600;color:#666;">Configs on this cost center:</div>
+                  @if (!diag().configs_for_this_cost_center?.length) {
+                    <div style="color:#b91c1c;padding:4px 0;">None — this is why it auto-approves.</div>
+                  }
+                  @for (c of diag().configs_for_this_cost_center; track c.id) {
+                    <div class="diag-cfg">
+                      <span class="diag-type" [class.diag-po]="c.type === 'po'">{{ c.type | uppercase }}</span>
+                      L{{ c.level }} ·
+                      {{ c.resolved_user_ids?.length ? (c.resolved_user_ids.length + ' approver(s)') : 'NO approver' }} ·
+                      {{ c.is_active ? 'active' : 'INACTIVE' }} ·
+                      {{ c.amount_limit ? ('≤ ₹' + (c.amount_limit | number:'1.0-0')) : 'unlimited' }}
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+
             <!-- Invoices panel -->
             @if (po()!.invoices?.length) {
               <mat-card style="margin-bottom:16px;">
@@ -401,6 +438,10 @@ import { AuthService } from '../../core/auth/auth.service';
     .inv-status--approved { background:#ecfdf5; color:#065f46; }
     .inv-status--rejected { background:#fef2f2; color:#b91c1c; }
     .status-invoiced { background:#fef9c3 !important; color:#92400e !important; }
+    .diag-row { display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px solid #f5f5f5; }
+    .diag-cfg { padding:4px 0; color:#475569; border-bottom:1px solid #f8f8f8; }
+    .diag-type { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#e2e8f0; color:#475569; margin-right:4px; }
+    .diag-type.diag-po { background:#c2410c; color:#fff; }
   `],
 })
 export class PoDetailComponent implements OnInit {
@@ -414,6 +455,7 @@ export class PoDetailComponent implements OnInit {
   loading = signal(true);
   acting = signal<string | false>(false);
   downloading = signal(false);
+  diag = signal<any>(null);   // super-admin approval-routing diagnostic
 
   pendingApproverName = computed(() => {
     const po = this.po();
@@ -429,12 +471,19 @@ export class PoDetailComponent implements OnInit {
       next: po => { this.po.set(po); this.loading.set(false); },
       error: () => { this.notify.error('Could not load PO.'); this.loading.set(false); },
     });
+    if (this.auth.isSuperAdmin()) this.loadDiagnostic();
+  }
+
+  /** Super-admin: fetch why this PO routed the way it did (config state + verdict). */
+  private loadDiagnostic() {
+    this.http.get<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/approval-diagnostic`)
+      .subscribe({ next: d => this.diag.set(d), error: () => {} });
   }
 
   submitPo() {
     this.acting.set('submit');
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/submit`, {}).subscribe({
-      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO submitted for approval.'); },
+      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO submitted for approval.'); if (this.auth.isSuperAdmin()) this.loadDiagnostic(); },
       error: err => { this.notify.error(err.error?.error ?? 'Submit failed.'); this.acting.set(false); },
     });
   }
@@ -486,7 +535,7 @@ export class PoDetailComponent implements OnInit {
     )) return;
     this.acting.set('reset');
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/reset-to-draft`, {}).subscribe({
-      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO reset to draft. Configure approvers, then Submit for Approval.'); },
+      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO reset to draft. Configure approvers, then Submit for Approval.'); if (this.auth.isSuperAdmin()) this.loadDiagnostic(); },
       error: err => { this.notify.error(err.error?.error ?? 'Reset failed.'); this.acting.set(false); },
     });
   }
