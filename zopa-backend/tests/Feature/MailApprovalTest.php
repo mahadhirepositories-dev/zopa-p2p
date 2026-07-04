@@ -278,4 +278,35 @@ class MailApprovalTest extends TestCase
 
         $this->assertEquals('approved', $approval->fresh()->action);
     }
+
+    // ── 8. Admin oversight: read-only view of all pending approvals ───────────
+
+    public function test_admin_sees_all_pending_approvals_including_others(): void
+    {
+        // Pending approval assigned to the L1 approver, NOT to the admin.
+        $pr       = $this->makePr('pending_l1');
+        $approval = $this->pendingApproval($pr, 'cl1@acmetest.com');
+
+        // The client admin has nothing in their OWN queue …
+        Sanctum::actingAs($this->user('cadmin@acmetest.com'));
+        $this->withHeader('X-Tenant-ID', (string) $this->acme->id)
+            ->getJson('/api/approvals/pending')
+            ->assertStatus(200)
+            ->assertJsonCount(0, 'data');
+
+        // … but the oversight endpoint shows it, with the assigned approver.
+        $this->withHeader('X-Tenant-ID', (string) $this->acme->id)
+            ->getJson('/api/approvals/all-pending')
+            ->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.assigned_to.email', 'cl1@acmetest.com');
+    }
+
+    public function test_non_admin_cannot_use_oversight_endpoint(): void
+    {
+        Sanctum::actingAs($this->user('cbuyer@acmetest.com'));
+        $this->withHeader('X-Tenant-ID', (string) $this->acme->id)
+            ->getJson('/api/approvals/all-pending')
+            ->assertStatus(403);
+    }
 }

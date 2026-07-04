@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCardModule } from '@angular/material/card';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { ApprovalActionDialogComponent } from './approval-action-dialog.component';
 
 @Component({
@@ -104,6 +105,63 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
                   <mat-icon>close</mat-icon> Reject
                 </button>
               </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Admin oversight: all pending approvals across the org (read-only) -->
+      @if (auth.isAdmin() && !loading()) {
+        <div class="admin-section">
+          <div class="admin-header">
+            <div>
+              <h3>Organisation-wide pending approvals</h3>
+              <p>Read-only oversight — {{ allPending().length }} awaiting across all approvers</p>
+            </div>
+            <span class="oversight-badge"><mat-icon>visibility</mat-icon> Oversight</span>
+          </div>
+
+          @if (loadingAll()) {
+            <div class="loading-state"><mat-spinner diameter="28" /></div>
+          } @else if (allPending().length === 0) {
+            <div class="admin-empty">No pending approvals anywhere in the organisation.</div>
+          } @else {
+            <div class="approval-list">
+              @for (a of allPending(); track a.id) {
+                <div class="approval-card readonly">
+                  <div class="approval-info">
+                    <div class="approval-po-ref">
+                      <div class="po-icon-wrap" [style.background]="entityBg(a)">
+                        <mat-icon [style.color]="entityColor(a)">{{ entityIcon(a) }}</mat-icon>
+                      </div>
+                      <div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                          <span class="type-badge type-badge--{{ a.entity_type | lowercase }}">{{ a.entity_type }}</span>
+                          <a class="po-link" (click)="viewEntity(a)">{{ entityRef(a) }}</a>
+                        </div>
+                        <div class="po-meta">{{ entityMeta(a) }}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="approval-metrics">
+                    <div class="metric">
+                      <div class="metric-label">Amount</div>
+                      <div class="metric-value">₹{{ entityAmount(a) | number:'1.0-0' }}</div>
+                    </div>
+                    <div class="metric">
+                      <div class="metric-label">Level</div>
+                      <div class="level-badge">L{{ a.level }}</div>
+                    </div>
+                  </div>
+                  <div class="awaiting-col">
+                    <div class="metric-label">Awaiting</div>
+                    <div class="awaiting-name">
+                      <span class="approver-chip">{{ a.assigned_to?.name?.[0] ?? '?' }}</span>
+                      {{ a.assigned_to?.name ?? '—' }}
+                    </div>
+                  </div>
+                </div>
+              }
             </div>
           }
         </div>
@@ -226,6 +284,19 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     .type-badge--po { background:var(--brand-light);color:var(--brand); }
     .type-badge--invoice { background:#f0fdf4;color:#16a34a; }
     .type-badge--pr { background:#eff6ff;color:#2563eb; }
+
+    .admin-section { margin-top: 40px; padding-top: 24px; border-top: 1px dashed var(--border); }
+    .admin-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .admin-header h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text-1); }
+    .admin-header p  { margin: 3px 0 0; font-size: 12px; color: var(--text-3); }
+    .oversight-badge { display: inline-flex; align-items: center; gap: 4px; background: #eff6ff; color: #2563eb; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; }
+    .oversight-badge mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .admin-empty { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; text-align: center; font-size: 13px; color: var(--text-3); }
+    .approval-card.readonly { cursor: default; }
+    .approval-card.readonly:hover { box-shadow: var(--shadow-xs); transform: none; }
+    .awaiting-col { flex-shrink: 0; text-align: right; min-width: 140px; }
+    .awaiting-name { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); margin-top: 4px; }
+    .approver-chip { width: 24px; height: 24px; border-radius: 6px; background: var(--brand-light); color: var(--brand); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; }
   `],
 })
 export class ApprovalQueueComponent implements OnInit {
@@ -233,18 +304,33 @@ export class ApprovalQueueComponent implements OnInit {
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
+  readonly auth = inject(AuthService);
 
   approvals = signal<any[]>([]);
+  allPending = signal<any[]>([]);
   loading = signal(true);
+  loadingAll = signal(false);
   acting = signal<Map<number, string>>(new Map());
 
-  ngOnInit() { this.load(); }
+  ngOnInit() {
+    this.load();
+    if (this.auth.isAdmin()) this.loadAllPending();
+  }
 
   load() {
     this.loading.set(true);
     this.http.get<any>(`${environment.apiUrl}/approvals/pending`).subscribe({
       next: res => { this.approvals.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
+    });
+  }
+
+  /** Admin-only: all pending approvals across the org (read-only oversight). */
+  loadAllPending() {
+    this.loadingAll.set(true);
+    this.http.get<any>(`${environment.apiUrl}/approvals/all-pending`).subscribe({
+      next: res => { this.allPending.set(res.data ?? res); this.loadingAll.set(false); },
+      error: () => this.loadingAll.set(false),
     });
   }
 
@@ -316,6 +402,7 @@ export class ApprovalQueueComponent implements OnInit {
         this.notify.success('PO approved successfully.');
         this.approvals.update(list => list.filter(x => x.id !== a.id));
         this.setActing(a.id, null);
+        if (this.auth.isAdmin()) this.loadAllPending();
       },
       error: err => {
         this.notify.error(err.error?.message ?? 'Approval failed.');
@@ -339,6 +426,7 @@ export class ApprovalQueueComponent implements OnInit {
           this.notify.success(`PO ${action === 'return' ? 'returned for revision' : 'rejected'}.`);
           this.approvals.update(list => list.filter(x => x.id !== a.id));
           this.setActing(a.id, null);
+          if (this.auth.isAdmin()) this.loadAllPending();
         },
         error: err => {
           this.notify.error(err.error?.message ?? 'Action failed.');

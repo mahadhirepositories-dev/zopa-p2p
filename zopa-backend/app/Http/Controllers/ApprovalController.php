@@ -47,6 +47,36 @@ class ApprovalController extends Controller
         return response()->json($approvals);
     }
 
+    /**
+     * Admin oversight: every pending approval in the current tenant, regardless of
+     * who it's assigned to — READ-ONLY visibility so admins can see what's awaiting
+     * whom. This endpoint grants no approve/reject power; the assigned approver
+     * still acts. Includes the assigned approver so the UI can show "awaiting X".
+     */
+    public function allPending(Request $request): JsonResponse
+    {
+        $this->requireAdminRole();
+        $tenantId = app('currentTenant')->id;
+
+        $approvals = Approval::with([
+                'assignedTo:id,name,email',
+                'purchaseOrder' => fn($q) => $q->with('vendor', 'costCenter'),
+                'invoice' => fn($q) => $q->with(['purchaseOrder:id,po_number', 'purchaseOrder.vendor']),
+                'purchaseRequisition:id,pr_number,title,cost_center_id,estimated_amount',
+            ])
+            ->where('action', 'pending')
+            ->where(function ($q) use ($tenantId) {
+                $q->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId))
+                  ->orWhereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId))
+                  ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+            })
+            ->orderBy('level')
+            ->latest()
+            ->paginate(50);
+
+        return response()->json($approvals);
+    }
+
     public function approve(Request $request, Approval $approval): JsonResponse
     {
         $this->requirePermission('approvals', 'edit');

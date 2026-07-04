@@ -189,6 +189,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Approvals
         Route::get('approvals/pending', [ApprovalController::class, 'pending']);
+        Route::get('approvals/all-pending', [ApprovalController::class, 'allPending']); // admin read-only oversight
         Route::post('approvals/{approval}/approve', [ApprovalController::class, 'approve']);
         Route::post('approvals/{approval}/return', [ApprovalController::class, 'returnWithQuery']);
         Route::post('approvals/{approval}/reject', [ApprovalController::class, 'reject']);
