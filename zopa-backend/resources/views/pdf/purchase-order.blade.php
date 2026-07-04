@@ -327,6 +327,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     @endforeach
 
     @if($po->freight > 0)
+    @php $freightGst = (float) $po->freight * (float) ($po->freight_gst_rate ?? 0) / 100; @endphp
     <tr>
       <td class="c fnt" style="font-size:8px;">—</td>
       @if($hasCode)<td></td>@endif
@@ -335,8 +336,14 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       @if($hasUOM)<td></td>@endif
       <td></td>
       <td class="r" style="font-size:9px;">&#8377;{{ number_format($po->freight, 2) }}</td>
-      <td class="r fnt">—</td>
-      <td class="r b" style="font-size:9.5px; color:#1f2937;">&#8377;{{ number_format($po->freight, 2) }}</td>
+      <td class="r" style="font-size:9px; color:#475569;">
+        @if(($po->freight_gst_rate ?? 0) > 0)
+          {{ number_format($po->freight_gst_rate, 0) }}%<br><span style="font-size:7.5px;">(&#8377;{{ number_format($freightGst, 2) }})</span>
+        @else
+          <span class="fnt">—</span>
+        @endif
+      </td>
+      <td class="r b" style="font-size:9.5px; color:#1f2937;">&#8377;{{ number_format($po->freight + $freightGst, 2) }}</td>
       @if($hasWar)<td></td>@endif
       @if($hasRB)<td></td>@endif
     </tr>
@@ -380,7 +387,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         </tr>
         @if($po->freight > 0)
         <tr>
-          <td class="lbl">Freight</td>
+          <td class="lbl">Freight{{ ($po->freight_gst_rate ?? 0) > 0 ? ' (+'.number_format($po->freight_gst_rate, 0).'% GST)' : '' }}</td>
           <td class="val">&#8377;{{ number_format($po->freight, 2) }}</td>
         </tr>
         @endif

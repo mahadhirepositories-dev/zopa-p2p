@@ -28,12 +28,13 @@ class GstService
         ];
     }
 
-    public function freightTax(float $freight): float
+    /** Freight GST, applied on top of the freight amount at the given rate. */
+    public function freightTax(float $freight, float $freightGstRate = 0): float
     {
-        return $freight / 1.18 * 0.18;
+        return $freight * ($freightGstRate / 100);
     }
 
-    public function calculatePoTotals(array $items, float $freight, string $vendorStateCode, string $companyStateCode): array
+    public function calculatePoTotals(array $items, float $freight, string $vendorStateCode, string $companyStateCode, float $freightGstRate = 0): array
     {
         $netTotal = 0;
         $taxTotal = 0;
@@ -45,7 +46,7 @@ class GstService
             $taxTotal += $tax['total'];
         }
 
-        $taxTotal += $this->freightTax($freight);
+        $taxTotal += $this->freightTax($freight, $freightGstRate);
 
         $grandTotal = $netTotal + $freight + $taxTotal;
         $roundOff = round($grandTotal) - $grandTotal;

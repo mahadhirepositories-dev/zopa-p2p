@@ -252,7 +252,10 @@ import { AuthService } from '../../core/auth/auth.service';
                 <div class="totals">
                   <div class="total-row"><span>Net Total</span><span>₹{{ po()!.net_total | number:'1.2-2' }}</span></div>
                   @if (po()!.freight && po()!.freight! > 0) {
-                    <div class="total-row"><span>Freight</span><span>₹{{ po()!.freight | number:'1.2-2' }}</span></div>
+                    <div class="total-row">
+                      <span>Freight{{ po()!.freight_gst_rate ? ' (+' + po()!.freight_gst_rate + '% GST)' : '' }}</span>
+                      <span>₹{{ po()!.freight | number:'1.2-2' }}</span>
+                    </div>
                   }
                   <div class="total-row"><span>Tax Amount</span><span>₹{{ po()!.tax_amount | number:'1.2-2' }}</span></div>
                   <div class="total-row grand"><span>Grand Total</span><span>₹{{ po()!.grand_total | number:'1.2-2' }}</span></div>

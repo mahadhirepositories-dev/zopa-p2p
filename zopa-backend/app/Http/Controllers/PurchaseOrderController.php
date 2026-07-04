@@ -91,6 +91,8 @@ class PurchaseOrderController extends Controller
             'items.*.net_rate' => 'required|numeric|min:0',
             'items.*.gst_rate' => 'required|numeric|min:0',
             'items.*.required_by' => 'nullable|date',
+            'freight' => 'nullable|numeric|min:0',
+            'freight_gst_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         $tenant = app('currentTenant');
@@ -106,7 +108,8 @@ class PurchaseOrderController extends Controller
             $request->items,
             (float) ($request->freight ?? 0),
             $vendorStateCode,
-            $companyStateCode
+            $companyStateCode,
+            (float) ($request->freight_gst_rate ?? 0)
         );
 
         $costCenter = \App\Models\CostCenter::with('tenant')->find($request->cost_center_id);
@@ -131,6 +134,7 @@ class PurchaseOrderController extends Controller
                 ]),
                 'tenant_id' => $tenant->id,
                 'freight' => $request->freight ?? 0,
+                'freight_gst_rate' => $request->freight_gst_rate ?? 0,
                 'created_by' => $user->id,
                 'created_by_role' => app('currentRole'),
                 'status' => 'draft',
@@ -261,6 +265,8 @@ class PurchaseOrderController extends Controller
             'items.*.net_rate' => 'required|numeric|min:0',
             'items.*.gst_rate' => 'required|numeric|min:0',
             'items.*.required_by' => 'nullable|date',
+            'freight' => 'nullable|numeric|min:0',
+            'freight_gst_rate' => 'nullable|numeric|min:0|max:100',
         ]);
 
         try {
@@ -274,6 +280,7 @@ class PurchaseOrderController extends Controller
                     (float) ($request->freight ?? 0),
                     $vendorAddress?->state_code ?? '',
                     $billToLocation?->state_code ?? '',
+                    (float) ($request->freight_gst_rate ?? 0),
                 );
 
                 $purchaseOrder->items()->delete();
@@ -303,6 +310,7 @@ class PurchaseOrderController extends Controller
                         'payment_terms_json', 'warranty_months', 'terms_conditions',
                     ]),
                     'freight' => $request->freight ?? 0,
+                    'freight_gst_rate' => $request->freight_gst_rate ?? 0,
                     ...$totals,
                 ]);
 

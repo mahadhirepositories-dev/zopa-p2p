@@ -247,6 +247,16 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
                 <input matInput type="number" formControlName="freight" min="0"
                        (input)="recalc()" />
               </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-sm">
+                <mat-label>Freight GST %</mat-label>
+                <mat-select formControlName="freight_gst_rate" (selectionChange)="recalc()">
+                  @for (r of gstRates; track r) {
+                    <mat-option [value]="r">{{ r }}%</mat-option>
+                  }
+                </mat-select>
+                <mat-hint>GST applied on freight</mat-hint>
+              </mat-form-field>
             </div>
           </form>
         </mat-card-content>
@@ -706,6 +716,7 @@ export class PoFormComponent implements OnInit {
     ship_to_location_id: [null as number | null],
     po_valid_till:       [null as Date | null, Validators.required],
     freight:             [0],
+    freight_gst_rate:    [0],
   });
 
   items: FormArray<FormGroup> = this.fb.array<FormGroup>([]);
@@ -770,6 +781,7 @@ export class PoFormComponent implements OnInit {
       ship_to_location_id: po.ship_to_location_id,
       po_valid_till:       po.po_valid_till ? new Date(po.po_valid_till) : null,
       freight:             po.freight,
+      freight_gst_rate:    po.freight_gst_rate != null ? +po.freight_gst_rate : 0,
     });
     this.tcControl.setValue(po.terms_conditions ?? '');
     this.attachments.set(po.attachments ?? []);
@@ -1002,10 +1014,14 @@ export class PoFormComponent implements OnInit {
       tax += lineNet * (gst_rate || 0) / 100;
     }
     const fr = +(this.headerForm.value.freight || 0);
+    // Freight GST is applied on top of the freight amount (tax-exclusive), the
+    // same way line-item net_rate + gst_rate work — and matches the backend.
+    const frGst = fr * (+(this.headerForm.value.freight_gst_rate || 0)) / 100;
+    tax += frGst;
     this.freight.set(fr);       // ← signal updated so template reflects freight immediately
     this.netTotal.set(net);
     this.taxAmount.set(tax);
-    this.grandTotal.set(net + tax + fr);
+    this.grandTotal.set(net + fr + tax);
   }
 
   asGroup(ctrl: AbstractControl) { return ctrl as FormGroup; }
