@@ -179,6 +179,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/deliver', [PurchaseOrderController::class, 'deliver']);
         Route::post('purchase-orders/{purchaseOrder}/release-payment', [PurchaseOrderController::class, 'releasePayment']);
         Route::post('purchase-orders/{purchaseOrder}/reset-to-draft', [PurchaseOrderController::class, 'resetToDraft']);
+        Route::get('purchase-orders/{purchaseOrder}/approval-diagnostic', [PurchaseOrderController::class, 'approvalDiagnostic']);
         Route::post('purchase-orders/{purchaseOrder}/upload', [PurchaseOrderController::class, 'upload']);
         Route::get('purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderController::class, 'pdf']);
         Route::get('purchase-orders/{purchaseOrder}/pdf-url', [PurchaseOrderController::class, 'pdfUrl']);

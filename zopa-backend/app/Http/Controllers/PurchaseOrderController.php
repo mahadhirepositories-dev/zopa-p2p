@@ -494,6 +494,37 @@ class PurchaseOrderController extends Controller
         return response()->json($purchaseOrder->fresh('items'));
     }
 
+    /**
+     * Super-admin diagnostic: shows which approval configs exist for a PO's cost center,
+     * so we can understand why a PO auto-approved or got routed unexpectedly.
+     */
+    public function approvalDiagnostic(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $this->requireRole('zopa_super_admin');
+        $this->authorizePoAccess($purchaseOrder);
+
+        $po = $purchaseOrder->load('costCenter');
+        $configs = \App\Models\ApprovalConfig::where('cost_center_id', $po->cost_center_id)
+            ->orderBy('type')
+            ->orderBy('level')
+            ->get();
+
+        $allTenantConfigs = \App\Models\ApprovalConfig::whereHas('costCenter', fn ($q) =>
+            $q->where('tenant_id', $po->tenant_id)
+        )->with('costCenter:id,name')->orderBy('type')->orderBy('level')->get();
+
+        return response()->json([
+            'po_id'            => $po->id,
+            'po_number'        => $po->po_number,
+            'po_status'        => $po->status,
+            'cost_center_id'   => $po->cost_center_id,
+            'cost_center_name' => $po->costCenter?->name,
+            'grand_total'      => $po->grand_total,
+            'configs_for_this_cost_center' => $configs,
+            'all_po_configs_for_tenant'    => $allTenantConfigs->where('type', 'po')->values(),
+        ]);
+    }
+
     public function releasePayment(PurchaseOrder $purchaseOrder): JsonResponse
     {
         $this->requireAdminRole();   // financial action — admin only
