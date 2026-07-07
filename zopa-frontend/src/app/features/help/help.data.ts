@@ -380,7 +380,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Create client organizations and their users.',
     keywords: ['client', 'organization', 'tenant', 'onboard', 'create client'],
     superAdminOnly: true,
-    body: `<p>(<strong>ZOPA Super Admin</strong>) <strong>Client Management</strong> lets you create client organizations, add client users, assign ZOPA staff to a client, change roles, and deactivate accounts.</p>`,
+    body: `<p>(<strong>ZOPA Super Admin</strong>) <strong>Client Management</strong> lets you create client organizations, add client users, assign ZOPA staff to a client, change roles, and deactivate accounts.</p>
+      <p>You can also configure the numbering sequence for Purchase Orders (PO) and Purchase Requisitions (PR) by setting a custom Prefix and Starting Series.</p>`,
   },
   {
     id: 'access-control',
@@ -464,5 +465,20 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ['boq', 'bill of quantities', 'line items', 'upload', 'excel', 'import', 'po', 'pr'],
     modules: ['purchase_orders', 'purchase_requisitions'],
     body: `<p>On a new <strong>PO</strong> or <strong>PR</strong>, use <strong>BOQ Template</strong> to download the line-item Excel template, fill it in, then <strong>Upload BOQ</strong>. The rows populate the line-items grid so you can <strong>review and edit before submitting</strong>.</p>`,
+  },
+  {
+    id: 'document-numbering',
+    title: 'Customizing PO and PR Numbering',
+    category: 'Administration',
+    icon: 'pin',
+    summary: 'Set up custom prefixes and starting numbers for documents.',
+    keywords: ['numbering', 'prefix', 'series', 'po number', 'pr number', 'sequence', 'format'],
+    superAdminOnly: true,
+    body: `<p>(<strong>ZOPA Super Admin</strong>) When editing a client in <strong>Client Management</strong>, you can configure a custom sequence for their documents.</p>
+      <ul>
+        <li><strong>Prefix</strong> — The text that appears before the number (e.g., <code>TH/2026-27/</code>). Always ensure you include any necessary separators like a trailing slash or hyphen.</li>
+        <li><strong>Starting Series</strong> — The number to start counting from (e.g., <code>1</code> or <code>49</code>).</li>
+      </ul>
+      <p>The system will combine these to generate the final document numbers (e.g., <code>TH/2026-27/49</code>). Changing this configuration applies to all future documents generated.</p>`,
   },
 ];
