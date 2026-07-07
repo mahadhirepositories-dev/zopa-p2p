@@ -9,13 +9,16 @@ class Tenant extends Model
 {
     protected $fillable = [
         'name', 'code', 'gstin', 'address_json',
-        'po_prefix', 'fiscal_year_start', 'is_active', 'is_internal', 'logo_path', 'plan',
+        'po_prefix', 'fiscal_year_start',        'is_active', 'is_internal', 'logo_path',
+        'po_starting_series', 'pr_prefix', 'pr_starting_series', 'plan',
     ];
 
     protected $casts = [
         'address_json' => 'array',
-        'is_active'    => 'boolean',
-        'is_internal'  => 'boolean',
+        'is_active' => 'boolean',
+        'is_internal' => 'boolean',
+        'po_starting_series' => 'integer',
+        'pr_starting_series' => 'integer',
     ];
 
     public function userTenantRoles(): HasMany

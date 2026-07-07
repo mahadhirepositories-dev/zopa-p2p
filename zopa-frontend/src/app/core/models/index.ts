@@ -20,6 +20,9 @@ export interface Tenant {
   code: string;
   gstin?: string;
   po_prefix: string;
+  po_starting_series?: number;
+  pr_prefix?: string;
+  pr_starting_series?: number;
   fiscal_year_start: number;
   is_active: boolean;
 }

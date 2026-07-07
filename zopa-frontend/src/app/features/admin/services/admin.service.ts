@@ -16,6 +16,9 @@ export interface Tenant {
   gstin?: string;
   address_json?: any;
   po_prefix?: string;
+  po_starting_series?: number;
+  pr_prefix?: string;
+  pr_starting_series?: number;
   fiscal_year_start?: string;
   is_active: boolean;
   is_internal: boolean;

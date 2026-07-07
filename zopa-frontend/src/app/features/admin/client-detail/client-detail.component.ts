@@ -105,6 +105,18 @@ import { gstinValidator } from '../../../core/validators';
             <span>PO Prefix: <strong>{{ client()!.po_prefix || '—' }}</strong></span>
           </div>
           <div class="info-chip">
+            <mat-icon>receipt_long</mat-icon>
+            <span>PO Series: <strong>{{ client()!.po_starting_series || '—' }}</strong></span>
+          </div>
+          <div class="info-chip">
+            <mat-icon>request_quote</mat-icon>
+            <span>PR Prefix: <strong>{{ client()!.pr_prefix || '—' }}</strong></span>
+          </div>
+          <div class="info-chip">
+            <mat-icon>request_quote</mat-icon>
+            <span>PR Series: <strong>{{ client()!.pr_starting_series || '—' }}</strong></span>
+          </div>
+          <div class="info-chip">
             <mat-icon>calendar_today</mat-icon>
             <span>FY Start Month: <strong>{{ client()!.fiscal_year_start || '—' }}</strong></span>
           </div>
@@ -362,9 +374,25 @@ import { gstinValidator } from '../../../core/validators';
                   <mat-label>Client Code *</mat-label>
                   <input matInput formControlName="code" />
                 </mat-form-field>
+              </div>
+              <div class="form-row">
                 <mat-form-field appearance="outline" style="flex:1;">
                   <mat-label>PO Prefix</mat-label>
                   <input matInput formControlName="po_prefix" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="flex:1;">
+                  <mat-label>PO Starting Series</mat-label>
+                  <input matInput type="number" formControlName="po_starting_series" />
+                </mat-form-field>
+              </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" style="flex:1;">
+                  <mat-label>PR Prefix</mat-label>
+                  <input matInput formControlName="pr_prefix" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="flex:1;">
+                  <mat-label>PR Starting Series</mat-label>
+                  <input matInput type="number" formControlName="pr_starting_series" />
                 </mat-form-field>
               </div>
               <mat-form-field appearance="outline" class="full-width">
@@ -642,11 +670,14 @@ export class ClientDetailComponent implements OnInit {
   });
 
   editForm: FormGroup = this.fb.group({
-    code:        ['', Validators.required],
-    name:        ['', Validators.required],
-    gstin:       ['', gstinValidator()],
-    po_prefix:   [''],
-    is_internal: [false],
+    code:               ['', Validators.required],
+    name:               ['', Validators.required],
+    gstin:              ['', gstinValidator()],
+    po_prefix:          [''],
+    po_starting_series: [null],
+    pr_prefix:          [''],
+    pr_starting_series: [null],
+    is_internal:        [false],
   });
 
   editRoleForm: FormGroup = this.fb.group({
@@ -678,7 +709,16 @@ export class ClientDetailComponent implements OnInit {
     this.adminService.getClient(id).subscribe({
       next: c => {
         this.client.set(c);
-        this.editForm.patchValue({ code: c.code, name: c.name, gstin: c.gstin, po_prefix: c.po_prefix, is_internal: c.is_internal });
+        this.editForm.patchValue({ 
+          code: c.code, 
+          name: c.name, 
+          gstin: c.gstin, 
+          po_prefix: c.po_prefix, 
+          po_starting_series: c.po_starting_series,
+          pr_prefix: c.pr_prefix,
+          pr_starting_series: c.pr_starting_series,
+          is_internal: c.is_internal 
+        });
         this.loading.set(false);
       },
       error: () => {

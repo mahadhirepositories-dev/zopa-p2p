@@ -15,23 +15,24 @@ class PoNumberService
      */
     public function generate(Tenant $tenant): string
     {
-        $year    = now()->year;
-        $orgCode = strtoupper(trim($tenant->code ?? 'ORG'));
-        $prefix  = "{$orgCode}-PO-{$year}-";
+        $prefix  = $tenant->po_prefix ?? 'PO-';
         $like    = "{$prefix}%";
+        $startSeries = $tenant->po_starting_series ?? 1;
 
-        return DB::transaction(function () use ($tenant, $prefix, $like) {
-            $lastNumber = PurchaseOrder::where('tenant_id', $tenant->id)
+        return DB::transaction(function () use ($tenant, $prefix, $like, $startSeries) {
+            $poNumbers = PurchaseOrder::where('tenant_id', $tenant->id)
                 ->whereNotNull('po_number')
                 ->where('po_number', 'like', $like)
                 ->lockForUpdate()
-                ->max('po_number');
+                ->pluck('po_number');
 
-            $seq = $lastNumber
-                ? ((int) substr($lastNumber, strlen($prefix))) + 1
-                : 1;
+            $maxSeq = $poNumbers->map(function ($po) use ($prefix) {
+                return (int) substr($po, strlen($prefix));
+            })->max();
 
-            return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $seq = $maxSeq ? $maxSeq + 1 : $startSeries;
+
+            return $prefix . $seq;
         });
     }
 }

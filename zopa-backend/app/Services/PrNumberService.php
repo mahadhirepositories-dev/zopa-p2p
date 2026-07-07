@@ -10,23 +10,24 @@ class PrNumberService
 {
     public function generate(Tenant $tenant): string
     {
-        $year    = now()->year;
-        $orgCode = strtoupper(trim($tenant->code ?? 'ORG'));
-        $prefix  = "{$orgCode}-PR-{$year}-";
+        $prefix  = $tenant->pr_prefix ?? 'PR-';
         $like    = "{$prefix}%";
+        $startSeries = $tenant->pr_starting_series ?? 1;
 
-        return DB::transaction(function () use ($tenant, $prefix, $like) {
-            $lastNumber = PurchaseRequisition::where('tenant_id', $tenant->id)
+        return DB::transaction(function () use ($tenant, $prefix, $like, $startSeries) {
+            $prNumbers = PurchaseRequisition::where('tenant_id', $tenant->id)
                 ->whereNotNull('pr_number')
                 ->where('pr_number', 'like', $like)
                 ->lockForUpdate()
-                ->max('pr_number');
+                ->pluck('pr_number');
 
-            $seq = $lastNumber
-                ? ((int) substr($lastNumber, strlen($prefix))) + 1
-                : 1;
+            $maxSeq = $prNumbers->map(function ($pr) use ($prefix) {
+                return (int) substr($pr, strlen($prefix));
+            })->max();
 
-            return $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $seq = $maxSeq ? $maxSeq + 1 : $startSeries;
+
+            return $prefix . $seq;
         });
     }
 }
