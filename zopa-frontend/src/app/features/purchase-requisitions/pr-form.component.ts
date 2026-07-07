@@ -355,17 +355,20 @@ export class PrFormComponent implements OnInit {
         if (pr.location_id) this.onLocationChange();
 
         if (pr.items && pr.items.length > 0) {
-          this.items.clear();
-          pr.items.forEach((it: any) => {
-            const group = this.newItem();
-            group.patchValue({
+          while (this.items.length > pr.items.length) {
+            this.items.removeAt(this.items.length - 1);
+          }
+          while (this.items.length < pr.items.length) {
+            this.items.push(this.newItem());
+          }
+          pr.items.forEach((it: any, index: number) => {
+            this.items.at(index).patchValue({
               description: it.description,
               qty: it.qty,
               unit: it.unit,
               estimated_price: it.estimated_price,
               remarks: it.remarks,
             });
-            this.items.push(group);
           });
         }
       },
