@@ -41,6 +41,11 @@ class PurchaseRequisitionController extends Controller
             $query->where('requested_by', $request->requested_by);
         }
 
+        // Hide drafts from non-transact roles (like Approvers)
+        if (!$this->hasTransactRole()) {
+            $query->where('status', '!=', 'draft');
+        }
+
         return response()->json($query->latest()->paginate(20));
     }
 

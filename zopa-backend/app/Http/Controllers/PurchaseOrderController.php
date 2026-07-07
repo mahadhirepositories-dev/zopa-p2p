@@ -49,6 +49,11 @@ class PurchaseOrderController extends Controller
             $query->whereIn('status', (array) $request->statuses);
         }
 
+        // Hide drafts from non-transact roles (like Approvers)
+        if (!$this->hasTransactRole()) {
+            $query->where('status', '!=', 'draft');
+        }
+
         // grn_eligible=1 → exclude POs where every item is already fully received
         if ($request->boolean('grn_eligible')) {
             $query->whereExists(function ($sub) {
