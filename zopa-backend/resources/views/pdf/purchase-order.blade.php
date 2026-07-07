@@ -378,28 +378,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     </tr>
     @endforeach
 
-    @if($po->freight > 0)
-    @php $freightGst = (float) $po->freight * (float) ($po->freight_gst_rate ?? 0) / 100; @endphp
-    <tr>
-      <td class="c fnt" style="font-size:8px;">—</td>
-      @if($hasCode)<td></td>@endif
-      <td style="font-size:9px; color:#475569; font-style:italic;">Freight / Transportation</td>
-      @if($hasHSN)<td></td>@endif
-      @if($hasUOM)<td></td>@endif
-      <td></td>
-      <td class="r" style="font-size:9px;">&#8377;{{ number_format($po->freight, 2) }}</td>
-      <td class="r" style="font-size:9px; color:#475569;">
-        @if(($po->freight_gst_rate ?? 0) > 0)
-          {{ number_format($po->freight_gst_rate, 0) }}%<br><span style="font-size:7.5px;">(&#8377;{{ number_format($freightGst, 2) }})</span>
-        @else
-          <span class="fnt">—</span>
-        @endif
-      </td>
-      <td class="r b" style="font-size:9.5px; color:#1f2937;">&#8377;{{ number_format($po->freight + $freightGst, 2) }}</td>
-      @if($hasWar)<td></td>@endif
-      @if($hasRB)<td></td>@endif
-    </tr>
-    @endif
+
 
     @if($po->round_off != 0)
     <tr>
@@ -433,16 +412,16 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
           <td class="lbl">Net Total (before tax)</td>
           <td class="val">&#8377;{{ number_format($po->net_total, 2) }}</td>
         </tr>
-        <tr>
-          <td class="lbl">GST / Tax Amount</td>
-          <td class="val">&#8377;{{ number_format($po->tax_amount, 2) }}</td>
-        </tr>
         @if($po->freight > 0)
         <tr>
           <td class="lbl">Freight{{ ($po->freight_gst_rate ?? 0) > 0 ? ' (+'.number_format($po->freight_gst_rate, 0).'% GST)' : '' }}</td>
           <td class="val">&#8377;{{ number_format($po->freight, 2) }}</td>
         </tr>
         @endif
+        <tr>
+          <td class="lbl">GST / Tax Amount</td>
+          <td class="val">&#8377;{{ number_format($po->tax_amount, 2) }}</td>
+        </tr>
         <tr class="grand">
           <td style="text-transform:uppercase; letter-spacing:0.5px; font-size:8.5px;">Grand Total</td>
           <td style="text-align:right; font-size:12.5px;">&#8377;{{ number_format($po->grand_total, 2) }}</td>
