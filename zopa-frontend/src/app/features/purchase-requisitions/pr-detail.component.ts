@@ -38,6 +38,9 @@ import { AuthService } from '../../core/auth/auth.service';
           </div>
           <div class="header-actions">
             @if (pr()!.status === 'draft' && auth.canTransact()) {
+              <button mat-stroked-button color="primary" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']" [disabled]="acting()">
+                <mat-icon>edit</mat-icon> Edit PR
+              </button>
               <button mat-stroked-button (click)="submit()" [disabled]="acting()">
                 <mat-icon>send</mat-icon> Submit for Procurement
               </button>

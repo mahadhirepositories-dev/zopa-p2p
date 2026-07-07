@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -32,8 +32,8 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     <div class="page-wrapper">
       <div class="page-header">
         <div>
-          <h2>New Purchase Requisition</h2>
-          <p>Request items for procurement</p>
+          <h2>{{ isEditMode() ? 'Edit' : 'New' }} Purchase Requisition</h2>
+          <p>{{ isEditMode() ? 'Modify your requisition' : 'Request items for procurement' }}</p>
         </div>
       </div>
 
@@ -274,10 +274,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 export class PrFormComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private notify = inject(NotificationService);
   private bulk = inject(BulkImportService);
   boqUploading = signal(false);
+
+  isEditMode = signal(false);
+  prId = signal<number | null>(null);
 
   costCenters = signal<any[]>([]);
   projects    = signal<any[]>([]);
@@ -324,6 +328,49 @@ export class PrFormComponent implements OnInit {
     this.http.get<any>(`${environment.apiUrl}/cost-centers`).subscribe(r => this.costCenters.set(r.data ?? r));
     this.http.get<any>(`${environment.apiUrl}/projects`).subscribe(r => this.projects.set(r));
     this.http.get<any>(`${environment.apiUrl}/locations`).subscribe(r => this.locations.set(r));
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.isEditMode.set(true);
+      this.prId.set(+idParam);
+      this.loadPr(+idParam);
+    }
+  }
+
+  loadPr(id: number) {
+    this.http.get<any>(`${environment.apiUrl}/purchase-requisitions/${id}`).subscribe({
+      next: (pr) => {
+        this.form.patchValue({
+          title: pr.title,
+          cost_center_id: pr.cost_center_id,
+          project_id: pr.project_id,
+          location_id: pr.location_id,
+          priority: pr.priority,
+          required_by_date: pr.required_by_date,
+          required_by_person: pr.required_by_person,
+          description: pr.description,
+        });
+
+        if (pr.cost_center_id) this.onCostCenterChange();
+        if (pr.location_id) this.onLocationChange();
+
+        if (pr.items && pr.items.length > 0) {
+          this.items.clear();
+          pr.items.forEach((it: any) => {
+            const group = this.newItem();
+            group.patchValue({
+              description: it.description,
+              qty: it.qty,
+              unit: it.unit,
+              estimated_price: it.estimated_price,
+              remarks: it.remarks,
+            });
+            this.items.push(group);
+          });
+        }
+      },
+      error: () => this.notify.error('Failed to load PR details'),
+    });
   }
 
   onCostCenterChange() {
@@ -414,7 +461,11 @@ export class PrFormComponent implements OnInit {
       items: this.items.value,
     };
 
-    this.http.post<any>(`${environment.apiUrl}/purchase-requisitions`, body).subscribe({
+    const req = this.isEditMode() 
+      ? this.http.put<any>(`${environment.apiUrl}/purchase-requisitions/${this.prId()}`, body)
+      : this.http.post<any>(`${environment.apiUrl}/purchase-requisitions`, body);
+
+    req.subscribe({
       next: pr => {
         if (submit) {
           this.http.post(`${environment.apiUrl}/purchase-requisitions/${pr.id}/submit`, {}).subscribe({
@@ -425,7 +476,7 @@ export class PrFormComponent implements OnInit {
             error: e => { this.notify.error(e.error?.error ?? 'Submit failed'); this.saving.set(false); },
           });
         } else {
-          this.notify.success('PR saved as draft');
+          this.notify.success(`PR ${this.isEditMode() ? 'updated' : 'saved as draft'}`);
           this.router.navigate(['/purchase-requisitions', pr.id]);
         }
       },

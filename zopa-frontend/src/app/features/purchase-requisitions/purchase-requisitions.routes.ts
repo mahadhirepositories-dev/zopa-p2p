@@ -13,6 +13,12 @@ export const prRoutes: Routes = [
     loadComponent: () => import('./pr-form.component').then(m => m.PrFormComponent),
   },
   {
+    path: ':id/edit',
+    canActivate: [permissionGuard],
+    data: { module: 'purchase_requisitions', action: 'update' },
+    loadComponent: () => import('./pr-form.component').then(m => m.PrFormComponent),
+  },
+  {
     path: ':id',
     loadComponent: () => import('./pr-detail.component').then(m => m.PrDetailComponent),
   },
