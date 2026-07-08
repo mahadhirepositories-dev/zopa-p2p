@@ -181,16 +181,18 @@ if (!function_exists('_poTermsLines')) {
       $s = preg_replace('/<li[^>]*>/i', "\n\u{2022} ", $s);         // <li> → bullet line
       $s = preg_replace('/<\/(p|div|li|ul|ol|h[1-6]|tr)>/i', "\n", $s);
       $s = preg_replace('/<br\s*\/?>/i', "\n", $s);
+      
+      // Remove <style> and <script> blocks completely (strip_tags leaves their text contents!)
+      $s = preg_replace('/<(style|script)\b[^>]*>.*?<\/\1>/is', '', $s);
+
+      // Strip tags on the whole string so multi-line tags are removed correctly.
+      $s = strip_tags($s, '<b><strong><i><em><u>');
+      $s = preg_replace('/<(b|strong|i|em|u)\b[^>]*>/i', '<$1>', $s);
     }
     $lines = preg_split('/\r?\n/', $s);
     $out = [];
     foreach ($lines as $line) {
-      if ($isHtml) {
-        // Keep inline formatting only + drop attributes. Text runs are already
-        // entity-encoded by the browser, so this is safe to print with {!! !!}.
-        $line = strip_tags($line, '<b><strong><i><em><u>');
-        $line = preg_replace('/<(b|strong|i|em|u)\b[^>]*>/i', '<$1>', $line);
-      } else {
+      if (!$isHtml) {
         // Legacy plain text — escape so it prints literally.
         $line = htmlspecialchars($line, ENT_QUOTES);
       }
