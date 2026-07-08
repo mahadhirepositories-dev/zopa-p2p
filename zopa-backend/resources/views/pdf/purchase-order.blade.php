@@ -327,17 +327,17 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
 <table class="items" style="margin-bottom:8px;">
   <thead>
     <tr>
-      <th style="width:22px;" class="c">Sl<br>No</th>
-      @if($hasCode)<th style="width:52px;">Code</th>@endif
+      <th style="width:18px;" class="c">Sl<br>No</th>
+      @if($hasCode)<th style="width:45px;">Code</th>@endif
       <th>Description / Specification</th>
-      @if($hasHSN)<th style="width:50px;" class="c">HSN</th>@endif
-      @if($hasUOM)<th style="width:36px;" class="c">UOM</th>@endif
-      <th style="width:34px;" class="r">Qty</th>
-      <th style="width:74px;" class="r">Unit Price</th>
-      <th style="width:88px;" class="r">GST</th>
-      <th style="width:84px;" class="r">Amount</th>
-      @if($hasWar)<th style="width:48px;" class="c">Warranty</th>@endif
-      @if($hasRB)<th style="width:62px;">Req. By</th>@endif
+      @if($hasHSN)<th style="width:35px;" class="c">HSN</th>@endif
+      @if($hasUOM)<th style="width:28px;" class="c">UOM</th>@endif
+      <th style="width:28px;" class="r">Qty</th>
+      <th style="width:55px;" class="r">Unit Price</th>
+      <th style="width:65px;" class="r">GST</th>
+      <th style="width:65px;" class="r">Amount</th>
+      @if($hasWar)<th style="width:35px;" class="c">Warranty</th>@endif
+      @if($hasRB)<th style="width:50px;">Req. By</th>@endif
     </tr>
   </thead>
   <tbody>
