@@ -481,4 +481,33 @@ export const HELP_ARTICLES: HelpArticle[] = [
       </ul>
       <p>The system will combine these to generate the final document numbers (e.g., <code>TH/2026-27/49</code>). Changing this configuration applies to all future documents generated.</p>`,
   },
+  {
+    id: 'export-data',
+    title: 'Export Data to Excel',
+    category: 'Dashboards & Reports',
+    icon: 'file_download',
+    summary: 'Download lists as Excel spreadsheets.',
+    keywords: ['export', 'excel', 'csv', 'download', 'spreadsheet', 'data', 'reports'],
+    body: `<p>You can export data from almost any list view in the system, including <strong>Requisitions, Purchase Orders, Approvals, Goods Receipts, Invoices, Vendors, Products, and Categories</strong>.</p>
+      <ol>
+        <li>Navigate to the relevant list screen.</li>
+        <li>Click the <strong>Export</strong> button near the search bar.</li>
+        <li>An Excel file (<code>.xlsx</code>) will be generated and downloaded to your computer containing the current data.</li>
+      </ol>
+      <p>This is useful for offline analysis or sharing data outside the system.</p>`,
+  },
+  {
+    id: 'draft-visibility',
+    title: 'Draft Document Visibility',
+    category: 'Approvals',
+    icon: 'visibility_off',
+    summary: 'Understanding who can see Draft PRs and POs.',
+    keywords: ['draft', 'visibility', 'hidden', 'approver', 'buyer', 'see', 'access'],
+    body: `<p>Documents in <strong>Draft</strong> status are works-in-progress. To keep workflows clean, their visibility is restricted based on your role permissions.</p>
+      <ul>
+        <li><strong>Buyers & Creators</strong> — can see Draft documents so they can continue working on them.</li>
+        <li><strong>Approvers (without Create/Edit permissions)</strong> — <em>cannot</em> see Draft documents in the list. They will only see the document once it is submitted and officially enters the approval workflow.</li>
+      </ul>
+      <p>If you are an Approver and need to see drafts, contact your administrator to adjust your role's Access Control permissions.</p>`,
+  },
 ];
