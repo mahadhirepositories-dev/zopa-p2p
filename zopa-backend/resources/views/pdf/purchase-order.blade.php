@@ -427,7 +427,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         </tr>
         <tr class="grand">
           <td style="text-transform:uppercase; letter-spacing:0.5px; font-size:8.5px;">Grand Total</td>
-          <td style="text-align:right; font-size:12.5px;">&#8377;{{ number_format($po->grand_total, 2) }}</td>
+          <td style="text-align:right; font-size:12.5px;">&#8377;{{ number_format(round($po->grand_total), 2) }}</td>
         </tr>
       </table>
     </td>

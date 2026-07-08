@@ -55,7 +55,7 @@ class GstService
             'net_total' => round($netTotal, 2),
             'freight' => round($freight, 2),
             'tax_amount' => round($taxTotal, 2),
-            'grand_total' => round($grandTotal, 2),
+            'grand_total' => round($grandTotal),
             'round_off' => round($roundOff, 2),
         ];
     }
