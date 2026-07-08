@@ -300,6 +300,44 @@ import { AuthService } from '../../core/auth/auth.service';
               </mat-card-content>
             </mat-card>
 
+            @if (budget()) {
+              <mat-card style="margin-bottom:16px;">
+                <mat-card-header>
+                  <mat-card-title style="font-size:14px;display:flex;align-items:center;gap:6px;">
+                    <mat-icon style="color:var(--brand);font-size:18px;">account_balance_wallet</mat-icon>
+                    Budget Availability
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content style="padding-top:12px;">
+                  <div class="diag-row">
+                    <span>Annual Budget</span>
+                    <strong>₹{{ budget()!.annual | number:'1.0-0' }}</strong>
+                  </div>
+                  <div class="diag-row">
+                    <span>Frozen (Pending POs)</span>
+                    <strong>₹{{ budget()!.frozen | number:'1.0-0' }}</strong>
+                  </div>
+                  <div class="diag-row">
+                    <span>Consumed (Released POs)</span>
+                    <strong>₹{{ budget()!.consumed | number:'1.0-0' }}</strong>
+                  </div>
+                  <mat-divider style="margin:8px 0;" />
+                  <div class="diag-row" style="font-size:13px;font-weight:700;">
+                    <span>Available Budget</span>
+                    <span [style.color]="(budget()?.available ?? 0) < (po()?.grand_total ?? 0) ? '#dc2626' : '#16a34a'">
+                      ₹{{ budget()!.available | number:'1.0-0' }}
+                    </span>
+                  </div>
+                  @if ((budget()?.available ?? 0) < (po()?.grand_total ?? 0) && po()?.status === 'draft') {
+                    <div style="background:#fef2f2;color:#b91c1c;padding:8px 10px;border-radius:6px;margin-top:10px;font-size:12px;display:flex;align-items:center;gap:6px;">
+                      <mat-icon style="font-size:16px;width:16px;height:16px;">warning</mat-icon>
+                      PO total exceeds available budget!
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+
             <mat-card style="margin-bottom:16px;">
               <mat-card-header><mat-card-title>Approval Timeline</mat-card-title></mat-card-header>
               <mat-card-content style="padding-top:16px;">
@@ -528,6 +566,7 @@ export class PoDetailComponent implements OnInit {
   myApproval = signal<any>(null);  // pending approval record for the current user
   approvalAction = signal<'approve'|'return'|'reject'|null>(null);
   approvalComments = '';
+  budget = signal<any>(null);
 
   returnComment = computed(() => {
     const po = this.po();
@@ -553,6 +592,11 @@ export class PoDetailComponent implements OnInit {
         // Check if the current user has a pending approval for this PO
         this.http.get<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/my-approval`)
           .subscribe({ next: a => this.myApproval.set(a), error: () => {} });
+        // Fetch budget for the selected cost center
+        if (po.cost_center_id) {
+          this.http.get<any>(`${environment.apiUrl}/cost-centers/${po.cost_center_id}/budget`)
+            .subscribe({ next: b => this.budget.set(b), error: () => {} });
+        }
       },
       error: () => { this.notify.error('Could not load PO.'); this.loading.set(false); },
     });

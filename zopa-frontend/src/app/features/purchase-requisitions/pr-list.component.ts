@@ -15,6 +15,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 
 @Component({
   selector: 'app-pr-list',
@@ -23,6 +24,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     DatePipe, DecimalPipe, TitleCasePipe, FormsModule, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule, MatIconModule,
     MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule, SearchFieldComponent,
+    MatCheckboxModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -32,6 +34,11 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <p>{{ filtered().length }} requisition{{ filtered().length !== 1 ? 's' : '' }} found</p>
         </div>
         <div style="display: flex; gap: 12px;">
+          @if (selectedPrIds().length > 0) {
+            <button mat-raised-button color="accent" (click)="convertSelectedToPo()">
+              <mat-icon>receipt_long</mat-icon> Convert Selected ({{ selectedPrIds().length }})
+            </button>
+          }
           <button mat-stroked-button (click)="exportData()">
             <mat-icon>download</mat-icon> Export
           </button>
@@ -76,6 +83,22 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
             </div>
           } @else {
             <table mat-table [dataSource]="filtered()" class="full-width">
+
+              <!-- Checkbox Column -->
+              <ng-container matColumnDef="select">
+                <th mat-header-cell *matHeaderCellDef style="width: 48px;">
+                  <mat-checkbox (change)="$event ? toggleAll() : null"
+                                [checked]="isAllSelected()"
+                                [indeterminate]="isAnySelected() && !isAllSelected()">
+                  </mat-checkbox>
+                </th>
+                <td mat-cell *matCellDef="let pr" (click)="$event.stopPropagation()">
+                  <mat-checkbox (change)="$event ? toggleSelection(pr.id) : null"
+                                [checked]="selectedPrIds().includes(pr.id)"
+                                [disabled]="!isConvertible(pr)">
+                  </mat-checkbox>
+                </td>
+              </ng-container>
 
               <ng-container matColumnDef="pr_number">
                 <th mat-header-cell *matHeaderCellDef>PR Number</th>
@@ -133,8 +156,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
                 </td>
               </ng-container>
 
-              <tr mat-header-row *matHeaderRowDef="columns"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns;"
+              <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedColumns();"
                   class="clickable-row" (click)="view(row.id)"></tr>
             </table>
           }
@@ -189,6 +212,14 @@ export class PrListComponent implements OnInit {
   loading = signal(true);
   search = signal('');
   statusFilter = signal('');
+  selectedPrIds = signal<number[]>([]);
+
+  displayedColumns = computed(() => {
+    if (this.auth.canTransact()) {
+      return ['select', ...this.columns];
+    }
+    return this.columns;
+  });
 
   filtered = computed(() => {
     const q = this.search().toLowerCase();
@@ -208,6 +239,47 @@ export class PrListComponent implements OnInit {
   }
 
   view(id: number) { this.router.navigate(['/purchase-requisitions', id]); }
+
+  isConvertible(pr: any): boolean {
+    return ['submitted', 'rfq_approved', 'partially_converted'].includes(pr.status);
+  }
+
+  isAllSelected() {
+    const convertible = this.filtered().filter(pr => this.isConvertible(pr));
+    return convertible.length > 0 && convertible.every(pr => this.selectedPrIds().includes(pr.id));
+  }
+
+  isAnySelected() {
+    return this.selectedPrIds().length > 0;
+  }
+
+  toggleAll() {
+    if (this.isAllSelected()) {
+      this.selectedPrIds.set([]);
+    } else {
+      const convertibleIds = this.filtered()
+        .filter(pr => this.isConvertible(pr))
+        .map(pr => pr.id);
+      this.selectedPrIds.set(convertibleIds);
+    }
+  }
+
+  toggleSelection(id: number) {
+    const current = this.selectedPrIds();
+    if (current.includes(id)) {
+      this.selectedPrIds.set(current.filter(x => x !== id));
+    } else {
+      this.selectedPrIds.set([...current, id]);
+    }
+  }
+
+  convertSelectedToPo() {
+    const ids = this.selectedPrIds();
+    if (!ids.length) return;
+    this.router.navigate(['/purchase-orders/create'], {
+      queryParams: { pr_ids: ids.join(',') },
+    });
+  }
 
   formatStatus(s: string): string {
     const map: Record<string,string> = {

@@ -73,11 +73,6 @@ import { gstinValidator } from '../../../core/validators';
 
         @if (client()) {
           <div style="display:flex;gap:10px;align-items:center;">
-            <button mat-raised-button color="primary" class="raise-po-btn"
-                    (click)="raisePo()">
-              <mat-icon>add_shopping_cart</mat-icon>
-              Raise PO on Behalf
-            </button>
             <button mat-stroked-button (click)="openEditDialog()">
               <mat-icon>edit</mat-icon> Edit Client
             </button>
@@ -118,7 +113,7 @@ import { gstinValidator } from '../../../core/validators';
           </div>
           <div class="info-chip">
             <mat-icon>calendar_today</mat-icon>
-            <span>FY Start Month: <strong>{{ client()!.fiscal_year_start || '—' }}</strong></span>
+            <span>Fiscal Year Start: <strong>{{ getMonthName(client()!.fiscal_year_start) }}</strong></span>
           </div>
           <div class="info-chip">
             <mat-icon>group</mat-icon>
@@ -631,6 +626,16 @@ import { gstinValidator } from '../../../core/validators';
 export class ClientDetailComponent implements OnInit {
   id = input.required<string>();
 
+  getMonthName(monthNum: number | string | null | undefined): string {
+    if (!monthNum) return '—';
+    const num = +monthNum;
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return months[num - 1] || '—';
+  }
+
   private adminService = inject(AdminService);
   private auth = inject(AuthService);
   private router = inject(Router);
@@ -736,13 +741,6 @@ export class ClientDetailComponent implements OnInit {
     });
   }
 
-  /** Switch tenant context to this client and open PO create */
-  raisePo() {
-    const c = this.client();
-    if (!c) return;
-    this.auth.impersonateClient(c.id, c.name);
-    this.router.navigate(['/purchase-orders/create']);
-  }
 
   openAssignStaffDialog() {
     this.assignForm.reset({ role: 'zopa_buyer' });

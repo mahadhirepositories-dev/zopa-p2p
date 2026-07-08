@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed, input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { FormBuilder, FormArray, FormGroup, ReactiveFormsModule, Validators, AbstractControl } from '@angular/forms';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -762,11 +763,17 @@ export class PoFormComponent implements OnInit {
       this.http.get<any>(`${api}/purchase-orders/${id}`).subscribe(po => this.patchPo(po));
     }
 
-    // Pre-fill from PR if ?pr_id is in URL
+    // Pre-fill from PR if ?pr_id or ?pr_ids is in URL
     const prId = this.route.snapshot.queryParamMap.get('pr_id');
+    const prIdsStr = this.route.snapshot.queryParamMap.get('pr_ids');
     if (prId) {
       this.prSource.set(+prId);
       this.http.get<any>(`${api}/purchase-requisitions/${prId}`).subscribe(pr => this.patchFromPr(pr));
+    } else if (prIdsStr) {
+      const prIds = prIdsStr.split(',').map(x => +x).filter(x => !isNaN(x));
+      if (prIds.length) {
+        this.loadMultiplePrs(prIds);
+      }
     }
   }
 
@@ -839,12 +846,63 @@ export class PoFormComponent implements OnInit {
           product_id: item.product_id,
           category_id: item.category_id,
           required_by: pr.required_by_date,
+          pr_item_id: item.id,
+          pr_id: pr.id,
         }));
       });
       this.recalc();
     }
     // Also store pr_id for backend to link TAT
     (this.headerForm as any)._prId = pr.id;
+  }
+
+  // ─── Load Multiple PRs ────────────────────────────────────────────────
+  private loadMultiplePrs(prIds: number[]) {
+    const api = environment.apiUrl;
+    const requests = prIds.map(id => this.http.get<any>(`${api}/purchase-requisitions/${id}`));
+    
+    forkJoin(requests).subscribe({
+      next: (prs: any[]) => {
+        if (!prs.length) return;
+        // Pre-fill cost center from the first PR
+        const firstPr = prs[0];
+        this.headerForm.patchValue({
+          cost_center_id: firstPr.cost_center_id,
+          pr_reference: prs.map(p => p.pr_number ?? p.pr_ref).join(', '),
+        });
+        if (firstPr.cost_center_id) {
+          this.loadBudget(firstPr.cost_center_id);
+          setTimeout(() => {
+            this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === firstPr.cost_center_id) ?? null);
+          }, 300);
+        }
+        if (firstPr.location_id) {
+          this.headerForm.patchValue({ ship_to_location_id: firstPr.location_id });
+        }
+
+        // Merge line items from all PRs
+        while (this.items.length > 0) this.items.removeAt(0);
+        prs.forEach(pr => {
+          if (pr.items?.length) {
+            pr.items.forEach((item: any) => {
+              this.items.push(this.buildItem({
+                description: item.description,
+                qty: item.qty,
+                net_rate: 0,
+                gst_rate: 18,
+                product_id: item.product_id,
+                category_id: item.category_id,
+                required_by: pr.required_by_date,
+                pr_item_id: item.id,
+                pr_id: pr.id,
+              }));
+            });
+          }
+        });
+        this.recalc();
+      },
+      error: () => this.notify.error('Could not load purchase requisitions.')
+    });
   }
 
   // ─── Selection handlers ───────────────────────────────────────────────
@@ -923,6 +981,8 @@ export class PoFormComponent implements OnInit {
       gst_rate:        [data?.gst_rate != null ? +data.gst_rate : 18, Validators.required],
       warranty_months: [data?.warranty_months != null ? +data.warranty_months : 0],
       required_by:     [data?.required_by ? new Date(data.required_by) : null],
+      pr_item_id:      [data?.pr_item_id ?? null],
+      pr_id:           [data?.pr_id ?? null],
     });
   }
 

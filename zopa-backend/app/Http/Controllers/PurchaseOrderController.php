@@ -334,6 +334,20 @@ class PurchaseOrderController extends Controller
                     'id', collect($request->items)->pluck('product_id')->filter()->unique()
                 )->get()->keyBy('id');
 
+                // Decrement converted_qty on old PR items before deleting
+                foreach ($purchaseOrder->items as $oldItem) {
+                    if ($oldItem->pr_item_id) {
+                        $prItem = \App\Models\PrItem::find($oldItem->pr_item_id);
+                        if ($prItem) {
+                            // Prevent negative quantities
+                            $decrementQty = min((float)$oldItem->qty, (float)$prItem->converted_qty);
+                            if ($decrementQty > 0) {
+                                $prItem->decrement('converted_qty', $decrementQty);
+                            }
+                        }
+                    }
+                }
+
                 $purchaseOrder->items()->delete();
                 foreach ($request->items as $i => $item) {
                     $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
@@ -341,6 +355,7 @@ class PurchaseOrderController extends Controller
                     PoItem::create([
                         'po_id' => $purchaseOrder->id,
                         'sno' => $i + 1,
+                        'pr_item_id' => $item['pr_item_id'] ?? null,
                         'product_id' => $item['product_id'] ?? null,
                         'product_code' => $product?->code,
                         'product_name' => $product?->name,
@@ -355,6 +370,46 @@ class PurchaseOrderController extends Controller
                         'amount' => $grossRate * $item['qty'],
                         'required_by' => $item['required_by'] ?? null,
                         'warranty_months' => $item['warranty_months'] ?? 0,
+                    ]);
+
+                    // Increment converted_qty on new PR items
+                    if (!empty($item['pr_item_id'])) {
+                        $prItem = \App\Models\PrItem::find($item['pr_item_id']);
+                        if ($prItem) {
+                            $prItem->increment('converted_qty', $item['qty']);
+                        }
+                    }
+                }
+
+                // Track and sync PR links for this PO after edit
+                $linkedPrIds = array_filter(array_unique(
+                    array_merge(
+                        $request->filled('pr_id') ? [$request->pr_id] : [],
+                        collect($request->items)->pluck('pr_id')->filter()->unique()->values()->toArray()
+                    )
+                ));
+
+                // Detach all PRs first, then re-sync
+                $purchaseOrder->prs()->detach();
+                
+                foreach ($linkedPrIds as $prId) {
+                    $pr = \App\Models\PurchaseRequisition::with('items')->find($prId);
+                    if (!$pr) continue;
+
+                    $purchaseOrder->prs()->syncWithoutDetaching([$prId]);
+
+                    $pr->load('items');
+                    $allConverted = $pr->items->every(fn($it) => (float)$it->converted_qty >= (float)$it->qty);
+                    $anyConverted = $pr->items->some(fn($it)  => (float)$it->converted_qty > 0);
+
+                    if ($allConverted)      $newStatus = 'converted';
+                    elseif ($anyConverted)  $newStatus = 'partially_converted';
+                    else                   $newStatus = 'submitted'; // reset to submitted if all items removed
+
+                    $pr->update([
+                        'status'       => $newStatus,
+                        'buyer_id'     => auth()->id(),
+                        'converted_at' => now(),
                     ]);
                 }
 
