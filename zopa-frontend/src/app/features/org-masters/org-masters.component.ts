@@ -77,6 +77,12 @@ import { AuthService } from '../../core/auth/auth.service';
                         </div>
                       </td>
                     </ng-container>
+                    <ng-container matColumnDef="head">
+                      <th mat-header-cell *matHeaderCellDef>Department Head</th>
+                      <td mat-cell *matCellDef="let row" style="font-size:13px;color:var(--text-2);">
+                        {{ row.head?.name ?? '—' }}
+                      </td>
+                    </ng-container>
                     <ng-container matColumnDef="status">
                       <th mat-header-cell *matHeaderCellDef>Status</th>
                       <td mat-cell *matCellDef="let row">
@@ -100,8 +106,8 @@ import { AuthService } from '../../core/auth/auth.service';
                         }
                       </td>
                     </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="columnsBasic"></tr>
-                    <tr mat-row *matRowDef="let row; columns: columnsBasic;" class="hover-row"></tr>
+                    <tr mat-header-row *matHeaderRowDef="columnsDepartment"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnsDepartment;" class="hover-row"></tr>
                   </table>
                 }
               </mat-card-content>
@@ -342,8 +348,9 @@ export class OrgMastersComponent implements OnInit {
   projects    = new MatTableDataSource<OrgEntity>([]);
   locations   = new MatTableDataSource<OrgEntity>([]);
 
-  columnsBasic    = ['name', 'status', 'actions'];
-  columnsLocation = ['name', 'gstin', 'status', 'actions'];
+  columnsBasic      = ['name', 'status', 'actions'];
+  columnsDepartment = ['name', 'head', 'status', 'actions'];
+  columnsLocation   = ['name', 'gstin', 'status', 'actions'];
 
   ngOnInit() { this.loadData(0); }
 

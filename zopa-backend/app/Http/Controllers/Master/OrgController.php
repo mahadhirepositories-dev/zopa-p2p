@@ -20,7 +20,7 @@ class OrgController extends Controller
     {
         $tenant = app('currentTenant');
         return response()->json(
-            Department::where('tenant_id', $tenant->id)->where('is_active', true)->get()
+            Department::with('head:id,name,email')->where('tenant_id', $tenant->id)->where('is_active', true)->get()
         );
     }
 
@@ -28,21 +28,29 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'create');
 
-        $request->validate(['name' => 'required|string|max:255']);
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'head_user_id' => 'nullable|integer|exists:users,id',
+        ]);
         $dept = Department::create([
             'tenant_id' => app('currentTenant')->id,
             'name' => $request->name,
+            'head_user_id' => $request->head_user_id,
             'is_active' => true,
         ]);
-        return response()->json($dept, 201);
+        return response()->json($dept->load('head:id,name,email'), 201);
     }
 
     public function updateDepartment(Request $request, Department $department): JsonResponse
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($department->tenant_id !== app('currentTenant')->id, 403);
-        $department->update($request->only('name', 'is_active'));
-        return response()->json($department);
+        $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'head_user_id' => 'nullable|integer|exists:users,id',
+        ]);
+        $department->update($request->only('name', 'is_active', 'head_user_id'));
+        return response()->json($department->load('head:id,name,email'));
     }
 
     public function destroyDepartment(Department $department): JsonResponse

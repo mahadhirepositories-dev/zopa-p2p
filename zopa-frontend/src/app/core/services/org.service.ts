@@ -15,6 +15,8 @@ export interface OrgEntity {
   pincode?: string;
   country?: string;
   gstin?: string;
+  head_user_id?: number;
+  head?: { id: number; name: string; email: string };
 }
 
 @Injectable({

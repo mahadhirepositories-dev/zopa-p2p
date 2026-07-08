@@ -65,7 +65,7 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             }
 
-            @if (myApproval()) {
+            @if (myApproval() && po()!.status?.startsWith('pending')) {
               <button mat-raised-button style="background:#22c55e;color:#fff;" [disabled]="acting()" (click)="openApprovalAction('approve')">
                 @if (acting() === 'approve') { <mat-spinner diameter="18" /> }
                 @else { <mat-icon>check_circle</mat-icon> Approve }

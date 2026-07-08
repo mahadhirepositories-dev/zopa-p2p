@@ -10,6 +10,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { OrgService, OrgEntity } from '../../core/services/org.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { gstinValidator } from '../../core/validators';
+import { HttpClient } from '@angular/common/http';
+import { MatSelectModule } from '@angular/material/select';
+import { environment } from '../../../environments/environment';
 
 export interface OrgMasterDialogData {
   type: 'department' | 'project' | 'location';
@@ -21,7 +24,8 @@ export interface OrgMasterDialogData {
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
-    MatFormFieldModule, MatInputModule, MatCheckboxModule, MatProgressSpinnerModule
+    MatFormFieldModule, MatInputModule, MatCheckboxModule, MatProgressSpinnerModule,
+    MatSelectModule
   ],
   template: `
     <h2 mat-dialog-title>{{ data.entity ? 'Edit' : 'New' }} {{ getTitle() }}</h2>
@@ -31,6 +35,18 @@ export interface OrgMasterDialogData {
           <mat-label>Name *</mat-label>
           <input matInput formControlName="name" />
         </mat-form-field>
+
+        @if (data.type === 'department') {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Department Head</mat-label>
+            <mat-select formControlName="head_user_id">
+              <mat-option [value]="null">None</mat-option>
+              @for (u of users(); track u.id) {
+                <mat-option [value]="u.id">{{ u.name }} ({{ u.email }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
 
         @if (data.type === 'location') {
           <mat-form-field appearance="outline" class="full-width">
@@ -44,13 +60,18 @@ export interface OrgMasterDialogData {
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Pincode</mat-label>
-              <input matInput formControlName="pincode" inputmode="numeric" maxlength="6" />
+              <input matInput formControlName="pincode" maxlength="20" />
             </mat-form-field>
           </div>
           <div class="row-2">
             <mat-form-field appearance="outline">
               <mat-label>State</mat-label>
-              <input matInput formControlName="state" />
+              <mat-select formControlName="state" (selectionChange)="onStateChange($event.value)">
+                <mat-option [value]="null">Select State</mat-option>
+                @for (s of indianStates; track s.code) {
+                  <mat-option [value]="s.name">{{ s.name }}</mat-option>
+                }
+              </mat-select>
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>State Code</mat-label>
@@ -91,16 +112,65 @@ export class OrgMasterDialogComponent implements OnInit {
   private orgService = inject(OrgService);
   private notify = inject(NotificationService);
   private dialogRef = inject(MatDialogRef<OrgMasterDialogComponent>);
+  private http = inject(HttpClient);
   data: OrgMasterDialogData = inject(MAT_DIALOG_DATA);
 
   saving = signal(false);
   form!: FormGroup;
+  users = signal<any[]>([]);
+
+  indianStates = [
+    { name: 'Andhra Pradesh', code: 'AP' },
+    { name: 'Arunachal Pradesh', code: 'AR' },
+    { name: 'Assam', code: 'AS' },
+    { name: 'Bihar', code: 'BR' },
+    { name: 'Chhattisgarh', code: 'CG' },
+    { name: 'Goa', code: 'GA' },
+    { name: 'Gujarat', code: 'GJ' },
+    { name: 'Haryana', code: 'HR' },
+    { name: 'Himachal Pradesh', code: 'HP' },
+    { name: 'Jharkhand', code: 'JH' },
+    { name: 'Karnataka', code: 'KA' },
+    { name: 'Kerala', code: 'KL' },
+    { name: 'Madhya Pradesh', code: 'MP' },
+    { name: 'Maharashtra', code: 'MH' },
+    { name: 'Manipur', code: 'MN' },
+    { name: 'Meghalaya', code: 'ML' },
+    { name: 'Mizoram', code: 'MZ' },
+    { name: 'Nagaland', code: 'NL' },
+    { name: 'Odisha', code: 'OD' },
+    { name: 'Punjab', code: 'PB' },
+    { name: 'Rajasthan', code: 'RJ' },
+    { name: 'Sikkim', code: 'SK' },
+    { name: 'Tamil Nadu', code: 'TN' },
+    { name: 'Telangana', code: 'TG' },
+    { name: 'Tripura', code: 'TR' },
+    { name: 'Uttar Pradesh', code: 'UP' },
+    { name: 'Uttarakhand', code: 'UK' },
+    { name: 'West Bengal', code: 'WB' },
+    { name: 'Andaman and Nicobar Islands', code: 'AN' },
+    { name: 'Chandigarh', code: 'CH' },
+    { name: 'Dadra and Nagar Haveli and Daman and Diu', code: 'DN' },
+    { name: 'Delhi', code: 'DL' },
+    { name: 'Jammu and Kashmir', code: 'JK' },
+    { name: 'Ladakh', code: 'LA' },
+    { name: 'Lakshadweep', code: 'LD' },
+    { name: 'Puducherry', code: 'PY' }
+  ];
 
   ngOnInit() {
     this.form = this.fb.group({
       name: [this.data.entity?.name || '', Validators.required],
       is_active: [this.data.entity ? this.data.entity.is_active : true]
     });
+
+    if (this.data.type === 'department') {
+      this.form.addControl('head_user_id', this.fb.control(this.data.entity?.head_user_id || null));
+      this.http.get<any[]>(`${environment.apiUrl}/users`).subscribe({
+        next: u => this.users.set(u),
+        error: () => {}
+      });
+    }
 
     if (this.data.type === 'location') {
       this.form.addControl('address', this.fb.control(this.data.entity?.address || ''));
@@ -110,6 +180,15 @@ export class OrgMasterDialogComponent implements OnInit {
       this.form.addControl('state_code', this.fb.control(this.data.entity?.state_code || ''));
       this.form.addControl('country', this.fb.control(this.data.entity?.country || 'India'));
       this.form.addControl('gstin', this.fb.control(this.data.entity?.gstin || '', gstinValidator()));
+    }
+  }
+
+  onStateChange(stateName: string) {
+    const s = this.indianStates.find(x => x.name === stateName);
+    if (s) {
+      this.form.get('state_code')?.setValue(s.code);
+    } else {
+      this.form.get('state_code')?.setValue('');
     }
   }
 
