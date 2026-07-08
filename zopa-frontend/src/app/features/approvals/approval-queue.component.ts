@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { ApprovalActionDialogComponent } from './approval-action-dialog.component';
 
 @Component({
@@ -30,6 +31,9 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
           <h2>Pending Approvals</h2>
           <p>{{ approvals().length }} item{{ approvals().length !== 1 ? 's' : '' }} awaiting your decision</p>
         </div>
+        <button mat-stroked-button (click)="exportData()">
+          <mat-icon>download</mat-icon> Export
+        </button>
       </div>
 
       @if (loading()) {
@@ -304,6 +308,7 @@ export class ApprovalQueueComponent implements OnInit {
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
+  private exportService = inject(ExportService);
   readonly auth = inject(AuthService);
 
   approvals = signal<any[]>([]);
@@ -434,5 +439,9 @@ export class ApprovalQueueComponent implements OnInit {
         },
       });
     });
+  }
+
+  exportData() {
+    this.exportService.export('api/approvals/export');
   }
 }

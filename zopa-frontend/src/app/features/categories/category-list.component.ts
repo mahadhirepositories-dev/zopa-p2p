@@ -13,6 +13,7 @@ import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { CategoryFormDialogComponent } from './category-form-dialog.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
 interface Category { id: number; name: string; parent_id?: number | null; children?: Category[]; }
@@ -38,9 +39,13 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()"
-                            (valueChange)="search.set($event); onSearch()" placeholder="Search…" />
+                            (valueChange)="search.set($event); onSearch()"
+                            placeholder="Search categories…" />
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
+          </button>
           @if (auth.canDo('products','create')) {
-            <button mat-raised-button color="primary" class="cta-btn" (click)="openForm()">
+            <button mat-raised-button color="primary" (click)="openForm()" class="cta-btn">
               <mat-icon>add</mat-icon> New Category
             </button>
           }
@@ -183,6 +188,7 @@ export class CategoryListComponent implements OnInit {
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
 
   categories = signal<Category[]>([]);
   loading = signal(true);
@@ -233,5 +239,9 @@ export class CategoryListComponent implements OnInit {
       data: { category: cat ?? null, categories: this.categories() },
     });
     ref.afterClosed().subscribe(saved => { if (saved) this.load(); });
+  }
+
+  exportData() {
+    this.exportService.export('api/categories/export');
   }
 }

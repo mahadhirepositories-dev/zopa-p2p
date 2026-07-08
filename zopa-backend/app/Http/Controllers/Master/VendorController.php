@@ -41,6 +41,30 @@ class VendorController extends Controller
         );
     }
 
+    public function export(Request $request)
+    {
+        $this->requirePermission('vendors', 'view');
+        $tenant = app('currentTenant');
+        
+        $query = Vendor::where('tenant_id', $tenant->id)
+                ->with(['category:id,name', 'subcategory:id,name']);
+
+        $data = $query->latest()->get()->map(fn($v) => [
+            'Vendor Name' => $v->name,
+            'Global Code' => $v->global_vendor_code,
+            'Email' => $v->email,
+            'Phone' => $v->phone,
+            'Category' => optional($v->category)->name,
+            'Subcategory' => optional($v->subcategory)->name,
+            'Status' => $v->is_active ? 'Active' : 'Inactive',
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['Vendor Name', 'Global Code', 'Email', 'Phone', 'Category', 'Subcategory', 'Status']),
+            'vendors.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('vendors', 'create');

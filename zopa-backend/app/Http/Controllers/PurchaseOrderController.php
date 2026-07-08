@@ -81,6 +81,41 @@ class PurchaseOrderController extends Controller
         return response()->json($query->latest()->paginate($perPage));
     }
 
+    public function export(Request $request)
+    {
+        $tenant = app('currentTenant');
+        $query = PurchaseOrder::with(['vendor', 'costCenter', 'creator'])
+            ->where('tenant_id', $tenant->id);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->has('statuses')) {
+            $query->whereIn('status', (array) $request->statuses);
+        }
+        if (!$this->hasTransactRole()) {
+            $query->where('status', '!=', 'draft');
+        }
+        if ($request->has('cost_center_id')) {
+            $query->where('cost_center_id', $request->cost_center_id);
+        }
+
+        $data = $query->latest()->get()->map(fn($po) => [
+            'PO Number' => $po->po_number ?? 'Draft',
+            'Vendor' => optional($po->vendor)->name,
+            'Cost Center' => optional($po->costCenter)->name,
+            'Grand Total' => $po->grand_total,
+            'Status' => ucfirst($po->status),
+            'Created By' => optional($po->creator)->name,
+            'Created At' => $po->created_at->format('Y-m-d'),
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['PO Number', 'Vendor', 'Cost Center', 'Grand Total', 'Status', 'Created By', 'Created At']),
+            'purchase_orders.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('purchase_orders', 'create');

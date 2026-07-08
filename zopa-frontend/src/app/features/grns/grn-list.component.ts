@@ -11,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-grn-list',
@@ -27,11 +28,16 @@ import { AuthService } from '../../core/auth/auth.service';
           <h2>Goods Received Notes</h2>
           <p>{{ grns().length }} receipt{{ grns().length !== 1 ? 's' : '' }}</p>
         </div>
-        @if (auth.canDo('grns','create')) {
-          <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
-            <mat-icon>add</mat-icon> New GRN
+        <div style="display: flex; gap: 12px;">
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
           </button>
-        }
+          @if (auth.canDo('grns','create')) {
+            <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
+              <mat-icon>add</mat-icon> New GRN
+            </button>
+          }
+        </div>
       </div>
 
       <mat-card style="overflow:hidden;">
@@ -143,6 +149,7 @@ export class GrnListComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
   columns = ['grn_number', 'po', 'received_date', 'received_by', 'status', 'arrow'];
   grns = signal<any[]>([]);
   loading = signal(true);
@@ -154,4 +161,8 @@ export class GrnListComponent implements OnInit {
     });
   }
   view(id: number) { this.router.navigate(['/grns', id]); }
+
+  exportData() {
+    this.exportService.export('api/grns/export');
+  }
 }

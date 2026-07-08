@@ -17,6 +17,7 @@ import { Vendor } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { BulkImportService } from '../../core/services/bulk-import.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
 @Component({
@@ -40,17 +41,21 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search vendors…" />
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
+          </button>
+          
           @if (auth.canDo('vendors','create')) {
-            <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Download the Excel import template">
+            <button mat-stroked-button color="primary" (click)="downloadTemplate()" matTooltip="Download Excel Template">
               <mat-icon>download</mat-icon> Template
             </button>
-            <button mat-stroked-button [disabled]="uploading()" (click)="fileInput.click()"
-                    matTooltip="Bulk upload vendors from a filled-in template">
-              @if (uploading()) { <mat-spinner diameter="18" /> } @else { <mat-icon>upload_file</mat-icon> }
-              Bulk Upload
+            <button mat-stroked-button color="primary" (click)="fileInput.click()" [disabled]="uploading()" matTooltip="Import from Excel">
+              @if(uploading()) { <mat-spinner diameter="20"/> } @else { <mat-icon>upload</mat-icon> }
+              Import
             </button>
-            <input #fileInput type="file" hidden accept=".xlsx,.xls,.csv" (change)="onFileSelected($event)" />
-            <button mat-raised-button color="primary" class="cta-btn" (click)="router.navigate(['/vendors/create'])">
+            <input #fileInput type="file" accept=".xlsx,.xls,.csv" style="display:none" (change)="onFileSelected($event)">
+            
+            <button mat-raised-button color="primary" (click)="router.navigate(['/vendors/create'])" class="cta-btn">
               <mat-icon>add</mat-icon> New Vendor
             </button>
           }
@@ -260,6 +265,7 @@ export class VendorListComponent implements OnInit {
   private bulk = inject(BulkImportService);
   readonly router = inject(Router);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
 
   columns = ['name', 'pan', 'gstin', 'category', 'addresses', 'status', 'actions'];
   vendors = signal<Vendor[]>([]);
@@ -329,5 +335,9 @@ export class VendorListComponent implements OnInit {
       },
       error: () => this.notify.error('Could not update vendor status.'),
     });
+  }
+
+  exportData() {
+    this.exportService.export('api/vendors/export');
   }
 }

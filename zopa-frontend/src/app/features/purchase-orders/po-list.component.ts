@@ -15,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
 @Component({
@@ -33,11 +34,16 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <h2>Purchase Orders</h2>
           <p>{{ filtered().length }} order{{ filtered().length !== 1 ? 's' : '' }} found</p>
         </div>
-        @if (auth.canDo('purchase_orders','create')) {
-          <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
-            <mat-icon>add</mat-icon> New PO
+        <div style="display: flex; gap: 12px;">
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
           </button>
-        }
+          @if (auth.canDo('purchase_orders','create')) {
+            <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
+              <mat-icon>add</mat-icon> New PO
+            </button>
+          }
+        </div>
       </div>
 
       <!-- Search + filters bar -->
@@ -249,6 +255,7 @@ export class PoListComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
 
   columns = ['po_number', 'vendor', 'cost_center', 'grand_total', 'status', 'arrow'];
   orders = signal<PurchaseOrder[]>([]);
@@ -293,5 +300,9 @@ export class PoListComponent implements OnInit {
       cancelled: 'Cancelled',
     };
     return map[s] ?? s;
+  }
+
+  exportData() {
+    this.exportService.export('api/purchase-orders/export', { status: this.statusFilter() });
   }
 }

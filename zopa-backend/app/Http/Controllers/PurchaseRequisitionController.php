@@ -49,6 +49,38 @@ class PurchaseRequisitionController extends Controller
         return response()->json($query->latest()->paginate(20));
     }
 
+    public function export(Request $request)
+    {
+        $tenant = app('currentTenant');
+        $query = PurchaseRequisition::with(['requestedBy:id,name', 'costCenter:id,name'])
+            ->where('tenant_id', $tenant->id);
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->has('requested_by')) {
+            $query->where('requested_by', $request->requested_by);
+        }
+        if (!$this->hasTransactRole()) {
+            $query->where('status', '!=', 'draft');
+        }
+
+        $data = $query->latest()->get()->map(fn($pr) => [
+            'PR Number' => $pr->pr_number ?? 'Draft',
+            'Title' => $pr->title,
+            'Requested By' => optional($pr->requestedBy)->name,
+            'Cost Center' => optional($pr->costCenter)->name,
+            'Estimated Amount' => $pr->estimated_amount,
+            'Status' => ucfirst($pr->status),
+            'Created At' => $pr->created_at->format('Y-m-d'),
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['PR Number', 'Title', 'Requested By', 'Cost Center', 'Estimated Amount', 'Status', 'Created At']),
+            'purchase_requisitions.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('purchase_requisitions', 'create');

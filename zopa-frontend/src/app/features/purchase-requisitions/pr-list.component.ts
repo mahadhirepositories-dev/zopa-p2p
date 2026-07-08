@@ -13,6 +13,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
 @Component({
@@ -30,11 +31,16 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <h2>Purchase Requisitions</h2>
           <p>{{ filtered().length }} requisition{{ filtered().length !== 1 ? 's' : '' }} found</p>
         </div>
-        @if (auth.canDo('purchase_requisitions','create')) {
-          <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
-            <mat-icon>add</mat-icon> New PR
+        <div style="display: flex; gap: 12px;">
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
           </button>
-        }
+          @if (auth.canDo('purchase_requisitions','create')) {
+            <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
+              <mat-icon>add</mat-icon> New PR
+            </button>
+          }
+        </div>
       </div>
 
       <div class="toolbar-bar">
@@ -176,6 +182,7 @@ export class PrListComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
 
   columns = ['pr_number', 'title', 'requested_by', 'priority', 'amount', 'status', 'arrow'];
   prs = signal<any[]>([]);
@@ -208,5 +215,9 @@ export class PrListComponent implements OnInit {
       rfq_approved: 'RFQ Approved', converted: 'Converted', rejected: 'Rejected',
     };
     return map[s] ?? s;
+  }
+
+  exportData() {
+    this.exportService.export('api/purchase-requisitions/export', { status: this.statusFilter() });
   }
 }

@@ -32,6 +32,35 @@ class InvoiceController extends Controller
         return response()->json($query->latest()->paginate(20));
     }
 
+    public function export(Request $request)
+    {
+        $tenant = app('currentTenant');
+        $query = Invoice::with(['purchaseOrder:id,po_number', 'grn:id,grn_number', 'approvedBy:id,name'])
+            ->where('tenant_id', $tenant->id);
+
+        if ($request->has('po_id')) {
+            $query->where('po_id', $request->po_id);
+        }
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $data = $query->latest()->get()->map(fn($inv) => [
+            'Invoice Number' => $inv->invoice_number,
+            'PO Number' => optional($inv->purchaseOrder)->po_number,
+            'GRN Number' => optional($inv->grn)->grn_number,
+            'Invoice Date' => $inv->invoice_date,
+            'Grand Total' => $inv->grand_total,
+            'Status' => ucfirst($inv->status),
+            'Approved By' => optional($inv->approvedBy)->name,
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['Invoice Number', 'PO Number', 'GRN Number', 'Invoice Date', 'Grand Total', 'Status', 'Approved By']),
+            'invoices.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('invoices', 'create');

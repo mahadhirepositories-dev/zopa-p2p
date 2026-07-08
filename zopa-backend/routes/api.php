@@ -137,6 +137,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Vendors
         // Bulk upload routes MUST come before apiResource so /template & /import
         // aren't captured by the {vendor} wildcard.
+        Route::get('vendors/export', [VendorController::class, 'export']);
         Route::get('vendors/template', [VendorController::class, 'template']);
         Route::post('vendors/import', [VendorController::class, 'import']);
         Route::apiResource('vendors', VendorController::class);
@@ -148,9 +149,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('vendors/{vendor}/documents/{document}', [VendorController::class, 'deleteDocument']);
 
         // Categories & Products
+        Route::get('categories/export', [CategoryController::class, 'export']);
         Route::apiResource('categories', CategoryController::class);
         // Bulk upload routes before apiResource so /template & /import aren't
         // captured by the {product} wildcard.
+        Route::get('products/export', [ProductController::class, 'export']);
         Route::get('products/template', [ProductController::class, 'template']);
         Route::post('products/import', [ProductController::class, 'import']);
         Route::apiResource('products', ProductController::class);
@@ -175,6 +178,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('boq/parse', [BoqController::class, 'parse']);
 
         // Purchase Orders
+        Route::get('purchase-orders/export', [PurchaseOrderController::class, 'export']);
         Route::apiResource('purchase-orders', PurchaseOrderController::class);
         Route::post('purchase-orders/{purchaseOrder}/submit', [PurchaseOrderController::class, 'submit']);
         Route::post('purchase-orders/{purchaseOrder}/release', [PurchaseOrderController::class, 'release']);
@@ -188,6 +192,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('purchase-orders/{purchaseOrder}/pdf-url', [PurchaseOrderController::class, 'pdfUrl']);
 
         // Approvals
+        Route::get('approvals/export', [ApprovalController::class, 'export']);
         Route::get('approvals/pending', [ApprovalController::class, 'pending']);
         Route::get('approvals/all-pending', [ApprovalController::class, 'allPending']); // admin read-only oversight
         Route::post('approvals/{approval}/approve', [ApprovalController::class, 'approve']);
@@ -195,18 +200,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('approvals/{approval}/reject', [ApprovalController::class, 'reject']);
 
         // GRN
+        Route::get('grns/export', [GrnController::class, 'export']);
         Route::get('grns', [GrnController::class, 'index']);
         Route::post('grns', [GrnController::class, 'store']);
         Route::get('grns/{grn}', [GrnController::class, 'show']);
         Route::get('purchase-orders/{purchaseOrder}/grns', [GrnController::class, 'forPo']);
 
         // Invoices
+        Route::get('invoices/export', [InvoiceController::class, 'export']);
         Route::get('invoices', [InvoiceController::class, 'index']);
         Route::post('invoices', [InvoiceController::class, 'store']);
         Route::get('invoices/{invoice}', [InvoiceController::class, 'show']);
         Route::put('invoices/{invoice}', [InvoiceController::class, 'update']);
 
         // Purchase Requisitions
+        Route::get('purchase-requisitions/export', [PurchaseRequisitionController::class, 'export']);
         Route::apiResource('purchase-requisitions', PurchaseRequisitionController::class);
         Route::post('purchase-requisitions/{purchaseRequisition}/submit', [PurchaseRequisitionController::class, 'submit']);
         Route::post('purchase-requisitions/{purchaseRequisition}/reject', [PurchaseRequisitionController::class, 'reject']);

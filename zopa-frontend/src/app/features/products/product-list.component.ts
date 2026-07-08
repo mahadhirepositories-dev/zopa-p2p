@@ -18,6 +18,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { BulkImportService } from '../../core/services/bulk-import.service';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 
 @Component({
@@ -41,6 +42,9 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
         <div style="display:flex;gap:10px;align-items:center;">
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search products…" />
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
+          </button>
           @if (auth.canDo('products','create')) {
             <button mat-stroked-button (click)="downloadTemplate()" matTooltip="Download the Excel import template">
               <mat-icon>download</mat-icon> Template
@@ -235,6 +239,7 @@ export class ProductListComponent implements OnInit {
   private dialog = inject(MatDialog);
   private notify = inject(NotificationService);
   private bulk = inject(BulkImportService);
+  private exportService = inject(ExportService);
   readonly auth = inject(AuthService);
 
   columns = ['name', 'unit', 'hsn_code', 'net_rate', 'gst_rate', 'status', 'actions'];
@@ -296,5 +301,9 @@ export class ProductListComponent implements OnInit {
       },
     });
     input.value = '';
+  }
+
+  exportData() {
+    this.exportService.export('api/products/export');
   }
 }

@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ExportService } from '../../core/services/export.service';
 
 @Component({
   selector: 'app-invoice-list',
@@ -24,11 +25,16 @@ import { AuthService } from '../../core/auth/auth.service';
           <h2>Invoices</h2>
           <p>{{ invoices().length }} invoice{{ invoices().length !== 1 ? 's' : '' }}</p>
         </div>
-        @if (auth.canDo('invoices','create')) {
-          <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
-            <mat-icon>add</mat-icon> New Invoice
+        <div style="display: flex; gap: 12px;">
+          <button mat-stroked-button (click)="exportData()">
+            <mat-icon>download</mat-icon> Export
           </button>
-        }
+          @if (auth.canDo('invoices','create')) {
+            <button mat-raised-button color="primary" routerLink="create" class="cta-btn">
+              <mat-icon>add</mat-icon> New Invoice
+            </button>
+          }
+        </div>
       </div>
 
       <mat-card style="overflow:hidden;">
@@ -157,6 +163,7 @@ export class InvoiceListComponent implements OnInit {
   private router = inject(Router);
   private notify = inject(NotificationService);
   readonly auth = inject(AuthService);
+  private exportService = inject(ExportService);
 
   columns = ['invoice_number', 'vendor', 'po', 'invoice_date', 'amount', 'status', 'actions', 'arrow'];
   invoices = signal<any[]>([]);
@@ -179,5 +186,9 @@ export class InvoiceListComponent implements OnInit {
       next: () => { this.notify.success(`Invoice ${status}.`); this.load(); },
       error: () => this.notify.error('Update failed.'),
     });
+  }
+
+  exportData() {
+    this.exportService.export('api/invoices/export');
   }
 }

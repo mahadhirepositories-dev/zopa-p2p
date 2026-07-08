@@ -26,6 +26,30 @@ class GrnController extends Controller
         return response()->json($query->latest()->paginate(20));
     }
 
+    public function export(Request $request)
+    {
+        $tenant = app('currentTenant');
+        $query = Grn::with(['purchaseOrder:id,po_number', 'receivedBy:id,name'])
+            ->where('tenant_id', $tenant->id);
+
+        if ($request->has('po_id')) {
+            $query->where('po_id', $request->po_id);
+        }
+
+        $data = $query->latest()->get()->map(fn($grn) => [
+            'GRN Number' => $grn->grn_number,
+            'PO Number' => optional($grn->purchaseOrder)->po_number,
+            'Received Date' => $grn->received_date,
+            'Received By' => optional($grn->receivedBy)->name,
+            'Created At' => $grn->created_at->format('Y-m-d H:i'),
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['GRN Number', 'PO Number', 'Received Date', 'Received By', 'Created At']),
+            'goods_receipts.xlsx'
+        );
+    }
+
     public function forPo(PurchaseOrder $purchaseOrder): JsonResponse
     {
         abort_if($purchaseOrder->tenant_id !== app('currentTenant')->id, 403);

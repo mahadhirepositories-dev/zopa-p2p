@@ -23,6 +23,25 @@ class CategoryController extends Controller
         );
     }
 
+    public function export(Request $request)
+    {
+        $this->requirePermission('products', 'view');
+        $tenant = app('currentTenant');
+        
+        $query = Category::where('tenant_id', $tenant->id)->with('parent');
+
+        $data = $query->latest()->get()->map(fn($c) => [
+            'Name' => $c->name,
+            'Parent Category' => optional($c->parent)->name,
+            'Status' => $c->is_active ? 'Active' : 'Inactive',
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['Name', 'Parent Category', 'Status']),
+            'categories.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('products', 'create');

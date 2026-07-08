@@ -47,6 +47,57 @@ class ApprovalController extends Controller
         return response()->json($approvals);
     }
 
+    public function export(Request $request)
+    {
+        $tenantId = app('currentTenant')->id;
+
+        $query = Approval::with([
+                'purchaseOrder' => fn($q) => $q->with('vendor', 'costCenter'),
+                'invoice' => fn($q) => $q->with(['purchaseOrder:id,po_number', 'purchaseOrder.vendor']),
+                'purchaseRequisition:id,pr_number,title,cost_center_id,estimated_amount',
+            ])
+            ->where('assigned_to_user_id', auth()->id())
+            ->where('action', 'pending')
+            ->where(function ($q) use ($tenantId) {
+                $q->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId))
+                  ->orWhereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId))
+                  ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+            });
+
+        $data = $query->latest()->get()->map(function($a) {
+            $docNum = '';
+            $desc = '';
+            $amount = 0;
+            if ($a->entity_type === 'PO') {
+                $docNum = optional($a->purchaseOrder)->po_number ?? 'Draft';
+                $desc = optional(optional($a->purchaseOrder)->vendor)->name;
+                $amount = optional($a->purchaseOrder)->grand_total;
+            } elseif ($a->entity_type === 'PR') {
+                $docNum = optional($a->purchaseRequisition)->pr_number ?? 'Draft';
+                $desc = optional($a->purchaseRequisition)->title;
+                $amount = optional($a->purchaseRequisition)->estimated_amount;
+            } elseif ($a->entity_type === 'Invoice') {
+                $docNum = optional($a->invoice)->invoice_number;
+                $desc = optional(optional(optional($a->invoice)->purchaseOrder)->vendor)->name;
+                $amount = optional($a->invoice)->grand_total;
+            }
+
+            return [
+                'Entity Type' => $a->entity_type,
+                'Document' => $docNum,
+                'Description' => $desc,
+                'Amount' => $amount,
+                'Level' => 'L' . $a->level,
+                'Requested On' => $a->created_at->format('Y-m-d H:i'),
+            ];
+        });
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['Entity Type', 'Document', 'Description', 'Amount', 'Level', 'Requested On']),
+            'pending_approvals.xlsx'
+        );
+    }
+
     /**
      * Admin oversight: every pending approval in the current tenant, regardless of
      * who it's assigned to — READ-ONLY visibility so admins can see what's awaiting

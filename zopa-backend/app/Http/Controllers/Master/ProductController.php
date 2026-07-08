@@ -24,6 +24,30 @@ class ProductController extends Controller
         );
     }
 
+    public function export(Request $request)
+    {
+        $this->requirePermission('products', 'view');
+        $tenant = app('currentTenant');
+        
+        $query = Product::where('tenant_id', $tenant->id)->with('category', 'subcategory');
+
+        $data = $query->latest()->get()->map(fn($p) => [
+            'Code' => $p->code,
+            'Name' => $p->name,
+            'Category' => optional($p->category)->name,
+            'Subcategory' => optional($p->subcategory)->name,
+            'Unit' => $p->unit,
+            'Net Rate' => $p->net_rate,
+            'GST Rate' => $p->gst_rate,
+            'Status' => $p->is_active ? 'Active' : 'Inactive',
+        ]);
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\GenericExport($data, ['Code', 'Name', 'Category', 'Subcategory', 'Unit', 'Net Rate', 'GST Rate', 'Status']),
+            'products.xlsx'
+        );
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->requirePermission('products', 'create');
