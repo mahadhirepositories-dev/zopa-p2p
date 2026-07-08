@@ -17,6 +17,8 @@ export interface OrgEntity {
   gstin?: string;
   head_user_id?: number;
   head?: { id: number; name: string; email: string };
+  receiver_name?: string;
+  receiver_phone?: string;
 }
 
 @Injectable({

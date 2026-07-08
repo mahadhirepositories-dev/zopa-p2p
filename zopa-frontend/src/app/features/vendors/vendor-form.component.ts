@@ -87,7 +87,7 @@ const CURRENCIES = [
               <mat-form-field appearance="outline">
                 <mat-label>Global Vendor Code</mat-label>
                 <input matInput formControlName="global_vendor_code" />
-                <mat-hint>Central/ERP vendor ID</mat-hint>
+                <mat-hint>Central/Entity vendor ID</mat-hint>
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Entity Code</mat-label>

@@ -82,11 +82,29 @@ interface FlatCat { id: number; name: string; parent_id: number | null; }
               }
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Warranty (months)</mat-label>
-            <input matInput type="number" formControlName="warranty_months" min="0" />
-          </mat-form-field>
+
+          @if (form.value.unit === 'Other') {
+            <mat-form-field appearance="outline">
+              <mat-label>Custom Unit Name *</mat-label>
+              <input matInput formControlName="custom_unit" />
+            </mat-form-field>
+          } @else {
+            <mat-form-field appearance="outline">
+              <mat-label>Warranty (months)</mat-label>
+              <input matInput type="number" formControlName="warranty_months" min="0" />
+            </mat-form-field>
+          }
         </div>
+
+        @if (form.value.unit === 'Other') {
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Warranty (months)</mat-label>
+              <input matInput type="number" formControlName="warranty_months" min="0" />
+            </mat-form-field>
+            <div></div>
+          </div>
+        }
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Net Rate (₹)</mat-label>
@@ -124,7 +142,7 @@ export class ProductFormDialogComponent implements OnInit {
   data: Product | null = inject(MAT_DIALOG_DATA);
 
   saving = signal(false);
-  units = ['Nos', 'Kg', 'Ltr', 'Mtr', 'Box', 'Set', 'Pair', 'Sq.Ft', 'Hours'];
+  units = ['Nos', 'Kg', 'Ltr', 'Mtr', 'Box', 'Set', 'Pair', 'Sq.Ft', 'Hours', 'Other'];
   gstRates = [0, 5, 12, 18, 28];
 
   allCategories = signal<FlatCat[]>([]);
@@ -136,6 +154,7 @@ export class ProductFormDialogComponent implements OnInit {
     name:            [this.data?.name ?? '', Validators.required],
     description:     [this.data?.description ?? ''],
     unit:            [this.data?.unit ?? 'Nos', Validators.required],
+    custom_unit:     [''],
     hsn_code:        [this.data?.hsn_code ?? ''],
     category_id:     [this.data?.category_id ?? null],     // primary
     subcategory_id:  [this.data?.subcategory_id ?? null],  // secondary
@@ -154,6 +173,13 @@ export class ProductFormDialogComponent implements OnInit {
         this.form.controls.subcategory_id.setValue(null);
       }
     });
+
+    if (this.data && !['Nos', 'Kg', 'Ltr', 'Mtr', 'Box', 'Set', 'Pair', 'Sq.Ft', 'Hours'].includes(this.data.unit ?? '')) {
+      this.form.patchValue({
+        unit: 'Other',
+        custom_unit: this.data.unit
+      });
+    }
 
     this.http.get<Category[]>(`${environment.apiUrl}/categories`).subscribe(cats => {
       const flat: FlatCat[] = [];
@@ -197,9 +223,15 @@ export class ProductFormDialogComponent implements OnInit {
   save() {
     if (this.form.invalid) return;
     this.saving.set(true);
+    const val: any = { ...this.form.value };
+    if (val.unit === 'Other') {
+      val.unit = val.custom_unit || 'Other';
+    }
+    delete val.custom_unit;
+
     const req = this.data
-      ? this.http.put(`${environment.apiUrl}/products/${this.data.id}`, this.form.value)
-      : this.http.post(`${environment.apiUrl}/products`, this.form.value);
+      ? this.http.put(`${environment.apiUrl}/products/${this.data.id}`, val)
+      : this.http.post(`${environment.apiUrl}/products`, val);
 
     req.subscribe({
       next: () => { this.notify.success(`Product ${this.data ? 'updated' : 'created'}.`); this.dialogRef.close(true); },

@@ -281,6 +281,7 @@ class PurchaseOrderController extends Controller
                 'items.product', 'items.prItem',
                 'vendor', 'vendorAddress',
                 'costCenter.department', 'costCenter.project', 'costCenter.location',
+                'billToLocation', 'shipToLocation',
                 'approvals.assignedTo', 'attachments',
                 'invoices', 'grns',
                 'pr:id,pr_number,title,status',

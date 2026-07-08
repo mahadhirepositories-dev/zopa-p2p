@@ -10,6 +10,7 @@ class Location extends Model
     protected $fillable = [
         'tenant_id', 'name', 'address', 'city', 'gstin',
         'state', 'state_code', 'pincode', 'country', 'is_active',
+        'receiver_name', 'receiver_phone',
     ];
 
     protected $casts = ['is_active' => 'boolean'];

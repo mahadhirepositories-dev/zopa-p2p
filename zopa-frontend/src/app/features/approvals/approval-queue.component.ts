@@ -351,7 +351,7 @@ export class ApprovalQueueComponent implements OnInit {
 
   entityRef(a: any): string {
     if (a.entity_type === 'INVOICE') return a.invoice?.invoice_number ?? ('Invoice #' + a.entity_id);
-    if (a.entity_type === 'PR') return a.purchase_requisition?.pr_number ?? ('PR #' + a.entity_id);
+    if (a.entity_type === 'PR') return a.purchaseRequisition?.pr_number ?? a.purchase_requisition?.pr_number ?? ('PR #' + a.entity_id);
     return a.purchase_order?.po_number ?? ('PO #' + a.entity_id);
   }
 
@@ -361,14 +361,14 @@ export class ApprovalQueueComponent implements OnInit {
       return [po?.po_number, po?.vendor?.name].filter(Boolean).join(' · ') || '—';
     }
     if (a.entity_type === 'PR') {
-      return a.purchase_requisition?.title ?? '—';
+      return a.purchaseRequisition?.title ?? a.purchase_requisition?.title ?? '—';
     }
     return [a.purchase_order?.vendor?.name, a.purchase_order?.cost_center?.name].filter(Boolean).join(' · ') || '—';
   }
 
   entityAmount(a: any): number {
     if (a.entity_type === 'INVOICE') return a.invoice?.amount ?? 0;
-    if (a.entity_type === 'PR') return a.purchase_requisition?.estimated_amount ?? 0;
+    if (a.entity_type === 'PR') return a.purchaseRequisition?.estimated_amount ?? a.purchase_requisition?.estimated_amount ?? 0;
     return a.purchase_order?.grand_total ?? 0;
   }
 

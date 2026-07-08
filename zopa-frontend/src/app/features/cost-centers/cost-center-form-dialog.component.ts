@@ -130,6 +130,12 @@ export class CostCenterFormDialogComponent implements OnInit {
 
   save() {
     if (this.form.invalid) return;
+    const from = this.form.value.budget_from;
+    const to = this.form.value.budget_to;
+    if (from && to && new Date(from) > new Date(to)) {
+      this.notify.error('Budget To Date must be after or equal to Budget From Date.');
+      return;
+    }
     this.saving.set(true);
     const payload = { ...this.form.value, current_fiscal_year: this.derivedFiscalYear() };
     const req = this.data

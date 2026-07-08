@@ -171,6 +171,35 @@ import { AuthService } from '../../core/auth/auth.service';
                   }
                 </div>
 
+                <!-- Billing & Shipping Details -->
+                @if (po()!.bill_to_location || po()!.ship_to_location) {
+                  <div class="section-divider">
+                    <span class="section-label">Billing &amp; Shipping</span>
+                  </div>
+                  <div class="detail-grid">
+                    @if (po()!.bill_to_location) {
+                      <div class="field">
+                        <span class="label">Bill To</span>
+                        <strong>{{ po()!.bill_to_location?.name }}</strong>
+                        @if (po()!.bill_to_location?.gstin) { <div style="font-size:11px;color:#666;">GSTIN: {{ po()!.bill_to_location?.gstin }}</div> }
+                      </div>
+                    }
+                    @if (po()!.ship_to_location) {
+                      <div class="field">
+                        <span class="label">Ship To</span>
+                        <strong>{{ po()!.ship_to_location?.name }}</strong>
+                        @if (po()!.ship_to_location?.gstin) { <div style="font-size:11px;color:#666;">GSTIN: {{ po()!.ship_to_location?.gstin }}</div> }
+                        @if (po()!.ship_to_location?.receiver_name || po()!.ship_to_location?.receiver_phone) {
+                          <div style="font-size:11px;color:#c2410c;margin-top:2px;">
+                            Receiver: {{ po()!.ship_to_location?.receiver_name || '—' }}
+                            {{ po()!.ship_to_location?.receiver_phone ? '(' + po()!.ship_to_location?.receiver_phone + ')' : '' }}
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+
                 <!-- Linked PRs -->
                 @if ((po()!.prs?.length ?? 0) > 0 || po()!.pr) {
                   <div class="section-divider">

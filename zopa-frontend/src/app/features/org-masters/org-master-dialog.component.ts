@@ -89,6 +89,16 @@ export interface OrgMasterDialogData {
               <mat-error>Invalid GSTIN format</mat-error>
             }
           </mat-form-field>
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Receiver Name</mat-label>
+              <input matInput formControlName="receiver_name" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Receiver Phone</mat-label>
+              <input matInput formControlName="receiver_phone" />
+            </mat-form-field>
+          </div>
         }
 
         <mat-checkbox formControlName="is_active" color="primary">Active</mat-checkbox>
@@ -180,6 +190,8 @@ export class OrgMasterDialogComponent implements OnInit {
       this.form.addControl('state_code', this.fb.control(this.data.entity?.state_code || ''));
       this.form.addControl('country', this.fb.control(this.data.entity?.country || 'India'));
       this.form.addControl('gstin', this.fb.control(this.data.entity?.gstin || '', gstinValidator()));
+      this.form.addControl('receiver_name', this.fb.control(this.data.entity?.receiver_name || ''));
+      this.form.addControl('receiver_phone', this.fb.control(this.data.entity?.receiver_phone || ''));
     }
   }
 

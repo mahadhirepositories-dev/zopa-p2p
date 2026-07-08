@@ -315,6 +315,11 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->shipToLocation->name }}</div>
         <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->shipToLocation])
+          @if($po->shipToLocation->receiver_name || $po->shipToLocation->receiver_phone)
+            <div style="margin-top:4px; font-weight:bold; color:#475569;">
+              Receiver: {{ $po->shipToLocation->receiver_name }} {{ $po->shipToLocation->receiver_phone ? '(' . $po->shipToLocation->receiver_phone . ')' : '' }}
+            </div>
+          @endif
         </div>
       @elseif($po->billToLocation)
         <div style="font-size:9px; color:#6b7280; font-style:italic;">Same as Bill To</div>

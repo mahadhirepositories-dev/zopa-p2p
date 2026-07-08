@@ -71,7 +71,7 @@ export interface Category {
 
 export interface Department { id: number; name: string; is_active: boolean; }
 export interface Project { id: number; name: string; is_active: boolean; }
-export interface Location { id: number; name: string; address?: string; city?: string; state?: string; state_code?: string; pincode?: string; country?: string; gstin?: string; is_active: boolean; }
+export interface Location { id: number; name: string; address?: string; city?: string; state?: string; state_code?: string; pincode?: string; country?: string; gstin?: string; is_active: boolean; receiver_name?: string; receiver_phone?: string; }
 
 export interface VendorCategoryEntry {
   id?: number;
@@ -215,7 +215,9 @@ export interface PurchaseOrder {
   cost_center_id: number;
   cost_center?: CostCenter;
   bill_to_location_id?: number;
+  bill_to_location?: Location;
   ship_to_location_id?: number;
+  ship_to_location?: Location;
   po_valid_till?: string;
   payment_terms_json?: PaymentTerm[];
   warranty_months?: number;

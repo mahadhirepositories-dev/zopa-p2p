@@ -115,17 +115,19 @@ class OrgController extends Controller
         $this->requirePermission('org_masters', 'create');
 
         $request->validate([
-            'name'       => 'required|string|max:255',
-            'address'    => 'nullable|string|max:500',
-            'city'       => 'nullable|string|max:100',
-            'state'      => 'nullable|string|max:100',
-            'state_code' => 'nullable|string|max:2',
-            'pincode'    => 'nullable|string|max:12',
-            'country'    => 'nullable|string|max:100',
+            'name'           => 'required|string|max:255',
+            'address'        => 'nullable|string|max:500',
+            'city'           => 'nullable|string|max:100',
+            'state'          => 'nullable|string|max:100',
+            'state_code'     => 'nullable|string|max:2',
+            'pincode'        => 'nullable|string|max:12',
+            'country'        => 'nullable|string|max:100',
+            'receiver_name'  => 'nullable|string|max:255',
+            'receiver_phone' => 'nullable|string|max:50',
         ]);
         $loc = Location::create([
             'tenant_id' => app('currentTenant')->id,
-            ...$request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin'),
+            ...$request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'receiver_name', 'receiver_phone'),
             'country'   => $request->input('country') ?: 'India',
             'is_active' => true,
         ]);
@@ -136,7 +138,11 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($location->tenant_id !== app('currentTenant')->id, 403);
-        $location->update($request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'is_active'));
+        $request->validate([
+            'receiver_name'  => 'nullable|string|max:255',
+            'receiver_phone' => 'nullable|string|max:50',
+        ]);
+        $location->update($request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'is_active', 'receiver_name', 'receiver_phone'));
         return response()->json($location);
     }
 
