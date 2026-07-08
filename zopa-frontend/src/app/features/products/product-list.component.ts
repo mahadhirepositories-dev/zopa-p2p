@@ -304,6 +304,6 @@ export class ProductListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/products/export');
+    this.exportService.export('products/export');
   }
 }

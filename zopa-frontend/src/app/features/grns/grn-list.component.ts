@@ -163,6 +163,6 @@ export class GrnListComponent implements OnInit {
   view(id: number) { this.router.navigate(['/grns', id]); }
 
   exportData() {
-    this.exportService.export('api/grns/export');
+    this.exportService.export('grns/export');
   }
 }

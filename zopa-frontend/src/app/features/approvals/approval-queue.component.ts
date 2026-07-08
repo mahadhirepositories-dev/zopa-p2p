@@ -442,6 +442,6 @@ export class ApprovalQueueComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/approvals/export');
+    this.exportService.export('approvals/export');
   }
 }

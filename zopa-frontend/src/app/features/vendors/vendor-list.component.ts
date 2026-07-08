@@ -338,6 +338,6 @@ export class VendorListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/vendors/export');
+    this.exportService.export('vendors/export');
   }
 }

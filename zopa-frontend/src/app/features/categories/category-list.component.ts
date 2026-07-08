@@ -242,6 +242,6 @@ export class CategoryListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/categories/export');
+    this.exportService.export('categories/export');
   }
 }

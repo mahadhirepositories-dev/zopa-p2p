@@ -189,6 +189,6 @@ export class InvoiceListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/invoices/export');
+    this.exportService.export('invoices/export');
   }
 }

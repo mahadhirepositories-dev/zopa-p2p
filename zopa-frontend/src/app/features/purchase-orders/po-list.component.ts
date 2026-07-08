@@ -303,6 +303,6 @@ export class PoListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/purchase-orders/export', { status: this.statusFilter() });
+    this.exportService.export('purchase-orders/export', { status: this.statusFilter() });
   }
 }

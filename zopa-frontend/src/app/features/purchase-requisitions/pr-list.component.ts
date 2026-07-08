@@ -218,6 +218,6 @@ export class PrListComponent implements OnInit {
   }
 
   exportData() {
-    this.exportService.export('api/purchase-requisitions/export', { status: this.statusFilter() });
+    this.exportService.export('purchase-requisitions/export', { status: this.statusFilter() });
   }
 }
