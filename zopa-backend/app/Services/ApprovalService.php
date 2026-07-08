@@ -157,7 +157,18 @@ class ApprovalService
 
         if ($approval->entity_type === 'PO') {
             $po = PurchaseOrder::with(['items.product', 'vendor', 'costCenter', 'creator'])->find($approval->entity_id);
-            $po->update(['status' => 'draft']);
+            // Set status to 'returned' (not 'draft') so the buyer sees it in a distinct tab
+            $po->update(['status' => 'returned']);
+            // Release the frozen budget so it's not double-consumed when buyer re-submits
+            app(BudgetService::class)->release(
+                $po->cost_center_id,
+                app(BudgetService::class)->currentFiscalYear($po->costCenter),
+                $po->grand_total,
+                'PO',
+                $po->id,
+                auth()->id(),
+                'Budget released — PO returned to buyer'
+            );
             $this->notifyStatusToSource('PO', $po, 'returned', $comments);
         } elseif ($approval->entity_type === 'INVOICE') {
             $invoice = Invoice::find($approval->entity_id);

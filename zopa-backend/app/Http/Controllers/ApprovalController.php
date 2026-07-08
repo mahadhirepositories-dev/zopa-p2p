@@ -210,6 +210,69 @@ class ApprovalController extends Controller
     }
 
     /**
+     * Get the current user's pending approval for a specific PO.
+     * Returns the approval record so the frontend can use its ID for actions.
+     */
+    public function myApprovalForPo(PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $approval = Approval::where('entity_type', 'PO')
+            ->where('entity_id', $purchaseOrder->id)
+            ->where('assigned_to_user_id', auth()->id())
+            ->where('action', 'pending')
+            ->first();
+
+        return response()->json($approval);
+    }
+
+    /** Approve a PO by PO ID (convenience shortcut for PO detail page). */
+    public function approveViaPoId(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $approval = $this->findMyPendingApproval($purchaseOrder);
+        $this->approvals->approve($approval, $request->input('comments', ''));
+        $this->actLog->log('PO', $purchaseOrder->id, 'approved', [
+            'level' => $approval->level, 'comments' => $request->input('comments', '')
+        ]);
+        return response()->json(['message' => 'Approved']);
+    }
+
+    /** Return a PO by PO ID (convenience shortcut for PO detail page). */
+    public function returnViaPoId(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $request->validate(['comments' => 'required|string']);
+        $approval = $this->findMyPendingApproval($purchaseOrder);
+        $this->approvals->returnWithQuery($approval, $request->comments);
+        $this->actLog->log('PO', $purchaseOrder->id, 'returned', [
+            'level' => $approval->level, 'comments' => $request->comments
+        ]);
+        return response()->json(['message' => 'Returned with query']);
+    }
+
+    /** Reject a PO by PO ID (convenience shortcut for PO detail page). */
+    public function rejectViaPoId(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
+        $request->validate(['comments' => 'required|string']);
+        $approval = $this->findMyPendingApproval($purchaseOrder);
+        $this->approvals->reject($approval, $request->comments);
+        $this->actLog->log('PO', $purchaseOrder->id, 'rejected', [
+            'level' => $approval->level, 'comments' => $request->comments
+        ]);
+        return response()->json(['message' => 'Rejected']);
+    }
+
+    /** Find the current user's pending approval for a PO, or abort 403. */
+    private function findMyPendingApproval(PurchaseOrder $purchaseOrder): Approval
+    {
+        $approval = Approval::where('entity_type', 'PO')
+            ->where('entity_id', $purchaseOrder->id)
+            ->where('assigned_to_user_id', auth()->id())
+            ->where('action', 'pending')
+            ->first();
+
+        abort_if(!$approval, 403, 'No pending approval assigned to you for this PO.');
+        return $approval;
+    }
+
+    /**
      * Verify the current user is assigned to this approval AND
      * that the approval's entity belongs to the current tenant.
      */

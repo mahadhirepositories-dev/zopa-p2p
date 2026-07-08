@@ -157,12 +157,9 @@ class PurchaseOrderController extends Controller
             return response()->json(['error' => 'Selected cost center not found.'], 422);
         }
 
-        $fiscalYear = $this->budget->currentFiscalYear($costCenter);
-        $budget = $this->budget->getAvailable($request->cost_center_id, $fiscalYear);
-
-        if ($totals['grand_total'] > $budget['available']) {
-            return response()->json(['error' => "Insufficient budget. Available: ₹" . number_format($budget['available'], 2) . ", Required: ₹" . number_format($totals['grand_total'], 2) . "."], 422);
-        }
+        // NOTE: Budget check is intentionally deferred to submit().
+        // Saving as draft is always allowed even if over budget;
+        // only submission is blocked when budget is insufficient.
 
         $po = DB::transaction(function () use ($request, $tenant, $user, $totals) {
             $po = PurchaseOrder::create([
@@ -303,8 +300,8 @@ class PurchaseOrderController extends Controller
         $this->requirePermission('purchase_orders', 'edit');
         $this->authorizePoAccess($purchaseOrder);
 
-        if ($purchaseOrder->status !== 'draft') {
-            return response()->json(['error' => 'Only draft POs can be edited.'], 422);
+        if (!in_array($purchaseOrder->status, ['draft', 'returned'])) {
+            return response()->json(['error' => 'Only draft or returned POs can be edited.'], 422);
         }
 
         $request->validate([
@@ -361,6 +358,37 @@ class PurchaseOrderController extends Controller
                     ]);
                 }
 
+                // If the PO was returned, log what the buyer changed before re-saving
+                if ($purchaseOrder->status === 'returned') {
+                    $oldItems = $purchaseOrder->items->keyBy('sno');
+                    $changes  = [];
+                    foreach ($request->items as $i => $item) {
+                        $sno    = $i + 1;
+                        $old    = $oldItems->get($sno);
+                        $oldRate = $old ? (float) $old->net_rate : null;
+                        $newRate = (float) $item['net_rate'];
+                        $oldQty  = $old ? (float) $old->qty : null;
+                        $newQty  = (float) $item['qty'];
+                        if ($old && ($oldRate !== $newRate || $oldQty !== $newQty)) {
+                            $changes[] = [
+                                'sno'       => $sno,
+                                'desc'      => $item['description'],
+                                'old_rate'  => $oldRate,
+                                'new_rate'  => $newRate,
+                                'old_qty'   => $oldQty,
+                                'new_qty'   => $newQty,
+                            ];
+                        }
+                    }
+                    if (!empty($changes)) {
+                        app(\App\Services\ActivityLogService::class)->log(
+                            'PO', $purchaseOrder->id,
+                            'edited_after_return',
+                            ['changes' => $changes]
+                        );
+                    }
+                }
+
                 $purchaseOrder->update([
                     ...$request->only([
                         'pr_reference', 'vendor_id', 'vendor_address_id', 'cost_center_id',
@@ -369,6 +397,7 @@ class PurchaseOrderController extends Controller
                     ]),
                     'freight' => $request->freight ?? 0,
                     'freight_gst_rate' => $request->freight_gst_rate ?? 0,
+                    'status'  => 'draft',   // returned → draft after buyer edits
                     ...$totals,
                 ]);
 
@@ -395,6 +424,19 @@ class PurchaseOrderController extends Controller
 
         if (!$purchaseOrder->cost_center_id) {
             return response()->json(['error' => 'A Cost Center must be selected before submitting.'], 422);
+        }
+
+        // Budget check is enforced here (at submit) — not at draft creation.
+        // This allows a buyer to save a draft even when over budget, but they
+        // cannot submit for approval until within budget.
+        $cc = $purchaseOrder->costCenter()->with('tenant')->first();
+        $fiscalYear = $this->budget->currentFiscalYear($cc);
+        $available  = $this->budget->getAvailable($purchaseOrder->cost_center_id, $fiscalYear);
+        if ((float) $purchaseOrder->grand_total > (float) $available['available']) {
+            return response()->json([
+                'error' => 'Insufficient budget. Available: ₹' . number_format($available['available'], 2)
+                         . ', Required: ₹' . number_format($purchaseOrder->grand_total, 2) . '.'
+            ], 422);
         }
 
         try {

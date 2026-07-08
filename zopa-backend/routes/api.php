@@ -198,6 +198,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('approvals/{approval}/approve', [ApprovalController::class, 'approve']);
         Route::post('approvals/{approval}/return', [ApprovalController::class, 'returnWithQuery']);
         Route::post('approvals/{approval}/reject', [ApprovalController::class, 'reject']);
+        // PO-scoped approval actions — lets the approver act from the PO detail page
+        Route::get('purchase-orders/{purchaseOrder}/my-approval', [ApprovalController::class, 'myApprovalForPo']);
+        Route::post('purchase-orders/{purchaseOrder}/approve', [ApprovalController::class, 'approveViaPoId']);
+        Route::post('purchase-orders/{purchaseOrder}/return', [ApprovalController::class, 'returnViaPoId']);
+        Route::post('purchase-orders/{purchaseOrder}/reject-approval', [ApprovalController::class, 'rejectViaPoId']);
 
         // GRN
         Route::get('grns/export', [GrnController::class, 'export']);

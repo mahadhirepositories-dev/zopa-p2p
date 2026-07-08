@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, input, computed } from '@angular/cor
 import { HttpClient } from '@angular/common/http';
 import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe, DatePipe, UpperCasePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -10,6 +11,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
@@ -19,9 +22,10 @@ import { AuthService } from '../../core/auth/auth.service';
   selector: 'app-po-detail',
   standalone: true,
   imports: [
-    DecimalPipe, DatePipe, UpperCasePipe, RouterLink,
+    DecimalPipe, DatePipe, UpperCasePipe, RouterLink, FormsModule,
     MatButtonModule, MatIconModule, MatCardModule, MatTableModule,
     MatChipsModule, MatDividerModule, MatProgressSpinnerModule, MatTooltipModule,
+    MatInputModule, MatFormFieldModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -46,12 +50,32 @@ import { AuthService } from '../../core/auth/auth.service';
           <div style="display:flex;gap:8px;align-items:center;">
             <mat-chip [class]="'status-' + po()!.status" [highlighted]="true">{{ po()!.status | uppercase }}</mat-chip>
 
-            @if (po()!.status === 'draft' && auth.canTransact()) {
+            @if ((po()!.status === 'draft' || po()!.status === 'returned') && auth.canTransact()) {
+              @if (po()!.status === 'returned') {
+                <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:#e65100;display:flex;align-items:center;gap:8px;">
+                  <mat-icon style="font-size:18px;width:18px;height:18px;">undo</mat-icon>
+                  <strong>Returned:</strong>&nbsp;{{ returnComment() }}
+                </div>
+              }
               <button mat-stroked-button [routerLink]="['/purchase-orders', po()!.id, 'edit']">
                 <mat-icon>edit</mat-icon> Edit
               </button>
               <button mat-raised-button color="primary" [disabled]="acting()" (click)="submitPo()">
                 @if (acting() === 'submit') { <mat-spinner diameter="18" /> } @else { Submit for Approval }
+              </button>
+            }
+
+            @if (myApproval()) {
+              <button mat-raised-button style="background:#22c55e;color:#fff;" [disabled]="acting()" (click)="openApprovalAction('approve')">
+                @if (acting() === 'approve') { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>check_circle</mat-icon> Approve }
+              </button>
+              <button mat-stroked-button color="warn" [disabled]="acting()" (click)="openApprovalAction('return')">
+                <mat-icon>undo</mat-icon> Return
+              </button>
+              <button mat-raised-button color="warn" [disabled]="acting()" (click)="openApprovalAction('reject')">
+                @if (acting() === 'reject') { <mat-spinner diameter="18" /> }
+                @else { <mat-icon>cancel</mat-icon> Reject }
               </button>
             }
 
@@ -391,8 +415,47 @@ import { AuthService } from '../../core/auth/auth.service';
         </div>
       }
     </div>
+
+    <!-- ── Approval Action Dialog ──────────────────────────────── -->
+    @if (approvalAction()) {
+      <div class="modal-overlay" (click)="approvalAction.set(null)">
+        <mat-card class="modal-card" style="width:420px;" (click)="$event.stopPropagation()">
+          <mat-card-header>
+            <mat-card-title style="font-size:16px;">
+              @if (approvalAction() === 'approve') { ✅ Approve PO }
+              @if (approvalAction() === 'return') { ↩ Return with Query }
+              @if (approvalAction() === 'reject') { ❌ Reject PO }
+            </mat-card-title>
+          </mat-card-header>
+          <mat-card-content style="padding-top:16px;">
+            <mat-form-field appearance="outline" style="width:100%;">
+              <mat-label>{{ approvalAction() === 'approve' ? 'Comments (optional)' : 'Reason (required)' }}</mat-label>
+              <textarea matInput [(ngModel)]="approvalComments" rows="3"></textarea>
+            </mat-form-field>
+          </mat-card-content>
+          <mat-card-actions style="display:flex;gap:8px;justify-content:flex-end;padding:0 16px 16px;">
+            <button mat-button (click)="approvalAction.set(null)">Cancel</button>
+            <button mat-raised-button
+              [color]="approvalAction() === 'approve' ? 'primary' : 'warn'"
+              [disabled]="acting() || (approvalAction() !== 'approve' && !approvalComments.trim())"
+              (click)="submitApprovalAction()">
+              @if (acting()) { <mat-spinner diameter="18" /> }
+              @else {
+                @if (approvalAction() === 'approve') { Approve }
+                @if (approvalAction() === 'return') { Return }
+                @if (approvalAction() === 'reject') { Reject }
+              }
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    }
   `,
   styles: [`
+    /* Approval action modal */
+    .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000; }
+    .modal-card { min-width:320px; }
+    .status-returned { background:#fff3e0 !important; color:#e65100 !important; }
     .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
     .main-col { min-width: 0; }
     .side-col { min-width: 0; }
@@ -462,6 +525,16 @@ export class PoDetailComponent implements OnInit {
   acting = signal<string | false>(false);
   downloading = signal(false);
   diag = signal<any>(null);   // super-admin approval-routing diagnostic
+  myApproval = signal<any>(null);  // pending approval record for the current user
+  approvalAction = signal<'approve'|'return'|'reject'|null>(null);
+  approvalComments = '';
+
+  returnComment = computed(() => {
+    const po = this.po();
+    if (!po?.approvals?.length) return '';
+    const ret = [...(po.approvals ?? [])].reverse().find((a: any) => a.action === 'returned');
+    return ret?.comments ?? '';
+  });
 
   pendingApproverName = computed(() => {
     const po = this.po();
@@ -474,7 +547,13 @@ export class PoDetailComponent implements OnInit {
 
   ngOnInit() {
     this.http.get<PurchaseOrder>(`${environment.apiUrl}/purchase-orders/${this.id()}`).subscribe({
-      next: po => { this.po.set(po); this.loading.set(false); },
+      next: po => {
+        this.po.set(po);
+        this.loading.set(false);
+        // Check if the current user has a pending approval for this PO
+        this.http.get<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/my-approval`)
+          .subscribe({ next: a => this.myApproval.set(a), error: () => {} });
+      },
       error: () => { this.notify.error('Could not load PO.'); this.loading.set(false); },
     });
     if (this.auth.isSuperAdmin()) this.loadDiagnostic();
@@ -543,6 +622,43 @@ export class PoDetailComponent implements OnInit {
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/reset-to-draft`, {}).subscribe({
       next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO reset to draft. Configure approvers, then Submit for Approval.'); if (this.auth.isSuperAdmin()) this.loadDiagnostic(); },
       error: err => { this.notify.error(err.error?.error ?? 'Reset failed.'); this.acting.set(false); },
+    });
+  }
+
+  openApprovalAction(action: 'approve'|'return'|'reject') {
+    this.approvalComments = '';
+    this.approvalAction.set(action);
+  }
+
+  submitApprovalAction() {
+    const action = this.approvalAction();
+    if (!action) return;
+    if (action !== 'approve' && !this.approvalComments.trim()) {
+      this.notify.error('Please provide a reason.');
+      return;
+    }
+    this.acting.set(action);
+    const url = action === 'approve'
+      ? `${environment.apiUrl}/purchase-orders/${this.id()}/approve`
+      : action === 'return'
+        ? `${environment.apiUrl}/purchase-orders/${this.id()}/return`
+        : `${environment.apiUrl}/purchase-orders/${this.id()}/reject-approval`;
+
+    this.http.post<any>(url, { comments: this.approvalComments }).subscribe({
+      next: () => {
+        this.acting.set(false);
+        this.approvalAction.set(null);
+        this.myApproval.set(null);
+        const msg = action === 'approve' ? 'PO approved.' : action === 'return' ? 'PO returned to buyer.' : 'PO rejected.';
+        this.notify.success(msg);
+        // Reload PO to reflect new status
+        this.http.get<PurchaseOrder>(`${environment.apiUrl}/purchase-orders/${this.id()}`)
+          .subscribe({ next: po => this.po.set(po), error: () => {} });
+      },
+      error: err => {
+        this.notify.error(err.error?.error ?? err.error?.message ?? 'Action failed.');
+        this.acting.set(false);
+      },
     });
   }
 

@@ -56,6 +56,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
                   (click)="statusFilter.set('')">All</button>
           <button class="filter-chip" [class.active]="statusFilter() === 'draft'"
                   (click)="statusFilter.set('draft')">Draft</button>
+          <button class="filter-chip returned" [class.active]="statusFilter() === 'returned'"
+                  (click)="statusFilter.set('returned')">⚠ Returned</button>
           <button class="filter-chip pending" [class.active]="statusFilter() === 'pending'"
                   (click)="statusFilter.set('pending')">Pending</button>
           <button class="filter-chip approved" [class.active]="statusFilter() === 'approved'"
@@ -199,6 +201,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .filter-chip.delivered.active { background: #059669; border-color: #059669; }
     .filter-chip.invoiced.active  { background: #92400e; border-color: #92400e; }
     .filter-chip.payment.active   { background: #4f46e5; border-color: #4f46e5; }
+    .filter-chip.returned         { color: #c2410c; border-color: #fed7aa; }
+    .filter-chip.returned.active  { background: #ea580c; border-color: #ea580c; color: white; }
 
     .full-width { width: 100%; }
     .clickable-row { cursor: pointer; }
