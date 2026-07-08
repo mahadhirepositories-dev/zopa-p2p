@@ -363,6 +363,8 @@ export class PrFormComponent implements OnInit {
           }
           pr.items.forEach((it: any, index: number) => {
             this.items.at(index).patchValue({
+              product_id: it.product_id,
+              category_id: it.category_id,
               description: it.description,
               qty: it.qty,
               unit: it.unit,
@@ -385,6 +387,8 @@ export class PrFormComponent implements OnInit {
 
   newItem() {
     return this.fb.group({
+      product_id: [null],
+      category_id: [null],
       description: ['', Validators.required],
       qty: [1, [Validators.required, Validators.min(0.001)]],
       unit: ['nos'],
@@ -433,6 +437,8 @@ export class PrFormComponent implements OnInit {
         (res.items ?? []).forEach(it => {
           const g = this.newItem();
           g.patchValue({
+            product_id: it.product_id,
+            category_id: it.category_id,
             description: it.description,
             qty: it.qty,
             unit: it.unit ?? 'nos',
