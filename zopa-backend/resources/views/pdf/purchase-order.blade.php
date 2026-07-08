@@ -343,8 +343,9 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   <tbody>
     @foreach($po->items as $item)
     @php
-      $lineGst   = ($item->amount ?? 0) * ($item->gst_rate ?? 0) / 100;
-      $lineTotal = ($item->amount ?? 0) + $lineGst;
+      $baseAmount = ($item->net_rate ?? 0) * ($item->qty ?? 1);
+      $lineGst    = $baseAmount * ($item->gst_rate ?? 0) / 100;
+      $lineTotal  = $baseAmount + $lineGst;
     @endphp
     <tr>
       <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
