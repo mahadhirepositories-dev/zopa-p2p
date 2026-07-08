@@ -46,7 +46,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           source: frontend.tar.gz
-          target: /tmp
+          target: /var/www/zopa
 
       # 6) SSH into the server and do the rest:
       #    - update the backend code + dependencies + database
@@ -77,8 +77,8 @@ jobs:
 
             echo "── Frontend ────────────────────────────"
             rm -rf /var/www/zopa-frontend/*
-            tar -xzf /tmp/frontend.tar.gz -C /var/www/zopa-frontend
-            rm -f /tmp/frontend.tar.gz
+            tar -xzf /var/www/zopa/frontend.tar.gz -C /var/www/zopa-frontend
+            rm -f /var/www/zopa/frontend.tar.gz
 
             echo "── Restart PHP ─────────────────────────"
             sudo systemctl reload php8.2-fpm
