@@ -510,4 +510,52 @@ export const HELP_ARTICLES: HelpArticle[] = [
       </ul>
       <p>If you are an Approver and need to see drafts, contact your administrator to adjust your role's Access Control permissions.</p>`,
   },
+  {
+    id: 'product-auto-code',
+    title: 'Product Auto-Coding & Cataloguing',
+    category: 'Master Data',
+    icon: 'pin',
+    summary: 'How product codes are automatically generated using organization prefixes.',
+    keywords: ['product', 'catalog', 'code', 'auto', 'generate', 'prefix', 'series'],
+    modules: ['products'],
+    body: `<p>When creating a new product in the Product Master, you can leave the **Product Code** field blank to let the system generate it automatically.</p>
+      <ul>
+        <li><strong>Organization Prefix</strong> — The system uses the <code>product_prefix</code> configured by the Administrator (e.g., <code>PRD-</code> or <code>ZP-</code>).</li>
+        <li><strong>Incrementing Series</strong> — It appends a zero-padded running counter (e.g., <code>0001</code>) that increments atomically with each new product.</li>
+        <li><strong>Custom Code</strong> — You can still type a custom product code manually to override the auto-generation.</li>
+      </ul>
+      <p>Admins can configure the prefix and start counter under **Client Management** in the administration settings.</p>`,
+  },
+  {
+    id: 'vendor-compliance',
+    title: 'Vendor Compliance & Special Status',
+    category: 'Master Data',
+    icon: 'verified',
+    summary: 'MSME registration, document requirements, and upload safety.',
+    keywords: ['vendor', 'msme', 'compliance', 'duplicate', 'upload', 'phone', 'history', 'timeline'],
+    modules: ['vendors'],
+    body: `<p>Maintaining clean vendor master data is essential for smooth procurement audits. ZOPA now includes stricter compliance checks:</p>
+      <ul>
+        <li><strong>Special Status (MSME)</strong> — When marking a vendor with a special status (such as MSME or SC/ST), you must provide their registration number and registration start date. Use the **No End Date** checkbox if the registration is valid indefinitely.</li>
+        <li><strong>Duplicate File Prevention</strong> — The system checks the file name of all uploaded vendor documents (PAN, GST, Cancelled Cheque). You cannot upload the exact same file name twice. Delete the old version first if you need to upload a replacement.</li>
+        <li><strong>Phone Number Validation</strong> — Vendor phone numbers require a country code prefix (e.g., <code>+91</code>) to ensure correct routing.</li>
+        <li><strong>Change Audit Log</strong> — Open any vendor details screen to see a chronological **Activity Log Timeline** detailing who changed what field (e.g., from old bank account to new).</li>
+      </ul>`,
+  },
+  {
+    id: 'cost-center-enhancements',
+    title: 'Cost Center & Budget Setup Enhancements',
+    category: 'Master Data',
+    icon: 'account_balance_wallet',
+    summary: 'Budget dates validation, user assignments, and multi-location support.',
+    keywords: ['cost center', 'budget', 'dates', 'valid', 'user', 'location', 'assign'],
+    modules: ['cost_centers'],
+    adminOnly: true,
+    body: `<p>Cost Center managers now have more control over budget windows and visibility:</p>
+      <ul>
+        <li><strong>Budget Dates Validation</strong> — The system ensures the Budget To (end) date is always after or equal to the Budget From (start) date, using calendar date pickers. If dates are invalid, saving is blocked and an inline warning appears.</li>
+        <li><strong>Multi-Location Cost Center</strong> — You can associate a single cost center with multiple delivery locations. Requisition (PR) forms automatically filter delivery locations based on the chosen cost center.</li>
+        <li><strong>User Assignments</strong> — Restrict cost center access to specified users. Only assigned users can raise transactions or view details for that cost center.</li>
+      </ul>`,
+  },
 ];
