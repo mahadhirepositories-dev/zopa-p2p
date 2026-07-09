@@ -20,6 +20,8 @@ class VendorController extends Controller
 {
     use AuthorizesRoles;
 
+    public function __construct(private \App\Services\ActivityLogService $actLog) {}
+
     private array $VENDOR_FIELDS = [
         'name', 'global_vendor_code', 'entity_code', 'vendor_type', 'entity_type',
         'pan', 'pan_not_available', 'gst_status', 'gstin',
@@ -78,6 +80,8 @@ class VendorController extends Controller
 
         $this->syncCategories($vendor, $request->input('vendor_categories', []));
 
+        $this->actLog->log('VENDOR', $vendor->id, 'created', ['name' => $vendor->name]);
+
         return response()->json($vendor->load(['vendorCategories.category', 'vendorCategories.subcategory']), 201);
     }
 
@@ -99,10 +103,24 @@ class VendorController extends Controller
         $this->authorizeVendor($vendor);
         $this->validateVendor($request, partial: true);
 
-        $vendor->update($request->only($this->VENDOR_FIELDS));
+        $vendor->fill($request->only($this->VENDOR_FIELDS));
+        $dirty = [];
+        foreach ($this->VENDOR_FIELDS as $field) {
+            if ($vendor->isDirty($field)) {
+                $dirty[$field] = [
+                    'old' => $vendor->getOriginal($field),
+                    'new' => $vendor->getAttribute($field)
+                ];
+            }
+        }
+        $vendor->save();
 
         if ($request->has('vendor_categories')) {
             $this->syncCategories($vendor, $request->input('vendor_categories', []));
+        }
+
+        if (!empty($dirty)) {
+            $this->actLog->log('VENDOR', $vendor->id, 'updated', ['changes' => $dirty]);
         }
 
         return response()->json($vendor->fresh()->load([
@@ -116,7 +134,14 @@ class VendorController extends Controller
         $this->requirePermission('vendors', 'delete');
         $this->authorizeVendor($vendor);
         $vendor->update(['is_active' => false]);
+        $this->actLog->log('VENDOR', $vendor->id, 'deactivated');
         return response()->json(null, 204);
+    }
+
+    public function activity(Vendor $vendor): JsonResponse
+    {
+        $this->authorizeVendor($vendor);
+        return response()->json($this->actLog->forEntity('VENDOR', $vendor->id));
     }
 
     // ── Documents ────────────────────────────────────────────────────────────

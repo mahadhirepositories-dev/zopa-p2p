@@ -19,4 +19,9 @@ class Location extends Model
     {
         return $this->belongsTo(Tenant::class);
     }
+
+    public function costCenters(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(CostCenter::class);
+    }
 }

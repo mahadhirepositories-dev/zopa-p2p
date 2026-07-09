@@ -204,6 +204,7 @@ class PurchaseRequisitionController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $purchaseRequisition) {
+            $estimated = null;
             if ($request->has('items')) {
                 $purchaseRequisition->items()->delete();
                 $estimated = 0;
@@ -219,17 +220,15 @@ class PurchaseRequisitionController extends Controller
                         'estimated_price' => $item['estimated_price'] ?? 0,
                         'remarks'         => $item['remarks'] ?? null,
                     ]);
-                    $estimated += ($item['qty'] ?? 1) * ($item['estimated_price'] ?? 0);
+                    $estimated += ($item['qty'] * ($item['estimated_price'] ?? 0));
                 }
-                $request->merge(['estimated_amount' => $estimated]);
             }
 
-            $purchaseRequisition->update(
-                $request->only([
-                    'title', 'description', 'cost_center_id', 'project_id',
-                    'location_id', 'priority', 'required_by_date', 'required_by_person', 'estimated_amount',
-                ])
-            );
+            $updateData = $request->only('title', 'cost_center_id', 'project_id', 'location_id', 'priority', 'required_by_date', 'required_by_person', 'description');
+            if ($estimated !== null) {
+                $updateData['estimated_amount'] = $estimated;
+            }
+            $purchaseRequisition->update($updateData);
         });
 
         $this->actLog->log('PR', $purchaseRequisition->id, 'updated');

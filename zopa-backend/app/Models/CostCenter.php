@@ -55,4 +55,9 @@ class CostCenter extends Model
     {
         return $this->belongsToMany(User::class);
     }
+
+    public function locations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Location::class);
+    }
 }

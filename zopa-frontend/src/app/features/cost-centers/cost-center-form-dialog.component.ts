@@ -51,13 +51,13 @@ import { NotificationService } from '../../core/services/notification.service';
         </div>
         <div class="row-2">
           <mat-form-field appearance="outline">
-            <mat-label>Location</mat-label>
-            <mat-select formControlName="location_id">
-              <mat-option [value]="null">— None —</mat-option>
+            <mat-label>Delivery Locations</mat-label>
+            <mat-select formControlName="location_ids" multiple>
               @for (l of locations(); track l.id) {
                 <mat-option [value]="l.id">{{ l.name }}</mat-option>
               }
             </mat-select>
+            <mat-hint>Locations allowed for this cost center</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Annual Budget (₹) *</mat-label>
@@ -126,6 +126,7 @@ export class CostCenterFormDialogComponent implements OnInit {
     department_id:       [this.data?.department?.id ?? null],
     project_id:          [this.data?.project?.id ?? null],
     location_id:         [this.data?.location?.id ?? null],
+    location_ids:        [this.data?.locations?.map(l => l.id) ?? (this.data?.location?.id ? [this.data.location.id] : [])],
     annual_budget:       [this.data?.annual_budget ?? 0, [Validators.required, Validators.min(0)]],
     budget_from:         [this.data?.budget_from ?? null],
     budget_to:           [this.data?.budget_to ?? null],
@@ -156,7 +157,12 @@ export class CostCenterFormDialogComponent implements OnInit {
       return;
     }
     this.saving.set(true);
-    const payload = { ...this.form.value, current_fiscal_year: this.derivedFiscalYear() };
+    const formVals: any = this.form.value;
+    const payload = {
+      ...formVals,
+      location_id: formVals.location_ids?.[0] ?? null,
+      current_fiscal_year: this.derivedFiscalYear()
+    };
     const req = this.data
       ? this.http.put(`${environment.apiUrl}/cost-centers/${this.data.id}`, payload)
       : this.http.post(`${environment.apiUrl}/cost-centers`, payload);

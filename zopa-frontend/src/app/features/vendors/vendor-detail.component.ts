@@ -14,6 +14,7 @@ import { Vendor, VendorAddress } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { gstinValidator, phoneValidator } from '../../core/validators';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 
 @Component({
   selector: 'app-vendor-detail',
@@ -21,6 +22,7 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
   imports: [
     ReactiveFormsModule, MatButtonModule, MatIconModule, MatTableModule,
     MatChipsModule, MatProgressSpinnerModule, MatCardModule, RouterLink, MatDialogModule,
+    DatePipe, TitleCasePipe,
   ],
   template: `
     <div class="page-wrapper">
@@ -234,6 +236,47 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
             </table>
           </mat-card-content>
         </mat-card>
+
+        <!-- Activity timeline card -->
+        <mat-card style="margin-top: 24px;">
+          <mat-card-header>
+            <mat-card-title>Change History & Activity Log</mat-card-title>
+          </mat-card-header>
+          <mat-card-content style="padding-top: 16px;">
+            @if (activity().length === 0) {
+              <p style="color: var(--text-3); font-size: 13px; text-align: center; padding: 20px;">No change history recorded yet.</p>
+            } @else {
+              <div class="timeline">
+                @for (act of activity(); track act.id) {
+                  <div class="timeline-item">
+                    <div class="timeline-badge">
+                      <mat-icon>{{ act.action === 'created' ? 'add_circle_outline' : act.action === 'deactivated' ? 'remove_circle_outline' : 'edit_note' }}</mat-icon>
+                    </div>
+                    <div class="timeline-body">
+                      <div class="timeline-header">
+                        <strong>{{ act.user?.name ?? 'System' }}</strong>
+                        <span class="timeline-action">{{ act.action | titlecase }}</span>
+                        <span class="timeline-date">{{ act.created_at | date:'dd MMM yyyy, hh:mm a' }}</span>
+                      </div>
+                      @if (act.meta?.changes) {
+                        <div class="timeline-changes">
+                          @for (chg of getChangePairs(act.meta.changes); track chg.field) {
+                            <div class="change-pair">
+                              <span class="change-field">{{ chg.field }}:</span>
+                              <span class="change-old">{{ chg.old ?? '—' }}</span>
+                              <mat-icon style="font-size:12px;width:12px;height:12px;margin:0 4px;vertical-align:middle;color:var(--text-3);">arrow_forward</mat-icon>
+                              <span class="change-new">{{ chg.new ?? '—' }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
       }
     </div>
   `,
@@ -251,6 +294,20 @@ import { gstinValidator, phoneValidator } from '../../core/validators';
     }
     .addr-form-title { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px; }
     .addr-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .timeline { display: flex; flex-direction: column; gap: 16px; position: relative; padding-left: 20px; }
+    .timeline::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
+    .timeline-item { display: flex; gap: 12px; position: relative; }
+    .timeline-badge { position: absolute; left: -20px; background: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+    .timeline-badge mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-2); }
+    .timeline-body { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .timeline-header { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
+    .timeline-action { font-weight: 600; color: var(--primary); }
+    .timeline-date { color: var(--text-3); font-size: 11px; margin-left: auto; }
+    .timeline-changes { margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .change-pair { display: flex; align-items: center; }
+    .change-field { font-weight: 600; color: #475569; margin-right: 6px; text-transform: capitalize; }
+    .change-old { color: #ef4444; text-decoration: line-through; }
+    .change-new { color: #22c55e; font-weight: 500; }
   `],
 })
 export class VendorDetailComponent implements OnInit {
@@ -263,6 +320,7 @@ export class VendorDetailComponent implements OnInit {
   pincodeLoading = signal(false);
 
   vendor = signal<Vendor | null>(null);
+  activity = signal<any[]>([]);
   loading = signal(true);
   showAddressForm = signal(false);
   savingAddress = signal(false);
@@ -288,6 +346,20 @@ export class VendorDetailComponent implements OnInit {
       next: v => { this.vendor.set(v); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+
+    this.http.get<any[]>(`${environment.apiUrl}/vendors/${this.id()}/activity`).subscribe({
+      next: act => this.activity.set(act),
+      error: () => {}
+    });
+  }
+
+  getChangePairs(changesObj: any): { field: string; old: any; new: any }[] {
+    if (!changesObj) return [];
+    return Object.entries(changesObj).map(([field, vals]: [string, any]) => ({
+      field: field.replace(/_/g, ' '),
+      old: vals.old,
+      new: vals.new
+    }));
   }
 
   openAddressForm(addr: VendorAddress | null) {

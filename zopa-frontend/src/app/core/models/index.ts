@@ -40,6 +40,7 @@ export interface CostCenter {
   location?: { id: number; name: string };
   approvalConfigs?: ApprovalConfig[];
   users?: { id: number; name: string; email: string }[];
+  locations?: Location[];
 }
 
 export interface BudgetAdjustment {

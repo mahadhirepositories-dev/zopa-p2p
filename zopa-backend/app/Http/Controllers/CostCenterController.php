@@ -19,7 +19,7 @@ class CostCenterController extends Controller
         $tenant = app('currentTenant');
         return response()->json(
             CostCenter::where('tenant_id', $tenant->id)
-                ->with(['department', 'project', 'location', 'users:id,name,email'])
+                ->with(['department', 'project', 'location', 'users:id,name,email', 'locations'])
                 ->get()
         );
     }
@@ -46,13 +46,17 @@ class CostCenterController extends Controller
             $cc->users()->sync($request->user_ids);
         }
 
-        return response()->json($cc->load('department', 'project', 'location', 'users:id,name,email'), 201);
+        if ($request->has('location_ids')) {
+            $cc->locations()->sync($request->location_ids);
+        }
+
+        return response()->json($cc->load('department', 'project', 'location', 'users:id,name,email', 'locations'), 201);
     }
 
     public function show(CostCenter $costCenter): JsonResponse
     {
         $this->authorizeCostCenter($costCenter);
-        return response()->json($costCenter->load('department', 'project', 'location', 'approvalConfigs.user', 'users:id,name,email'));
+        return response()->json($costCenter->load('department', 'project', 'location', 'approvalConfigs.user', 'users:id,name,email', 'locations'));
     }
 
     public function update(Request $request, CostCenter $costCenter): JsonResponse
@@ -63,7 +67,10 @@ class CostCenterController extends Controller
         if ($request->has('user_ids')) {
             $costCenter->users()->sync($request->user_ids);
         }
-        return response()->json($costCenter->load('department', 'project', 'location', 'users:id,name,email'));
+        if ($request->has('location_ids')) {
+            $costCenter->locations()->sync($request->location_ids);
+        }
+        return response()->json($costCenter->load('department', 'project', 'location', 'users:id,name,email', 'locations'));
     }
 
     public function destroy(CostCenter $costCenter): JsonResponse

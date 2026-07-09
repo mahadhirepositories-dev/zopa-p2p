@@ -141,6 +141,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('vendors/template', [VendorController::class, 'template']);
         Route::post('vendors/import', [VendorController::class, 'import']);
         Route::apiResource('vendors', VendorController::class);
+        Route::get('vendors/{vendor}/activity', [VendorController::class, 'activity']);
         Route::get('vendors/{vendor}/addresses', [VendorController::class, 'addresses']);
         Route::post('vendors/{vendor}/addresses', [VendorController::class, 'storeAddress']);
         Route::put('vendors/{vendor}/addresses/{address}', [VendorController::class, 'updateAddress']);

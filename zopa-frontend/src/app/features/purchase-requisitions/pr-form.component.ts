@@ -18,6 +18,8 @@ import { Budget, Location } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { BulkImportService } from '../../core/services/bulk-import.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { Product } from '../../core/models';
 
 @Component({
   selector: 'app-pr-form',
@@ -26,7 +28,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     ReactiveFormsModule, DecimalPipe,
     MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatCardModule, MatProgressSpinnerModule, MatProgressBarModule,
-    MatDatepickerModule, MatNativeDateModule, MatTooltipModule,
+    MatDatepickerModule, MatNativeDateModule, MatTooltipModule, MatAutocompleteModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -191,7 +193,14 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                     <div class="item-fields">
                       <mat-form-field appearance="outline" class="full">
                         <mat-label>Description *</mat-label>
-                        <input matInput formControlName="description" />
+                        <input matInput formControlName="description" [matAutocomplete]="auto" />
+                        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onProductSelect($event, $index)">
+                          @for (p of filterAutocompleteProducts(item.get('description')?.value ?? ''); track p.id) {
+                            <mat-option [value]="p.name">
+                              {{ p.name }} (Code: {{ p.code ?? '—' }}, Rate: ₹{{ p.net_rate }})
+                            </mat-option>
+                          }
+                        </mat-autocomplete>
                       </mat-form-field>
 
                       <div class="three-col">
@@ -305,6 +314,7 @@ export class PrFormComponent implements OnInit {
   saving      = signal(false);
   budget      = signal<Budget | null>(null);
   selectedCostCenterId = signal<number | null>(null);
+  productsMaster = signal<Product[]>([]);
 
   filteredProjects = computed(() => {
     const ccId = this.selectedCostCenterId();
@@ -318,8 +328,13 @@ export class PrFormComponent implements OnInit {
   filteredLocations = computed(() => {
     const ccId = this.selectedCostCenterId();
     const cc = this.costCenters().find(c => c.id === ccId);
-    if (cc && cc.location_id) {
-      return this.locations().filter(l => l.id === cc.location_id);
+    if (cc) {
+      if (cc.locations && cc.locations.length > 0) {
+        const allowedIds = cc.locations.map((l: any) => l.id);
+        return this.locations().filter(l => allowedIds.includes(l.id));
+      } else if (cc.location_id) {
+        return this.locations().filter(l => l.id === cc.location_id);
+      }
     }
     return this.locations();
   });
@@ -362,6 +377,7 @@ export class PrFormComponent implements OnInit {
     this.http.get<any>(`${environment.apiUrl}/cost-centers`).subscribe(r => this.costCenters.set(r.data ?? r));
     this.http.get<any>(`${environment.apiUrl}/projects`).subscribe(r => this.projects.set(r));
     this.http.get<any>(`${environment.apiUrl}/locations`).subscribe(r => this.locations.set(r));
+    this.http.get<any>(`${environment.apiUrl}/products`).subscribe(r => this.productsMaster.set(r.data ?? r));
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -412,6 +428,28 @@ export class PrFormComponent implements OnInit {
     });
   }
 
+  filterAutocompleteProducts(searchStr: string): Product[] {
+    const q = (searchStr || '').toLowerCase().trim();
+    if (!q) return this.productsMaster().slice(0, 20);
+    return this.productsMaster().filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.code && p.code.toLowerCase().includes(q))
+    );
+  }
+
+  onProductSelect(event: any, index: number) {
+    const productName = event.option.value;
+    const p = this.productsMaster().find(prod => prod.name === productName);
+    if (p) {
+      this.items.at(index).patchValue({
+        product_id: p.id,
+        unit: p.unit,
+        estimated_price: p.net_rate,
+        category_id: p.category_id,
+      });
+    }
+  }
+
   onCostCenterChange(autoFill = true) {
     const ccId = this.form.value.cost_center_id;
     this.selectedCostCenterId.set(ccId ?? null);
@@ -427,13 +465,10 @@ export class PrFormComponent implements OnInit {
         } else {
           this.form.patchValue({ project_id: null });
         }
-        if (cc.location_id) {
-          this.form.patchValue({ location_id: cc.location_id });
-          this.onLocationChange();
-        } else {
-          this.form.patchValue({ location_id: null });
-          this.onLocationChange();
-        }
+        
+        const locId = cc.locations?.[0]?.id ?? cc.location_id ?? null;
+        this.form.patchValue({ location_id: locId });
+        this.onLocationChange();
       }
     }
   }

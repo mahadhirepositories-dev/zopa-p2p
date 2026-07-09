@@ -165,7 +165,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                 <mat-label>Bill-to Location</mat-label>
                 <mat-select formControlName="bill_to_location_id"
                             (selectionChange)="onBillToChange()">
-                  @for (l of locations(); track l.id) {
+                  @for (l of filteredLocations(); track l.id) {
                     <mat-option [value]="l.id">{{ l.name }}</mat-option>
                   }
                 </mat-select>
@@ -174,7 +174,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
               <mat-form-field appearance="outline" class="field-wide">
                 <mat-label>Ship-to Location</mat-label>
                 <mat-select formControlName="ship_to_location_id" (selectionChange)="onShipToChange()">
-                  @for (l of locations(); track l.id) {
+                  @for (l of filteredLocations(); track l.id) {
                     <mat-option [value]="l.id">{{ l.name }}</mat-option>
                   }
                 </mat-select>
@@ -705,6 +705,20 @@ export class PoFormComponent implements OnInit {
     // API returns root-only with children nested, no further filtering needed
     flatten(this.categories());
     return flat;
+  });
+
+  filteredLocations = computed(() => {
+    const cc = this.selectedCostCenter();
+    if (cc) {
+      if (cc.locations && cc.locations.length > 0) {
+        const allowedIds = cc.locations.map((l: any) => l.id);
+        return this.locations().filter(l => allowedIds.includes(l.id));
+      } else if (cc.location?.id) {
+        const targetId = cc.location.id;
+        return this.locations().filter(l => l.id === targetId);
+      }
+    }
+    return this.locations();
   });
 
   // Form — warranty_months removed from header (now per item)
