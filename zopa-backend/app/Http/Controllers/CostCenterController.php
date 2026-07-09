@@ -36,6 +36,7 @@ class CostCenterController extends Controller
             'budget_to'           => 'nullable|date|after_or_equal:budget_from',
         ]);
 
+        $tenant = app('currentTenant');
         $cc = CostCenter::create([
             ...$request->only('name', 'department_id', 'project_id', 'location_id',
                               'annual_budget', 'budget_from', 'budget_to', 'current_fiscal_year'),
