@@ -70,7 +70,7 @@ export interface Category {
 }
 
 export interface Department { id: number; name: string; is_active: boolean; }
-export interface Project { id: number; name: string; is_active: boolean; }
+export interface Project { id: number; name: string; is_active: boolean; end_date?: string; }
 export interface Location { id: number; name: string; address?: string; city?: string; state?: string; state_code?: string; pincode?: string; country?: string; gstin?: string; is_active: boolean; receiver_name?: string; receiver_phone?: string; }
 
 export interface VendorCategoryEntry {
@@ -147,6 +147,8 @@ export interface Product {
   gst_rate: number;
   hsn_code?: string;
   warranty_months: number;
+  mrp?: number;
+  sale_price?: number;
   is_active: boolean;
   category_id?: number | null;
   subcategory_id?: number | null;

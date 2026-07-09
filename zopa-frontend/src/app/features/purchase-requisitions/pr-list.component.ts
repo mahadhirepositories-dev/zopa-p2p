@@ -117,7 +117,27 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
                 <th mat-header-cell *matHeaderCellDef>Title</th>
                 <td mat-cell *matCellDef="let pr">
                   <div style="font-size:13px;font-weight:500;">{{ pr.title }}</div>
-                  <div style="font-size:11px;color:var(--text-3);">{{ pr.cost_center?.name }}</div>
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="cost_center">
+                <th mat-header-cell *matHeaderCellDef>Cost Centre</th>
+                <td mat-cell *matCellDef="let pr" style="font-size:13px;color:var(--text-2);">
+                  {{ pr.cost_center?.name ?? '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="project">
+                <th mat-header-cell *matHeaderCellDef>Project</th>
+                <td mat-cell *matCellDef="let pr" style="font-size:13px;color:var(--text-2);">
+                  {{ pr.project?.name ?? '—' }}
+                </td>
+              </ng-container>
+
+              <ng-container matColumnDef="location">
+                <th mat-header-cell *matHeaderCellDef>Location</th>
+                <td mat-cell *matCellDef="let pr" style="font-size:13px;color:var(--text-2);">
+                  {{ pr.location?.name ?? '—' }}
                 </td>
               </ng-container>
 
@@ -207,7 +227,7 @@ export class PrListComponent implements OnInit {
   readonly auth = inject(AuthService);
   private exportService = inject(ExportService);
 
-  columns = ['pr_number', 'title', 'requested_by', 'priority', 'amount', 'status', 'arrow'];
+  columns = ['pr_number', 'title', 'cost_center', 'project', 'location', 'requested_by', 'priority', 'amount', 'status', 'arrow'];
   prs = signal<any[]>([]);
   loading = signal(true);
   search = signal('');
@@ -225,7 +245,12 @@ export class PrListComponent implements OnInit {
     const q = this.search().toLowerCase();
     const s = this.statusFilter();
     return this.prs().filter(pr => {
-      const matchSearch = !q || pr.pr_number?.toLowerCase().includes(q) || pr.title?.toLowerCase().includes(q);
+      const matchSearch = !q ||
+        pr.pr_number?.toLowerCase().includes(q) ||
+        pr.title?.toLowerCase().includes(q) ||
+        pr.cost_center?.name?.toLowerCase().includes(q) ||
+        pr.project?.name?.toLowerCase().includes(q) ||
+        pr.location?.name?.toLowerCase().includes(q);
       const matchStatus = !s || pr.status === s;
       return matchSearch && matchStatus;
     });

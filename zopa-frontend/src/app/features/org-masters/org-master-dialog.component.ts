@@ -12,6 +12,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { gstinValidator } from '../../core/validators';
 import { HttpClient } from '@angular/common/http';
 import { MatSelectModule } from '@angular/material/select';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 
 export interface OrgMasterDialogData {
@@ -25,7 +27,7 @@ export interface OrgMasterDialogData {
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatCheckboxModule, MatProgressSpinnerModule,
-    MatSelectModule
+    MatSelectModule, MatDatepickerModule, MatNativeDateModule
   ],
   template: `
     <h2 mat-dialog-title>{{ data.entity ? 'Edit' : 'New' }} {{ getTitle() }}</h2>
@@ -45,6 +47,16 @@ export interface OrgMasterDialogData {
                 <mat-option [value]="u.id">{{ u.name }} ({{ u.email }})</mat-option>
               }
             </mat-select>
+          </mat-form-field>
+        }
+
+        @if (data.type === 'project') {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Project End Date</mat-label>
+            <input matInput [matDatepicker]="projPicker" formControlName="end_date" />
+            <mat-datepicker-toggle matIconSuffix [for]="projPicker" />
+            <mat-datepicker #projPicker />
+            <mat-hint>Optional project expiration date</mat-hint>
           </mat-form-field>
         }
 
@@ -182,6 +194,10 @@ export class OrgMasterDialogComponent implements OnInit {
       });
     }
 
+    if (this.data.type === 'project') {
+      this.form.addControl('end_date', this.fb.control(this.data.entity?.end_date || null));
+    }
+
     if (this.data.type === 'location') {
       this.form.addControl('address', this.fb.control(this.data.entity?.address || ''));
       this.form.addControl('city', this.fb.control(this.data.entity?.city || ''));
@@ -217,7 +233,12 @@ export class OrgMasterDialogComponent implements OnInit {
     let req;
     const isEdit = !!this.data.entity;
     const id = this.data.entity?.id;
-    const val = this.form.value;
+    const val = { ...this.form.value };
+
+    if (val.end_date) {
+      const d = new Date(val.end_date);
+      val.end_date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
 
     if (this.data.type === 'department') {
       req = isEdit ? this.orgService.updateDepartment(id!, val) : this.orgService.createDepartment(val);

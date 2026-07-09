@@ -10,11 +10,14 @@ class Product extends Model
     protected $fillable = [
         'tenant_id', 'code', 'name', 'description', 'category_id', 'subcategory_id',
         'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'is_active',
+        'mrp', 'sale_price',
     ];
 
     protected $casts = [
         'net_rate' => 'decimal:2',
         'gst_rate' => 'decimal:2',
+        'mrp' => 'decimal:2',
+        'sale_price' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 

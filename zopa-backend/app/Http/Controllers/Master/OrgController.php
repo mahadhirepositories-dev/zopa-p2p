@@ -66,6 +66,13 @@ class OrgController extends Controller
     public function projects(): JsonResponse
     {
         $tenant = app('currentTenant');
+        // Auto-deactivate projects that have expired
+        Project::where('tenant_id', $tenant->id)
+            ->where('is_active', true)
+            ->whereNotNull('end_date')
+            ->where('end_date', '<', now()->toDateString())
+            ->update(['is_active' => false]);
+
         return response()->json(
             Project::where('tenant_id', $tenant->id)->where('is_active', true)->get()
         );
@@ -75,10 +82,14 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'create');
 
-        $request->validate(['name' => 'required|string|max:255']);
+        $request->validate([
+            'name'     => 'required|string|max:255',
+            'end_date' => 'nullable|date',
+        ]);
         $proj = Project::create([
             'tenant_id' => app('currentTenant')->id,
             'name' => $request->name,
+            'end_date' => $request->end_date,
             'is_active' => true,
         ]);
         return response()->json($proj, 201);
@@ -88,7 +99,11 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($project->tenant_id !== app('currentTenant')->id, 403);
-        $project->update($request->only('name', 'is_active'));
+        $request->validate([
+            'name'     => 'sometimes|required|string|max:255',
+            'end_date' => 'nullable|date',
+        ]);
+        $project->update($request->only('name', 'is_active', 'end_date'));
         return response()->json($project);
     }
 

@@ -11,6 +11,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { OrgService, OrgEntity } from '../../core/services/org.service';
 import { OrgMasterDialogComponent } from './org-master-dialog.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-org-masters',
@@ -19,6 +20,7 @@ import { AuthService } from '../../core/auth/auth.service';
     MatTabsModule, MatTableModule, MatButtonModule,
     MatIconModule, MatDialogModule, MatChipsModule,
     MatProgressSpinnerModule, MatCardModule, MatTooltipModule,
+    DatePipe,
   ],
   template: `
     <div class="page-wrapper">
@@ -158,6 +160,12 @@ import { AuthService } from '../../core/auth/auth.service';
                         </div>
                       </td>
                     </ng-container>
+                    <ng-container matColumnDef="end_date">
+                      <th mat-header-cell *matHeaderCellDef>End Date</th>
+                      <td mat-cell *matCellDef="let row" style="font-size:13px;color:var(--text-2);">
+                        {{ row.end_date ? (row.end_date | date:'dd MMM yyyy') : '—' }}
+                      </td>
+                    </ng-container>
                     <ng-container matColumnDef="status">
                       <th mat-header-cell *matHeaderCellDef>Status</th>
                       <td mat-cell *matCellDef="let row">
@@ -181,8 +189,8 @@ import { AuthService } from '../../core/auth/auth.service';
                         }
                       </td>
                     </ng-container>
-                    <tr mat-header-row *matHeaderRowDef="columnsBasic"></tr>
-                    <tr mat-row *matRowDef="let row; columns: columnsBasic;" class="hover-row"></tr>
+                    <tr mat-header-row *matHeaderRowDef="columnsProject"></tr>
+                    <tr mat-row *matRowDef="let row; columns: columnsProject;" class="hover-row"></tr>
                   </table>
                 }
               </mat-card-content>
@@ -350,6 +358,7 @@ export class OrgMastersComponent implements OnInit {
 
   columnsBasic      = ['name', 'status', 'actions'];
   columnsDepartment = ['name', 'head', 'status', 'actions'];
+  columnsProject    = ['name', 'end_date', 'status', 'actions'];
   columnsLocation   = ['name', 'gstin', 'status', 'actions'];
 
   ngOnInit() { this.loadData(0); }

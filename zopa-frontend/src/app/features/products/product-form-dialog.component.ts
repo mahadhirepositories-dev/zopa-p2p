@@ -119,6 +119,16 @@ interface FlatCat { id: number; name: string; parent_id: number | null; }
             </mat-select>
           </mat-form-field>
         </div>
+        <div class="row-2">
+          <mat-form-field appearance="outline">
+            <mat-label>MRP (₹)</mat-label>
+            <input matInput type="number" formControlName="mrp" min="0" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Sale Price (₹)</mat-label>
+            <input matInput type="number" formControlName="sale_price" min="0" />
+          </mat-form-field>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -160,6 +170,8 @@ export class ProductFormDialogComponent implements OnInit {
     subcategory_id:  [this.data?.subcategory_id ?? null],  // secondary
     net_rate:        [this.data?.net_rate ?? 0, [Validators.required, Validators.min(0)]],
     gst_rate:        [this.data?.gst_rate ?? 18, Validators.required],
+    mrp:             [this.data?.mrp ?? null, [Validators.min(0)]],
+    sale_price:      [this.data?.sale_price ?? null, [Validators.min(0)]],
     warranty_months: [this.data?.warranty_months ?? 0],
   });
 

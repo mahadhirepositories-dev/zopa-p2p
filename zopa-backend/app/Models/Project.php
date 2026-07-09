@@ -7,9 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Project extends Model
 {
-    protected $fillable = ['tenant_id', 'name', 'department_id', 'is_active'];
+    protected $fillable = ['tenant_id', 'name', 'department_id', 'is_active', 'end_date'];
 
-    protected $casts = ['is_active' => 'boolean'];
+    protected $casts = [
+        'is_active' => 'boolean',
+        'end_date' => 'date',
+    ];
 
     public function tenant(): BelongsTo
     {

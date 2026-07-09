@@ -60,11 +60,13 @@ class ProductController extends Controller
             'description'    => 'nullable|string',
             'category_id'    => 'nullable|integer|exists:categories,id',
             'subcategory_id' => 'nullable|integer|exists:categories,id',
+            'mrp'            => 'nullable|numeric|min:0',
+            'sale_price'     => 'nullable|numeric|min:0',
         ]);
 
         $tenant = app('currentTenant');
         $product = Product::create([
-            ...$request->only('code', 'name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months'),
+            ...$request->only('code', 'name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),
             'tenant_id' => $tenant->id,
         ]);
 
@@ -81,6 +83,17 @@ class ProductController extends Controller
     {
         $this->requirePermission('products', 'edit');
         $this->authorizeProduct($product);
+        $request->validate([
+            'name'           => 'sometimes|required|string|max:255',
+            'unit'           => 'sometimes|required|string|max:30',
+            'net_rate'       => 'sometimes|required|numeric|min:0',
+            'gst_rate'       => 'sometimes|required|numeric|min:0|max:100',
+            'description'    => 'nullable|string',
+            'category_id'    => 'nullable|integer|exists:categories,id',
+            'subcategory_id' => 'nullable|integer|exists:categories,id',
+            'mrp'            => 'nullable|numeric|min:0',
+            'sale_price'     => 'nullable|numeric|min:0',
+        ]);
         $product->update($request->except('tenant_id'));
         return response()->json($product);
     }

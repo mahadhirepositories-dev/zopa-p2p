@@ -19,6 +19,7 @@ export interface OrgEntity {
   head?: { id: number; name: string; email: string };
   receiver_name?: string;
   receiver_phone?: string;
+  end_date?: string;
 }
 
 @Injectable({

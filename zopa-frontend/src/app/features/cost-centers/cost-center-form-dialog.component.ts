@@ -7,6 +7,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 import { CostCenter } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
@@ -17,6 +19,7 @@ import { NotificationService } from '../../core/services/notification.service';
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule,
+    MatDatepickerModule, MatNativeDateModule,
   ],
   template: `
     <h2 mat-dialog-title>{{ data ? 'Edit Cost Center' : 'New Cost Center' }}</h2>
@@ -64,12 +67,16 @@ import { NotificationService } from '../../core/services/notification.service';
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Budget From Date</mat-label>
-            <input matInput type="date" formControlName="budget_from" />
+            <input matInput [matDatepicker]="fromPicker" formControlName="budget_from" />
+            <mat-datepicker-toggle matIconSuffix [for]="fromPicker" />
+            <mat-datepicker #fromPicker />
             <mat-hint>Start of budget period</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Budget To Date</mat-label>
-            <input matInput type="date" formControlName="budget_to" />
+            <input matInput [matDatepicker]="toPicker" formControlName="budget_to" />
+            <mat-datepicker-toggle matIconSuffix [for]="toPicker" />
+            <mat-datepicker #toPicker />
             <mat-hint>End of budget period</mat-hint>
           </mat-form-field>
         </div>

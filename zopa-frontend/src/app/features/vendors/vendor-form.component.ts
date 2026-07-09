@@ -128,7 +128,10 @@ const CURRENCIES = [
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Contact Phone</mat-label>
-                <input matInput formControlName="phone" maxlength="15" />
+                <input matInput formControlName="phone" placeholder="e.g. +919876543210" maxlength="20" />
+                @if (form.get('phone')?.errors?.['pattern'] && form.get('phone')?.touched) {
+                  <mat-error>Invalid phone format (e.g. +919876543210)</mat-error>
+                }
               </mat-form-field>
             </div>
           </mat-card-content>
@@ -454,7 +457,7 @@ export class VendorFormComponent implements OnInit {
     vendor_type:               [null as string | null],
     entity_type:               [null as string | null],
     email:                     ['', Validators.email],
-    phone:                     [''],
+    phone:                     ['', [Validators.pattern(/^\+?[0-9\s\-]{7,15}$/)]],
     currency:                  ['INR'],
     pan:                       [''],
     pan_not_available:         [false],
@@ -545,6 +548,21 @@ export class VendorFormComponent implements OnInit {
     if (!input.files?.length) return;
     const file = input.files[0];
     if (!this.pendingFiles[type]) this.pendingFiles[type] = [];
+    
+    // Check if filename is already pending for this type
+    if (this.pendingFiles[type].some(f => f.name === file.name)) {
+      this.notify.error(`A file named "${file.name}" is already selected for upload.`);
+      input.value = '';
+      return;
+    }
+
+    // Check if filename already exists in uploaded documents
+    if (this.existingDocs().some(d => d.file_name === file.name)) {
+      this.notify.error(`A document named "${file.name}" has already been uploaded for this vendor.`);
+      input.value = '';
+      return;
+    }
+
     if (type === 'additional') {
       this.pendingFiles[type].push(file);
     } else {
