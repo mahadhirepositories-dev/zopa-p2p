@@ -278,21 +278,35 @@ const CURRENCIES = [
               </mat-form-field>
               @if (form.get('special_status')?.value) {
                 <mat-form-field appearance="outline">
-                  <mat-label>Registration Number</mat-label>
+                  <mat-label>Registration Number *</mat-label>
                   <input matInput formControlName="special_status_reg_no" />
+                  @if (form.get('special_status_reg_no')?.errors?.['required'] && form.get('special_status_reg_no')?.touched) {
+                    <mat-error>Registration number is required</mat-error>
+                  }
                 </mat-form-field>
                 <mat-form-field appearance="outline">
-                  <mat-label>Valid From</mat-label>
+                  <mat-label>Valid From *</mat-label>
                   <input matInput [matDatepicker]="dpStart" formControlName="special_status_start_date" />
                   <mat-datepicker-toggle matSuffix [for]="dpStart" />
                   <mat-datepicker #dpStart />
+                  @if (form.get('special_status_start_date')?.errors?.['required'] && form.get('special_status_start_date')?.touched) {
+                    <mat-error>Start date is required</mat-error>
+                  }
                 </mat-form-field>
-                <mat-form-field appearance="outline">
-                  <mat-label>Valid Till</mat-label>
-                  <input matInput [matDatepicker]="dpEnd" formControlName="special_status_end_date" />
-                  <mat-datepicker-toggle matSuffix [for]="dpEnd" />
-                  <mat-datepicker #dpEnd />
-                </mat-form-field>
+                <div style="display:flex; align-items:center; height:56px; padding-left:4px;">
+                  <mat-checkbox formControlName="special_status_no_end_date">No End Date</mat-checkbox>
+                </div>
+                @if (!form.get('special_status_no_end_date')?.value) {
+                  <mat-form-field appearance="outline">
+                    <mat-label>Valid Till *</mat-label>
+                    <input matInput [matDatepicker]="dpEnd" formControlName="special_status_end_date" />
+                    <mat-datepicker-toggle matSuffix [for]="dpEnd" />
+                    <mat-datepicker #dpEnd />
+                    @if (form.get('special_status_end_date')?.errors?.['required'] && form.get('special_status_end_date')?.touched) {
+                      <mat-error>End date is required</mat-error>
+                    }
+                  </mat-form-field>
+                }
               }
             </div>
           </mat-card-content>
@@ -472,6 +486,7 @@ export class VendorFormComponent implements OnInit {
     special_status_reg_no:     [''],
     special_status_start_date: [null as Date | null],
     special_status_end_date:   [null as Date | null],
+    special_status_no_end_date: [false],
     vendor_categories:         this.fb.array([]),
   });
 
@@ -486,6 +501,47 @@ export class VendorFormComponent implements OnInit {
       this.allCategories.set(cats);
       if (this.vendorId) this.loadVendor();
     });
+
+    this.form.get('special_status')?.valueChanges.subscribe(status => {
+      this.updateSpecialStatusValidators(status ?? null, this.form.get('special_status_no_end_date')?.value ?? null);
+    });
+
+    this.form.get('special_status_no_end_date')?.valueChanges.subscribe(noEndDate => {
+      this.updateSpecialStatusValidators(this.form.get('special_status')?.value ?? null, noEndDate ?? null);
+    });
+  }
+
+  updateSpecialStatusValidators(status: string | null, noEndDate: boolean | null) {
+    const regNo = this.form.get('special_status_reg_no');
+    const startDate = this.form.get('special_status_start_date');
+    const endDate = this.form.get('special_status_end_date');
+
+    if (status) {
+      regNo?.setValidators([Validators.required]);
+      startDate?.setValidators([Validators.required]);
+
+      if (noEndDate) {
+        endDate?.clearValidators();
+        endDate?.disable({ emitEvent: false });
+        endDate?.setValue(null, { emitEvent: false });
+      } else {
+        endDate?.enable({ emitEvent: false });
+        endDate?.setValidators([Validators.required]);
+      }
+    } else {
+      regNo?.clearValidators();
+      startDate?.clearValidators();
+      endDate?.clearValidators();
+      endDate?.enable({ emitEvent: false });
+
+      regNo?.setValue('', { emitEvent: false });
+      startDate?.setValue(null, { emitEvent: false });
+      endDate?.setValue(null, { emitEvent: false });
+    }
+
+    regNo?.updateValueAndValidity({ emitEvent: false });
+    startDate?.updateValueAndValidity({ emitEvent: false });
+    endDate?.updateValueAndValidity({ emitEvent: false });
   }
 
   loadVendor() {
@@ -503,7 +559,9 @@ export class VendorFormComponent implements OnInit {
         special_status_reg_no: v.special_status_reg_no ?? '',
         special_status_start_date: v.special_status_start_date ? new Date(v.special_status_start_date) : null,
         special_status_end_date: v.special_status_end_date ? new Date(v.special_status_end_date) : null,
+        special_status_no_end_date: v.special_status ? !v.special_status_end_date : false,
       });
+      this.updateSpecialStatusValidators(v.special_status ?? null, v.special_status ? !v.special_status_end_date : false);
 
       // Load multi-categories
       this.categoryRows.clear();
@@ -590,7 +648,7 @@ export class VendorFormComponent implements OnInit {
     }
     this.saving.set(true);
 
-    const val = this.form.value;
+    const val = this.form.getRawValue();
     const payload: any = {
       ...val,
       special_status_start_date: val.special_status_start_date instanceof Date

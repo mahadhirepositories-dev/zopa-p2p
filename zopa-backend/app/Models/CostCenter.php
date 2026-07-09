@@ -50,4 +50,9 @@ class CostCenter extends Model
     {
         return $this->hasMany(BudgetLedger::class);
     }
+
+    public function users(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class);
+    }
 }

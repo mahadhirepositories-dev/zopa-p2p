@@ -106,6 +106,19 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
                 </td>
               </ng-container>
 
+              <ng-container matColumnDef="users">
+                <th mat-header-cell *matHeaderCellDef>Assigned Users</th>
+                <td mat-cell *matCellDef="let cc">
+                  @if (cc.users?.length) {
+                    <span class="tag" style="background:#e0f2fe;color:#0369a1;">
+                      {{ cc.users.length }} user{{ cc.users.length !== 1 ? 's' : '' }}
+                    </span>
+                  } @else {
+                    <span style="color:var(--text-3);font-size:12px;">All Users</span>
+                  }
+                </td>
+              </ng-container>
+
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let cc" style="text-align:right;white-space:nowrap;">
@@ -174,7 +187,7 @@ export class CostCenterListComponent implements OnInit {
   private router = inject(Router);
   readonly auth = inject(AuthService);
 
-  columns = ['name', 'project', 'annual_budget', 'actions'];
+  columns = ['name', 'project', 'annual_budget', 'users', 'actions'];
   costCenters = signal<CostCenter[]>([]);
   loading = signal(true);
   search = signal('');

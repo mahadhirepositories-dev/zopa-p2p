@@ -90,12 +90,27 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                 </div>
               }
 
+              @if (budget() && (estimatedTotal() > budget()!.available)) {
+                <div class="budget-banner budget-warn" style="margin-top: 8px; border-color: #ef4444; background: #fef2f2; color: #b91c1c;">
+                  <mat-icon style="color: #ef4444;">warning</mat-icon>
+                  <div style="flex:1;">
+                    <div style="font-size:12px; font-weight:700;">
+                      Requisition Total Exceeds Available Budget!
+                    </div>
+                    <div style="font-size:11px; opacity:.9;">
+                      Requisition Total: ₹{{ estimatedTotal() | number:'1.0-0' }} &nbsp;·&nbsp;
+                      Available Budget: ₹{{ budget()!.available | number:'1.0-0' }}
+                    </div>
+                  </div>
+                </div>
+              }
+
               <div class="two-col">
                 <mat-form-field appearance="outline">
                   <mat-label>Project</mat-label>
                   <mat-select formControlName="project_id">
                     <mat-option [value]="null">— None —</mat-option>
-                    @for (p of projects(); track p.id) {
+                    @for (p of filteredProjects(); track p.id) {
                       <mat-option [value]="p.id">{{ p.name }}</mat-option>
                     }
                   </mat-select>
@@ -105,7 +120,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
                   <mat-label>Delivery Location</mat-label>
                   <mat-select formControlName="location_id" (selectionChange)="onLocationChange()">
                     <mat-option [value]="null">— None —</mat-option>
-                    @for (l of locations(); track l.id) {
+                    @for (l of filteredLocations(); track l.id) {
                       <mat-option [value]="l.id">{{ l.name }}</mat-option>
                     }
                   </mat-select>
@@ -289,6 +304,25 @@ export class PrFormComponent implements OnInit {
   selectedLocation = signal<Location | null>(null);
   saving      = signal(false);
   budget      = signal<Budget | null>(null);
+  selectedCostCenterId = signal<number | null>(null);
+
+  filteredProjects = computed(() => {
+    const ccId = this.selectedCostCenterId();
+    const cc = this.costCenters().find(c => c.id === ccId);
+    if (cc && cc.project_id) {
+      return this.projects().filter(p => p.id === cc.project_id);
+    }
+    return this.projects();
+  });
+
+  filteredLocations = computed(() => {
+    const ccId = this.selectedCostCenterId();
+    const cc = this.costCenters().find(c => c.id === ccId);
+    if (cc && cc.location_id) {
+      return this.locations().filter(l => l.id === cc.location_id);
+    }
+    return this.locations();
+  });
 
   budgetWarn = computed(() => {
     const b = this.budget();
@@ -351,7 +385,7 @@ export class PrFormComponent implements OnInit {
           description: pr.description,
         });
 
-        if (pr.cost_center_id) this.onCostCenterChange();
+        if (pr.cost_center_id) this.onCostCenterChange(false);
         if (pr.location_id) this.onLocationChange();
 
         if (pr.items && pr.items.length > 0) {
@@ -378,11 +412,30 @@ export class PrFormComponent implements OnInit {
     });
   }
 
-  onCostCenterChange() {
+  onCostCenterChange(autoFill = true) {
     const ccId = this.form.value.cost_center_id;
+    this.selectedCostCenterId.set(ccId ?? null);
     if (!ccId) { this.budget.set(null); return; }
     this.http.get<Budget>(`${environment.apiUrl}/cost-centers/${ccId}/budget`)
       .subscribe(b => this.budget.set(b));
+
+    if (autoFill) {
+      const cc = this.costCenters().find(c => c.id === ccId);
+      if (cc) {
+        if (cc.project_id) {
+          this.form.patchValue({ project_id: cc.project_id });
+        } else {
+          this.form.patchValue({ project_id: null });
+        }
+        if (cc.location_id) {
+          this.form.patchValue({ location_id: cc.location_id });
+          this.onLocationChange();
+        } else {
+          this.form.patchValue({ location_id: null });
+          this.onLocationChange();
+        }
+      }
+    }
   }
 
   newItem() {

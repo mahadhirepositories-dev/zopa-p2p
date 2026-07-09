@@ -64,6 +64,15 @@ import { NotificationService } from '../../core/services/notification.service';
             <input matInput type="number" formControlName="annual_budget" min="0" />
           </mat-form-field>
         </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Assigned Users</mat-label>
+          <mat-select formControlName="user_ids" multiple>
+            @for (u of users(); track u.id) {
+              <mat-option [value]="u.id">{{ u.name }} ({{ u.email }})</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Users permitted to transact or view this Cost Center</mat-hint>
+        </mat-form-field>
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Budget From Date</mat-label>
@@ -110,6 +119,7 @@ export class CostCenterFormDialogComponent implements OnInit {
   departments = signal<any[]>([]);
   projects = signal<any[]>([]);
   locations = signal<any[]>([]);
+  users = signal<any[]>([]);
 
   form = this.fb.group({
     name:                [this.data?.name ?? '', Validators.required],
@@ -119,6 +129,7 @@ export class CostCenterFormDialogComponent implements OnInit {
     annual_budget:       [this.data?.annual_budget ?? 0, [Validators.required, Validators.min(0)]],
     budget_from:         [this.data?.budget_from ?? null],
     budget_to:           [this.data?.budget_to ?? null],
+    user_ids:            [this.data?.users?.map(u => u.id) ?? []],
   });
 
   /** Fiscal year auto-derived from the budget start date (no manual entry). */
@@ -133,6 +144,7 @@ export class CostCenterFormDialogComponent implements OnInit {
     this.http.get<any[]>(`${api}/departments`).subscribe(r => this.departments.set(r));
     this.http.get<any[]>(`${api}/projects`).subscribe(r => this.projects.set(r));
     this.http.get<any[]>(`${api}/locations`).subscribe(r => this.locations.set(r));
+    this.http.get<any[]>(`${api}/users`).subscribe(r => this.users.set(r));
   }
 
   save() {

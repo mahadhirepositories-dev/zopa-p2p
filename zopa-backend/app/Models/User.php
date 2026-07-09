@@ -49,5 +49,10 @@ class User extends Authenticatable
             ->where('role', 'zopa_super_admin')
             ->where('is_active', true)
             ->exists();
-    }
+     }
+
+     public function costCenters(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     {
+         return $this->belongsToMany(CostCenter::class);
+     }
 }

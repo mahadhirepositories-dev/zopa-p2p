@@ -65,8 +65,19 @@ class ProductController extends Controller
         ]);
 
         $tenant = app('currentTenant');
+
+        $code = $request->code;
+        if (empty($code)) {
+            $maxId = Product::where('tenant_id', $tenant->id)->max('id') ?? 0;
+            $nextVal = $maxId + 1;
+            do {
+                $code = 'PRD-' . str_pad($nextVal++, 5, '0', STR_PAD_LEFT);
+            } while (Product::where('tenant_id', $tenant->id)->where('code', $code)->exists());
+        }
+
         $product = Product::create([
-            ...$request->only('code', 'name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),
+            ...$request->only('name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),
+            'code'      => $code,
             'tenant_id' => $tenant->id,
         ]);
 
