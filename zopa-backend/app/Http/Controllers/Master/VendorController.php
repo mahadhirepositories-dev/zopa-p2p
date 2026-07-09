@@ -73,8 +73,25 @@ class VendorController extends Controller
         $this->validateVendor($request);
 
         $tenant = app('currentTenant');
+
+        $code = $request->global_vendor_code;
+        if (empty($code)) {
+            $prefix = 'ZP-' . date('y') . date('m') . '-';
+            do {
+                $maxSeq = Vendor::where('tenant_id', $tenant->id)
+                    ->where('global_vendor_code', 'like', $prefix . '%')
+                    ->get()
+                    ->map(function ($v) use ($prefix) {
+                        return (int) str_replace($prefix, '', $v->global_vendor_code);
+                    })
+                    ->max() ?? 0;
+                $code = $prefix . str_pad($maxSeq + 1, 2, '0', STR_PAD_LEFT);
+            } while (Vendor::where('tenant_id', $tenant->id)->where('global_vendor_code', $code)->exists());
+        }
+
         $vendor = Vendor::create([
             ...$request->only($this->VENDOR_FIELDS),
+            'global_vendor_code' => $code,
             'tenant_id' => $tenant->id,
         ]);
 
@@ -101,7 +118,7 @@ class VendorController extends Controller
     {
         $this->requirePermission('vendors', 'edit');
         $this->authorizeVendor($vendor);
-        $this->validateVendor($request, partial: true);
+        $this->validateVendor($request, partial: true, ignoreId: $vendor->id);
 
         $vendor->fill($request->only($this->VENDOR_FIELDS));
         $dirty = [];
@@ -269,13 +286,36 @@ class VendorController extends Controller
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private function validateVendor(Request $request, bool $partial = false): void
+    private function validateVendor(Request $request, bool $partial = false, ?int $ignoreId = null): void
     {
         $required = $partial ? 'nullable' : 'required';
+        $tenantId = app('currentTenant')->id;
+
         $request->validate([
-            'name'           => "$required|string|max:255",
-            'pan'            => ['nullable', 'string', 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'],
-            'gstin'          => ['nullable', 'string', 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'],
+            'name'           => [
+                $partial ? 'sometimes' : 'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('vendors', 'name')
+                    ->where('tenant_id', $tenantId)
+                    ->ignore($ignoreId)
+            ],
+            'pan'            => [
+                'nullable',
+                'string',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                \Illuminate\Validation\Rule::unique('vendors', 'pan')
+                    ->where('tenant_id', $tenantId)
+                    ->ignore($ignoreId)
+            ],
+            'gstin'          => [
+                'nullable',
+                'string',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                \Illuminate\Validation\Rule::unique('vendors', 'gstin')
+                    ->where('tenant_id', $tenantId)
+                    ->ignore($ignoreId)
+            ],
             'email'          => 'nullable|email|max:100',
             'phone'          => ['nullable', 'string'],
             'gst_status'     => 'nullable|in:registered,unregistered,overseas',
