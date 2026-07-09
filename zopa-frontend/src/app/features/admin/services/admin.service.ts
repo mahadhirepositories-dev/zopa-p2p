@@ -19,6 +19,8 @@ export interface Tenant {
   po_starting_series?: number;
   pr_prefix?: string;
   pr_starting_series?: number;
+  product_prefix?: string;
+  product_series?: number;
   fiscal_year_start?: string;
   is_active: boolean;
   is_internal: boolean;

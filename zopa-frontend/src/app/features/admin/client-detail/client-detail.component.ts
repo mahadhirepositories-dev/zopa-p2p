@@ -112,6 +112,10 @@ import { gstinValidator } from '../../../core/validators';
             <span>PR Series: <strong>{{ client()!.pr_starting_series || '—' }}</strong></span>
           </div>
           <div class="info-chip">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Product Prefix: <strong>{{ client()!.product_prefix || '—' }}</strong></span>
+          </div>
+          <div class="info-chip">
             <mat-icon>calendar_today</mat-icon>
             <span>Fiscal Year Start: <strong>{{ getMonthName(client()!.fiscal_year_start) }}</strong></span>
           </div>
@@ -388,6 +392,16 @@ import { gstinValidator } from '../../../core/validators';
                 <mat-form-field appearance="outline" style="flex:1;">
                   <mat-label>PR Starting Series</mat-label>
                   <input matInput type="number" formControlName="pr_starting_series" />
+                </mat-form-field>
+              </div>
+              <div class="form-row">
+                <mat-form-field appearance="outline" style="flex:1;">
+                  <mat-label>Product Prefix</mat-label>
+                  <input matInput formControlName="product_prefix" placeholder="e.g. PRD-" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" style="flex:1;">
+                  <mat-label>Product Series Start</mat-label>
+                  <input matInput type="number" formControlName="product_series" />
                 </mat-form-field>
               </div>
               <mat-form-field appearance="outline" class="full-width">
@@ -682,6 +696,8 @@ export class ClientDetailComponent implements OnInit {
     po_starting_series: [null],
     pr_prefix:          [''],
     pr_starting_series: [null],
+    product_prefix:     [''],
+    product_series:     [1],
     is_internal:        [false],
   });
 
@@ -722,6 +738,8 @@ export class ClientDetailComponent implements OnInit {
           po_starting_series: c.po_starting_series,
           pr_prefix: c.pr_prefix,
           pr_starting_series: c.pr_starting_series,
+          product_prefix: c.product_prefix ?? '',
+          product_series: c.product_series ?? 1,
           is_internal: c.is_internal 
         });
         this.loading.set(false);

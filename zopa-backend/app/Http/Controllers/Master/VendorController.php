@@ -182,6 +182,18 @@ class VendorController extends Controller
         }
 
         $file = $request->file('document');
+        $originalName = $file->getClientOriginalName();
+
+        // CR-V5: Prevent duplicate uploads — reject if same filename already exists for this vendor
+        $duplicateExists = $vendor->documents()
+            ->where('original_name', $originalName)
+            ->exists();
+        if ($duplicateExists) {
+            return response()->json([
+                'error' => "A file named \"{$originalName}\" is already attached to this vendor. Delete the existing file before re-uploading.",
+            ], 422);
+        }
+
         $path = $file->store("vendors/{$vendor->id}/documents", 'public');
 
         $doc = VendorDocument::create([

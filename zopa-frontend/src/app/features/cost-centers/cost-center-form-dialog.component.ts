@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../environments/environment';
 import { CostCenter } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
@@ -19,7 +20,7 @@ import { NotificationService } from '../../core/services/notification.service';
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule,
-    MatDatepickerModule, MatNativeDateModule,
+    MatDatepickerModule, MatNativeDateModule, MatIconModule,
   ],
   template: `
     <h2 mat-dialog-title>{{ data ? 'Edit Cost Center' : 'New Cost Center' }}</h2>
@@ -92,6 +93,9 @@ import { NotificationService } from '../../core/services/notification.service';
         @if (form.value.budget_from) {
           <p class="fy-note">Fiscal year is set automatically to <strong>{{ derivedFiscalYear() }}</strong> from the budget start date.</p>
         }
+        @if (form.value.budget_from && form.value.budget_to && isBudgetDateInvalid()) {
+          <p class="date-error"><mat-icon style="font-size:14px;vertical-align:middle;">error</mat-icon> Budget end date must be after the start date.</p>
+        }
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -106,6 +110,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .full-width { width: 100%; }
     .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .fy-note { font-size: 12px; color: var(--text-3); margin: 4px 2px 0; }
+    .date-error { font-size: 12px; color: #dc2626; margin: 4px 2px 0; display:flex; align-items:center; gap:4px; }
   `],
 })
 export class CostCenterFormDialogComponent implements OnInit {
@@ -138,6 +143,13 @@ export class CostCenterFormDialogComponent implements OnInit {
     const from = this.form.value.budget_from;
     return from ? new Date(from).getFullYear()
                 : (this.data?.current_fiscal_year ?? new Date().getFullYear());
+  }
+
+  /** CR-CC3: Returns true when budget_to is before budget_from */
+  isBudgetDateInvalid(): boolean {
+    const from = this.form.value.budget_from;
+    const to = this.form.value.budget_to;
+    return !!(from && to && new Date(from) > new Date(to));
   }
 
   ngOnInit() {

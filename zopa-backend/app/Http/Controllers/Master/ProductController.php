@@ -68,12 +68,16 @@ class ProductController extends Controller
 
         $code = $request->code;
         if (empty($code)) {
-            $maxId = Product::where('tenant_id', $tenant->id)->max('id') ?? 0;
-            $nextVal = $maxId + 1;
+            // Use tenant's product_prefix if set, otherwise fallback to 'PRD-'
+            $prefix = !empty($tenant->product_prefix) ? $tenant->product_prefix : 'PRD-';
+            $series = $tenant->product_series ?? 1;
             do {
-                $code = 'PRD-' . str_pad($nextVal++, 5, '0', STR_PAD_LEFT);
+                $code = $prefix . str_pad($series++, 4, '0', STR_PAD_LEFT);
             } while (Product::where('tenant_id', $tenant->id)->where('code', $code)->exists());
+            // Persist the incremented series back to tenant
+            $tenant->increment('product_series', $series - ($tenant->product_series ?? 1));
         }
+
 
         $product = Product::create([
             ...$request->only('name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),

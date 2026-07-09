@@ -271,7 +271,7 @@ const CURRENCIES = [
                 <mat-select formControlName="special_status">
                   <mat-option [value]="null">— None —</mat-option>
                   <mat-option value="msme">MSME</mat-option>
-                  <mat-option value="non_msme">Non-MSME</mat-option>
+                  <mat-option value="sc_st">SC/ST</mat-option>
                   <mat-option value="sez">SEZ</mat-option>
                   <mat-option value="others">Others</mat-option>
                 </mat-select>

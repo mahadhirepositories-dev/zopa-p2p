@@ -11,6 +11,7 @@ class Tenant extends Model
         'name', 'code', 'gstin', 'address_json',
         'po_prefix', 'fiscal_year_start',        'is_active', 'is_internal', 'logo_path',
         'po_starting_series', 'pr_prefix', 'pr_starting_series', 'plan',
+        'product_prefix', 'product_series',
     ];
 
     protected $casts = [
@@ -19,6 +20,7 @@ class Tenant extends Model
         'is_internal' => 'boolean',
         'po_starting_series' => 'integer',
         'pr_starting_series' => 'integer',
+        'product_series'     => 'integer',
     ];
 
     public function userTenantRoles(): HasMany
