@@ -108,10 +108,21 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 .terms-tbl { width: 100%; border-collapse: collapse; }
 .terms-tbl td { border: none; font-size: 9px; color: #374151; line-height: 1.5; padding: 1px 2px; vertical-align: top; }
 .terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
-
+.pdf-repeated-header {
+  position: fixed;
+  top: -30px;
+  right: 0px;
+  font-size: 8px;
+  color: #6b7280;
+  text-align: right;
+}
 </style>
 </head>
 <body>
+
+<div class="pdf-repeated-header">
+  PO No: {{ $po->po_number ?? 'DRAFT' }}
+</div>
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
@@ -272,7 +283,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
           if ($va->pincode)    { $vLine2 = trim($vLine2).' - '.$va->pincode; }
         @endphp
         <div style="font-size:9px; color:#374151; line-height:1.6;">
-          @if($va->label)<strong>{{ $va->label }}</strong>&nbsp;&mdash;&nbsp;@endif
+          @if($va->label){{ $va->label }}&nbsp;&mdash;&nbsp;@endif
           @if($va->address){{ $va->address }}@endif
           @if($vLine2)<br>{{ $vLine2 }}@endif
           @if($va->country)<br>{{ $va->country }}@endif
