@@ -16,15 +16,16 @@
  *    breaks BETWEEN rows. A single-row table can't split (-> blank pages) and
  *    free block flow overflows the bottom margin — both were real bugs here.
  */
-@page { margin: 1.5cm 1.3cm; }
+@page { margin: 1.5cm 1.3cm; }   /* kept as a hint; the body margin does the work */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: DejaVu Sans, sans-serif;
   font-size: 9px;
   color: #374151;
+  background: #fff;
   line-height: 1.45;
-  margin: 0;
+  margin: 1.5cm 1.3cm;   /* dompdf applies body margin on page 1 / sides every page */
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
@@ -38,7 +39,7 @@ body {
 .cell  { border: 1px solid #cbd5e1; border-top: 2px solid #1f2937; padding: 8px 11px; vertical-align: top; }
 .nobrk { page-break-inside: avoid; }
 .sl {
-  font-size: 7.5px; font-weight: normal;
+  font-size: 7.5px; font-weight: bold;
   text-transform: uppercase; letter-spacing: 1px;
   color: #6b7280;
   padding-bottom: 4px; margin-bottom: 6px;
@@ -109,36 +110,19 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 .terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
 .pdf-repeated-header {
   position: fixed;
-  top: -35px;
-  left: 0px;
+  top: -30px;
   right: 0px;
-  height: 20px;
   font-size: 8px;
   color: #6b7280;
   text-align: right;
-}
-.pdf-repeated-footer {
-  position: fixed;
-  bottom: -30px;
-  left: 0px;
-  right: 0px;
-  height: 20px;
-  font-size: 8px;
-  color: #6b7280;
-  text-align: right;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 5px;
 }
 </style>
 </head>
 <body>
 
-<header class="pdf-repeated-header">
+<div class="pdf-repeated-header">
   PO No: {{ $po->po_number ?? 'DRAFT' }}
-</header>
-<footer class="pdf-repeated-footer">
-  PO No: {{ $po->po_number ?? 'DRAFT' }}
-</footer>
+</div>
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
@@ -286,7 +270,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   <tr>
     <td class="cell" style="background:#fafafa;">
       <div class="sl">Vendor / Supplier</div>
-      <div style="font-size:11.5px; font-weight:normal; color:#1f2937; margin-bottom:2px;">{{ $po->vendor?->name }}</div>
+      <div style="font-size:11.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->vendor?->name }}</div>
       @php $vgstin = $po->vendorAddress?->gstin ?? $po->vendor?->gstin; @endphp
       @if($vgstin)
         <div style="font-size:8.5px; color:#6b7280; margin-bottom:2px;">GSTIN: {{ $vgstin }}</div>
@@ -318,13 +302,13 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     <td class="cell" style="width:50%;">
       <div class="sl">Bill To</div>
       @if($po->costCenter && !$po->billToLocation)
-        <div style="font-size:10.5px; font-weight:normal; color:#1f2937; margin-bottom:2px;">{{ $po->costCenter->name }}</div>
+        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->costCenter->name }}</div>
         @if($po->costCenter->department)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Dept: {{ $po->costCenter->department->name }}</div>@endif
         @if($po->costCenter->project)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Project: {{ $po->costCenter->project->name }}</div>@endif
         @if($po->costCenter->location)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
       @endif
       @if($po->billToLocation)
-        <div style="font-size:10.5px; font-weight:normal; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
+        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
         <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
         </div>
@@ -339,7 +323,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     <td class="cell" style="width:50%;">
       <div class="sl">Ship To</div>
       @if($po->shipToLocation)
-        <div style="font-size:10.5px; font-weight:normal; color:#1f2937; margin-bottom:2px;">{{ $po->shipToLocation->name }}</div>
+        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->shipToLocation->name }}</div>
         <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->shipToLocation])
           @if($po->shipToLocation->receiver_name || $po->shipToLocation->receiver_phone)
