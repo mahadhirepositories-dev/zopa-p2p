@@ -108,24 +108,24 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 .terms-tbl { width: 100%; border-collapse: collapse; }
 .terms-tbl td { border: none; font-size: 9px; color: #374151; line-height: 1.5; padding: 1px 2px; vertical-align: top; }
 .terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
-.pdf-repeated-header {
-  position: fixed;
-  top: -40px;
-  left: 0;
-  right: 0;
-  font-size: 8px;
-  color: #6b7280;
-  text-align: right;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 4px;
-}
+/* page-header row is repeated via outer table thead — see body element */
 </style>
 </head>
 <body>
 
-<header class="pdf-repeated-header">
-  PO No: {{ $po->po_number ?? 'DRAFT' }}
-</header>
+{{-- ══ OUTER WRAPPER TABLE — thead repeats on every page (DomPDF native) ══ --}}
+<table style="width:100%; border-collapse:collapse; border:none;">
+  <thead>
+    <tr>
+      <td style="font-size:8px; color:#6b7280; text-align:right;
+                 border-bottom:1px solid #e5e7eb; padding-bottom:4px;
+                 padding-top:0; margin-bottom:6px;">
+        PO No: {{ $po->po_number ?? 'DRAFT' }}
+      </td>
+    </tr>
+  </thead>
+  <tbody>
+  <tr><td style="padding:0; border:none;">
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
@@ -519,6 +519,10 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       </div>
     </td>
   </tr>
+</table>
+
+  </td></tr>
+  </tbody>
 </table>
 
 </body>
