@@ -110,19 +110,22 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 .terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
 .pdf-repeated-header {
   position: fixed;
-  top: -30px;
-  right: 0px;
+  top: -40px;
+  left: 0;
+  right: 0;
   font-size: 8px;
   color: #6b7280;
   text-align: right;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
 }
 </style>
 </head>
 <body>
 
-<div class="pdf-repeated-header">
+<header class="pdf-repeated-header">
   PO No: {{ $po->po_number ?? 'DRAFT' }}
-</div>
+</header>
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
