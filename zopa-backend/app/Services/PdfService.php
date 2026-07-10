@@ -137,6 +137,7 @@ class PdfService
      */
     private static function generateWithDomPdf(string $view, array $data): string
     {
+        $data['is_dompdf'] = true;
         return DomPdf::loadView($view, $data)
             ->setPaper('a4')
             ->output();
@@ -147,16 +148,16 @@ class PdfService
      */
     private static function binaryExists(string $path): bool
     {
-        if (PHP_OS_FAMILY === 'Windows') {
-            // On Windows: test with where.exe
-            exec('where "' . addslashes($path) . '" 2>NUL', $out, $code);
-            if ($code === 0) return true;
-            // Also check if path itself is a file
-            return file_exists($path);
+        if (is_executable($path) || file_exists($path)) {
+            return true;
         }
-        // Unix: use which / direct file test
+
+        if (PHP_OS_FAMILY === 'Windows') {
+            exec('where "' . addslashes($path) . '" 2>NUL', $out, $code);
+            return $code === 0;
+        }
+
         exec('which "' . escapeshellarg($path) . '" 2>/dev/null', $out, $code);
-        if ($code === 0) return true;
-        return file_exists($path);
+        return $code === 0;
     }
 }

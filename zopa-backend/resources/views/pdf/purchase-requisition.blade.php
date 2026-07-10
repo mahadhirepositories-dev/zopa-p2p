@@ -3,6 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <style>
+  @if(isset($is_dompdf) && $is_dompdf)
+    body { margin: 1.5cm 1.3cm; }
+  @else
+    @page { margin: 0; }
+  @endif
+
   /* DomPDF-safe: DejaVu Sans, no emoji, no font-weight:600, no height:100% */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1e293b; line-height: 1.45; }

@@ -12,7 +12,13 @@
  * Rupee    : ₹ UTF-8 works directly in wkhtmltopdf; &#8377; also kept for DomPDF fallback.
  * Layout   : Tables for structure (works in both engines).
  */
-@page { margin: 0; }   /* wkhtmltopdf: margins set via --margin-* in PdfService */
+@if(isset($is_dompdf) && $is_dompdf)
+body {
+  margin: 1.5cm 1.3cm;
+}
+@else
+@page { margin: 0; }
+@endif
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -21,9 +27,6 @@ body {
   color: #374151;
   background: #fff;
   line-height: 1.45;
-  /* Body margin: wkhtmltopdf ignores this (uses --margin-* CLI options).
-     DomPDF fallback uses this to set page margins. */
-  margin: 1.5cm 1.3cm;
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
