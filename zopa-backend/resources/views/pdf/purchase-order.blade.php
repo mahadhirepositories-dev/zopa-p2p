@@ -4,28 +4,24 @@
 <meta charset="UTF-8">
 <style>
 /*
- * ZOPA PO PDF — professional, DomPDF-safe layout.
- * Rules enforced:
- *  - NO height:100% on any element (causes full-page blank cells)
- *  - font-weight ONLY bold(700) / normal(400)  (600 breaks the Rs glyph)
- *  - NO emoji (DejaVu Sans has no emoji glyphs);  Rupee = &#8377;
- *  - Layout via tables/<td>, NOT flex/grid (unsupported by DomPDF)
- *  - Near-monochrome: charcoal ink + grays, one accent = charcoal; bordered tables
- *  - MARGINS: this dompdf build honours BODY margin (NOT @page) — set on body{}.
- *  - PAGINATION: long sections (Terms, Approval) are MULTI-ROW tables so dompdf
- *    breaks BETWEEN rows. A single-row table can't split (-> blank pages) and
- *    free block flow overflows the bottom margin — both were real bugs here.
+ * ZOPA PO PDF — wkhtmltopdf layout.
+ * Engine   : wkhtmltopdf (barryvdh/laravel-snappy), DomPDF as fallback.
+ * Header   : PO number is injected via --header-html on every page (po-header.blade.php).
+ * Margins  : Set via wkhtmltopdf --margin-* options in PdfService, NOT via body{}.
+ * Font     : Arial / sans-serif (wkhtmltopdf uses system fonts).
+ * Rupee    : ₹ UTF-8 works directly in wkhtmltopdf; &#8377; also kept for DomPDF fallback.
+ * Layout   : Tables for structure (works in both engines).
  */
-@page { margin: 1.5cm 1.3cm; }   /* kept as a hint; the body margin does the work */
+@page { margin: 0; }   /* Margins are set by wkhtmltopdf CLI options */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: DejaVu Sans, sans-serif;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #374151;
   background: #fff;
   line-height: 1.45;
-  margin: 1.5cm 1.3cm;   /* dompdf applies body margin on page 1 / sides every page */
+  /* No body margin — wkhtmltopdf --margin-* handles page margins */
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
@@ -108,24 +104,11 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 .terms-tbl { width: 100%; border-collapse: collapse; }
 .terms-tbl td { border: none; font-size: 9px; color: #374151; line-height: 1.5; padding: 1px 2px; vertical-align: top; }
 .terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
-.pdf-repeated-header {
-  position: fixed;
-  top: -40px;
-  left: 0;
-  right: 0;
-  font-size: 8px;
-  color: #6b7280;
-  text-align: right;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 4px;
-}
+/* Page header (PO number) is injected by wkhtmltopdf via --header-html */
+/* (po-header.blade.php is rendered and passed per-call in PdfService)   */
 </style>
 </head>
 <body>
-
-<header class="pdf-repeated-header">
-  PO No: {{ $po->po_number ?? 'DRAFT' }}
-</header>
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */

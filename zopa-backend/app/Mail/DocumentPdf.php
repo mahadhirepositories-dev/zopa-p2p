@@ -2,7 +2,7 @@
 
 namespace App\Mail;
 
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Mail\Mailables\Attachment;
 
 /**
@@ -10,6 +10,9 @@ use Illuminate\Mail\Mailables\Attachment;
  *
  * Relations are (re)loaded defensively so this works even when the mailable
  * was serialized onto a queue (where eager-loaded relations are dropped).
+ *
+ * PDF generation delegates to PdfService which uses wkhtmltopdf as the
+ * primary engine with DomPDF as an automatic fallback.
  */
 class DocumentPdf
 {
@@ -18,24 +21,15 @@ class DocumentPdf
     {
         try {
             if ($entityType === 'PO') {
-                $entity->loadMissing([
-                    'items.product', 'vendor', 'vendorAddress',
-                    'costCenter.department', 'costCenter.project', 'costCenter.location',
-                    'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant',
-                    'creator', 'approver',
-                ]);
-                $pdf  = Pdf::loadView('pdf.purchase-order', ['po' => $entity])->setPaper('a4');
-                $name = 'PO-' . str_replace(['/', '\\'], '-', (string) ($entity->po_number ?: $entity->id)) . '.pdf';
-                return [self::attachment($pdf, $name)];
+                $bytes = PdfService::makePoPdf($entity);
+                $name  = 'PO-' . str_replace(['/', '\\'], '-', (string) ($entity->po_number ?: $entity->id)) . '.pdf';
+                return [self::attachment($bytes, $name)];
             }
 
             if ($entityType === 'PR') {
-                $entity->loadMissing([
-                    'items', 'costCenter', 'project', 'location', 'requestedBy', 'tenant',
-                ]);
-                $pdf  = Pdf::loadView('pdf.purchase-requisition', ['pr' => $entity])->setPaper('a4');
-                $name = 'PR-' . str_replace(['/', '\\'], '-', (string) ($entity->pr_number ?: $entity->id)) . '.pdf';
-                return [self::attachment($pdf, $name)];
+                $bytes = PdfService::makePrPdf($entity);
+                $name  = 'PR-' . str_replace(['/', '\\'], '-', (string) ($entity->pr_number ?: $entity->id)) . '.pdf';
+                return [self::attachment($bytes, $name)];
             }
         } catch (\Throwable $e) {
             // A PDF failure must never block the notification email.
@@ -45,9 +39,9 @@ class DocumentPdf
         return [];
     }
 
-    private static function attachment($pdf, string $name): Attachment
+    private static function attachment(string $bytes, string $name): Attachment
     {
-        return Attachment::fromData(fn () => $pdf->output(), $name)
+        return Attachment::fromData(fn () => $bytes, $name)
             ->withMime('application/pdf');
     }
 }

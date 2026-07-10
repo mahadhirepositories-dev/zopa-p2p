@@ -12,7 +12,7 @@ use App\Services\GstService;
 use App\Services\PoNumberService;
 use App\Services\TatService;
 use App\Traits\AuthorizesRoles;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\PdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -764,12 +764,13 @@ class PurchaseOrderController extends Controller
         $this->authorizePoAccess($purchaseOrder);
         $po = $purchaseOrder->load(['items.product', 'vendor', 'vendorAddress', 'costCenter.department', 'costCenter.project', 'costCenter.location', 'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant', 'creator', 'approver']);
 
-        $pdf = Pdf::loadView('pdf.purchase-order', compact('po'))->setPaper('a4');
-
-        // PO numbers can contain '/' (from the org code) — Symfony rejects '/'
-        // and '\' in a Content-Disposition filename, so sanitise before streaming.
+        $bytes  = PdfService::makePoPdf($po);
         $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
-        return $pdf->stream("PO-{$safeNo}.pdf");
+
+        return response($bytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+        ]);
     }
 
     /**
@@ -816,12 +817,13 @@ class PurchaseOrderController extends Controller
             'creator', 'approver',
         ]);
 
-        $pdf = Pdf::loadView('pdf.purchase-order', compact('po'))->setPaper('a4');
-
-        // PO numbers can contain '/' (from the org code) — Symfony rejects '/'
-        // and '\' in a Content-Disposition filename, so sanitise before streaming.
+        $bytes  = PdfService::makePoPdf($po);
         $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
-        return $pdf->stream("PO-{$safeNo}.pdf");
+
+        return response($bytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+        ]);
     }
 
     private function authorizePoAccess(PurchaseOrder $po): void
