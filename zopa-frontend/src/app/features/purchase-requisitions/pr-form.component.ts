@@ -121,9 +121,19 @@ import { Product } from '../../core/models';
                 <mat-form-field appearance="outline">
                   <mat-label>Delivery Location</mat-label>
                   <mat-select formControlName="location_id" (selectionChange)="onLocationChange()">
+                    <mat-select-trigger>
+                      {{ selectedLocation()?.name ?? '' }}
+                    </mat-select-trigger>
                     <mat-option [value]="null">— None —</mat-option>
                     @for (l of filteredLocations(); track l.id) {
-                      <mat-option [value]="l.id">{{ l.name }}</mat-option>
+                      <mat-option [value]="l.id" style="height: auto; min-height: 48px; padding: 6px 16px;">
+                        <div style="display: flex; flex-direction: column; line-height: 1.35;">
+                          <span style="font-weight: 500; font-size: 13.5px;">{{ l.name }}</span>
+                          <span style="font-size: 10.5px; color: #6b7280;">
+                            {{ l.city }}@if(l.city && l.state){, }{{ l.state }}@if(l.pincode){ - {{ l.pincode }}}
+                          </span>
+                        </div>
+                      </mat-option>
                     }
                   </mat-select>
                 </mat-form-field>
