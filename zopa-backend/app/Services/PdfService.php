@@ -125,8 +125,8 @@ class PdfService
         try {
             $pdf = SnappyPdf::loadView($view, $data)
                 ->setOption('header-html', $headerUrl)
-                ->setOption('header-spacing', 2)
-                ->setOption('margin-top', 15)
+                ->setOption('header-spacing', 3)
+                ->setOption('margin-top', 20)
                 ->setOption('margin-right', 13)
                 ->setOption('margin-bottom', 15)
                 ->setOption('margin-left', 13)

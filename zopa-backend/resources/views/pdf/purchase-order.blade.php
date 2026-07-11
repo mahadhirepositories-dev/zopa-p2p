@@ -6,48 +6,65 @@
 /*
  * ZOPA PO PDF — wkhtmltopdf layout.
  * Engine   : wkhtmltopdf (barryvdh/laravel-snappy), DomPDF as fallback.
- * Header   : PO number is injected via --header-html on every page (po-header.blade.php).
- * Margins  : Set via wkhtmltopdf --margin-* options in PdfService, NOT via body{}.
+ * Header   : position:fixed bar repeats on every page in both engines.
+ * Margins  : body padding provides the space under the fixed header.
  * Font     : Arial / sans-serif (wkhtmltopdf uses system fonts).
  * Rupee    : ₹ UTF-8 works directly in wkhtmltopdf; &#8377; also kept for DomPDF fallback.
  * Layout   : Tables for structure (works in both engines).
  */
-@if(isset($is_dompdf) && $is_dompdf)
-body {
-  margin: 1.2cm 1.3cm;
-}
-body, table.items td, table.tot td, table.approv td, .terms-tbl td {
-  font-size: 10px !important;
-}
-header {
-  position: fixed;
-  top: 8px;
-  left: 1.3cm;
-  right: 1.3cm;
-  height: 20px;
-  text-align: right;
-  font-size: 8px;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 3px;
-  font-family: sans-serif;
-  z-index: 1000;
-  background: transparent;
-}
-@else
+
+/* ── Page setup ───────────────────────────────────────── */
 @page { margin: 0; }
 body {
   margin: 0;
-}
-@endif
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+  padding: 18mm 13mm 15mm 13mm;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #374151;
   background: #fff;
   line-height: 1.45;
+}
+
+@if(isset($is_dompdf) && $is_dompdf)
+body {
+  font-family: "DejaVu Sans", Arial, sans-serif;
+  font-size: 10px;
+}
+@endif
+
+/* ── Repeating page header (position:fixed — works in both wkhtmltopdf and DomPDF) ── */
+#running-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14mm;
+  background: #fff;
+  border-bottom: 1.5px solid #1f2937;
+  padding: 0 13mm;
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+  z-index: 9999;
+}
+#running-header .rh-left {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: left;
+  font-size: 8px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #1f2937;
+  width: 50%;
+}
+#running-header .rh-right {
+  display: table-cell;
+  vertical-align: middle;
+  text-align: right;
+  font-size: 8.5px;
+  color: #374151;
+  width: 50%;
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
@@ -536,7 +553,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       </table>
 
       <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
-        System generated document. Generated in ZOPA P2P ({{ isset($is_dompdf) && $is_dompdf ? 'DomPDF' : 'wkhtmltopdf' }}) on {{ $generatedAt }}. No signature required.
+        System generated document. Generated in ZOPA P2P on {{ $generatedAt }}. No signature required.
       </div>
     </td>
   </tr>
