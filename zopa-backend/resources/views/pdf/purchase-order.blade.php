@@ -14,10 +14,15 @@
  */
 
 /* ── Page setup ───────────────────────────────────────── */
+/*
+ * wkhtmltopdf: margin-top is set via --margin-top in PdfService (14mm),
+ * which reserves space for the --header-html repeating header.
+ * DomPDF: body padding-top handles spacing below the fixed header.
+ */
 @page { margin: 0; }
 body {
   margin: 0;
-  padding: 12mm 13mm 15mm 13mm;
+  padding: 4mm 13mm 15mm 13mm;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #374151;
@@ -29,11 +34,9 @@ body {
 body {
   font-family: "DejaVu Sans", Arial, sans-serif;
   font-size: 10px;
+  padding-top: 14mm;
 }
-@endif
-
-/* ── Repeating page header via position:fixed ─────────── */
-/* Works in wkhtmltopdf AND DomPDF — no temp files needed  */
+/* DomPDF fallback: fixed header repeated on every page */
 #page-hdr {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -41,30 +44,17 @@ body {
   background: #fff;
   border-bottom: 1.5px solid #1f2937;
   z-index: 9999;
-}
-#page-hdr table {
-  width: 100%;
-  border-collapse: collapse;
-  height: 10mm;
-  padding: 0 13mm;
-}
-#page-hdr td {
-  vertical-align: middle;
-  font-size: 8px;
-  color: #374151;
-  padding: 0 13mm;
-}
-#page-hdr .hdr-title {
-  font-weight: bold;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: #1f2937;
-}
-#page-hdr .hdr-pono {
   text-align: right;
+  padding: 0 13mm;
+  line-height: 10mm;
+  font-size: 8.5px;
   font-weight: bold;
   color: #1f2937;
+  font-family: "DejaVu Sans", Arial, sans-serif;
 }
+@endif
+
+/* ── Repeating page header (old fixed-div block removed — wkhtmltopdf uses --header-html) ── */
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
 .mut { color: #6b7280; }
@@ -152,14 +142,12 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 </head>
 <body>
 
-{{-- ══ REPEATING PAGE HEADER — position:fixed, renders on every page ══ --}}
-<div id="page-hdr">
-  <table>
-    <tr>
-      <td class="hdr-pono">PO No: {{ $po->po_number ?? 'DRAFT' }}</td>
-    </tr>
-  </table>
-</div>
+{{-- ══ REPEATING PAGE HEADER ══
+     wkhtmltopdf: rendered via --header-html in PdfService (repeats every page natively).
+     DomPDF: position:fixed div below repeats via CSS. --}}
+@if(isset($is_dompdf) && $is_dompdf)
+<div id="page-hdr">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>
+@endif
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */

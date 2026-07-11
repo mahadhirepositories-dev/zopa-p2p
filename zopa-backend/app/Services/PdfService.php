@@ -103,24 +103,42 @@ class PdfService
 
     /**
      * Generate PDF using wkhtmltopdf via barryvdh/laravel-snappy.
-     * The repeating page header is rendered via position:fixed CSS inside the
-     * blade itself — no --header-html temp file needed.
+     * The repeating page header is injected via --header-html (a temp file),
+     * which wkhtmltopdf natively repeats on every page.
      */
     private static function generateWithSnappy(string $view, array $data, string $headerHtml): string
     {
-        $pdf = SnappyPdf::loadView($view, $data)
-            ->setOption('margin-top', 0)
-            ->setOption('margin-right', 0)
-            ->setOption('margin-bottom', 0)
-            ->setOption('margin-left', 0)
-            ->setOption('no-outline', true)
-            ->setOption('print-media-type', true)
-            ->setOption('disable-smart-shrinking', true)
-            ->setOption('enable-local-file-access', true)
-            ->setOption('encoding', 'UTF-8');
+        // Write header HTML to a temp file — wkhtmltopdf requires a file:// URL.
+        $tempDir = storage_path('app/temp_pdf');
+        if (!file_exists($tempDir)) {
+            @mkdir($tempDir, 0755, true);
+        }
+        $headerFile = $tempDir . '/zopa_hdr_' . uniqid() . '.html';
+        file_put_contents($headerFile, $headerHtml);
 
-        self::$lastEngineUsed = 'wkhtmltopdf';
-        return $pdf->output();
+        $headerUrl = 'file://' . $headerFile;
+
+        try {
+            $pdf = SnappyPdf::loadView($view, $data)
+                ->setOption('header-html', $headerUrl)
+                ->setOption('header-spacing', 2)
+                ->setOption('margin-top', 14)
+                ->setOption('margin-right', 13)
+                ->setOption('margin-bottom', 15)
+                ->setOption('margin-left', 13)
+                ->setOption('no-outline', true)
+                ->setOption('print-media-type', true)
+                ->setOption('disable-smart-shrinking', true)
+                ->setOption('enable-local-file-access', true)
+                ->setOption('encoding', 'UTF-8');
+
+            self::$lastEngineUsed = 'wkhtmltopdf';
+            return $pdf->output();
+        } finally {
+            if (file_exists($headerFile)) {
+                @unlink($headerFile);
+            }
+        }
     }
 
     /**
