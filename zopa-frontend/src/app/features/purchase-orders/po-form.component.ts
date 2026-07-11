@@ -936,8 +936,35 @@ export class PoFormComponent implements OnInit {
 
   onCostCenterChange() {
     const ccId = this.headerForm.value.cost_center_id;
-    this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === ccId) ?? null);
+    const cc = this.costCenters().find(cc => cc.id === ccId) ?? null;
+    this.selectedCostCenter.set(cc);
     if (ccId) this.loadBudget(ccId);
+
+    // Auto-select bill_to and ship_to if we have locations
+    setTimeout(() => {
+      const locs = this.filteredLocations();
+      if (locs.length === 1) {
+        this.headerForm.patchValue({
+          bill_to_location_id: locs[0].id,
+          ship_to_location_id: locs[0].id,
+        });
+        this.onBillToChange();
+        this.onShipToChange();
+      } else {
+        const targetLocId = cc?.location_id || cc?.location?.id;
+        if (targetLocId) {
+          const found = locs.find(l => l.id === targetLocId);
+          if (found) {
+            this.headerForm.patchValue({
+              bill_to_location_id: targetLocId,
+              ship_to_location_id: targetLocId,
+            });
+            this.onBillToChange();
+            this.onShipToChange();
+          }
+        }
+      }
+    }, 50);
   }
 
   onBillToChange() {

@@ -328,7 +328,17 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
         <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
+          @if($po->tenant?->gstin)
+            <br>GSTIN: {{ $po->tenant->gstin }}
+          @endif
         </div>
+        @if($po->costCenter)
+          <div style="margin-top:5px; border-top:1px dashed #e5e7eb; padding-top:4px; font-size:8.5px; color:#4b5563; line-height:1.45;">
+            <strong>Cost Center:</strong> {{ $po->costCenter->name }}
+            @if($po->costCenter->department)<br>Dept: {{ $po->costCenter->department->name }}@endif
+            @if($po->costCenter->project)<br>Project: {{ $po->costCenter->project->name }}@endif
+          </div>
+        @endif
       @endif
       @if(!$po->costCenter && !$po->billToLocation)
         <div style="font-size:9.5px; color:#1f2937;">{{ $po->tenant?->name }}</div>
