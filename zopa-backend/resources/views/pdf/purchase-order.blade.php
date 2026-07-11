@@ -536,7 +536,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
       </table>
 
       <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
-        System generated document. Generated in ZOPA P2P on {{ $generatedAt }}. No signature required.
+        System generated document. Generated in ZOPA P2P ({{ isset($is_dompdf) && $is_dompdf ? 'DomPDF' : 'wkhtmltopdf' }}) on {{ $generatedAt }}. No signature required.
       </div>
     </td>
   </tr>
