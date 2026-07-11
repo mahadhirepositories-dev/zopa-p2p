@@ -109,9 +109,12 @@ class PdfService
         $headerFile = tempnam(sys_get_temp_dir(), 'zopa_pdf_hdr_') . '.html';
         file_put_contents($headerFile, $headerHtml);
 
+        // Convert path to file:// URL for robust cross-platform wkhtmltopdf local file access
+        $headerUrl = 'file:///' . ltrim(str_replace('\\', '/', $headerFile), '/');
+
         try {
             $pdf = SnappyPdf::loadView($view, $data)
-                ->setOption('header-html', $headerFile)
+                ->setOption('header-html', $headerUrl)
                 ->setOption('header-spacing', 4)
                 ->setOption('margin-top', 22)
                 ->setOption('margin-right', 13)

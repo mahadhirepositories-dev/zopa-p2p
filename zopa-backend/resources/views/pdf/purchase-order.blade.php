@@ -16,8 +16,29 @@
 body {
   margin: 1.5cm 1.3cm;
 }
+body, table.items td, table.tot td, table.approv td, .terms-tbl td {
+  font-size: 10px !important;
+}
+header {
+  position: fixed;
+  top: 12px;
+  left: 1.3cm;
+  right: 1.3cm;
+  height: 20px;
+  text-align: right;
+  font-size: 8px;
+  color: #6b7280;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 3px;
+  font-family: sans-serif;
+  z-index: 1000;
+  background: transparent;
+}
 @else
 @page { margin: 0; }
+body {
+  margin: 0;
+}
 @endif
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -114,6 +135,11 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 </style>
 </head>
 <body>
+@if(isset($is_dompdf) && $is_dompdf)
+<header>
+  PURCHASE ORDER &nbsp;|&nbsp; PO No: {{ $po->po_number ?? 'DRAFT' }}
+</header>
+@endif
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */

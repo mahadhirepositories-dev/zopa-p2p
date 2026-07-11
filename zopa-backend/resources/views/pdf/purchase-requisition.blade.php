@@ -5,8 +5,22 @@
 <style>
   @if(isset($is_dompdf) && $is_dompdf)
     body { margin: 1.5cm 1.3cm; }
+    header {
+      position: fixed;
+      top: 12px;
+      left: 1.3cm;
+      right: 1.3cm;
+      height: 20px;
+      text-align: right;
+      font-size: 8.5px;
+      color: #64748b;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 3px;
+      font-family: sans-serif;
+    }
   @else
     @page { margin: 0; }
+    body { margin: 0; }
   @endif
 
   /* DomPDF-safe: DejaVu Sans, no emoji, no font-weight:600, no height:100% */
@@ -30,6 +44,12 @@
 </style>
 </head>
 <body>
+  @if(isset($is_dompdf) && $is_dompdf)
+  <header>
+    PURCHASE REQUISITION &nbsp;|&nbsp; PR No: {{ $pr->pr_number ?? 'DRAFT' }}
+  </header>
+  @endif
+
   <table style="border-bottom:2px solid #1976d2;padding-bottom:8px;">
     <tr>
       <td>
