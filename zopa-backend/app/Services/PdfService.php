@@ -103,42 +103,31 @@ class PdfService
 
     /**
      * Generate PDF using wkhtmltopdf via barryvdh/laravel-snappy.
-     * The repeating page header is injected via --header-html (a temp file),
-     * which wkhtmltopdf natively repeats on every page.
+     * Uses --header-right text option (no temp files) so PO number
+     * appears on every page reliably.
      */
     private static function generateWithSnappy(string $view, array $data, string $headerHtml): string
     {
-        // Write header HTML to a temp file — wkhtmltopdf requires a file:// URL.
-        $tempDir = storage_path('app/temp_pdf');
-        if (!file_exists($tempDir)) {
-            @mkdir($tempDir, 0755, true);
-        }
-        $headerFile = $tempDir . '/zopa_hdr_' . uniqid() . '.html';
-        file_put_contents($headerFile, $headerHtml);
+        // Extract plain PO number from the rendered header HTML for text-based header
+        $poNumber = $data['po']->po_number ?? 'DRAFT';
 
-        $headerUrl = 'file://' . $headerFile;
+        $pdf = SnappyPdf::loadView($view, $data)
+            ->setOption('header-right', 'PO No: ' . $poNumber)
+            ->setOption('header-font-size', 8)
+            ->setOption('header-font-name', 'Arial')
+            ->setOption('header-spacing', 3)
+            ->setOption('margin-top', 12)
+            ->setOption('margin-right', 13)
+            ->setOption('margin-bottom', 15)
+            ->setOption('margin-left', 13)
+            ->setOption('no-outline', true)
+            ->setOption('print-media-type', true)
+            ->setOption('disable-smart-shrinking', true)
+            ->setOption('enable-local-file-access', true)
+            ->setOption('encoding', 'UTF-8');
 
-        try {
-            $pdf = SnappyPdf::loadView($view, $data)
-                ->setOption('header-html', $headerUrl)
-                ->setOption('header-spacing', 2)
-                ->setOption('margin-top', 14)
-                ->setOption('margin-right', 13)
-                ->setOption('margin-bottom', 15)
-                ->setOption('margin-left', 13)
-                ->setOption('no-outline', true)
-                ->setOption('print-media-type', true)
-                ->setOption('disable-smart-shrinking', true)
-                ->setOption('enable-local-file-access', true)
-                ->setOption('encoding', 'UTF-8');
-
-            self::$lastEngineUsed = 'wkhtmltopdf';
-            return $pdf->output();
-        } finally {
-            if (file_exists($headerFile)) {
-                @unlink($headerFile);
-            }
-        }
+        self::$lastEngineUsed = 'wkhtmltopdf';
+        return $pdf->output();
     }
 
     /**

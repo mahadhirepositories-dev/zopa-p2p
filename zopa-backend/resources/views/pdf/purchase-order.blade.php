@@ -15,14 +15,14 @@
 
 /* ── Page setup ───────────────────────────────────────── */
 /*
- * wkhtmltopdf: margin-top is set via --margin-top in PdfService (14mm),
- * which reserves space for the --header-html repeating header.
- * DomPDF: body padding-top handles spacing below the fixed header.
+ * wkhtmltopdf: margins set in PdfService via CLI options.
+ *   --margin-top 12 leaves space for the --header-right text.
+ * DomPDF: body padding handles all spacing.
  */
 @page { margin: 0; }
 body {
   margin: 0;
-  padding: 4mm 13mm 15mm 13mm;
+  padding: 10mm 13mm 15mm 13mm;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #374151;
