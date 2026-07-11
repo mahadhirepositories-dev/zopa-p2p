@@ -158,20 +158,21 @@ class PdfService
     }
 
     /**
-     * Check whether a binary exists on the current OS.
+     * Check whether a binary exists and is executable on the current OS.
+     *
+     * is_executable() can return false inside systemd sandboxed PHP-FPM units
+     * even when the binary is perfectly accessible via shell. We therefore
+     * always confirm with a shell probe as the authoritative check.
      */
     private static function binaryExists(string $path): bool
     {
-        if (is_executable($path) || file_exists($path)) {
-            return true;
-        }
-
         if (PHP_OS_FAMILY === 'Windows') {
             exec('where "' . addslashes($path) . '" 2>NUL', $out, $code);
             return $code === 0;
         }
 
-        exec('which "' . escapeshellarg($path) . '" 2>/dev/null', $out, $code);
+        // Use `test -x` — reliable even inside systemd PrivateTmp / NoNewPrivileges units.
+        exec('test -x ' . escapeshellarg($path) . ' 2>/dev/null', $out, $code);
         return $code === 0;
     }
 }
