@@ -103,51 +103,24 @@ class PdfService
 
     /**
      * Generate PDF using wkhtmltopdf via barryvdh/laravel-snappy.
+     * The repeating page header is rendered via position:fixed CSS inside the
+     * blade itself — no --header-html temp file needed.
      */
     private static function generateWithSnappy(string $view, array $data, string $headerHtml): string
     {
-        // Write the header HTML to a project storage folder to avoid any systemd PrivateTmp / permissions issues on Linux
-        $tempDir = storage_path('app/temp_pdf');
-        if (!file_exists($tempDir)) {
-            @mkdir($tempDir, 0755, true);
-        }
-        $headerFile = $tempDir . '/zopa_hdr_' . uniqid() . '.html';
-        file_put_contents($headerFile, $headerHtml);
+        $pdf = SnappyPdf::loadView($view, $data)
+            ->setOption('margin-top', 0)
+            ->setOption('margin-right', 0)
+            ->setOption('margin-bottom', 0)
+            ->setOption('margin-left', 0)
+            ->setOption('no-outline', true)
+            ->setOption('print-media-type', true)
+            ->setOption('disable-smart-shrinking', true)
+            ->setOption('enable-local-file-access', true)
+            ->setOption('encoding', 'UTF-8');
 
-        // wkhtmltopdf requires a file:// URL for --header-html on all platforms.
-        // Using a plain path causes the header to silently fail on page 2+.
-        if (PHP_OS_FAMILY === 'Windows') {
-            $headerUrl = 'file:///' . ltrim(str_replace('\\', '/', $headerFile), '/');
-        } else {
-            $headerUrl = 'file://' . $headerFile;
-        }
-
-        try {
-            $pdf = SnappyPdf::loadView($view, $data)
-                ->setOption('header-html', $headerUrl)
-                ->setOption('header-spacing', 3)
-                ->setOption('margin-top', 20)
-                ->setOption('margin-right', 13)
-                ->setOption('margin-bottom', 15)
-                ->setOption('margin-left', 13)
-                ->setOption('no-outline', true)
-                ->setOption('print-media-type', true)
-                ->setOption('disable-smart-shrinking', true)
-                ->setOption('enable-local-file-access', true)
-                ->setOption('encoding', 'UTF-8');
-
-            self::$lastEngineUsed = 'wkhtmltopdf';
-
-            // Call output() FIRST — wkhtmltopdf reads the header file during rendering.
-            // Only delete the temp file AFTER output() returns, never in a finally block,
-            // otherwise the file is gone before page 2+ headers are rendered.
-            $result = $pdf->output();
-            @unlink($headerFile);
-            return $result;
-        } catch (\Throwable $e) {
-            @unlink($headerFile);
-            throw $e;
-        }
+        self::$lastEngineUsed = 'wkhtmltopdf';
+        return $pdf->output();
     }
 
     /**

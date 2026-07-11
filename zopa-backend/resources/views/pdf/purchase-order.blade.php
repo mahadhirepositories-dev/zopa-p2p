@@ -17,7 +17,7 @@
 @page { margin: 0; }
 body {
   margin: 0;
-  padding: 18mm 13mm 15mm 13mm;
+  padding: 12mm 13mm 15mm 13mm;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 9px;
   color: #374151;
@@ -32,39 +32,38 @@ body {
 }
 @endif
 
-/* ── Repeating page header (position:fixed — works in both wkhtmltopdf and DomPDF) ── */
-#running-header {
+/* ── Repeating page header via position:fixed ─────────── */
+/* Works in wkhtmltopdf AND DomPDF — no temp files needed  */
+#page-hdr {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 14mm;
+  top: 0; left: 0; right: 0;
+  height: 10mm;
   background: #fff;
   border-bottom: 1.5px solid #1f2937;
-  padding: 0 13mm;
-  display: table;
-  width: 100%;
-  table-layout: fixed;
   z-index: 9999;
 }
-#running-header .rh-left {
-  display: table-cell;
+#page-hdr table {
+  width: 100%;
+  border-collapse: collapse;
+  height: 10mm;
+  padding: 0 13mm;
+}
+#page-hdr td {
   vertical-align: middle;
-  text-align: left;
   font-size: 8px;
+  color: #374151;
+  padding: 0 13mm;
+}
+#page-hdr .hdr-title {
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: #1f2937;
-  width: 50%;
 }
-#running-header .rh-right {
-  display: table-cell;
-  vertical-align: middle;
+#page-hdr .hdr-pono {
   text-align: right;
-  font-size: 8.5px;
-  color: #374151;
-  width: 50%;
+  font-weight: bold;
+  color: #1f2937;
 }
 .b   { font-weight: bold; }
 .ink { color: #1f2937; }
@@ -152,11 +151,16 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 </style>
 </head>
 <body>
-@if(isset($is_dompdf) && $is_dompdf)
-<header>
-  PURCHASE ORDER &nbsp;|&nbsp; PO No: {{ $po->po_number ?? 'DRAFT' }}
-</header>
-@endif
+
+{{-- ══ REPEATING PAGE HEADER — position:fixed, renders on every page ══ --}}
+<div id="page-hdr">
+  <table>
+    <tr>
+      <td class="hdr-title">Purchase Order</td>
+      <td class="hdr-pono">PO No: {{ $po->po_number ?? 'DRAFT' }}</td>
+    </tr>
+  </table>
+</div>
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
