@@ -32,6 +32,41 @@ use Illuminate\Support\Facades\Route;
 // Public — login is rate-limited (brute-force protection): 6 attempts/min per IP.
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 
+// TEMP DEBUG — remove after diagnosis
+Route::get('/debug-pdf-engine', function () {
+    $binary = config('snappy.pdf.binary', '/usr/bin/wkhtmltopdf');
+    $exists = file_exists($binary);
+    $executable = is_executable($binary);
+    exec('test -x ' . escapeshellarg($binary) . ' 2>/dev/null', $out, $code);
+    $testX = $code === 0;
+
+    $version = null;
+    exec(escapeshellarg($binary) . ' --version 2>&1', $vOut, $vCode);
+    $version = implode(' ', $vOut);
+
+    // Try generating a minimal 2-page PDF
+    $html = '<html><body><p style="page-break-after:always">Page 1</p><p>Page 2</p></body></html>';
+    $tmpIn  = sys_get_temp_dir() . '/dbg_in_'.uniqid().'.html';
+    $tmpOut = sys_get_temp_dir() . '/dbg_out_'.uniqid().'.pdf';
+    file_put_contents($tmpIn, $html);
+    exec(escapeshellarg($binary) . ' --header-right "PO No: TEST" --margin-top 15 ' . escapeshellarg($tmpIn) . ' ' . escapeshellarg($tmpOut) . ' 2>&1', $pdfOut, $pdfCode);
+    $pdfSize = file_exists($tmpOut) ? filesize($tmpOut) : 0;
+    @unlink($tmpIn); @unlink($tmpOut);
+
+    return response()->json([
+        'binary'      => $binary,
+        'exists'      => $exists,
+        'executable'  => $executable,
+        'test_x'      => $testX,
+        'version'     => $version,
+        'pdf_exit'    => $pdfCode,
+        'pdf_output'  => $pdfOut,
+        'pdf_size'    => $pdfSize,
+        'php_os'      => PHP_OS_FAMILY,
+        'snappy_cfg'  => config('snappy.pdf'),
+    ]);
+});
+
 // Public password reset (rate-limited). forgot-password emails a one-time link;
 // reset-password completes it with the emailed token.
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
