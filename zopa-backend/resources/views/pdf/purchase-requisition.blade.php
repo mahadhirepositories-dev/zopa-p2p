@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <style>
   @if(isset($is_dompdf) && $is_dompdf)
-    body { margin: 1.5cm 1.3cm; }
+    body { margin: 1.2cm 1.3cm; }
     header {
       position: fixed;
-      top: 12px;
+      top: 8px;
       left: 1.3cm;
       right: 1.3cm;
       height: 20px;
