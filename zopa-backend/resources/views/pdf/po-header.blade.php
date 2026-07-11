@@ -12,7 +12,7 @@
   .header-bar {
     width: 100%;
     text-align: right;
-    padding: 15px 13mm 3px 13mm;
+    padding: 4px 13mm 4px 13mm;
     border-bottom: 1px solid #e5e7eb;
     font-size: 8px;
     color: #6b7280;
