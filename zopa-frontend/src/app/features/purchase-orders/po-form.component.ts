@@ -165,7 +165,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                 <mat-label>Bill-to Location</mat-label>
                 <mat-select formControlName="bill_to_location_id"
                             (selectionChange)="onBillToChange()">
-                  @for (l of filteredLocations(); track l.id) {
+                  @for (l of locations(); track l.id) {
                     <mat-option [value]="l.id">{{ l.name }}</mat-option>
                   }
                 </mat-select>
@@ -174,7 +174,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
               <mat-form-field appearance="outline" class="field-wide">
                 <mat-label>Ship-to Location</mat-label>
                 <mat-select formControlName="ship_to_location_id" (selectionChange)="onShipToChange()">
-                  @for (l of filteredLocations(); track l.id) {
+                  @for (l of locations(); track l.id) {
                     <mat-option [value]="l.id">{{ l.name }}</mat-option>
                   }
                 </mat-select>
@@ -936,35 +936,8 @@ export class PoFormComponent implements OnInit {
 
   onCostCenterChange() {
     const ccId = this.headerForm.value.cost_center_id;
-    const cc = this.costCenters().find(cc => cc.id === ccId) ?? null;
-    this.selectedCostCenter.set(cc);
+    this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === ccId) ?? null);
     if (ccId) this.loadBudget(ccId);
-
-    // Auto-select bill_to and ship_to if we have locations
-    setTimeout(() => {
-      const locs = this.filteredLocations();
-      if (locs.length === 1) {
-        this.headerForm.patchValue({
-          bill_to_location_id: locs[0].id,
-          ship_to_location_id: locs[0].id,
-        });
-        this.onBillToChange();
-        this.onShipToChange();
-      } else {
-        const targetLocId = cc?.location_id || cc?.location?.id;
-        if (targetLocId) {
-          const found = locs.find(l => l.id === targetLocId);
-          if (found) {
-            this.headerForm.patchValue({
-              bill_to_location_id: targetLocId,
-              ship_to_location_id: targetLocId,
-            });
-            this.onBillToChange();
-            this.onShipToChange();
-          }
-        }
-      }
-    }, 50);
   }
 
   onBillToChange() {
