@@ -105,12 +105,20 @@ class PdfService
      */
     private static function generateWithSnappy(string $view, array $data, string $headerHtml): string
     {
-        // Write the header HTML to a temp file so wkhtmltopdf can read it.
-        $headerFile = tempnam(sys_get_temp_dir(), 'zopa_pdf_hdr_') . '.html';
+        // Write the header HTML to a project storage folder to avoid any systemd PrivateTmp / permissions issues on Linux
+        $tempDir = storage_path('app/temp_pdf');
+        if (!file_exists($tempDir)) {
+            @mkdir($tempDir, 0755, true);
+        }
+        $headerFile = $tempDir . '/zopa_hdr_' . uniqid() . '.html';
         file_put_contents($headerFile, $headerHtml);
 
-        // Convert path to file:// URL for robust cross-platform wkhtmltopdf local file access
-        $headerUrl = 'file:///' . ltrim(str_replace('\\', '/', $headerFile), '/');
+        // Convert path to file:// URL on Windows for local file access compatibility
+        if (PHP_OS_FAMILY === 'Windows') {
+            $headerUrl = 'file:///' . ltrim(str_replace('\\', '/', $headerFile), '/');
+        } else {
+            $headerUrl = $headerFile;
+        }
 
         try {
             $pdf = SnappyPdf::loadView($view, $data)

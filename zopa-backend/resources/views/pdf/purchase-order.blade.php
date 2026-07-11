@@ -328,7 +328,7 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
         <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
         <div style="font-size:9px; color:#374151; line-height:1.55;">
           @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
-          @if($po->tenant?->gstin)
+          @if($po->tenant?->gstin && empty($po->billToLocation->gstin))
             <br>GSTIN: {{ $po->tenant->gstin }}
           @endif
         </div>
