@@ -114,11 +114,12 @@ class PdfService
         $headerFile = $tempDir . '/zopa_hdr_' . uniqid() . '.html';
         file_put_contents($headerFile, $headerHtml);
 
-        // Convert path to file:// URL on Windows for local file access compatibility
+        // wkhtmltopdf requires a file:// URL for --header-html on all platforms.
+        // Using a plain path causes the header to silently fail on page 2+.
         if (PHP_OS_FAMILY === 'Windows') {
             $headerUrl = 'file:///' . ltrim(str_replace('\\', '/', $headerFile), '/');
         } else {
-            $headerUrl = $headerFile;
+            $headerUrl = 'file://' . $headerFile;
         }
 
         try {
@@ -136,12 +137,16 @@ class PdfService
                 ->setOption('encoding', 'UTF-8');
 
             self::$lastEngineUsed = 'wkhtmltopdf';
-            return $pdf->output();
-        } finally {
-            // Always clean up the temp file.
-            if (file_exists($headerFile)) {
-                @unlink($headerFile);
-            }
+
+            // Call output() FIRST — wkhtmltopdf reads the header file during rendering.
+            // Only delete the temp file AFTER output() returns, never in a finally block,
+            // otherwise the file is gone before page 2+ headers are rendered.
+            $result = $pdf->output();
+            @unlink($headerFile);
+            return $result;
+        } catch (\Throwable $e) {
+            @unlink($headerFile);
+            throw $e;
         }
     }
 
