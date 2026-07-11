@@ -29,7 +29,6 @@
 </head>
 <body>
   <div class="header-bar">
-    <span class="left">Purchase Order</span>
     <span class="right"><strong>PO No:</strong>&nbsp;{{ $po_number }}</span>
   </div>
 </body>

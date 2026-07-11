@@ -156,7 +156,6 @@ table.approv thead { display: table-header-group; }   /* repeat header when spli
 <div id="page-hdr">
   <table>
     <tr>
-      <td class="hdr-title">Purchase Order</td>
       <td class="hdr-pono">PO No: {{ $po->po_number ?? 'DRAFT' }}</td>
     </tr>
   </table>
