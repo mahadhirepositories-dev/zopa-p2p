@@ -770,6 +770,7 @@ class PurchaseOrderController extends Controller
         return response($bytes, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+            'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
         ]);
     }
 
@@ -823,6 +824,7 @@ class PurchaseOrderController extends Controller
         return response($bytes, 200, [
             'Content-Type'        => 'application/pdf',
             'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+            'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
         ]);
     }
 

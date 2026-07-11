@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\View;
  */
 class PdfService
 {
+    public static ?string $lastEngineUsed = null;
     // ─────────────────────────────────────────────────────────────────────────
     //  Public API
     // ─────────────────────────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ class PdfService
                 ->setOption('enable-local-file-access', true)
                 ->setOption('encoding', 'UTF-8');
 
+            self::$lastEngineUsed = 'wkhtmltopdf';
             return $pdf->output();
         } finally {
             // Always clean up the temp file.
@@ -148,6 +150,7 @@ class PdfService
      */
     private static function generateWithDomPdf(string $view, array $data): string
     {
+        self::$lastEngineUsed = 'dompdf';
         $data['is_dompdf'] = true;
         return DomPdf::loadView($view, $data)
             ->setPaper('a4')

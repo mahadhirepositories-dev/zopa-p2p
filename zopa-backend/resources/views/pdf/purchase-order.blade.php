@@ -264,8 +264,12 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
     <td style="width:48%; padding:0 0 8px 8px; vertical-align:bottom; text-align:right;">
       <div style="font-size:16px; font-weight:bold; color:#1f2937; letter-spacing:1.5px;">PURCHASE ORDER</div>
       <div style="margin-top:5px;">
-        <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;{{ $po->po_number ?? 'DRAFT' }}</span>
-        &nbsp;&nbsp;<span class="badge">{{ $statusLabel }}</span>
+        @if(!empty($po->po_number))
+          <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;{{ $po->po_number }}</span>
+          &nbsp;&nbsp;<span class="badge">{{ $statusLabel }}</span>
+        @else
+          <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;DRAFT</span>
+        @endif
       </div>
       @if($po->po_date)
       <div style="font-size:8.5px; color:#6b7280; margin-top:3px;">
