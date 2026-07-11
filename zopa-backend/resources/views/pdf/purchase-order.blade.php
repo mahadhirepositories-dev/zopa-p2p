@@ -4,142 +4,147 @@
 <meta charset="UTF-8">
 <style>
 /*
- * ZOPA PO PDF — wkhtmltopdf layout.
- * Engine   : wkhtmltopdf (barryvdh/laravel-snappy), DomPDF as fallback.
- * Header   : PO number is injected via --header-html on every page (po-header.blade.php).
- * Margins  : Set via wkhtmltopdf --margin-* options in PdfService, NOT via body{}.
- * Font     : Arial / sans-serif (wkhtmltopdf uses system fonts).
- * Rupee    : ₹ UTF-8 works directly in wkhtmltopdf; &#8377; also kept for DomPDF fallback.
- * Layout   : Tables for structure (works in both engines).
+ * ZOPA PO PDF — DomPDF-safe layout (beautified)
+ * Rules:
+ *  - NO height:100% on any element
+ *  - NO font-weight:600  (breaks Rs glyph in DejaVu Sans)
+ *  - NO emoji (U+1Fxxx)
+ *  - position:fixed for repeating page header/footer
+ *  - Only font-weight:bold (700) or normal (400)
  */
-@if(isset($is_dompdf) && $is_dompdf)
-body {
-  margin: 1.2cm 1.3cm;
-}
-body, table.items td, table.tot td, table.approv td, .terms-tbl td {
-  font-size: 10px !important;
-}
-header {
-  position: fixed;
-  top: 8px;
-  left: 1.3cm;
-  right: 1.3cm;
-  height: 20px;
-  text-align: right;
-  font-size: 8px;
-  color: #6b7280;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 3px;
-  font-family: sans-serif;
-  z-index: 1000;
-  background: transparent;
-}
-@else
-@page { margin: 0; }
-body {
-  margin: 0;
-}
-@endif
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: "DejaVu Sans", Arial, Helvetica, sans-serif;
+  font-family: DejaVu Sans, sans-serif;
   font-size: 9px;
-  color: #374151;
+  color: #1e293b;
   background: #fff;
-  line-height: 1.45;
-}
-.b   { font-weight: bold; }
-.ink { color: #1f2937; }
-.mut { color: #6b7280; }
-.fnt { color: #9ca3af; }
-.r   { text-align: right; }
-.c   { text-align: center; }
-
-/* ── Section box + label ──────────────────────────────── */
-.sec   { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-.cell  { border: 1px solid #cbd5e1; border-top: 2px solid #1f2937; padding: 8px 11px; vertical-align: top; }
-.nobrk { page-break-inside: avoid; }
-.sl {
-  font-size: 7.5px; font-weight: bold;
-  text-transform: uppercase; letter-spacing: 1px;
-  color: #6b7280;
-  padding-bottom: 4px; margin-bottom: 6px;
-  border-bottom: 1px solid #e5e7eb;
+  line-height: 1.5;
+  margin-top: 90px;
 }
 
-/* ── Status badge (monochrome) ────────────────────────── */
+/* ── Repeating page header (DomPDF position:fixed trick) ── */
+#page-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 82px;
+  background: #fff;
+  border-bottom: 3px solid #1565c0;
+  padding: 0;
+}
+#page-header table { width: 100%; border-collapse: collapse; height: 82px; }
+#page-header .hd-left { padding: 10px 16px; vertical-align: middle; width: 50%; }
+#page-header .hd-right { padding: 10px 16px; vertical-align: middle; text-align: right; width: 50%; }
+.po-title { font-size: 20px; font-weight: bold; color: #1565c0; letter-spacing: 1.5px; }
+.po-meta  { font-size: 8.5px; color: #475569; margin-top: 4px; line-height: 1.8; }
+.po-meta strong { color: #1e293b; }
+
+/* ── Repeating page footer ────────────────────────────── */
+#page-footer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+#page-footer table { width: 100%; border-collapse: collapse; }
+#page-footer td { padding: 3px 8px; font-size: 7px; color: #94a3b8; vertical-align: middle; }
+
+/* ── Status badge ─────────────────────────────────── */
 .badge {
-  display: inline-block; padding: 2px 7px;
+  display: inline-block;
+  padding: 2px 8px;
   font-size: 7px; font-weight: bold;
   letter-spacing: 1px; text-transform: uppercase;
-  border: 1px solid #9ca3af; color: #1f2937; background: #f3f4f6;
+  border-radius: 3px;
 }
+.b-draft    { background:#e2e8f0; color:#475569; }
+.b-pending  { background:#fef3c7; color:#92400e; }
+.b-approved { background:#d1fae5; color:#065f46; }
+.b-released { background:#dbeafe; color:#1e40af; }
+.b-rejected { background:#fee2e2; color:#991b1b; }
 
-/* ── Items table ──────────────────────────────────────── */
-table.items { width: 100%; border-collapse: collapse; }
-table.items thead { display: table-header-group; }      /* repeat header each page */
-table.items th {
-  background: #1f2937; color: #fff;
-  font-size: 7.5px; font-weight: bold;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 6px 6px; border: 1px solid #1f2937; text-align: left;
-}
-table.items th.r { text-align: right; }
-table.items th.c { text-align: center; }
-table.items td {
-  padding: 5px 6px; font-size: 9px; color: #374151;
-  border: 1px solid #d1d5db; vertical-align: top;
-}
-table.items tbody tr:nth-child(even) td { background: #f8f9fb; }
-
-/* ── Totals ───────────────────────────────────────────── */
-table.tot { width: 100%; border-collapse: collapse; }
-table.tot td { padding: 5px 10px; font-size: 9px; border: 1px solid #d1d5db; }
-table.tot .lbl   { color: #6b7280; border-right: none; }
-table.tot .val   { text-align: right; font-weight: bold; color: #1f2937; border-left: none; }
-table.tot .grand td { background: #1f2937; color: #fff; font-weight: bold; border-color: #1f2937; }
-
-/* ── Approvals ────────────────────────────────────────── */
-table.approv { width: 100%; border-collapse: collapse; }
-table.approv th {
-  background: #f3f4f6; color: #374151;
-  font-size: 7.5px; font-weight: bold;
-  text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 5px 8px; border: 1px solid #d1d5db; text-align: left;
-}
-table.approv td { padding: 5px 8px; border: 1px solid #d1d5db; font-size: 9px; vertical-align: top; }
-.c-ok  { color: #166534; font-weight: bold; }
-.c-no  { color: #991b1b; font-weight: bold; }
-.c-ret { color: #92400e; font-weight: bold; }
-.c-pnd { color: #6b7280; }
-table.approv thead { display: table-header-group; }   /* repeat header when split */
-
-/* ── Standalone section header — for long sections that MUST be able to
-      break across pages (Terms, Approval Trail). NEVER wrap such sections in a
-      single-row <table>: DomPDF can't split a <tr>, which yields blank pages. ── */
-.sec-h {
-  font-size: 8px; font-weight: bold;
+/* ── Section label ──────────────────────────────────── */
+.sl {
+  font-size: 7px; font-weight: bold;
   text-transform: uppercase; letter-spacing: 1px;
-  color: #1f2937; padding-bottom: 4px; margin: 4px 0 7px;
-  border-bottom: 1.5px solid #1f2937;
+  color: #1565c0;
+  padding-bottom: 4px; margin-bottom: 6px;
+  border-bottom: 1.5px solid #bbdefb;
 }
-/* Long terms render as a MULTI-ROW table — DomPDF paginates by breaking BETWEEN
-   rows (a single-row table can't split → blank pages; free-flowing blocks
-   overflow the bottom margin). One <tr> per line is the reliable pattern. */
-.terms-tbl { width: 100%; border-collapse: collapse; }
-.terms-tbl td { border: none; font-size: 9px; color: #374151; line-height: 1.5; padding: 1px 2px; vertical-align: top; }
-.terms-tbl td.sub { font-weight: bold; color: #1f2937; padding-top: 8px; padding-bottom: 2px; }
-/* Page header (PO number) is injected by wkhtmltopdf via --header-html */
-/* (po-header.blade.php is rendered and passed per-call in PdfService)   */
+
+/* ── Info card boxes ────────────────────────────────── */
+.card {
+  border: 1px solid #e2e8f0;
+  border-top: 2.5px solid #1565c0;
+  padding: 10px 13px;
+  background: #fafafa;
+}
+.card-title { font-size: 12px; font-weight: bold; color: #1e293b; margin-bottom: 3px; }
+.card-sub   { font-size: 8.5px; color: #64748b; line-height: 1.7; }
+
+/* ── GSTIN chip ─────────────────────────────────────── */
+.gstin {
+  display: inline-block;
+  background: #eff6ff; border: 1px solid #bfdbfe;
+  border-radius: 3px; padding: 1px 6px;
+  font-size: 7.5px; color: #1d4ed8;
+  margin-top: 3px;
+}
+
+/* ── Items table ────────────────────────────────────── */
+table.items { width:100%; border-collapse:collapse; }
+table.items thead tr { background:#1e3a5f; }
+table.items th {
+  color:#fff; font-size:7.5px; font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.5px;
+  padding:6px 6px; border:1px solid #1e3a5f;
+  text-align:left;
+}
+table.items th.r { text-align:right; }
+table.items th.c { text-align:center; }
+table.items td {
+  padding:6px 6px; font-size:9px; color:#334155;
+  border:1px solid #e2e8f0; vertical-align:top;
+}
+table.items tbody tr:nth-child(even) td { background:#f8faff; }
+
+/* ── Approvals table ────────────────────────────────── */
+table.approv { width:100%; border-collapse:collapse; }
+table.approv th {
+  background:#f0f7ff; color:#475569;
+  font-size:7.5px; text-transform:uppercase; letter-spacing:0.5px;
+  padding:5px 7px; border:1px solid #dbeafe; text-align:left;
+}
+table.approv td { padding:6px 7px; border:1px solid #e2e8f0; font-size:9px; vertical-align:top; }
+.c-ok  { color:#15803d; font-weight:bold; }
+.c-no  { color:#b91c1c; font-weight:bold; }
+.c-ret { color:#b45309; font-weight:bold; }
+.c-pnd { color:#94a3b8; }
+
+/* ── Totals summary block ───────────────────────────── */
+.totals-row td {
+  padding: 5px 10px;
+  border-bottom: 1px solid #f0f4ff;
+  font-size: 9px;
+}
+.totals-label { color: #64748b; }
+.totals-value { text-align: right; font-weight: bold; color: #1e293b; }
+.totals-grand-label {
+  padding: 8px 10px;
+  background: #1e3a5f;
+  font-size: 8.5px; font-weight: bold;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: #bfdbfe;
+}
+.totals-grand-value {
+  padding: 8px 10px;
+  background: #1e3a5f;
+  text-align: right;
+  font-weight: bold; color: #fff; font-size: 13px;
+}
+
 </style>
 </head>
 <body>
-@if(isset($is_dompdf) && $is_dompdf)
-<header>
-  PURCHASE ORDER &nbsp;|&nbsp; PO No: {{ $po->po_number ?? 'DRAFT' }}
-</header>
-@endif
 
 @php
 /* ── Client (tenant) logo ──────────────────────────────── */
@@ -150,7 +155,7 @@ $tenantLd = ($tenantLp && file_exists($tenantLp))
   ? 'data:' . mime_content_type($tenantLp) . ';base64,' . base64_encode(file_get_contents($tenantLp))
   : null;
 
-/* ── Platform (ZOPA) logo — audit box only ────────────── */
+/* ── Platform (ZOPA) logo — footer only ───────────────── */
 $platSettings     = [];
 $platSettingsFile = storage_path('app/public/platform/settings.json');
 if (file_exists($platSettingsFile)) {
@@ -163,17 +168,14 @@ $platLd = ($platLp && file_exists($platLp))
   ? 'data:' . mime_content_type($platLp) . ';base64,' . base64_encode(file_get_contents($platLp))
   : null;
 
-/* ── Status badge ─────────────────────────────────────── */
-$statusLabel = strtoupper(str_replace('_', ' ', $po->status));
-
-/* ── Audit timestamps — DB stores UTC; display in IST (Asia/Kolkata) ───── */
-$tz = 'Asia/Kolkata';
-$createdAt   = $po->created_at  ? \Carbon\Carbon::parse($po->created_at)->timezone($tz)->format('d M Y, H:i')  : null;
-$approvedAt  = $po->approved_at ? \Carbon\Carbon::parse($po->approved_at)->timezone($tz)->format('d M Y, H:i') : null;
-$releasedAt  = $po->released_at ? \Carbon\Carbon::parse($po->released_at)->timezone($tz)->format('d M Y, H:i') : null;
-$creatorRole = $po->created_by_role  ? ucwords(str_replace('_', ' ', $po->created_by_role))  : null;
-$approverRole= $po->approved_by_role ? ucwords(str_replace('_', ' ', $po->approved_by_role)) : null;
-$generatedAt = now()->timezone($tz)->format('d M Y, H:i') . ' IST';
+/* ── Status badge class ───────────────────────────────── */
+$bc = match(true) {
+  $po->status === 'approved'          => 'b-approved',
+  $po->status === 'released'          => 'b-released',
+  $po->status === 'rejected'          => 'b-rejected',
+  str_contains($po->status, 'pending')=> 'b-pending',
+  default                             => 'b-draft',
+};
 
 /* ── Amount in words (Indian numbering) ───────────────── */
 if (!function_exists('_poNumWords')) {
@@ -194,122 +196,108 @@ if (!function_exists('_poNumWords')) {
 }
 $amtWords = _poNumWords((int) round($po->grand_total)) . ' Rupees Only';
 
-/* ── Terms → paginatable lines ─────────────────────────────
-   terms_conditions may be rich HTML (from the WYSIWYG editor) or legacy plain
-   text. Normalise to an array of lines so each renders as its own table ROW —
-   the only reliable way DomPDF paginates long terms. Inline bold/italic/underline
-   are preserved; every other tag + all attributes are stripped, so the output is
-   safe to print with {!! !!} (DomPDF has PHP execution disabled). */
-if (!function_exists('_poTermsLines')) {
-  function _poTermsLines(?string $raw): array {
-    if (!$raw || trim($raw) === '') return [];
-    $isHtml = (bool) preg_match('/<[a-z][\s\S]*>/i', $raw);
-    $s = $raw;
-    if ($isHtml) {
-      $s = preg_replace('/<li[^>]*>/i', "\n\u{2022} ", $s);         // <li> → bullet line
-      $s = preg_replace('/<\/(p|div|li|ul|ol|h[1-6]|tr)>/i', "\n", $s);
-      $s = preg_replace('/<br\s*\/?>/i', "\n", $s);
-      
-      // Remove <style> and <script> blocks completely (strip_tags leaves their text contents!)
-      $s = preg_replace('/<(style|script)\b[^>]*>.*?<\/\1>/is', '', $s);
-
-      // Strip tags on the whole string so multi-line tags are removed correctly.
-      $s = strip_tags($s, '<b><strong><i><em><u>');
-      $s = preg_replace('/<(b|strong|i|em|u)\b[^>]*>/i', '<$1>', $s);
-    }
-    $lines = preg_split('/\r?\n/', $s);
-    $out = [];
-    foreach ($lines as $line) {
-      if (!$isHtml) {
-        // Legacy plain text — escape so it prints literally.
-        $line = htmlspecialchars($line, ENT_QUOTES);
-      }
-      if (trim(strip_tags($line)) !== '') $out[] = trim($line);     // skip blank lines
-    }
-    return $out;
-  }
-}
-
-/* ── Item-level flags for optional columns ──────────────
-   Prefer the values SNAPSHOTTED on the po_item at creation; fall back to the
-   live product only for legacy rows created before snapshotting existed. This
-   keeps a printed PO fixed even if the product master is edited later. ── */
-$hasCode = $po->items->contains(fn($i) => !empty($i->product_code ?? $i->product?->code));
-$hasHSN  = $po->items->contains(fn($i) => !empty($i->hsn_code ?? $i->product?->hsn_code));
-$hasUOM  = $po->items->contains(fn($i) => !empty($i->unit) || !empty($i->product?->unit));
+/* ── Item-level flags for optional columns ────────────── */
+$hasCode = $po->items->contains(fn($i) => !empty($i->product?->code));
+$hasHSN  = $po->items->contains(fn($i) => !empty($i->product?->hsn_code));
+$hasUOM  = $po->items->contains(fn($i) => !empty($i->product?->unit));
 $hasWar  = $po->items->contains(fn($i) => ($i->warranty_months ?? 0) > 0);
 $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
+
+$poNo = $po->po_number ?? 'DRAFT';
+$tenantGstin = $po->tenant?->gstin ?? '';
+$vendorGstin = $po->vendorAddress?->gstin ?? $po->vendor?->gstin ?? '';
 @endphp
 
-
-{{-- ═══════════ HEADER ═══════════ --}}
-<table style="width:100%; border-collapse:collapse; border-bottom:2px solid #1f2937; margin-bottom:10px;">
-  <tr>
-    <td style="width:52%; padding:0 8px 8px 0; vertical-align:bottom;">
-      @if($tenantLd)
-        <img src="{{ $tenantLd }}" alt="Logo" style="max-height:54px; max-width:200px;" />
-        @if($po->tenant?->gstin)
-          <div style="font-size:8px; color:#6b7280; margin-top:3px;">GSTIN: {{ $po->tenant->gstin }}</div>
-        @endif
-      @else
-        <div style="font-size:16px; font-weight:bold; color:#1f2937;">
-          {{ $po->tenant?->name ?? 'ZOPA Procurement' }}
-        </div>
-        @if($po->tenant?->gstin)
-          <div style="font-size:8px; color:#6b7280; margin-top:2px;">GSTIN: {{ $po->tenant->gstin }}</div>
-        @endif
-      @endif
-    </td>
-
-    <td style="width:48%; padding:0 0 8px 8px; vertical-align:bottom; text-align:right;">
-      <div style="font-size:16px; font-weight:bold; color:#1f2937; letter-spacing:1.5px;">PURCHASE ORDER</div>
-      <div style="margin-top:5px;">
-        @if(!empty($po->po_number))
-          <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;{{ $po->po_number }}</span>
-          &nbsp;&nbsp;<span class="badge">{{ $statusLabel }}</span>
+{{-- ═══════════════════════════════════════════════════
+     REPEATING PAGE HEADER — fixed, shows on every page
+     ═══════════════════════════════════════════════════ --}}
+<div id="page-header">
+  <table>
+    <tr>
+      {{-- Left: tenant logo or company name --}}
+      <td class="hd-left">
+        @if($tenantLd)
+          <img src="{{ $tenantLd }}" alt="Logo"
+               style="max-height:52px; max-width:180px; object-fit:contain;" />
+          @if($tenantGstin)
+            <div style="font-size:7.5px; color:#64748b; margin-top:2px;">GSTIN: {{ $tenantGstin }}</div>
+          @endif
         @else
-          <span style="font-size:8.5px; color:#374151;"><strong>PO No:</strong>&nbsp;DRAFT</span>
+          <div style="font-size:16px; font-weight:bold; color:#1e293b;">
+            {{ $po->tenant?->name ?? 'ZOPA Procurement' }}
+          </div>
+          @if($tenantGstin)
+            <div style="font-size:8px; color:#64748b; margin-top:2px;">GSTIN: {{ $tenantGstin }}</div>
+          @endif
         @endif
-      </div>
-      @if($po->po_date)
-      <div style="font-size:8.5px; color:#6b7280; margin-top:3px;">
-        <strong>Date:</strong>&nbsp;{{ \Carbon\Carbon::parse($po->po_date)->format('d M Y') }}
-        @if($po->po_valid_till)
-          &nbsp;&nbsp;<strong>Valid Till:</strong>&nbsp;{{ \Carbon\Carbon::parse($po->po_valid_till)->format('d M Y') }}
-        @endif
-      </div>
-      @endif
-      @if(!empty($po->pr_reference))
-      <div style="font-size:8px; color:#9ca3af; margin-top:2px;"><strong>PR Ref:</strong>&nbsp;{{ $po->pr_reference }}</div>
-      @endif
-    </td>
-  </tr>
-</table>
+      </td>
 
-{{-- ═══════════ VENDOR ═══════════ --}}
-<table class="sec nobrk">
+      {{-- Right: PURCHASE ORDER + PO No + meta --}}
+      <td class="hd-right">
+        <div class="po-title">PURCHASE ORDER</div>
+        <div class="po-meta">
+          <strong>PO No:</strong>&nbsp;{{ $poNo }}
+          &nbsp;&nbsp;<span class="badge {{ $bc }}">{{ strtoupper(str_replace('_',' ',$po->status)) }}</span>
+          @if($po->po_date)
+            <br><strong>Date:</strong>&nbsp;{{ \Carbon\Carbon::parse($po->po_date)->format('d M Y') }}
+            @if($po->po_valid_till)
+              &nbsp;&nbsp;<strong>Valid Till:</strong>&nbsp;{{ \Carbon\Carbon::parse($po->po_valid_till)->format('d M Y') }}
+            @endif
+          @endif
+          @if(!empty($po->pr_reference))
+            <br><strong>PR Ref:</strong>&nbsp;{{ $po->pr_reference }}
+          @endif
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+{{-- ═══════════════════════════════════════════════════
+     REPEATING PAGE FOOTER
+     ═══════════════════════════════════════════════════ --}}
+<div id="page-footer">
+  <table>
+    <tr>
+      <td>
+        Generated {{ now()->format('d M Y, H:i') }}
+        &nbsp;&middot;&nbsp;
+        @if($platLd)
+          <img src="{{ $platLd }}" alt="ZOPA"
+               style="max-height:12px; max-width:40px; vertical-align:middle; margin:0 2px;" />
+        @else
+          <span style="color:#1565c0; font-weight:bold;">ZOPA</span>
+        @endif
+        Procurement Platform
+      </td>
+      <td style="text-align:right;">
+        <strong style="color:#475569;">{{ $po->tenant?->name }}</strong>
+        &nbsp;&middot;&nbsp;PO:&nbsp;{{ $poNo }}
+      </td>
+    </tr>
+  </table>
+</div>
+
+{{-- ═══════════════════════════════════════════════════
+     VENDOR CARD
+     ═══════════════════════════════════════════════════ --}}
+<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
   <tr>
-    <td class="cell" style="background:#fafafa;">
+    <td class="card">
       <div class="sl">Vendor / Supplier</div>
-      <div style="font-size:11.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->vendor?->name }}</div>
-      @php $vgstin = $po->vendorAddress?->gstin ?? $po->vendor?->gstin; @endphp
-      @if($vgstin)
-        <div style="font-size:8.5px; color:#6b7280; margin-bottom:2px;">GSTIN: {{ $vgstin }}</div>
+      <div class="card-title">{{ $po->vendor?->name }}</div>
+      @if($vendorGstin)
+        <div><span class="gstin">GSTIN: {{ $vendorGstin }}</span></div>
       @endif
       @if($po->vendorAddress)
-        @php
-          $va = $po->vendorAddress;
-          $vLine2 = collect([$va->city, $va->state])->filter()->implode(', ');
-          if ($va->state_code) { $vLine2 .= ' ('.$va->state_code.')'; }
-          if ($va->pincode)    { $vLine2 = trim($vLine2).' - '.$va->pincode; }
-        @endphp
-        <div style="font-size:9px; color:#374151; line-height:1.6;">
-          @if($va->label){{ $va->label }}&nbsp;&mdash;&nbsp;@endif
-          @if($va->address){{ $va->address }}@endif
-          @if($vLine2)<br>{{ $vLine2 }}@endif
-          @if($va->country)<br>{{ $va->country }}@endif
-          @if($va->contact_name || $va->contact_phone)
-            <br><span style="color:#6b7280;">Contact: {{ trim(($va->contact_name ?? '').($va->contact_phone ? ' · '.$va->contact_phone : '')) }}</span>
+        <div class="card-sub" style="margin-top:5px;">
+          @if($po->vendorAddress->label)
+            <strong>{{ $po->vendorAddress->label }}</strong>&nbsp;&mdash;&nbsp;
+          @endif
+          @if($po->vendorAddress->address){{ $po->vendorAddress->address }}@endif
+          @if($po->vendorAddress->state)
+            , {{ $po->vendorAddress->state }}
+            @if($po->vendorAddress->state_code) ({{ $po->vendorAddress->state_code }})@endif
           @endif
         </div>
       @endif
@@ -317,123 +305,165 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   </tr>
 </table>
 
-{{-- ═══════════ BILL TO / SHIP TO ═══════════ --}}
-<table class="sec nobrk">
+{{-- ═══════════════════════════════════════════════════
+     BILL TO  /  SHIP TO  (side by side)
+     ═══════════════════════════════════════════════════ --}}
+<table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
   <tr>
-    <td class="cell" style="width:50%;">
-      <div class="sl">Bill To</div>
-      @if($po->costCenter && !$po->billToLocation)
-        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->costCenter->name }}</div>
-        @if($po->costCenter->department)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Dept: {{ $po->costCenter->department->name }}</div>@endif
-        @if($po->costCenter->project)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Project: {{ $po->costCenter->project->name }}</div>@endif
-        @if($po->costCenter->location)<div style="font-size:8.5px; color:#6b7280; line-height:1.55;">Location: {{ $po->costCenter->location->name }}</div>@endif
-      @endif
-      @if($po->billToLocation)
-        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
-        <div style="font-size:9px; color:#374151; line-height:1.55;">
-          @include('pdf.partials.location-address', ['loc' => $po->billToLocation])
-          @if($po->tenant?->gstin && empty($po->billToLocation->gstin))
-            <br>GSTIN: {{ $po->tenant->gstin }}
+
+    {{-- Bill To --}}
+    <td style="width:49%; padding:0; vertical-align:top;">
+      <div class="card" style="height:100%;">
+        <div class="sl">Bill To</div>
+        @if($po->billToLocation)
+          <div class="card-title">{{ $po->billToLocation->name }}</div>
+          @if($po->billToLocation->address)
+            <div class="card-sub">{{ $po->billToLocation->address }}</div>
           @endif
-        </div>
-      @endif
-      @if(!$po->costCenter && !$po->billToLocation)
-        <div style="font-size:9.5px; color:#1f2937;">{{ $po->tenant?->name }}</div>
-      @endif
+          @if(!empty($po->billToLocation->gstin))
+            <div><span class="gstin">GSTIN: {{ $po->billToLocation->gstin }}</span></div>
+          @endif
+        @elseif($po->costCenter)
+          <div class="card-title">{{ $po->costCenter->name }}</div>
+          @if($po->costCenter->department)
+            <div class="card-sub">Dept: {{ $po->costCenter->department->name }}</div>
+          @endif
+          @if($po->costCenter->project)
+            <div class="card-sub">Project: {{ $po->costCenter->project->name }}</div>
+          @endif
+          @if($po->costCenter->location)
+            <div class="card-sub">Location: {{ $po->costCenter->location->name }}</div>
+          @endif
+        @else
+          <div class="card-title">{{ $po->tenant?->name }}</div>
+        @endif
+        @if($tenantGstin)
+          <div><span class="gstin">GSTIN: {{ $tenantGstin }}</span></div>
+        @endif
+      </div>
     </td>
 
-    <td style="width:8px; border:none;"></td>
+    <td style="width:2%;"></td>
 
-    <td class="cell" style="width:50%;">
-      <div class="sl">Ship To</div>
-      @if($po->shipToLocation)
-        <div style="font-size:10.5px; font-weight:bold; color:#1f2937; margin-bottom:2px;">{{ $po->shipToLocation->name }}</div>
-        <div style="font-size:9px; color:#374151; line-height:1.55;">
-          @include('pdf.partials.location-address', ['loc' => $po->shipToLocation])
-          @if($po->shipToLocation->receiver_name || $po->shipToLocation->receiver_phone)
-            <div style="margin-top:4px; font-weight:bold; color:#475569;">
-              Receiver: {{ $po->shipToLocation->receiver_name }} {{ $po->shipToLocation->receiver_phone ? '(' . $po->shipToLocation->receiver_phone . ')' : '' }}
-            </div>
+    {{-- Ship To --}}
+    <td style="width:49%; padding:0; vertical-align:top;">
+      <div class="card" style="height:100%;">
+        <div class="sl">Ship To</div>
+        @if($po->shipToLocation)
+          <div class="card-title">{{ $po->shipToLocation->name }}</div>
+          @if($po->shipToLocation->address)
+            <div class="card-sub">{{ $po->shipToLocation->address }}</div>
           @endif
-        </div>
-      @elseif($po->billToLocation)
-        <div style="font-size:9px; color:#6b7280; font-style:italic;">Same as Bill To</div>
-      @endif
+        @elseif($po->billToLocation)
+          <div class="card-sub" style="font-style:italic; color:#94a3b8;">Same as Bill To</div>
+        @else
+          <div class="card-sub" style="font-style:italic; color:#94a3b8;">—</div>
+        @endif
+      </div>
     </td>
+
   </tr>
 </table>
 
-{{-- ═══════════ LINE ITEMS ═══════════ --}}
-<table class="items" style="margin-bottom:8px;">
+{{-- ═══════════════════════════════════════════════════
+     LINE ITEMS TABLE
+     ═══════════════════════════════════════════════════ --}}
+<table class="items" style="margin-bottom:0; border-bottom:none;">
   <thead>
     <tr>
-      <th style="width:18px;" class="c">Sl<br>No</th>
-      @if($hasCode)<th style="width:45px;">Code</th>@endif
+      <th style="width:22px; text-align:center;">Sl<br>No</th>
+      @if($hasCode)<th style="width:52px;">Code</th>@endif
       <th>Description / Specification</th>
-      @if($hasHSN)<th style="width:35px;" class="c">HSN</th>@endif
-      @if($hasUOM)<th style="width:28px;" class="c">UOM</th>@endif
-      <th style="width:28px;" class="r">Qty</th>
-      <th style="width:55px;" class="r">Unit Price</th>
-      <th style="width:65px;" class="r">GST</th>
-      <th style="width:65px;" class="r">Amount</th>
-      @if($hasWar)<th style="width:35px;" class="c">Warranty</th>@endif
-      @if($hasRB)<th style="width:50px;">Req. By</th>@endif
+      @if($hasHSN)<th style="width:50px;" class="c">HSN</th>@endif
+      @if($hasUOM)<th style="width:36px;" class="c">UOM</th>@endif
+      <th style="width:34px;" class="r">Qty</th>
+      <th style="width:74px;" class="r">Unit Price</th>
+      <th style="width:88px;" class="r">GST</th>
+      <th style="width:84px;" class="r">Amount</th>
+      @if($hasWar)<th style="width:48px;" class="c">Warranty</th>@endif
+      @if($hasRB)<th style="width:62px;">Req. By</th>@endif
     </tr>
   </thead>
   <tbody>
     @foreach($po->items as $item)
     @php
-      $baseAmount = ($item->net_rate ?? 0) * ($item->qty ?? 1);
-      $lineGst    = $baseAmount * ($item->gst_rate ?? 0) / 100;
-      $lineTotal  = $baseAmount + $lineGst;
+      $lineGst   = ($item->amount ?? 0) * ($item->gst_rate ?? 0) / 100;
+      $lineTotal = ($item->amount ?? 0) + $lineGst;
     @endphp
     <tr>
-      <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
-      @php
-        $itCode = $item->product_code ?? $item->product?->code;
-        $itName = $item->product_name ?? $item->product?->name;
-        $itHsn  = $item->hsn_code ?? $item->product?->hsn_code;
-      @endphp
-      @if($hasCode)<td style="font-size:8px; color:#6b7280;">{{ $itCode ?? '—' }}</td>@endif
+      <td style="text-align:center; color:#94a3b8; font-size:8px;">{{ $item->sno }}</td>
+      @if($hasCode)
+        <td style="font-size:8px; color:#64748b;">{{ $item->product?->code ?? '—' }}</td>
+      @endif
       <td>
-        <div style="font-weight:bold; color:#1f2937; font-size:9.5px; white-space:pre-wrap;">{{ $item->description }}</div>
-        @if($itName && $itName !== $item->description)
-          <div style="font-size:7.5px; color:#6b7280; margin-top:2px;">Product: {{ $itName }}</div>
+        <div style="font-weight:bold; color:#1e293b; font-size:9.5px; white-space:pre-wrap;">{{ $item->description }}</div>
+        @if($item->product && $item->product->name !== $item->description)
+          <div style="font-size:7.5px; color:#64748b; margin-top:2px;">Product: {{ $item->product->name }}</div>
         @endif
-        @if(!$hasCode && $itCode && $itCode !== $item->description)
-          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">{{ $itCode }}</div>
+        @if(!$hasCode && $item->product?->code && $item->product->code !== $item->description)
+          <div style="font-size:7.5px; color:#94a3b8; margin-top:1px;">{{ $item->product->code }}</div>
         @endif
-        @if(!$hasHSN && $itHsn)
-          <div style="font-size:7.5px; color:#9ca3af; margin-top:1px;">HSN: {{ $itHsn }}</div>
+        @if(!$hasHSN && $item->product?->hsn_code)
+          <div style="font-size:7.5px; color:#94a3b8; margin-top:1px;">HSN: {{ $item->product->hsn_code }}</div>
         @endif
       </td>
-      @if($hasHSN)<td class="c" style="font-size:8.5px; color:#475569;">{{ $itHsn ?? '—' }}</td>@endif
-      @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->unit ?? $item->product?->unit ?? '—' }}</td>@endif
-      <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($item->qty, 3),'0'),'.') }}</td>
-      <td class="r" style="font-size:9px;">&#8377;{{ number_format($item->net_rate, 2) }}</td>
-      <td class="r" style="font-size:9px; color:#475569;">
+      @if($hasHSN)
+        <td style="text-align:center; font-size:8.5px; color:#475569;">{{ $item->product?->hsn_code ?? '—' }}</td>
+      @endif
+      @if($hasUOM)
+        <td style="text-align:center; font-size:9px;">{{ $item->product?->unit ?? '—' }}</td>
+      @endif
+      <td style="text-align:right; font-size:9px;">{{ rtrim(rtrim(number_format($item->qty, 3),'0'),'.') }}</td>
+      <td style="text-align:right; font-size:9px;">&#8377;{{ number_format($item->net_rate, 2) }}</td>
+      <td style="text-align:right; font-size:9px; color:#475569;">
         {{ number_format($item->gst_rate, 0) }}%
-        @if($lineGst > 0)<br><span style="font-size:7.5px;">(&#8377;{{ number_format($lineGst, 2) }})</span>@endif
+        @if($lineGst > 0)
+          <br><span style="font-size:7.5px;">(&#8377;{{ number_format($lineGst, 2) }})</span>
+        @endif
       </td>
-      <td class="r b" style="font-size:9.5px; color:#1f2937;">&#8377;{{ number_format($lineTotal, 2) }}</td>
-      @if($hasWar)<td class="c" style="font-size:9px; color:#475569;">{{ ($item->warranty_months ?? 0) > 0 ? $item->warranty_months.' mo' : '—' }}</td>@endif
-      @if($hasRB)<td style="font-size:8.5px; color:#475569;">{{ $item->required_by ? \Carbon\Carbon::parse($item->required_by)->format('d M Y') : '—' }}</td>@endif
+      <td style="text-align:right; font-weight:bold; font-size:9.5px;">&#8377;{{ number_format($lineTotal, 2) }}</td>
+      @if($hasWar)
+        <td style="text-align:center; font-size:9px; color:#475569;">
+          {{ ($item->warranty_months ?? 0) > 0 ? $item->warranty_months.' mo' : '—' }}
+        </td>
+      @endif
+      @if($hasRB)
+        <td style="font-size:8.5px; color:#475569;">
+          {{ $item->required_by ? \Carbon\Carbon::parse($item->required_by)->format('d M Y') : '—' }}
+        </td>
+      @endif
     </tr>
     @endforeach
 
+    {{-- Freight row --}}
+    @if($po->freight > 0)
+    <tr>
+      <td style="text-align:center; color:#94a3b8; font-size:8px;">—</td>
+      @if($hasCode)<td style="font-size:8px;"></td>@endif
+      <td style="font-size:9px; color:#475569; font-style:italic;">Freight / Transportation</td>
+      @if($hasHSN)<td></td>@endif
+      @if($hasUOM)<td></td>@endif
+      <td></td>
+      <td style="text-align:right; font-size:9px;">&#8377;{{ number_format($po->freight, 2) }}</td>
+      <td style="text-align:right; font-size:9px; color:#94a3b8;">—</td>
+      <td style="text-align:right; font-weight:bold; font-size:9.5px;">&#8377;{{ number_format($po->freight, 2) }}</td>
+      @if($hasWar)<td></td>@endif
+      @if($hasRB)<td></td>@endif
+    </tr>
+    @endif
 
-
+    {{-- Round-off row --}}
     @if($po->round_off != 0)
     <tr>
-      <td class="c fnt" style="font-size:8px;">—</td>
+      <td style="text-align:center; color:#94a3b8; font-size:8px;">—</td>
       @if($hasCode)<td></td>@endif
       <td style="font-size:9px; color:#475569; font-style:italic;">Round Off</td>
       @if($hasHSN)<td></td>@endif
       @if($hasUOM)<td></td>@endif
-      <td></td>
-      <td></td>
-      <td></td>
-      <td class="r" style="font-size:9.5px; color:#475569;">{{ $po->round_off > 0 ? '+' : '' }}&#8377;{{ number_format($po->round_off, 2) }}</td>
+      <td></td><td></td><td></td>
+      <td style="text-align:right; font-size:9.5px; color:#475569;">
+        {{ $po->round_off > 0 ? '+' : '' }}&#8377;{{ number_format($po->round_off, 2) }}
+      </td>
       @if($hasWar)<td></td>@endif
       @if($hasRB)<td></td>@endif
     </tr>
@@ -441,106 +471,189 @@ $hasRB   = $po->items->contains(fn($i) => !empty($i->required_by));
   </tbody>
 </table>
 
-{{-- ═══════════ TOTALS + AMOUNT IN WORDS ═══════════ --}}
-<table style="width:100%; border-collapse:collapse; margin-bottom:8px;" class="nobrk">
+{{-- ── Financial totals (right-aligned summary below items) ── --}}
+<table style="width:100%; border-collapse:collapse; margin-bottom:0;">
   <tr>
-    <td style="width:54%; border:1px solid #d1d5db; background:#f8f9fb; padding:8px 11px; vertical-align:top;">
-      <div class="sl">Amount in Words</div>
-      <div style="font-size:9.5px; color:#1f2937; line-height:1.5;">{{ $amtWords }}</div>
-    </td>
-    <td style="width:8px; border:none;"></td>
-    <td style="width:46%; padding:0; vertical-align:top;">
-      <table class="tot">
-        <tr>
-          <td class="lbl">Net Total (before tax)</td>
-          <td class="val">&#8377;{{ number_format($po->net_total, 2) }}</td>
+    <td style="width:55%; border:none; padding:0;"></td>
+    <td style="width:45%; border:1px solid #e2e8f0; border-top:none; padding:0; vertical-align:top;">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr class="totals-row">
+          <td class="totals-label">Net Total (before tax)</td>
+          <td class="totals-value">&#8377;{{ number_format($po->net_total, 2) }}</td>
         </tr>
         @if($po->freight > 0)
-        <tr>
-          <td class="lbl">Freight{{ ($po->freight_gst_rate ?? 0) > 0 ? ' (+'.number_format($po->freight_gst_rate, 0).'% GST)' : '' }}</td>
-          <td class="val">&#8377;{{ number_format($po->freight, 2) }}</td>
+        <tr class="totals-row">
+          <td class="totals-label">Freight</td>
+          <td class="totals-value">&#8377;{{ number_format($po->freight, 2) }}</td>
         </tr>
         @endif
-        <tr>
-          <td class="lbl">GST / Tax Amount</td>
-          <td class="val">&#8377;{{ number_format($po->tax_amount, 2) }}</td>
+        <tr class="totals-row">
+          <td class="totals-label">GST / Tax Amount</td>
+          <td class="totals-value">&#8377;{{ number_format($po->tax_amount, 2) }}</td>
         </tr>
-        <tr class="grand">
-          <td style="text-transform:uppercase; letter-spacing:0.5px; font-size:8.5px;">Grand Total</td>
-          <td style="text-align:right; font-size:12.5px;">&#8377;{{ number_format(round($po->grand_total), 2) }}</td>
+        <tr>
+          <td class="totals-grand-label">Grand Total</td>
+          <td class="totals-grand-value">&#8377;{{ number_format($po->grand_total, 2) }}</td>
         </tr>
       </table>
     </td>
   </tr>
 </table>
 
-{{-- ═══════════ TERMS & CONDITIONS ═══════════
-     Rendered as flowing blocks (NOT a wrapping single-row table) so long
-     free-text terms break across pages cleanly with no blank pages. --}}
-@if(($po->payment_terms_json && count($po->payment_terms_json)) || $po->terms_conditions)
-<div class="sec-h">Terms &amp; Conditions</div>
-<table class="terms-tbl">
-  @if($po->payment_terms_json && count($po->payment_terms_json))
-    <tr><td class="sub">Payment Schedule</td></tr>
-    @foreach($po->payment_terms_json as $idx => $pt)
-      <tr><td>{{ $idx + 1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%@if(!empty($pt['credit_days']) && $pt['credit_days'] > 0)&nbsp;({{ $pt['credit_days'] }} days credit)@endif</td></tr>
-    @endforeach
-  @endif
-  @if($po->terms_conditions)
-    @if($po->payment_terms_json && count($po->payment_terms_json))<tr><td class="sub">General Terms</td></tr>@endif
-    @foreach(_poTermsLines($po->terms_conditions) as $line)
-      {{-- One row per line so DomPDF paginates; inline bold/italic/underline preserved. --}}
-      <tr><td>{!! $line !!}</td></tr>
-    @endforeach
-  @endif
+{{-- ── Amount in words ───────────────────────────────────── --}}
+<table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+  <tr>
+    <td style="border:1px solid #e2e8f0; border-top:none; background:#f8faff;
+               padding:7px 11px; font-size:9px; color:#334155; font-style:italic;">
+      <strong style="font-style:normal; color:#1e293b;">Amount in Words:</strong>
+      &nbsp;{{ $amtWords }}
+    </td>
+  </tr>
 </table>
-<div style="margin-bottom:8px;"></div>
+
+{{-- ═══════════════════════════════════════════════════
+     TERMS & CONDITIONS
+     ═══════════════════════════════════════════════════ --}}
+@if(($po->payment_terms_json && count($po->payment_terms_json)) || $po->terms_conditions)
+<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
+  <tr>
+    <td class="card" style="background:#fff;">
+      <div class="sl">Terms &amp; Conditions</div>
+
+      @if($po->payment_terms_json && count($po->payment_terms_json))
+        <div style="font-size:9px; font-weight:bold; color:#1e293b; margin-bottom:5px;">
+          Payment Schedule
+        </div>
+        @foreach($po->payment_terms_json as $idx => $pt)
+          <div style="font-size:9px; color:#334155; line-height:1.8; padding-left:12px;">
+            {{ $idx + 1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%
+            @if(!empty($pt['credit_days']) && $pt['credit_days'] > 0)
+              ({{ $pt['credit_days'] }} days credit)
+            @endif
+          </div>
+        @endforeach
+        @if($po->terms_conditions)<div style="margin-top:8px;"></div>@endif
+      @endif
+
+      @if($po->terms_conditions)
+        @php
+          $tcLines = array_values(array_filter(
+            array_map('trim', preg_split('/\r?\n/', $po->terms_conditions))
+          ));
+          $isSpecial = $po->payment_terms_json && count($po->payment_terms_json);
+        @endphp
+        <div style="font-size:9px; font-weight:bold; color:#1e293b; margin-bottom:5px;">
+          {{ $isSpecial ? 'General Terms' : 'Payment Terms' }}
+        </div>
+        @foreach($tcLines as $i => $line)
+          <div style="font-size:9px; color:#334155; line-height:1.8; padding-left:12px;">
+            {{ $i + 1 }}.&nbsp;{{ $line }}
+          </div>
+        @endforeach
+      @endif
+    </td>
+  </tr>
+</table>
 @endif
 
-
-{{-- ═══════════ AUTHORISATION & AUDIT (replaces signatures) ═══════════ --}}
-<table class="sec nobrk">
+{{-- ═══════════════════════════════════════════════════
+     APPROVAL HISTORY
+     ═══════════════════════════════════════════════════ --}}
+@if($po->approvals && $po->approvals->count())
+<table style="width:100%; border-collapse:collapse; margin-bottom:10px;">
   <tr>
-    <td class="cell">
-      <table style="width:100%; border-collapse:collapse; margin-bottom:6px;">
-        <tr>
-          <td style="vertical-align:middle;"><div class="sl" style="border:none; margin:0; padding:0;">Authorisation &amp; Audit Trail</div></td>
-          <td></td>
-        </tr>
+    <td style="padding:0; border:1px solid #e2e8f0; border-top:2.5px solid #1565c0;">
+      <div class="sl" style="padding:7px 13px 5px; margin-bottom:0;">Authorisation &amp; Audit Trail</div>
+      <table class="approv">
+        <thead>
+          <tr>
+            <th style="width:36px; text-align:center;">Level</th>
+            <th>Approver</th>
+            <th style="width:80px;">Status</th>
+            <th style="width:74px;">Date</th>
+            <th>Remarks</th>
+          </tr>
+        </thead>
+        <tbody>
+          @foreach($po->approvals as $a)
+          <tr>
+            <td style="text-align:center; color:#1565c0; font-weight:bold;">{{ $a->level }}</td>
+            <td>{{ $a->assignedTo?->name ?? '—' }}</td>
+            <td>
+              @if($a->action==='approved')     <span class="c-ok">Approved</span>
+              @elseif($a->action==='rejected') <span class="c-no">Rejected</span>
+              @elseif($a->action==='returned') <span class="c-ret">Returned</span>
+              @else                            <span class="c-pnd">Pending</span>
+              @endif
+            </td>
+            <td style="color:#64748b; font-size:8.5px;">
+              {{ $a->acted_at ? \Carbon\Carbon::parse($a->acted_at)->format('d M Y') : '—' }}
+            </td>
+            <td style="font-size:9px; color:#475569; font-style:italic;">{{ $a->comments ?? '—' }}</td>
+          </tr>
+          @endforeach
+        </tbody>
       </table>
-
-      <table style="width:100%; border-collapse:collapse;">
-        <tr>
-          <td style="width:50%; padding:3px 0; vertical-align:top;">
-            <span class="mut" style="font-size:8px; text-transform:uppercase; letter-spacing:0.5px;">Prepared By</span><br>
-            <span class="ink b" style="font-size:9.5px;">{{ $po->creator?->name ?? '—' }}</span>
-            @if($creatorRole)<span class="mut" style="font-size:8px;">&nbsp;·&nbsp;{{ $creatorRole }}</span>@endif<br>
-            <span class="mut" style="font-size:8.5px;">{{ $createdAt ? 'Created on '.$createdAt : '—' }}</span>
-          </td>
-          <td style="width:50%; padding:3px 0; vertical-align:top;">
-            <span class="mut" style="font-size:8px; text-transform:uppercase; letter-spacing:0.5px;">Approved By</span><br>
-            @if($po->approver?->name)
-              <span class="ink b" style="font-size:9.5px;">{{ $po->approver->name }}</span>
-              @if($approverRole)<span class="mut" style="font-size:8px;">&nbsp;·&nbsp;{{ $approverRole }}</span>@endif<br>
-              <span class="mut" style="font-size:8.5px;">{{ $approvedAt ? 'Approved on '.$approvedAt : 'Approved' }}</span>
-            @elseif(str_contains($po->status, 'approved') || in_array($po->status, ['released','delivered','invoiced','payment_released']))
-              <span class="ink b" style="font-size:9.5px;">System Auto-Approved</span><br>
-              <span class="mut" style="font-size:8.5px;">{{ $approvedAt ?? 'No approval level configured' }}</span>
-            @else
-              <span class="ink b" style="font-size:9.5px;">Pending Approval</span><br>
-              <span class="mut" style="font-size:8.5px;">Status: {{ $statusLabel }}</span>
-            @endif
-            @if($releasedAt)<br><span class="mut" style="font-size:8px;">Released on {{ $releasedAt }}</span>@endif
-          </td>
-        </tr>
-      </table>
-
-      <div style="border-top:1px solid #e5e7eb; margin-top:7px; padding-top:6px; font-size:8.5px; color:#6b7280; font-style:italic;">
-        System generated document. Generated in ZOPA P2P ({{ isset($is_dompdf) && $is_dompdf ? 'DomPDF' : 'wkhtmltopdf' }}) on {{ $generatedAt }}. No signature required.
-      </div>
     </td>
   </tr>
 </table>
+@endif
+
+{{-- ═══════════════════════════════════════════════════
+     SIGNATURE BLOCK
+     ═══════════════════════════════════════════════════ --}}
+<table style="width:100%; border-collapse:collapse; margin-top:18px; margin-bottom:28px;">
+  <tr>
+    {{-- Prepared By --}}
+    <td style="width:48%; border:1px solid #e2e8f0; border-top:2.5px solid #1565c0;
+               padding:10px 13px; vertical-align:bottom; background:#fafafa;">
+      <div style="font-size:7px; font-weight:bold; text-transform:uppercase;
+                  letter-spacing:1px; color:#1565c0; margin-bottom:3px;">Prepared By</div>
+      @php
+        $preparedBy = $po->approvals?->first()?->assignedTo?->name ?? null;
+        $createdAt  = $po->created_at ? \Carbon\Carbon::parse($po->created_at)->format('d M Y, H:i') : null;
+      @endphp
+      @if($po->creator ?? null)
+        <div style="font-size:9px; font-weight:bold; color:#1e293b;">{{ $po->creator->name }}</div>
+        @if($po->creator->email ?? null)
+          <div style="font-size:8px; color:#64748b;">{{ $po->creator->email }}</div>
+        @endif
+      @endif
+      @if($createdAt)
+        <div style="font-size:8px; color:#94a3b8; margin-top:2px;">Created on {{ $createdAt }}</div>
+      @endif
+      <div style="border-top:1px solid #cbd5e1; margin-top:26px; padding-top:4px;
+                  font-size:7.5px; color:#94a3b8;">Signature &amp; Name</div>
+    </td>
+
+    <td style="width:4%;"></td>
+
+    {{-- Approved By --}}
+    <td style="width:48%; border:1px solid #e2e8f0; border-top:2.5px solid #1565c0;
+               padding:10px 13px; vertical-align:bottom; background:#fafafa;">
+      <div style="font-size:7px; font-weight:bold; text-transform:uppercase;
+                  letter-spacing:1px; color:#1565c0; margin-bottom:3px;">Approved By</div>
+      @php
+        $lastApproval = $po->approvals?->where('action','approved')->sortByDesc('level')->first();
+      @endphp
+      @if($lastApproval)
+        <div style="font-size:9px; font-weight:bold; color:#1e293b;">{{ $lastApproval->assignedTo?->name ?? '—' }}</div>
+        @if($lastApproval->acted_at)
+          <div style="font-size:8px; color:#64748b;">{{ \Carbon\Carbon::parse($lastApproval->acted_at)->format('d M Y, H:i') }}</div>
+        @endif
+      @else
+        <div style="font-size:9px; color:#f59e0b; font-weight:bold;">Pending Approval</div>
+        <div style="font-size:8px; color:#94a3b8;">Status: {{ strtoupper(str_replace('_',' ',$po->status)) }}</div>
+      @endif
+      <div style="border-top:1px solid #cbd5e1; margin-top:26px; padding-top:4px;
+                  font-size:7.5px; color:#94a3b8;">Authorised Signatory</div>
+    </td>
+  </tr>
+</table>
+
+<div style="font-size:7px; color:#94a3b8; text-align:center; margin-top:4px;">
+  System generated document. No signature required.
+</div>
 
 </body>
 </html>
