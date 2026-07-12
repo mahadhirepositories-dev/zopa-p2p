@@ -21,6 +21,27 @@ body {
 body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; }
 @endif
 
+/* ── DomPDF fixed header (repeats on every page) ───────── */
+@if(isset($is_dompdf) && $is_dompdf)
+body { margin: 1.2cm 1.3cm 1.2cm 1.3cm; }
+header {
+  position: fixed;
+  top: 8px;
+  left: 1.3cm;
+  right: 1.3cm;
+  height: 20px;
+  text-align: right;
+  font-size: 8.5px;
+  color: #6b7280;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 3px;
+  font-family: sans-serif;
+}
+@else
+@page { margin: 0; }
+body { margin: 0; }
+@endif
+
 /* ── Utilities ───────────────────────────────────────── */
 .b   { font-weight:bold; }
 .ink { color:#1f2937; }
@@ -44,8 +65,13 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; }
 </style>
 </head>
 <body>
+  @if(isset($is_dompdf) && $is_dompdf)
+  <header>
+    PURCHASE ORDER &nbsp;|&nbsp; PO No: {{ $po->po_number ?? 'DRAFT' }}
+  </header>
+  @endif
 
-<style>
+  <style>
 /* ── Items table ─────────────────────────────────────── */
 table.items { width:100%; border-collapse:collapse; }
 table.items thead { display:table-header-group; }
