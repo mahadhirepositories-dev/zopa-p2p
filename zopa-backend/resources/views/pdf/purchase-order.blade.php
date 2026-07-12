@@ -63,7 +63,9 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1
 </style>
 </head>
 <body>
+  @if(empty($native_header))
   <div class="repeat-header">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>
+  @endif
 
   <style>
 /* ── Items table ─────────────────────────────────────── */
