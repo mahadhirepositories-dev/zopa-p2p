@@ -152,19 +152,7 @@ $hasWar =$po->items->contains(fn($i)=>($i->warranty_months??0)>0);
 $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 @endphp
 
-{{--
-  REPEATING HEADER TABLE
-  thead repeats on every page in wkhtmltopdf (unpatched Qt supports this natively).
-  tbody has a zero-height invisible row — required so the table is valid.
---}}
-<table id="rh">
-  <thead>
-    <tr class="pg-hdr-row"><td>PO No: {{ $po->po_number ?? 'DRAFT' }}</td></tr>
-  </thead>
-  <tbody>
-    <tr><td>&nbsp;</td></tr>
-  </tbody>
-</table>
+{{-- PO number repeats via items table thead on every page --}}
 
 {{-- ═══════════ PAGE 1 HEADER ═══════════ --}}
 <table style="width:100%;border-collapse:collapse;border-bottom:2px solid #1f2937;margin-bottom:10px;">
@@ -275,6 +263,12 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
   <thead>
+    {{-- This row repeats on every page because it's inside <thead> --}}
+    <tr>
+      <th colspan="99" style="background:#fff; border:none; border-bottom:1px solid #d1d5db; text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:2px 0 3px 0; letter-spacing:0.3px;">
+        PO No: {{ $po->po_number ?? 'DRAFT' }}
+      </th>
+    </tr>
     <tr>
       <th style="width:18px;" class="c">Sl<br>No</th>
       @if($hasCode)<th style="width:45px;">Code</th>@endif
