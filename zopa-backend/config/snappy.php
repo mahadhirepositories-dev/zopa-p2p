@@ -27,16 +27,12 @@ return [
             'dpi'         => 150,
 
             // ── Margins (mm) ───────────────────────────────────────
-            // Top margin is larger to give the running header room.
-            'margin-top'    => '22',
+            'margin-top'    => '10',
             'margin-right'  => '13',
             'margin-bottom' => '15',
             'margin-left'   => '13',
 
-            // ── Header ─────────────────────────────────────────────
-            // Header HTML is injected per-call (not set globally here).
-            // 'header-html' => ...,
-            'header-spacing' => '4',   // mm between header bottom and content
+            // ── No header (unpatched Qt — header-html/header-right not supported) ──
 
             // ── Rendering ──────────────────────────────────────────
             'no-outline'              => true,

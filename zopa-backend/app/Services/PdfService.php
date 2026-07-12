@@ -51,24 +51,14 @@ class PdfService
     }
 
     /**
-     * wkhtmltopdf — zero CLI header tricks.
-     * The repeating "PO No" header is a <thead> inside a full-page wrapper
-     * table in the blade. <thead> with display:table-header-group repeats
-     * on every page natively in every wkhtmltopdf version.
+     * wkhtmltopdf — unpatched Qt build on this server means --header-html
+     * and --header-right are silently ignored. The repeating "PO No" header
+     * is handled entirely inside the blade via a <thead> table.
+     * Margins come from config/snappy.php — no overrides here.
      */
     private static function generateWithSnappy(string $view, array $data): string
     {
-        $pdf = SnappyPdf::loadView($view, $data)
-            ->setOption('margin-top', 10)
-            ->setOption('margin-right', 13)
-            ->setOption('margin-bottom', 12)
-            ->setOption('margin-left', 13)
-            ->setOption('no-outline', true)
-            ->setOption('print-media-type', true)
-            ->setOption('disable-smart-shrinking', true)
-            ->setOption('enable-local-file-access', true)
-            ->setOption('encoding', 'UTF-8');
-
+        $pdf = SnappyPdf::loadView($view, $data);
         self::$lastEngineUsed = 'wkhtmltopdf';
         return $pdf->output();
     }
