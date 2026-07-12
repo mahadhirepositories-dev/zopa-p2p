@@ -5,10 +5,9 @@
 <style>
 /*
  * wkhtmltopdf 0.12.6 unpatched Qt — --header-html / --header-right do NOT work.
- * The ONLY reliable repeating-header technique: a dedicated <table> whose
- * <thead> holds "PO No: X". wkhtmltopdf repeats <thead> natively on every page.
- * The <tbody> holds a single invisible spacer row so the table renders.
- * All other content follows OUTSIDE this table.
+ * The ONLY reliable repeating-header technique: the <thead> of the items table
+ * holds "PO No: X" as its first row. wkhtmltopdf repeats <thead> natively on
+ * every page break. DomPDF also supports <thead> repetition.
  */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -21,23 +20,6 @@ body {
 @if(isset($is_dompdf) && $is_dompdf)
 body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; }
 @endif
-
-/* ── Repeating page header table ────────────────────────
-   thead repeats on every page in wkhtmltopdf (unpatched Qt).
-   The tbody has a zero-height row so the table is valid HTML. */
-table#rh { width:100%; border-collapse:collapse; }
-table#rh thead { display:table-header-group; }
-table#rh tbody { display:table-row-group; }
-table#rh thead td {
-  text-align: right;
-  font-size: 8px;
-  font-weight: bold;
-  color: #6b7280;
-  padding: 2px 0 3px 0;
-  border-bottom: 1px solid #d1d5db;
-  letter-spacing: 0.3px;
-}
-table#rh tbody td { height: 0; padding: 0; border: none; font-size: 0; line-height: 0; }
 
 /* ── Utilities ───────────────────────────────────────── */
 .b   { font-weight:bold; }
@@ -65,8 +47,7 @@ table#rh tbody td { height: 0; padding: 0; border: none; font-size: 0; line-heig
 
 <style>
 /* ── Items table ─────────────────────────────────────── */
-table.items { width:100%; border-collapse:collapse; caption-side:top; }
-table.items caption { text-align:right; padding:0 0 3px 0; }
+table.items { width:100%; border-collapse:collapse; }
 table.items thead { display:table-header-group; }
 table.items th {
   background:#1f2937; color:#fff; font-size:7.5px; font-weight:bold;
@@ -263,10 +244,12 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
-  <caption style="text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:0 0 3px 0; border-bottom:1px solid #d1d5db; caption-side:top; letter-spacing:0.3px;">
-    PO No: {{ $po->po_number ?? 'DRAFT' }}
-  </caption>
   <thead>
+    <tr>
+      <th colspan="99" style="background:#fff; border:none; border-bottom:1px solid #d1d5db; text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:2px 0 3px 0; letter-spacing:0.3px;">
+        PO No: {{ $po->po_number ?? 'DRAFT' }}
+      </th>
+    </tr>
     <tr>
       <th style="width:18px;" class="c">Sl<br>No</th>
       @if($hasCode)<th style="width:45px;">Code</th>@endif
