@@ -65,7 +65,8 @@ table#rh tbody td { height: 0; padding: 0; border: none; font-size: 0; line-heig
 
 <style>
 /* ── Items table ─────────────────────────────────────── */
-table.items { width:100%; border-collapse:collapse; }
+table.items { width:100%; border-collapse:collapse; caption-side:top; }
+table.items caption { text-align:right; padding:0 0 3px 0; }
 table.items thead { display:table-header-group; }
 table.items th {
   background:#1f2937; color:#fff; font-size:7.5px; font-weight:bold;
@@ -262,13 +263,10 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
+  <caption style="text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:0 0 3px 0; border-bottom:1px solid #d1d5db; caption-side:top; letter-spacing:0.3px;">
+    PO No: {{ $po->po_number ?? 'DRAFT' }}
+  </caption>
   <thead>
-    {{-- This row repeats on every page because it's inside <thead> --}}
-    <tr>
-      <th colspan="99" style="background:#fff; border:none; border-bottom:1px solid #d1d5db; text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:2px 0 3px 0; letter-spacing:0.3px;">
-        PO No: {{ $po->po_number ?? 'DRAFT' }}
-      </th>
-    </tr>
     <tr>
       <th style="width:18px;" class="c">Sl<br>No</th>
       @if($hasCode)<th style="width:45px;">Code</th>@endif
