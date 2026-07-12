@@ -18,29 +18,27 @@ body {
   line-height: 1.45;
 }
 @if(isset($is_dompdf) && $is_dompdf)
-body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1.2cm 1.3cm 1.2cm 1.3cm; }
 @endif
 
-/* ── DomPDF fixed header (repeats on every page) ───────── */
-@if(isset($is_dompdf) && $is_dompdf)
-body { margin: 1.2cm 1.3cm 1.2cm 1.3cm; }
-header {
+/* ── Repeating running header ───────────────────────────
+   position:fixed is repeated on EVERY page by both wkhtmltopdf
+   (INCLUDING the apt-get / unpatched-Qt build where <thead> repetition is
+   broken and --header-* is silently ignored) and DomPDF. This is the only
+   cross-engine technique that reliably works on every page. */
+.repeat-header {
   position: fixed;
-  top: 8px;
-  left: 1.3cm;
-  right: 1.3cm;
-  height: 20px;
+  top: 0;
+  left: 0;
+  right: 0;
   text-align: right;
-  font-size: 8.5px;
+  font-size: 8px;
+  font-weight: bold;
   color: #6b7280;
+  padding: 2px 0;
+  letter-spacing: 0.3px;
   border-bottom: 1px solid #d1d5db;
-  padding-bottom: 3px;
-  font-family: sans-serif;
 }
-@else
-@page { margin: 0; }
-body { margin: 0; }
-@endif
 
 /* ── Utilities ───────────────────────────────────────── */
 .b   { font-weight:bold; }
@@ -65,11 +63,7 @@ body { margin: 0; }
 </style>
 </head>
 <body>
-  @if(isset($is_dompdf) && $is_dompdf)
-  <header>
-    PURCHASE ORDER &nbsp;|&nbsp; PO No: {{ $po->po_number ?? 'DRAFT' }}
-  </header>
-  @endif
+  <div class="repeat-header">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>
 
   <style>
 /* ── Items table ─────────────────────────────────────── */
@@ -159,8 +153,6 @@ $hasUOM =$po->items->contains(fn($i)=>!empty($i->unit)||!empty($i->product?->uni
 $hasWar =$po->items->contains(fn($i)=>($i->warranty_months??0)>0);
 $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 @endphp
-
-{{-- PO number repeats via items table thead on every page --}}
 
 {{-- ═══════════ PAGE 1 HEADER ═══════════ --}}
 <table style="width:100%;border-collapse:collapse;border-bottom:2px solid #1f2937;margin-bottom:10px;">
@@ -271,11 +263,6 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
   <thead>
-    <tr>
-      <th colspan="99" style="background:#fff; border:none; border-bottom:1px solid #d1d5db; text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:2px 0 3px 0; letter-spacing:0.3px;">
-        PO No: {{ $po->po_number ?? 'DRAFT' }}
-      </th>
-    </tr>
     <tr>
       <th style="width:18px;" class="c">Sl<br>No</th>
       @if($hasCode)<th style="width:45px;">Code</th>@endif
