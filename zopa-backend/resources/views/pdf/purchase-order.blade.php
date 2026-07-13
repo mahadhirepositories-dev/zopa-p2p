@@ -5,9 +5,11 @@
 <style>
 /*
  * PO PDFs are rendered with DomPDF (see PdfService::makePoPdf), because the
- * server's wkhtmltopdf is the unpatched-Qt build where BOTH --header-* AND
- * <thead>/position:fixed repetition are broken. DomPDF reliably repeats
- * <thead> on every page, so the PO number lives in the items-table <thead>.
+ * server's wkhtmltopdf is the unpatched-Qt build where ALL repeating-header
+ * techniques (--header-*, <thead>, position:fixed) are broken. DomPDF
+ * reliably repeats a position:fixed element on every page, independent of
+ * any table, so the PO number lives in a position:fixed running header at
+ * the top of the body.
  */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -20,6 +22,24 @@ body {
 @if(isset($is_dompdf) && $is_dompdf)
 body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1.2cm 1.3cm 1.2cm 1.3cm; }
 @endif
+
+/* ── Repeating running header (DomPDF) ───────────────────
+   position:fixed repeats on EVERY page in DomPDF, independent of any table.
+   The body has a top margin (1.2cm above) so this fixed header never overlaps
+   the page-1 main header or any content on subsequent pages. */
+.repeat-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: right;
+  font-size: 8px;
+  font-weight: bold;
+  color: #6b7280;
+  padding: 2px 0;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #d1d5db;
+}
 
 /* ── Utilities ───────────────────────────────────────── */
 .b   { font-weight:bold; }
@@ -44,6 +64,8 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1
 </style>
 </head>
 <body>
+  <div class="repeat-header">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>
+
   <style>
 /* ── Items table ─────────────────────────────────────── */
 table.items { width:100%; border-collapse:collapse; }
@@ -242,11 +264,6 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
   <thead>
-    <tr>
-      <th colspan="99" style="background:#fff; border:none; border-bottom:1px solid #d1d5db; text-align:right; font-size:8px; font-weight:bold; color:#6b7280; padding:2px 0 3px 0; letter-spacing:0.3px;">
-        PO No: {{ $po->po_number ?? 'DRAFT' }}
-      </th>
-    </tr>
     <tr>
       <th style="width:18px;" class="c">Sl<br>No</th>
       @if($hasCode)<th style="width:45px;">Code</th>@endif
