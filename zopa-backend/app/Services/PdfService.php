@@ -53,12 +53,10 @@ class PdfService
     /**
      * wkhtmltopdf.
      *
-     * Patched-Qt builds support --header-right natively and repeat it on every
-     * page — this is the most reliable repeating-header mechanism and does NOT
-     * depend on the blade template being re-cached (it's injected here in PHP).
-     *
-     * Unpatched-Qt builds ignore --header-*; for those we fall back to the
-     * position:fixed running header rendered inside the blade template.
+     * Detects patched vs unpatched Qt so the controller can report it in the
+     * X-Pdf-Qt response header for diagnosis. The repeating "PO No" header is
+     * handled inside the blade template (position:fixed running header) which
+     * works on both wkhtmltopdf (patched AND unpatched) and DomPDF.
      */
     private static function generateWithSnappy(string $view, array $data, string $binary): string
     {
@@ -67,22 +65,10 @@ class PdfService
             $version = @shell_exec(escapeshellarg($binary) . ' --version 2>&1');
             self::$patchedQt = stripos((string) $version, 'patched') !== false;
         }
-        $patched = self::$patchedQt;
-
-        // Tell the blade whether to render its own fixed header (avoid duplicates
-        // when the native header is used).
-        $data['native_header'] = $patched;
 
         $pdf = SnappyPdf::loadView($view, $data);
 
-        if ($patched && isset($data['po'])) {
-            $poNo = $data['po']->po_number ?? 'DRAFT';
-            $pdf->setOption('header-right', 'PO No: ' . $poNo);
-            $pdf->setOption('margin-top', '16');
-            $pdf->setOption('header-spacing', '4');
-        }
-
-        self::$lastEngineUsed = 'wkhtmltopdf';
+        self::$lastEngineUsed = 'wkhtmltopdf' . (self::$patchedQt ? ' (patched)' : ' (unpatched)');
         return $pdf->output();
     }
 
