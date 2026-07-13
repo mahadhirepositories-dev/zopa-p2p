@@ -21,7 +21,11 @@ class PdfService
             'tenant', 'creator', 'approver',
         ]);
 
-        return static::generate('pdf.purchase-order', ['po' => $po]);
+        // PO PDFs use DomPDF directly — the server's wkhtmltopdf is the
+        // unpatched-Qt build, on which BOTH --header-* and <thead>/position:fixed
+        // repetition are broken, so repeating the PO number on every page is
+        // impossible there. DomPDF reliably repeats <thead> and position:fixed.
+        return static::generateWithDomPdf('pdf.purchase-order', ['po' => $po]);
     }
 
     public static function makePrPdf($pr): string
