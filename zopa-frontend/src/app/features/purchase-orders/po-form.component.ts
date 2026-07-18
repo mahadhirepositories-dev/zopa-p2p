@@ -323,9 +323,17 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                 <mat-form-field appearance="outline" class="field-product">
                   <mat-label>Product</mat-label>
                   <mat-select formControlName="product_id"
-                              (selectionChange)="onProductSelect(i)">
+                              (selectionChange)="onProductSelect(i)"
+                              (openedChange)="onProductSelectOpened($event)">
+                    <div style="padding: 8px 16px; position: sticky; top: 0; background: white; z-index: 1;">
+                      <input type="text" placeholder="Search by name, code or category..." 
+                             [value]="productSearch()"
+                             (input)="productSearch.set($any($event.target).value)" 
+                             (keydown)="$event.stopPropagation()"
+                             style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; outline: none; font-size: 14px;" />
+                    </div>
                     <mat-option [value]="null">— Custom Item —</mat-option>
-                    @for (p of products(); track p.id) {
+                    @for (p of filteredProducts(); track p.id) {
                       <mat-option [value]="p.id">
                         {{ p.name }}
                         @if (p.code) { ({{ p.code }}) }
@@ -693,6 +701,25 @@ export class PoFormComponent implements OnInit {
   categories = signal<Category[]>([]);
   attachments = signal<any[]>([]);
   pendingFiles = signal<File[]>([]);
+
+  // Product Search
+  productSearch = signal<string>('');
+  filteredProducts = computed(() => {
+    const q = this.productSearch().toLowerCase().trim();
+    const all = this.products();
+    if (!q) return all;
+    return all.filter(p => 
+      p.name.toLowerCase().includes(q) || 
+      (p.code && p.code.toLowerCase().includes(q)) || 
+      (p.category?.name && p.category.name.toLowerCase().includes(q))
+    );
+  });
+
+  onProductSelectOpened(opened: boolean) {
+    if (opened) {
+      this.productSearch.set('');
+    }
+  }
 
   // Selection context signals
   selectedVendor = signal<Vendor | null>(null);
