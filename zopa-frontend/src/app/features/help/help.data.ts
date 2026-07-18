@@ -115,12 +115,29 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ['role', 'permission', 'access', 'buyer', 'approver', 'admin', 'cannot see'],
     body: `<p>What you can see and do depends on your <strong>role</strong>. Common roles:</p>
       <ul>
-        <li><strong>Buyer</strong> — creates and edits requisitions, POs, GRNs, invoices.</li>
-        <li><strong>Approver (L1/L2/L3)</strong> — reviews and approves documents.</li>
+        <li><strong>Buyer</strong> — creates and edits requisitions, POs, GRNs, invoices. <em>(Note: Buyers can only edit documents while they are in <strong>Draft</strong> status)</em>.</li>
+        <li><strong>Approver (L1/L2/L3)</strong> — reviews and approves documents. <em>(Note: Approvers cannot edit documents; they can only approve or reject them)</em>.</li>
         <li><strong>Admin</strong> — full control within the organization.</li>
         <li><strong>ZOPA Super Admin</strong> — manages the whole platform.</li>
       </ul>
       <p>Each role has <strong>View / Create / Edit / Delete</strong> permission per module. If a button or menu is missing, your role doesn't allow that action — ask your admin to adjust it in <em>Access Control</em>.</p>`,
+  },
+  {
+    id: 'editing-immutability',
+    title: 'Document Editing & Immutability',
+    category: 'Getting Started',
+    icon: 'lock',
+    summary: 'When you can edit documents and why submitted ones are locked.',
+    keywords: ['edit', 'immutable', 'lock', 'snapshot', 'change', 'mistake', 'fix', 'reject'],
+    body: `<h3>Drafts are Editable</h3>
+      <p>While a PR or PO is in <strong>Draft</strong> status, the <strong>Buyer</strong> who created it can freely edit quantities, prices, and line items.</p>
+      <h3>Submitted Documents are Locked (Immutable)</h3>
+      <p>For financial compliance and auditing, once a PR or PO is submitted for approval, it becomes <strong>locked and immutable</strong>.</p>
+      <ul>
+        <li><strong>Master Data Snapshot:</strong> The exact product name, description, and HSN code at the time of creation are "snapshotted" into the document. If an Admin changes the product master data later, historical POs will not change.</li>
+        <li><strong>Approvers Cannot Edit:</strong> To maintain strict segregation of duties, Approvers cannot edit line items or prices. They can only Approve or Reject.</li>
+        <li><strong>Fixing Mistakes:</strong> If a submitted document has an error, you must ask your Approver to <strong>Reject</strong> it. You can then correct the rejected document (if applicable) or create a new one.</li>
+      </ul>`,
   },
 
   // ── My Account ────────────────────────────────────────────────────────────
