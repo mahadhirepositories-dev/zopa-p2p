@@ -50,13 +50,20 @@ const MODULE_META: ModuleMeta[] = [
 ];
 
 const ROLE_META: RoleMeta[] = [
-  { key: 'zopa_super_admin',    label: 'ZOPA Super Admin',     shortLabel: 'Super Admin',  badge: 'SA', badgeColor: '#7c3aed', isProtected: true,  group: 'zopa'   },
+  // ZOPA Roles
+  { key: 'zopa_super_admin',    label: 'ZOPA Super Admin',     shortLabel: 'Super',        badge: 'SA', badgeColor: '#b91c1c', isProtected: true,  group: 'zopa'   },
   { key: 'zopa_buyer',          label: 'ZOPA Buyer',           shortLabel: 'Buyer',        badge: 'ZB', badgeColor: '#2563eb', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l1',    label: 'ZOPA Approver L1',    shortLabel: 'Approver L1',  badge: 'L1', badgeColor: '#0891b2', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l2',    label: 'ZOPA Approver L2',    shortLabel: 'Approver L2',  badge: 'L2', badgeColor: '#0e7490', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l3',    label: 'ZOPA Approver L3',    shortLabel: 'Approver L3',  badge: 'L3', badgeColor: '#155e75', isProtected: false, group: 'zopa'   },
-  { key: 'client_admin',        label: 'Client Admin',         shortLabel: 'Admin',        badge: 'CA', badgeColor: '#16a34a', isProtected: false, group: 'client' },
+  { key: 'zopa_pr',             label: 'ZOPA PR User',         shortLabel: 'PR',           badge: 'ZP', badgeColor: '#0ea5e9', isProtected: false, group: 'zopa'   },
+  { key: 'zopa_grn',            label: 'ZOPA GRN User',        shortLabel: 'GRN',          badge: 'ZG', badgeColor: '#0ea5e9', isProtected: false, group: 'zopa'   },
+  { key: 'zopa_approver_l1',    label: 'ZOPA Approver (L1)',   shortLabel: 'L1 Approver',  badge: 'L1', badgeColor: '#16a34a', isProtected: false, group: 'zopa'   },
+  { key: 'zopa_approver_l2',    label: 'ZOPA Approver (L2)',   shortLabel: 'L2 Approver',  badge: 'L2', badgeColor: '#059669', isProtected: false, group: 'zopa'   },
+  { key: 'zopa_approver_l3',    label: 'ZOPA Approver (L3)',   shortLabel: 'L3 Approver',  badge: 'L3', badgeColor: '#047857', isProtected: false, group: 'zopa'   },
+  
+  // Client Roles
+  { key: 'client_admin',        label: 'Client Admin',         shortLabel: 'Admin',        badge: 'CA', badgeColor: '#b91c1c', isProtected: false, group: 'client' },
   { key: 'client_buyer',        label: 'Client Buyer',         shortLabel: 'Buyer',        badge: 'CB', badgeColor: '#15803d', isProtected: false, group: 'client' },
+  { key: 'client_pr',           label: 'Client PR User',       shortLabel: 'PR',           badge: 'CP', badgeColor: '#0ea5e9', isProtected: false, group: 'client' },
+  { key: 'client_grn',          label: 'Client GRN User',      shortLabel: 'GRN',          badge: 'CG', badgeColor: '#0ea5e9', isProtected: false, group: 'client' },
   { key: 'client_approver_l1',  label: 'Client Approver L1',  shortLabel: 'Approver L1',  badge: 'L1', badgeColor: '#d97706', isProtected: false, group: 'client' },
   { key: 'client_approver_l2',  label: 'Client Approver L2',  shortLabel: 'Approver L2',  badge: 'L2', badgeColor: '#b45309', isProtected: false, group: 'client' },
   { key: 'client_approver_l3',  label: 'Client Approver L3',  shortLabel: 'Approver L3',  badge: 'L3', badgeColor: '#92400e', isProtected: false, group: 'client' },

@@ -183,6 +183,38 @@ export interface PoItem {
   warranty_months?: number;
 }
 
+export interface Grn {
+  id: number;
+  tenant_id: number;
+  po_id: number;
+  grn_number: string;
+  received_date: string;
+  dc_number?: string;
+  dc_date?: string;
+  invoice_number?: string;
+  invoice_date?: string;
+  received_by: number;
+  status: 'draft' | 'confirmed' | 'rejected';
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+  purchase_order?: PurchaseOrder;
+  received_by_user?: { id: number; name: string };
+  items?: GrnItem[];
+  attachments?: any[]; // We'll just use any[] or GrnAttachment interface
+}
+
+export interface GrnItem {
+  id: number;
+  grn_id: number;
+  po_item_id: number;
+  received_qty: number;
+  accepted_qty: number;
+  rejected_qty: number;
+  remarks?: string;
+  po_item?: PoItem;
+}
+
 export interface PrItem {
   id: number;
   sno: number;
@@ -293,4 +325,8 @@ export type Role =
   | 'client_buyer'
   | 'client_approver_l1'
   | 'client_approver_l2'
-  | 'client_approver_l3';
+  | 'client_approver_l3'
+  | 'zopa_pr'
+  | 'zopa_grn'
+  | 'client_pr'
+  | 'client_grn';

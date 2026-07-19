@@ -67,6 +67,10 @@ class GrnController extends Controller
         $request->validate([
             'po_id' => 'required|integer|exists:purchase_orders,id',
             'received_date' => 'required|date',
+            'dc_number' => 'nullable|string|max:255',
+            'dc_date' => 'nullable|date',
+            'invoice_number' => 'nullable|string|max:255',
+            'invoice_date' => 'nullable|date',
             'remarks' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.po_item_id' => 'required|integer|exists:po_items,id',
@@ -99,6 +103,10 @@ class GrnController extends Controller
                 'po_id' => $request->po_id,
                 'grn_number' => $grnNumber,
                 'received_date' => $request->received_date,
+                'dc_number' => $request->dc_number,
+                'dc_date' => $request->dc_date,
+                'invoice_number' => $request->invoice_number,
+                'invoice_date' => $request->invoice_date,
                 'received_by' => auth()->id(),
                 'status' => 'confirmed',
                 'remarks' => $request->remarks,
@@ -143,7 +151,40 @@ class GrnController extends Controller
     {
         abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
         return response()->json(
-            $grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name'])
+            $grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name', 'attachments'])
         );
+    }
+
+    public function upload(Request $request, Grn $grn): JsonResponse
+    {
+        $this->requirePermission('grns', 'create');
+        $request->validate(['file' => 'required|file|max:10240']);
+        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+
+        $path = $request->file('file')->store("grn-attachments/{$grn->id}", 'local');
+
+        $attachment = \App\Models\GrnAttachment::create([
+            'grn_id' => $grn->id,
+            'name' => pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME),
+            'original_name' => $request->file('file')->getClientOriginalName(),
+            'file_path' => $path,
+            'size' => $request->file('file')->getSize(),
+            'uploaded_by' => auth()->id(),
+        ]);
+
+        return response()->json($attachment, 201);
+    }
+
+    public function downloadAttachment(Grn $grn, \App\Models\GrnAttachment $attachment)
+    {
+        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        abort_if($attachment->grn_id !== $grn->id, 404);
+
+        abort_if(!\Illuminate\Support\Facades\Storage::disk('local')->exists($attachment->file_path), 404, 'File not found on server.');
+        
+        $path = \Illuminate\Support\Facades\Storage::disk('local')->path($attachment->file_path);
+
+        // Use response()->file() to display inline (view) instead of forcing download
+        return response()->file($path);
     }
 }

@@ -116,6 +116,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
     body: `<p>What you can see and do depends on your <strong>role</strong>. Common roles:</p>
       <ul>
         <li><strong>Buyer</strong> — creates and edits requisitions, POs, GRNs, invoices. <em>(Note: Buyers can only edit documents while they are in <strong>Draft</strong> status)</em>.</li>
+        <li><strong>PR User</strong> — restricted specifically to creating and viewing Purchase Requisitions.</li>
+        <li><strong>GRN User</strong> — restricted specifically to creating and viewing Goods Receipt Notes (GRNs).</li>
         <li><strong>Approver (L1/L2/L3)</strong> — reviews and approves documents. <em>(Note: Approvers cannot edit documents; they can only approve or reject them)</em>.</li>
         <li><strong>Admin</strong> — full control within the organization.</li>
         <li><strong>ZOPA Super Admin</strong> — manages the whole platform.</li>

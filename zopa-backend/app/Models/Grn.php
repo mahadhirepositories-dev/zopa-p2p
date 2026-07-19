@@ -11,7 +11,13 @@ class Grn extends Model
     protected $fillable = [
         'tenant_id', 'po_id', 'grn_number', 'received_date',
         'received_by', 'status', 'remarks',
+        'dc_number', 'dc_date', 'invoice_number', 'invoice_date',
     ];
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(GrnAttachment::class);
+    }
 
     public function purchaseOrder(): BelongsTo
     {

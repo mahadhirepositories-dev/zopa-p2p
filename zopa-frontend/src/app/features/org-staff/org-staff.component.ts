@@ -25,6 +25,8 @@ interface StaffMember {
 const CLIENT_ROLE_LABELS: Record<string, string> = {
   client_admin:        'Admin',
   client_buyer:        'Buyer',
+  client_pr:           'PR User',
+  client_grn:          'GRN User',
   client_approver_l1:  'L1 Approver',
   client_approver_l2:  'L2 Approver',
   client_approver_l3:  'L3 Approver',
@@ -33,6 +35,8 @@ const CLIENT_ROLE_LABELS: Record<string, string> = {
 const ZOPA_ROLE_LABELS: Record<string, string> = {
   zopa_super_admin:   'Super Admin',
   zopa_buyer:         'Buyer',
+  zopa_pr:            'PR User',
+  zopa_grn:           'GRN User',
   zopa_approver_l1:   'L1 Approver',
   zopa_approver_l2:   'L2 Approver',
   zopa_approver_l3:   'L3 Approver (Final)',
@@ -170,6 +174,8 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
                   <mat-label>Role *</mat-label>
                   <mat-select formControlName="role">
                     <mat-option value="client_buyer">Buyer</mat-option>
+                    <mat-option value="client_pr">PR User</mat-option>
+                    <mat-option value="client_grn">GRN User</mat-option>
                     <mat-option value="client_approver_l1">L1 Approver</mat-option>
                     <mat-option value="client_approver_l2">L2 Approver</mat-option>
                     <mat-option value="client_approver_l3">L3 Approver</mat-option>
@@ -271,6 +277,8 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
     }
     .role-pill.role-client_admin        { background:#fff7ed;color:#c2410c; }
     .role-pill.role-client_buyer        { background:#eff6ff;color:#2563eb; }
+    .role-pill.role-client_pr           { background:#e0f2fe;color:#0ea5e9; }
+    .role-pill.role-client_grn          { background:#e0f2fe;color:#0ea5e9; }
     .role-pill.role-client_approver_l1  { background:#f0fdf4;color:#16a34a; }
     .role-pill.role-client_approver_l2  { background:#f5f3ff;color:#7c3aed; }
     .role-pill.role-client_approver_l3  { background:#fff1f2;color:#dc2626; }

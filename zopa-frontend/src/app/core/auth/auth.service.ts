@@ -49,7 +49,7 @@ export class AuthService {
 
   /** Roles that may create/submit transactional documents (PR, PO, GRN, Invoice) */
   readonly canTransact = computed(() =>
-    ['zopa_super_admin', 'zopa_buyer', 'client_admin', 'client_buyer'].includes(this.currentRole() ?? '')
+    ['zopa_super_admin', 'zopa_buyer', 'client_admin', 'client_buyer', 'zopa_pr', 'zopa_grn', 'client_pr', 'client_grn'].includes(this.currentRole() ?? '')
   );
 
   /** Roles that may manage master data and perform financial/admin actions */

@@ -79,6 +79,49 @@ interface PoItemMeta {
             <input matInput [formControl]="remarksControl" />
           </mat-form-field>
         </div>
+        
+        <div class="fields-row" style="margin-top: 12px;">
+          <mat-form-field appearance="outline">
+            <mat-label>DC Number</mat-label>
+            <input matInput [formControl]="dcNumberControl" placeholder="Delivery Challan No." />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>DC Date</mat-label>
+            <input matInput [matDatepicker]="dpDc" [formControl]="dcDateControl" />
+            <mat-datepicker-toggle matSuffix [for]="dpDc" />
+            <mat-datepicker #dpDc />
+          </mat-form-field>
+          <div class="file-upload-wrap">
+            <label class="file-upload-btn">
+              <mat-icon>attach_file</mat-icon> Add Attachments
+              <input type="file" multiple (change)="onFileSelect($event)" style="display:none;" />
+            </label>
+            @if (attachments().length > 0) {
+              <div class="file-list">
+                @for (file of attachments(); track file.name; let i = $index) {
+                  <span class="file-badge">
+                    {{ file.name }}
+                    <mat-icon (click)="removeFile(i)">close</mat-icon>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="fields-row" style="margin-top: 12px;">
+          <mat-form-field appearance="outline">
+            <mat-label>Invoice Number</mat-label>
+            <input matInput [formControl]="invoiceNumberControl" placeholder="Invoice No." />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Invoice Date</mat-label>
+            <input matInput [matDatepicker]="dpInv" [formControl]="invoiceDateControl" />
+            <mat-datepicker-toggle matSuffix [for]="dpInv" />
+            <mat-datepicker #dpInv />
+          </mat-form-field>
+          <div></div>
+        </div>
       </div>
 
       @if (loadingItems()) {
@@ -271,6 +314,23 @@ interface PoItemMeta {
     .fields-row mat-form-field { width: 100%; }
     .spinner-row { display:flex; justify-content:center; padding:32px; }
 
+    .file-upload-wrap { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
+    .file-upload-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
+      background: #f1f5f9; color: #334155; border-radius: 6px; border: 1px dashed #cbd5e1;
+      cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;
+    }
+    .file-upload-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+    .file-upload-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    
+    .file-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .file-badge {
+      display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px;
+      background: #e0f2fe; color: #0369a1; border-radius: 4px; font-size: 11px; font-weight: 500;
+    }
+    .file-badge mat-icon { font-size: 14px; width: 14px; height: 14px; cursor: pointer; color: #0284c7; }
+    .file-badge mat-icon:hover { color: #0c4a6e; }
+
     /* Prior GRN banner */
     .prior-grn-banner {
       display: flex;
@@ -423,11 +483,33 @@ export class GrnFormComponent implements OnInit {
   loadingItems = signal(false);
   saving       = signal(false);
 
-  poControl      = this.fb.control<number | null>(null, Validators.required);
-  dateControl    = this.fb.control<Date | null>(null, Validators.required);
-  remarksControl = this.fb.control('');
+  poControl          = this.fb.control<number | null>(null, Validators.required);
+  dateControl        = this.fb.control<Date | null>(null, Validators.required);
+  dcNumberControl    = this.fb.control<string>('');
+  dcDateControl      = this.fb.control<Date | null>(null);
+  invoiceNumberControl = this.fb.control<string>('');
+  invoiceDateControl = this.fb.control<Date | null>(null);
+  remarksControl     = this.fb.control('');
+  
+  attachments = signal<File[]>([]);
 
   itemGroups: FormArray<FormGroup> = this.fb.array<FormGroup>([]);
+
+  onFileSelect(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      const newFiles = Array.from(input.files);
+      this.attachments.update(curr => [...curr, ...newFiles].slice(0, 5)); // max 5 files
+    }
+  }
+
+  removeFile(index: number) {
+    this.attachments.update(curr => {
+      const arr = [...curr];
+      arr.splice(index, 1);
+      return arr;
+    });
+  }
 
   get formInvalid() {
     if (!this.poControl.value || !this.dateControl.value) return true;
@@ -565,11 +647,38 @@ export class GrnFormComponent implements OnInit {
       received_date: this.dateControl.value instanceof Date
         ? this.dateControl.value.toISOString().split('T')[0]
         : this.dateControl.value,
+      dc_number: this.dcNumberControl.value,
+      dc_date: this.dcDateControl.value instanceof Date ? this.dcDateControl.value.toISOString().split('T')[0] : this.dcDateControl.value,
+      invoice_number: this.invoiceNumberControl.value,
+      invoice_date: this.invoiceDateControl.value instanceof Date ? this.invoiceDateControl.value.toISOString().split('T')[0] : this.invoiceDateControl.value,
       remarks: this.remarksControl.value,
       items: receivableItems,
     };
+    
     this.http.post<any>(`${environment.apiUrl}/grns`, payload).subscribe({
-      next: grn => { this.notify.success('GRN saved.'); this.router.navigate(['/grns', grn.id]); },
+      next: grn => {
+        const files = this.attachments();
+        if (files.length > 0) {
+          const uploads = files.map(file => {
+            const formData = new FormData();
+            formData.append('file', file);
+            return this.http.post(`${environment.apiUrl}/grns/${grn.id}/upload`, formData);
+          });
+          forkJoin(uploads).subscribe({
+            next: () => {
+              this.notify.success('GRN saved with attachments.');
+              this.router.navigate(['/grns', grn.id]);
+            },
+            error: () => {
+              this.notify.error('GRN saved, but attachments failed.');
+              this.router.navigate(['/grns', grn.id]);
+            }
+          });
+        } else {
+          this.notify.success('GRN saved.');
+          this.router.navigate(['/grns', grn.id]);
+        }
+      },
       error: err => { this.notify.error(err.error?.message ?? 'Save failed.'); this.saving.set(false); },
     });
   }

@@ -118,6 +118,37 @@ class RolePermissionSeeder extends Seeder
             $p($role, 'org_staff',             false, false, false, false);
         }
 
+        // ── PR/GRN Users: Can only create PR and GRN ───────────────
+        foreach (['zopa_pr', 'client_pr'] as $role) {
+            $p($role, 'purchase_requisitions', true,  true,  true,  false);
+            $p($role, 'grns',                  false, false, false, false);
+            
+            $p($role, 'purchase_orders',       false, false, false, false);
+            $p($role, 'invoices',              false, false, false, false);
+            $p($role, 'vendors',               false, false, false, false);
+            $p($role, 'products',              false, false, false, false);
+            $p($role, 'cost_centers',          false, false, false, false);
+            $p($role, 'org_masters',           false, false, false, false);
+            $p($role, 'approvals',             false, false, false, false);
+            $p($role, 'reports',               false, false, false, false);
+            $p($role, 'org_staff',             false, false, false, false);
+        }
+
+        foreach (['zopa_grn', 'client_grn'] as $role) {
+            $p($role, 'purchase_requisitions', false, false, false, false);
+            $p($role, 'grns',                  true,  true,  true,  false);
+            
+            $p($role, 'purchase_orders',       false, false, false, false);
+            $p($role, 'invoices',              false, false, false, false);
+            $p($role, 'vendors',               false, false, false, false);
+            $p($role, 'products',              false, false, false, false);
+            $p($role, 'cost_centers',          false, false, false, false);
+            $p($role, 'org_masters',           false, false, false, false);
+            $p($role, 'approvals',             false, false, false, false);
+            $p($role, 'reports',               false, false, false, false);
+            $p($role, 'org_staff',             false, false, false, false);
+        }
+
         // insertOrIgnore: safe to run multiple times; respects the unique(role, module) constraint
         DB::table('role_permissions')->insertOrIgnore($rows);
 

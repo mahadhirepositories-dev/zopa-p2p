@@ -34,6 +34,10 @@ class RolePermissionsController extends Controller
         'client_approver_l1',
         'client_approver_l2',
         'client_approver_l3',
+        'zopa_pr',
+        'zopa_grn',
+        'client_pr',
+        'client_grn'
     ];
 
     /** Application modules whose permissions are configurable. */

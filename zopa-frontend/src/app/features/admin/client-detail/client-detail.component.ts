@@ -268,6 +268,8 @@ import { gstinValidator } from '../../../core/validators';
                 <mat-label>Role for this Client</mat-label>
                 <mat-select formControlName="role">
                   <mat-option value="zopa_buyer">ZOPA Buyer</mat-option>
+                  <mat-option value="zopa_pr">ZOPA PR User</mat-option>
+                  <mat-option value="zopa_grn">ZOPA GRN User</mat-option>
                   <mat-option value="zopa_approver_l1">ZOPA L1 Approver</mat-option>
                   <mat-option value="zopa_approver_l2">ZOPA L2 Approver</mat-option>
                   @if (client()?.is_internal) {
@@ -706,19 +708,23 @@ export class ClientDetailComponent implements OnInit {
   });
 
   roleLabel(role: string): string {
-    const map: Record<string, string> = {
+    const rolesMap: Record<string, string> = {
       zopa_super_admin: 'Super Admin',
       zopa_buyer: 'ZOPA Buyer',
-      zopa_approver_l1: 'ZOPA L1 Approver',
+      zopa_pr: 'ZOPA PR User',
+      zopa_grn: 'ZOPA GRN User',
+      zopa_approver_l1: 'L1 Approver',
       zopa_approver_l2: 'ZOPA L2 Approver',
       zopa_approver_l3: 'ZOPA L3 Approver',
       client_admin: 'Admin',
       client_buyer: 'Buyer',
+      client_pr: 'Client PR User',
+      client_grn: 'Client GRN User',
       client_approver_l1: 'L1 Approver',
       client_approver_l2: 'L2 Approver',
       client_approver_l3: 'L3 Approver',
     };
-    return map[role] ?? role;
+    return rolesMap[role] ?? role;
   }
 
   ngOnInit() { this.loadClientData(+this.id()); }

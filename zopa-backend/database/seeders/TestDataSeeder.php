@@ -85,6 +85,12 @@ class TestDataSeeder extends Seeder
         // Governance: a ZOPA staffer may only be L3 on an INTERNAL tenant.
         $zL3 = $this->user('Test ZOPA Approver L3', 'zl3@zopatest.com', true);
         $this->assign($zL3, $zopa, 'zopa_approver_l3', $superAdmin);
+        
+        $zPr = $this->user('Test ZOPA PR User', 'zpr@zopatest.com', true);
+        $this->assign($zPr, $zopa, 'zopa_pr', $superAdmin);
+        
+        $zGrn = $this->user('Test ZOPA GRN User', 'zgrn@zopatest.com', true);
+        $this->assign($zGrn, $zopa, 'zopa_grn', $superAdmin);
 
         // Client users for Acme (is_zopa_staff = false)
         $cAdmin = $this->user('Test Acme Admin', 'cadmin@acmetest.com', false);
@@ -101,6 +107,12 @@ class TestDataSeeder extends Seeder
 
         $cL3 = $this->user('Test Acme Approver L3', 'cl3@acmetest.com', false);
         $this->assign($cL3, $acme, 'client_approver_l3', $superAdmin);
+        
+        $cPr = $this->user('Test Acme PR User', 'cpr@acmetest.com', false);
+        $this->assign($cPr, $acme, 'client_pr', $superAdmin);
+
+        $cGrn = $this->user('Test Acme GRN User', 'cgrn@acmetest.com', false);
+        $this->assign($cGrn, $acme, 'client_grn', $superAdmin);
 
         // A separate Globex admin — used to verify cross-tenant isolation.
         $globexAdmin = $this->user('Test Globex Admin', 'admin@globextest.com', false);
@@ -173,11 +185,15 @@ class TestDataSeeder extends Seeder
                 ['zopa_approver_l1',   'zl1@zopatest.com',        'Acme'],
                 ['zopa_approver_l2',   'zl2@zopatest.com',        'Acme'],
                 ['zopa_approver_l3',   'zl3@zopatest.com',        'ZOPA Internal'],
+                ['zopa_pr',            'zpr@zopatest.com',        'ZOPA Internal'],
+                ['zopa_grn',           'zgrn@zopatest.com',       'ZOPA Internal'],
                 ['client_admin',       'cadmin@acmetest.com',     'Acme'],
                 ['client_buyer',       'cbuyer@acmetest.com',     'Acme'],
                 ['client_approver_l1', 'cl1@acmetest.com',        'Acme'],
                 ['client_approver_l2', 'cl2@acmetest.com',        'Acme'],
                 ['client_approver_l3', 'cl3@acmetest.com',        'Acme'],
+                ['client_pr',          'cpr@acmetest.com',        'Acme'],
+                ['client_grn',         'cgrn@acmetest.com',       'Acme'],
                 ['client_admin',       'admin@globextest.com',    'Globex (isolation)'],
             ]
         );

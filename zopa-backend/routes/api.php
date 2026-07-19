@@ -245,6 +245,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('grns', [GrnController::class, 'index']);
         Route::post('grns', [GrnController::class, 'store']);
         Route::get('grns/{grn}', [GrnController::class, 'show']);
+        Route::post('grns/{grn}/upload', [GrnController::class, 'upload']);
+        Route::get('grns/{grn}/attachments/{attachment}', [GrnController::class, 'downloadAttachment']);
         Route::get('purchase-orders/{purchaseOrder}/grns', [GrnController::class, 'forPo']);
 
         // Invoices

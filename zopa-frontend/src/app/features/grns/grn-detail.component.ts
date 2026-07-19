@@ -35,8 +35,27 @@ import { environment } from '../../../environments/environment';
               <div><span class="label">Received Date</span>{{ grn()!.received_date | date:'dd MMM yyyy' }}</div>
               <div><span class="label">Received By</span>{{ grn()!.received_by?.name ?? '—' }}</div>
             </div>
+            <div class="detail-grid" style="margin-top:16px;">
+              <div><span class="label">DC Number</span>{{ grn()!.dc_number ?? '—' }}</div>
+              <div><span class="label">DC Date</span>{{ grn()!.dc_date ? (grn()!.dc_date | date:'dd MMM yyyy') : '—' }}</div>
+              <div><span class="label">Invoice Number</span>{{ grn()!.invoice_number ?? '—' }}</div>
+              <div><span class="label">Invoice Date</span>{{ grn()!.invoice_date ? (grn()!.invoice_date | date:'dd MMM yyyy') : '—' }}</div>
+            </div>
             @if (grn()!.remarks) {
-              <div style="margin-top:12px;"><span class="label">Remarks</span>{{ grn()!.remarks }}</div>
+              <div style="margin-top:16px;"><span class="label">Remarks</span>{{ grn()!.remarks }}</div>
+            }
+            @if (grn()!.attachments?.length > 0) {
+              <div style="margin-top:16px;">
+                <span class="label">Attachments</span>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+                  @for (a of grn()!.attachments; track a.id) {
+                    <div class="attachment-pill" (click)="downloadAttachment(a)">
+                      <mat-icon>attach_file</mat-icon>
+                      {{ a.original_name }}
+                    </div>
+                  }
+                </div>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -73,7 +92,11 @@ import { environment } from '../../../environments/environment';
       }
     </div>
   `,
-  styles: [`.page-wrapper{padding:24px} .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px} .full-width{width:100%} .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px} .label{font-size:10px;color:#888;text-transform:uppercase;display:block;margin-bottom:2px}`],
+  styles: [
+    `.page-wrapper{padding:24px} .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px} .full-width{width:100%} .detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px} .label{font-size:10px;color:#888;text-transform:uppercase;display:block;margin-bottom:2px}`,
+    `.attachment-pill { display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:16px;background:#f1f5f9;border:1px solid #e2e8f0;font-size:12px;color:#334155;cursor:pointer;transition:all 0.2s; }`,
+    `.attachment-pill:hover { background:#e2e8f0; } .attachment-pill mat-icon { font-size:16px;width:16px;height:16px;color:#64748b; }`
+  ],
 })
 export class GrnDetailComponent implements OnInit {
   id = input.required<string>();
@@ -88,5 +111,16 @@ export class GrnDetailComponent implements OnInit {
       next: g => { this.grn.set(g); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
+  }
+
+  downloadAttachment(attachment: any) {
+    this.http.get(`${environment.apiUrl}/grns/${this.grn().id}/attachments/${attachment.id}`, { responseType: 'blob' })
+      .subscribe(blob => {
+        // Create blob URL with explicit MIME type from the response blob
+        const url = window.URL.createObjectURL(new Blob([blob], { type: blob.type }));
+        window.open(url, '_blank');
+        // Revoke after a delay to ensure it had time to load
+        setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      });
   }
 }
