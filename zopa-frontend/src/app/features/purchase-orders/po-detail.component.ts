@@ -233,11 +233,6 @@ import { AuthService } from '../../core/auth/auth.service';
                     <th mat-header-cell *matHeaderCellDef>Description / Specification</th>
                     <td mat-cell *matCellDef="let i">
                       <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
-                      @if (shouldShowProductName(i)) {
-                        <div style="font-size:11px;color:var(--text-3);margin-top:2px;">
-                          Product: {{ i.product_name || i.product?.name }}
-                        </div>
-                      }
                       @if (i.product_code || i.product?.code) {
                         <div style="font-size:11px;color:var(--text-3);">
                           Code: {{ i.product_code || i.product?.code }}
@@ -589,18 +584,6 @@ export class PoDetailComponent implements OnInit {
 
   po = signal<PurchaseOrder | null>(null);
   loading = signal(true);
-
-  shouldShowProductName(item: any): boolean {
-    const prodName = item.product_name || item.product?.name;
-    if (!prodName) return false;
-    if (!item.description) return true;
-    
-    // Normalize both strings by removing ALL non-alphanumeric characters and converting to lowercase
-    const normalizedProd = prodName.replace(/[^a-z0-9]/gi, '').toLowerCase();
-    const normalizedDesc = item.description.replace(/[^a-z0-9]/gi, '').toLowerCase();
-    
-    return normalizedProd !== normalizedDesc;
-  }
   acting = signal<string | false>(false);
   downloading = signal(false);
   diag = signal<any>(null);   // super-admin approval-routing diagnostic
