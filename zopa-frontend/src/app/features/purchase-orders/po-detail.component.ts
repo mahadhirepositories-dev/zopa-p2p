@@ -595,9 +595,9 @@ export class PoDetailComponent implements OnInit {
     if (!prodName) return false;
     if (!item.description) return true;
     
-    // Normalize both strings by removing extra spaces and newlines, then comparing lowercase
-    const normalizedProd = prodName.replace(/\s+/g, ' ').trim().toLowerCase();
-    const normalizedDesc = item.description.replace(/\s+/g, ' ').trim().toLowerCase();
+    // Normalize both strings by removing ALL non-alphanumeric characters and converting to lowercase
+    const normalizedProd = prodName.replace(/[^a-z0-9]/gi, '').toLowerCase();
+    const normalizedDesc = item.description.replace(/[^a-z0-9]/gi, '').toLowerCase();
     
     return normalizedProd !== normalizedDesc;
   }

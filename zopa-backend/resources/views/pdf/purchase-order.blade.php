@@ -294,8 +294,8 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       <td>
         <div style="font-weight:bold;color:#1f2937;font-size:9.5px;white-space:pre-wrap;">{{ $item->description }}</div>
         @php
-            $normalizedName = strtolower(trim(preg_replace('/\s+/', ' ', $itName ?? '')));
-            $normalizedDesc = strtolower(trim(preg_replace('/\s+/', ' ', $item->description ?? '')));
+            $normalizedName = preg_replace('/[^a-z0-9]/i', '', strtolower($itName ?? ''));
+            $normalizedDesc = preg_replace('/[^a-z0-9]/i', '', strtolower($item->description ?? ''));
         @endphp
         @if($itName && $normalizedName !== $normalizedDesc)<div style="font-size:7.5px;color:#6b7280;margin-top:2px;">Product: {{ $itName }}</div>@endif
         @if(!$hasCode&&$itCode&&$itCode!==$item->description)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">{{ $itCode }}</div>@endif
