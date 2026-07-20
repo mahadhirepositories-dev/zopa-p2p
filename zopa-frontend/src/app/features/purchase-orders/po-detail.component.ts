@@ -233,7 +233,7 @@ import { AuthService } from '../../core/auth/auth.service';
                     <th mat-header-cell *matHeaderCellDef>Description / Specification</th>
                     <td mat-cell *matCellDef="let i">
                       <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
-                      @if ((i.product_name || i.product?.name) && (i.product_name || i.product?.name) !== i.description) {
+                      @if (shouldShowProductName(i)) {
                         <div style="font-size:11px;color:var(--text-3);margin-top:2px;">
                           Product: {{ i.product_name || i.product?.name }}
                         </div>
@@ -589,6 +589,18 @@ export class PoDetailComponent implements OnInit {
 
   po = signal<PurchaseOrder | null>(null);
   loading = signal(true);
+
+  shouldShowProductName(item: any): boolean {
+    const prodName = item.product_name || item.product?.name;
+    if (!prodName) return false;
+    if (!item.description) return true;
+    
+    // Normalize both strings by removing extra spaces and newlines, then comparing lowercase
+    const normalizedProd = prodName.replace(/\s+/g, ' ').trim().toLowerCase();
+    const normalizedDesc = item.description.replace(/\s+/g, ' ').trim().toLowerCase();
+    
+    return normalizedProd !== normalizedDesc;
+  }
   acting = signal<string | false>(false);
   downloading = signal(false);
   diag = signal<any>(null);   // super-admin approval-routing diagnostic
