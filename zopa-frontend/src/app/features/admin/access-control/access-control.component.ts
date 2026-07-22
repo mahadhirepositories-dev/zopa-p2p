@@ -14,6 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { ModulePermissions, PermissionsMatrix } from '../../../core/models';
+import { RoleService } from '../../../services/role.service';
 
 // ── Local display metadata ────────────────────────────────────────────────────
 
@@ -49,25 +50,7 @@ const MODULE_META: ModuleMeta[] = [
   { key: 'org_staff',             label: 'Staff Management',      icon: 'group',                  description: 'Add/remove users and assign roles',     group: 'admin'       },
 ];
 
-const ROLE_META: RoleMeta[] = [
-  // ZOPA Roles
-  { key: 'zopa_super_admin',    label: 'ZOPA Super Admin',     shortLabel: 'Super',        badge: 'SA', badgeColor: '#b91c1c', isProtected: true,  group: 'zopa'   },
-  { key: 'zopa_buyer',          label: 'ZOPA Buyer',           shortLabel: 'Buyer',        badge: 'ZB', badgeColor: '#2563eb', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_pr',             label: 'ZOPA PR User',         shortLabel: 'PR',           badge: 'ZP', badgeColor: '#0ea5e9', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_grn',            label: 'ZOPA GRN User',        shortLabel: 'GRN',          badge: 'ZG', badgeColor: '#0ea5e9', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l1',    label: 'ZOPA Approver (L1)',   shortLabel: 'L1 Approver',  badge: 'L1', badgeColor: '#16a34a', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l2',    label: 'ZOPA Approver (L2)',   shortLabel: 'L2 Approver',  badge: 'L2', badgeColor: '#059669', isProtected: false, group: 'zopa'   },
-  { key: 'zopa_approver_l3',    label: 'ZOPA Approver (L3)',   shortLabel: 'L3 Approver',  badge: 'L3', badgeColor: '#047857', isProtected: false, group: 'zopa'   },
-  
-  // Client Roles
-  { key: 'client_admin',        label: 'Client Admin',         shortLabel: 'Admin',        badge: 'CA', badgeColor: '#b91c1c', isProtected: false, group: 'client' },
-  { key: 'client_buyer',        label: 'Client Buyer',         shortLabel: 'Buyer',        badge: 'CB', badgeColor: '#15803d', isProtected: false, group: 'client' },
-  { key: 'client_pr',           label: 'Client PR User',       shortLabel: 'PR',           badge: 'CP', badgeColor: '#0ea5e9', isProtected: false, group: 'client' },
-  { key: 'client_grn',          label: 'Client GRN User',      shortLabel: 'GRN',          badge: 'CG', badgeColor: '#0ea5e9', isProtected: false, group: 'client' },
-  { key: 'client_approver_l1',  label: 'Client Approver L1',  shortLabel: 'Approver L1',  badge: 'L1', badgeColor: '#d97706', isProtected: false, group: 'client' },
-  { key: 'client_approver_l2',  label: 'Client Approver L2',  shortLabel: 'Approver L2',  badge: 'L2', badgeColor: '#b45309', isProtected: false, group: 'client' },
-  { key: 'client_approver_l3',  label: 'Client Approver L3',  shortLabel: 'Approver L3',  badge: 'L3', badgeColor: '#92400e', isProtected: false, group: 'client' },
-];
+
 
 const ACTION_COLS = [
   { key: 'can_view',   label: 'View',   icon: 'visibility',   color: '#2563eb' },
@@ -296,7 +279,7 @@ export class AccessControlComponent implements OnInit {
   private notify       = inject(NotificationService);
 
   // ── Display metadata ──────────────────────────────────────────────────────
-  readonly roleMeta    = ROLE_META;
+  get roleMeta() { return this.rolesMeta(); }
   readonly actionCols  = ACTION_COLS;
 
   readonly moduleGroups = [
@@ -323,8 +306,14 @@ export class AccessControlComponent implements OnInit {
   savingRole  = signal<string | null>(null);
   selectedTabIndex = 0;
 
+  private roleService = inject(RoleService);
+
   /** Live working copy of the matrix — mutated by the toggles. */
   private matrix = signal<PermissionsMatrix>({});
+
+  rolesMeta = signal<RoleMeta[]>([]);
+  readonly clientRoles = computed(() => this.rolesMeta().filter(r => r.group === 'client'));
+  readonly zopaRoles   = computed(() => this.rolesMeta().filter(r => r.group === 'zopa'));
 
   /**
    * Original matrix snapshot fetched from the API.
@@ -338,7 +327,7 @@ export class AccessControlComponent implements OnInit {
     const current  = this.matrix();
     const original = this.originalMatrix;
 
-    for (const role of ROLE_META.map(r => r.key)) {
+    for (const role of this.rolesMeta().map(r => r.key)) {
       if (!current[role] || !original[role]) continue;
       for (const mod of MODULE_META.map(m => m.key)) {
         const c = current[role][mod];
@@ -359,16 +348,36 @@ export class AccessControlComponent implements OnInit {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   ngOnInit(): void {
-    this.adminService.getRolePermissions().subscribe({
-      next: ({ matrix }) => {
-        this.originalMatrix = this.deepClone(matrix);
-        this.matrix.set(matrix);
-        this.loading.set(false);
+    this.roleService.getRoles().subscribe({
+      next: (roles) => {
+        const mappedRoles = roles.map(r => ({
+          key: r.slug,
+          label: r.name,
+          shortLabel: r.name,
+          badge: r.name.substring(0, 2).toUpperCase(),
+          badgeColor: r.type === 'zopa' ? '#2563eb' : '#15803d',
+          isProtected: r.slug === 'zopa_super_admin',
+          group: r.type
+        })) as RoleMeta[];
+        this.rolesMeta.set(mappedRoles);
+
+        this.adminService.getRolePermissions().subscribe({
+          next: ({ matrix }) => {
+            this.originalMatrix = this.deepClone(matrix);
+            this.matrix.set(matrix);
+            this.loading.set(false);
+          },
+          error: () => {
+            this.notify.error('Failed to load permissions.');
+            this.loading.set(false);
+          },
+        });
       },
       error: () => {
-        this.notify.error('Failed to load permissions.');
+        console.error("Failed to load roles!");
+        this.notify.error('Failed to load roles.');
         this.loading.set(false);
-      },
+      }
     });
   }
 

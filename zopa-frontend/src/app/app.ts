@@ -176,6 +176,9 @@ import { filter } from 'rxjs/operators';
                 <a class="nav-link" routerLink="/admin/settings" routerLinkActive="nav-link--active">
                   <mat-icon>tune</mat-icon><span>Platform Settings</span>
                 </a>
+                <a class="nav-link" routerLink="/admin/roles-master" routerLinkActive="nav-link--active">
+                  <mat-icon>manage_accounts</mat-icon><span>Roles Master</span>
+                </a>
                 <a class="nav-link" routerLink="/admin/access-control" routerLinkActive="nav-link--active">
                   <mat-icon>admin_panel_settings</mat-icon><span>Access Control</span>
                 </a>

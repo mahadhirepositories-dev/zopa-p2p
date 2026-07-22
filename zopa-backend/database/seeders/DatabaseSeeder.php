@@ -69,7 +69,8 @@ class DatabaseSeeder extends Seeder
             'is_active'   => true,
         ]);
 
-        // Seed default role permissions (idempotent — uses insertOrIgnore)
+        // Seed default roles and their permissions (idempotent)
+        $this->call(OrgRoleSeeder::class);
         $this->call(RolePermissionSeeder::class);
 
         $this->command->info('✓ Fresh install complete.');

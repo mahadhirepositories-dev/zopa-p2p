@@ -132,13 +132,13 @@ class ApprovalController extends Controller
     {
         $this->requirePermission('approvals', 'edit');
         $this->ensureAssigned($approval);
-        $this->approvals->approve($approval, $request->input('comments', ''));
+        $this->approvals->approve($approval, $request->input('comments') ?? '');
 
         $this->actLog->log(
             $approval->entity_type,
             $approval->entity_id,
             'approved',
-            ['level' => $approval->level, 'comments' => $request->input('comments', '')]
+            ['level' => $approval->level, 'comments' => $request->input('comments') ?? '']
         );
 
         return response()->json(['message' => 'Approved']);
@@ -228,9 +228,9 @@ class ApprovalController extends Controller
     public function approveViaPoId(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
         $approval = $this->findMyPendingApproval($purchaseOrder);
-        $this->approvals->approve($approval, $request->input('comments', ''));
+        $this->approvals->approve($approval, $request->input('comments') ?? '');
         $this->actLog->log('PO', $purchaseOrder->id, 'approved', [
-            'level' => $approval->level, 'comments' => $request->input('comments', '')
+            'level' => $approval->level, 'comments' => $request->input('comments') ?? ''
         ]);
         return response()->json(['message' => 'Approved']);
     }

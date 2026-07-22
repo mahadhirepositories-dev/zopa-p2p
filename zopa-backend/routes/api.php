@@ -25,6 +25,7 @@ use App\Http\Controllers\Admin\ClientUserController;
 use App\Http\Controllers\Admin\ZopaStaffController;
 use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Http\Controllers\Admin\RolePermissionsController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\EmailTemplatesController;
 use App\Http\Middleware\TenantScopeMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -107,6 +108,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Returns {role: {module: {can_view, can_create, can_edit, can_delete}}} for all roles.
     Route::get('/role-permissions', [RolePermissionsController::class, 'matrix']);
 
+    // Get all available roles (used by Access Control, ZOPA Staff, and Org Staff)
+    Route::get('/roles', [RoleController::class, 'index']);
+
     // Admin routes (Super Admin only)
     Route::prefix('admin')->middleware(['super_admin'])->group(function () {
         Route::get('zopa-staff', [ZopaStaffController::class, 'index']);
@@ -131,6 +135,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // Access Control — role × module permission matrix management
         Route::get('role-permissions', [RolePermissionsController::class, 'index']);
         Route::put('role-permissions/{role}', [RolePermissionsController::class, 'update']);
+
+        // Roles Master
+        Route::get('roles', [RoleController::class, 'index']);
+        Route::post('roles', [RoleController::class, 'store']);
+        Route::put('roles/{id}', [RoleController::class, 'update']);
+        Route::delete('roles/{id}', [RoleController::class, 'destroy']);
 
         // Email templates — read-only preview catalogue
         Route::get('email-templates', [EmailTemplatesController::class, 'index']);

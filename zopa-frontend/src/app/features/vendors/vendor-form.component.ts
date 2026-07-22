@@ -43,7 +43,7 @@ const CURRENCIES = [
   selector: 'app-vendor-form',
   standalone: true,
   imports: [
-    DatePipe, RouterLink, ReactiveFormsModule,
+    RouterLink, ReactiveFormsModule,
     MatButtonModule, MatIconModule, MatFormFieldModule, MatInputModule,
     MatSelectModule, MatCheckboxModule, MatDatepickerModule, MatNativeDateModule,
     MatCardModule, MatProgressSpinnerModule, MatDividerModule, MatChipsModule, MatTooltipModule,
@@ -62,7 +62,7 @@ const CURRENCIES = [
         <div style="display:flex;gap:8px;">
           <button mat-stroked-button routerLink="/vendors">Cancel</button>
           <button mat-raised-button color="primary" [disabled]="saving()" (click)="save()">
-            @if (saving()) { <mat-spinner diameter="18" /> } @else { <mat-icon>save</mat-icon> Save Vendor }
+            @if (saving()) { <mat-spinner diameter="18" /> } @else { <ng-container><mat-icon>save</mat-icon> Save Vendor</ng-container> }
           </button>
         </div>
       </div>

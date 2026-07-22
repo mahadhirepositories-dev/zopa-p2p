@@ -14,6 +14,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { AdminService, Tenant, UserTenantRole } from '../services/admin.service';
+import { RoleService, Role } from '../../../services/role.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { gstinValidator } from '../../../core/validators';
 
@@ -267,13 +268,8 @@ import { gstinValidator } from '../../../core/validators';
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Role for this Client</mat-label>
                 <mat-select formControlName="role">
-                  <mat-option value="zopa_buyer">ZOPA Buyer</mat-option>
-                  <mat-option value="zopa_pr">ZOPA PR User</mat-option>
-                  <mat-option value="zopa_grn">ZOPA GRN User</mat-option>
-                  <mat-option value="zopa_approver_l1">ZOPA L1 Approver</mat-option>
-                  <mat-option value="zopa_approver_l2">ZOPA L2 Approver</mat-option>
-                  @if (client()?.is_internal) {
-                    <mat-option value="zopa_approver_l3">ZOPA L3 Approver</mat-option>
+                  @for (role of zopaRoles(); track role.slug) {
+                    <mat-option [value]="role.slug">{{ role.name }}</mat-option>
                   }
                 </mat-select>
                 <mat-hint>Defines the staff member's role within this specific client org</mat-hint>
@@ -317,11 +313,9 @@ import { gstinValidator } from '../../../core/validators';
                 <mat-form-field appearance="outline" style="flex:1;">
                   <mat-label>Role *</mat-label>
                   <mat-select formControlName="role">
-                    <mat-option value="client_admin">Admin</mat-option>
-                    <mat-option value="client_buyer">Buyer</mat-option>
-                    <mat-option value="client_approver_l1">L1 Approver</mat-option>
-                    <mat-option value="client_approver_l2">L2 Approver</mat-option>
-                    <mat-option value="client_approver_l3">L3 Approver</mat-option>
+                    @for (role of clientRoles(); track role.slug) {
+                      <mat-option [value]="role.slug">{{ role.name }}</mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -469,11 +463,9 @@ import { gstinValidator } from '../../../core/validators';
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Role</mat-label>
                 <mat-select formControlName="role">
-                  <mat-option value="client_admin">Client Admin</mat-option>
-                  <mat-option value="client_buyer">Client Buyer</mat-option>
-                  <mat-option value="client_approver_l1">L1 Approver</mat-option>
-                  <mat-option value="client_approver_l2">L2 Approver</mat-option>
-                  <mat-option value="client_approver_l3">L3 Approver (Final)</mat-option>
+                  @for (role of clientRoles(); track role.slug) {
+                    <mat-option [value]="role.slug">{{ role.name }}</mat-option>
+                  }
                 </mat-select>
               </mat-form-field>
             </form>
@@ -653,6 +645,7 @@ export class ClientDetailComponent implements OnInit {
   }
 
   private adminService = inject(AdminService);
+  private roleService = inject(RoleService);
   private auth = inject(AuthService);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -662,6 +655,9 @@ export class ClientDetailComponent implements OnInit {
   zopaStaff = signal<UserTenantRole[]>([]);
   clientUsers = signal<UserTenantRole[]>([]);
   availableStaff = signal<any[]>([]);
+  clientRoles = signal<Role[]>([]);
+  zopaRoles = signal<Role[]>([]);
+  allRoles = signal<Role[]>([]);
 
   loading = signal(true);
   loadError = signal('');
@@ -708,26 +704,26 @@ export class ClientDetailComponent implements OnInit {
   });
 
   roleLabel(role: string): string {
-    const rolesMap: Record<string, string> = {
-      zopa_super_admin: 'Super Admin',
-      zopa_buyer: 'ZOPA Buyer',
-      zopa_pr: 'ZOPA PR User',
-      zopa_grn: 'ZOPA GRN User',
-      zopa_approver_l1: 'L1 Approver',
-      zopa_approver_l2: 'ZOPA L2 Approver',
-      zopa_approver_l3: 'ZOPA L3 Approver',
-      client_admin: 'Admin',
-      client_buyer: 'Buyer',
-      client_pr: 'Client PR User',
-      client_grn: 'Client GRN User',
-      client_approver_l1: 'L1 Approver',
-      client_approver_l2: 'L2 Approver',
-      client_approver_l3: 'L3 Approver',
-    };
-    return rolesMap[role] ?? role;
+    const found = this.allRoles().find(r => r.slug === role);
+    return found ? found.name : role;
   }
 
-  ngOnInit() { this.loadClientData(+this.id()); }
+  ngOnInit() {
+    this.roleService.getRoles().subscribe({
+      next: (roles) => {
+        this.allRoles.set(roles);
+        this.clientRoles.set(roles.filter(r => r.type === 'client'));
+        this.zopaRoles.set(roles.filter(r => r.type === 'zopa' && r.slug !== 'zopa_super_admin'));
+      },
+      error: () => console.error("Failed to load client roles")
+    });
+    this.loadClientData(+this.id());
+  }
+
+  onTabChange(index: number) {
+    this.selectedTab.set(index);
+    // Force angular HMR
+  }
 
   loadClientData(id: number) {
     this.loading.set(true);

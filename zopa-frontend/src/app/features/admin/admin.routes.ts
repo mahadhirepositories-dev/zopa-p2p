@@ -27,6 +27,12 @@ export const adminRoutes: Routes = [
     loadComponent: () => import('./zopa-dashboard/zopa-dashboard.component').then(m => m.ZopaDashboardComponent),
   },
   {
+    path: 'roles-master',
+    canActivate: [roleGuard],
+    data: { roles: ['zopa_super_admin'] },
+    loadComponent: () => import('./roles-master/roles-master.component').then(m => m.RolesMasterComponent),
+  },
+  {
     path: 'staff',
     canActivate: [roleGuard],
     data: { roles: ['zopa_super_admin'] },

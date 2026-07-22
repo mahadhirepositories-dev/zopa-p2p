@@ -63,11 +63,14 @@ class RolePermissionsController extends Controller
 
     public function index(): JsonResponse
     {
-        $matrix = $this->permissionService->buildMatrix(self::ROLES, self::MODULES);
+        // Dynamically load all available role slugs from the database
+        $roles = \App\Models\Role::pluck('slug')->toArray();
+        
+        $matrix = $this->permissionService->buildMatrix($roles, self::MODULES);
 
         return response()->json([
             'matrix'  => $matrix,
-            'roles'   => self::ROLES,
+            'roles'   => $roles,
             'modules' => self::MODULES,
         ]);
     }
@@ -85,7 +88,8 @@ class RolePermissionsController extends Controller
      */
     public function update(Request $request, string $role): JsonResponse
     {
-        if (!in_array($role, self::ROLES, true)) {
+        $validRoles = \App\Models\Role::pluck('slug')->toArray();
+        if (!in_array($role, $validRoles, true)) {
             return response()->json(['message' => 'Invalid role.'], 422);
         }
 
@@ -132,9 +136,10 @@ class RolePermissionsController extends Controller
 
     public function matrix(): JsonResponse
     {
-        $matrix = Cache::remember('role_permissions_matrix', 300, fn () =>
-            $this->permissionService->buildMatrix(self::ROLES, self::MODULES)
-        );
+        $matrix = Cache::remember('role_permissions_matrix', 300, function () {
+            $roles = \App\Models\Role::pluck('slug')->toArray();
+            return $this->permissionService->buildMatrix($roles, self::MODULES);
+        });
 
         return response()->json($matrix);
     }

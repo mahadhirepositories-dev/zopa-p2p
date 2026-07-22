@@ -10,16 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { AdminService } from '../services/admin.service';
 import { NotificationService } from '../../../core/services/notification.service';
-
-const ROLE_LABELS: Record<string, string> = {
-  zopa_super_admin:   'Super Admin',
-  zopa_buyer:         'Buyer',
-  zopa_pr:            'PR User',
-  zopa_grn:           'GRN User',
-  zopa_approver_l1:   'L1 Approver',
-  zopa_approver_l2:   'L2 Approver',
-  zopa_approver_l3:   'L3 Approver',
-};
+import { RoleService, Role } from '../../../services/role.service';
 
 @Component({
   selector: 'app-zopa-staff',
@@ -68,7 +59,7 @@ const ROLE_LABELS: Record<string, string> = {
                 <div class="staff-right">
                   @if (s.zopa_role) {
                     <span class="role-pill role-{{ s.zopa_role }}">
-                      {{ roleLabel(s.zopa_role) }}
+                      {{ getRoleName(s.zopa_role) }}
                     </span>
                   }
                   @if (!isSelf(s.id)) {
@@ -124,13 +115,9 @@ const ROLE_LABELS: Record<string, string> = {
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>Role *</mat-label>
                 <mat-select formControlName="role">
-                  <mat-option value="zopa_buyer">Buyer</mat-option>
-                  <mat-option value="zopa_pr">PR User</mat-option>
-                  <mat-option value="zopa_grn">GRN User</mat-option>
-                  <mat-option value="zopa_approver_l1">L1 Approver</mat-option>
-                  <mat-option value="zopa_approver_l2">L2 Approver</mat-option>
-                  <mat-option value="zopa_approver_l3">L3 Approver (Final)</mat-option>
-                  <mat-option value="zopa_super_admin">Super Admin</mat-option>
+                  @for (role of zopaRoles(); track role.slug) {
+                    <mat-option [value]="role.slug">{{ role.name }}</mat-option>
+                  }
                 </mat-select>
                 <mat-hint>Role within the ZOPA internal org</mat-hint>
               </mat-form-field>
@@ -228,8 +215,11 @@ export class ZopaStaffComponent implements OnInit {
   private adminService = inject(AdminService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
+  private roleService = inject(RoleService);
 
   staff = signal<any[]>([]);
+  zopaRoles = signal<Role[]>([]);
+  
   loading = signal(true);
   showDialog = signal(false);
   saving = signal(false);
@@ -243,7 +233,7 @@ export class ZopaStaffComponent implements OnInit {
     name:     ['', Validators.required],
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
-    role:     ['zopa_buyer', Validators.required],
+    role:     ['', Validators.required],
   });
 
   ngOnInit() {
@@ -253,13 +243,27 @@ export class ZopaStaffComponent implements OnInit {
   loadStaff() {
     this.loading.set(true);
     this.adminService.getZopaStaff().subscribe({
-      next: data => { this.staff.set(data); this.loading.set(false); },
+      next: data => { 
+        this.staff.set(data); 
+        
+        this.roleService.getRoles().subscribe({
+          next: roles => {
+            this.zopaRoles.set(roles.filter(r => r.type === 'zopa'));
+            this.loading.set(false);
+          },
+          error: () => this.loading.set(false)
+        });
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  roleLabel(role: string): string {
-    return ROLE_LABELS[role] ?? role;
+  getRoleName(slug: string): string {
+    const roles = this.zopaRoles();
+    const role = roles.find(r => r.slug === slug);
+    if (role) return role.name;
+    
+    return slug.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
 
   isSelf(userId: number): boolean {
@@ -267,7 +271,7 @@ export class ZopaStaffComponent implements OnInit {
   }
 
   openDialog() {
-    this.form.reset({ role: 'zopa_buyer' });
+    this.form.reset({ role: '' });
     this.saveError.set('');
     this.showDialog.set(true);
   }

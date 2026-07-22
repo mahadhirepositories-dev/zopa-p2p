@@ -68,21 +68,21 @@ import { AuthService } from '../../core/auth/auth.service';
             @if (myApproval() && po()!.status?.startsWith('pending')) {
               <button mat-raised-button style="background:#22c55e;color:#fff;" [disabled]="acting()" (click)="openApprovalAction('approve')">
                 @if (acting() === 'approve') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>check_circle</mat-icon> Approve }
+                @else { <ng-container><mat-icon>check_circle</mat-icon> Approve</ng-container> }
               </button>
               <button mat-stroked-button color="warn" [disabled]="acting()" (click)="openApprovalAction('return')">
                 <mat-icon>undo</mat-icon> Return
               </button>
               <button mat-raised-button color="warn" [disabled]="acting()" (click)="openApprovalAction('reject')">
                 @if (acting() === 'reject') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>cancel</mat-icon> Reject }
+                @else { <ng-container><mat-icon>cancel</mat-icon> Reject</ng-container> }
               </button>
             }
 
             @if (po()!.status === 'approved' && auth.canTransact()) {
               <button mat-raised-button color="primary" [disabled]="acting()" (click)="releasePo()">
                 @if (acting() === 'release') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>send</mat-icon> Release PO }
+                @else { <ng-container><mat-icon>send</mat-icon> Release PO</ng-container> }
               </button>
             }
 
@@ -90,7 +90,7 @@ import { AuthService } from '../../core/auth/auth.service';
               <button mat-raised-button color="primary" [disabled]="acting()" (click)="deliverPo()"
                 style="background:linear-gradient(135deg,#10b981,#059669);">
                 @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>local_shipping</mat-icon> Mark Delivered }
+                @else { <ng-container><mat-icon>local_shipping</mat-icon> Mark Delivered</ng-container> }
               </button>
             }
 
@@ -105,7 +105,7 @@ import { AuthService } from '../../core/auth/auth.service';
               <button mat-raised-button color="primary" [disabled]="acting()" (click)="releasePaymentPo()"
                 style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
                 @if (acting() === 'payment') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>payments</mat-icon> Release Payment }
+                @else { <ng-container><mat-icon>payments</mat-icon> Release Payment</ng-container> }
               </button>
             }
 

@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { RoleService, Role } from '../../services/role.service';
 
 interface StaffMember {
   id: number;
@@ -21,26 +22,6 @@ interface StaffMember {
   email: string;
   role: string;
 }
-
-const CLIENT_ROLE_LABELS: Record<string, string> = {
-  client_admin:        'Admin',
-  client_buyer:        'Buyer',
-  client_pr:           'PR User',
-  client_grn:          'GRN User',
-  client_approver_l1:  'L1 Approver',
-  client_approver_l2:  'L2 Approver',
-  client_approver_l3:  'L3 Approver',
-};
-
-const ZOPA_ROLE_LABELS: Record<string, string> = {
-  zopa_super_admin:   'Super Admin',
-  zopa_buyer:         'Buyer',
-  zopa_pr:            'PR User',
-  zopa_grn:           'GRN User',
-  zopa_approver_l1:   'L1 Approver',
-  zopa_approver_l2:   'L2 Approver',
-  zopa_approver_l3:   'L3 Approver (Final)',
-};
 
 @Component({
   selector: 'app-org-staff',
@@ -96,7 +77,7 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
                   <div class="staff-email">{{ s.email }}</div>
                 </div>
                 <span class="role-pill role-zopa-{{ roleKey(s.role) }}">
-                  {{ zopaRoleLabel(s.role) }}
+                  {{ getRoleName(s.role) }}
                 </span>
               </div>
             }
@@ -105,12 +86,12 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
 
         <mat-divider style="margin-bottom:28px;" />
 
-        <!-- Own staff section -->
+        <!-- Client's Own Staff section -->
         <div class="section-header">
-          <div class="section-icon org-icon"><mat-icon>group</mat-icon></div>
+          <div class="section-icon org-icon"><mat-icon>business</mat-icon></div>
           <div>
-            <div class="section-title">Organisation Staff</div>
-            <div class="section-sub">Your own team members</div>
+            <div class="section-title">Your Organisation Staff</div>
+            <div class="section-sub">Team members in your company</div>
           </div>
           <span class="count-badge">{{ ownStaff().length }}</span>
         </div>
@@ -118,30 +99,29 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
         @if (ownStaff().length === 0) {
           <div class="empty-band">
             <mat-icon>info_outline</mat-icon>
-            No organisation staff yet.
-            @if (isAdmin()) { Click <strong>Add Staff</strong> to invite your first team member. }
+            No staff members added yet.
           </div>
         } @else {
           <div class="staff-grid">
             @for (s of ownStaff(); track s.id) {
-              <div class="staff-card">
-                <div class="staff-avatar">{{ s.name?.[0]?.toUpperCase() }}</div>
+              <div class="staff-card org-card">
+                <div class="staff-avatar org-avatar">{{ s.name?.[0]?.toUpperCase() }}</div>
                 <div class="staff-info">
-                  <div class="staff-name">{{ s.name }}</div>
+                  <div class="staff-name flex-align">
+                    {{ s.name }}
+                    @if (s.id === currentUserId()) { <span class="badge badge-me">You</span> }
+                  </div>
                   <div class="staff-email">{{ s.email }}</div>
                 </div>
-                <span class="role-pill role-{{ s.role }}">
-                  {{ clientRoleLabel(s.role) }}
+                <span class="role-pill role-client-{{ roleKey(s.role) }}">
+                  {{ getRoleName(s.role) }}
                 </span>
+                
                 @if (isAdmin() && s.id !== currentUserId()) {
-                  <button mat-icon-button color="warn" title="Remove from organisation"
-                          [disabled]="removingId() === s.id"
-                          (click)="remove(s)">
-                    @if (removingId() === s.id) {
-                      <mat-spinner diameter="16" />
-                    } @else {
-                      <mat-icon style="font-size:18px;">person_remove</mat-icon>
-                    }
+                  <button mat-icon-button class="action-btn remove-btn" 
+                          (click)="remove(s)" [disabled]="removingId() === s.id"
+                          title="Remove user">
+                    @if (removingId() === s.id) { <mat-spinner diameter="16"/> } @else { <mat-icon>person_remove</mat-icon> }
                   </button>
                 }
               </div>
@@ -173,13 +153,9 @@ const ZOPA_ROLE_LABELS: Record<string, string> = {
                 <mat-form-field appearance="outline" style="flex:1;">
                   <mat-label>Role *</mat-label>
                   <mat-select formControlName="role">
-                    <mat-option value="client_buyer">Buyer</mat-option>
-                    <mat-option value="client_pr">PR User</mat-option>
-                    <mat-option value="client_grn">GRN User</mat-option>
-                    <mat-option value="client_approver_l1">L1 Approver</mat-option>
-                    <mat-option value="client_approver_l2">L2 Approver</mat-option>
-                    <mat-option value="client_approver_l3">L3 Approver</mat-option>
-                    <mat-option value="client_admin">Admin</mat-option>
+                    @for (role of clientRoles(); track role.slug) {
+                      <mat-option [value]="role.slug">{{ role.name }}</mat-option>
+                    }
                   </mat-select>
                 </mat-form-field>
               </div>
@@ -329,8 +305,11 @@ export class OrgStaffComponent implements OnInit {
   private auth = inject(AuthService);
   private notify = inject(NotificationService);
   private fb = inject(FormBuilder);
+  private roleService = inject(RoleService);
 
   allUsers = signal<StaffMember[]>([]);
+  clientRoles = signal<Role[]>([]);
+  
   loading = signal(true);
   showDialog = signal(false);
   saving = signal(false);
@@ -338,7 +317,7 @@ export class OrgStaffComponent implements OnInit {
   removingId = signal<number | null>(null);
 
   zopaStaff = computed(() => this.allUsers().filter(u => u.role.startsWith('zopa_')));
-  ownStaff  = computed(() => this.allUsers().filter(u => u.role.startsWith('client_')));
+  ownStaff  = computed(() => this.allUsers().filter(u => u.role.startsWith('client_') || u.role && !u.role.startsWith('zopa_')));
 
   isAdmin = computed(() => this.auth.hasRole('client_admin'));
   currentUserId = computed(() => this.auth.user()?.id ?? null);
@@ -347,25 +326,45 @@ export class OrgStaffComponent implements OnInit {
     name:     ['', Validators.required],
     email:    ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(8)]],
-    role:     ['client_buyer', Validators.required],
+    role:     ['', Validators.required],
   });
 
   ngOnInit() { this.load(); }
 
   load() {
     this.loading.set(true);
+    
+    // Fetch both users and dynamic roles
     this.http.get<StaffMember[]>(`${environment.apiUrl}/users`).subscribe({
-      next: data => { this.allUsers.set(data); this.loading.set(false); },
+      next: data => { 
+        this.allUsers.set(data); 
+        
+        this.roleService.getRoles().subscribe({
+          next: roles => {
+            this.clientRoles.set(roles.filter(r => r.type === 'client'));
+            this.loading.set(false);
+          },
+          error: () => this.loading.set(false)
+        });
+      },
       error: () => this.loading.set(false),
     });
   }
 
-  clientRoleLabel(role: string): string { return CLIENT_ROLE_LABELS[role] ?? role; }
-  zopaRoleLabel(role: string): string   { return ZOPA_ROLE_LABELS[role]   ?? role; }
-  roleKey(role: string): string         { return role.replace('zopa_', ''); }
+  getRoleName(slug: string): string {
+    // If we loaded roles, try to find it
+    const roles = this.clientRoles();
+    const role = roles.find(r => r.slug === slug);
+    if (role) return role.name;
+    
+    // Fallback formatting for ZOPA or unknown roles
+    return slug.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  roleKey(role: string): string { return role.replace('zopa_', '').replace('client_', ''); }
 
   openDialog() {
-    this.form.reset({ role: 'client_buyer' });
+    this.form.reset({ role: '' });
     this.saveError.set('');
     this.showDialog.set(true);
   }
