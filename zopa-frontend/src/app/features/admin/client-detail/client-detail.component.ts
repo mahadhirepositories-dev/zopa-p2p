@@ -664,6 +664,7 @@ export class ClientDetailComponent implements OnInit {
   saving = signal(false);
   saveError = signal('');
   uploadingLogo = signal(false);
+  selectedTab   = signal(0);
 
   showAssignDialog     = signal(false);
   showCreateUserDialog = signal(false);
