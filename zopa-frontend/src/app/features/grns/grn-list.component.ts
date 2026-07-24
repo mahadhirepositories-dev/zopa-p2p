@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
@@ -8,6 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
@@ -20,6 +21,7 @@ import { ExportService } from '../../core/services/export.service';
     DatePipe, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule,
     MatIconModule, MatProgressSpinnerModule, MatCardModule,
+    MatPaginatorModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -58,7 +60,7 @@ import { ExportService } from '../../core/services/export.service';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="grns()" class="full-width">
+            <table mat-table [dataSource]="paginatedGrns()" class="full-width">
 
               <ng-container matColumnDef="grn_number">
                 <th mat-header-cell *matHeaderCellDef>GRN Number</th>
@@ -108,6 +110,14 @@ import { ExportService } from '../../core/services/export.service';
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
             </table>
+
+            <mat-paginator [length]="grns().length"
+                           [pageSize]="pageSize()"
+                           [pageIndex]="pageIndex()"
+                           [pageSizeOptions]="[10, 20, 50, 100]"
+                           (page)="pageIndex.set($event.pageIndex); pageSize.set($event.pageSize)"
+                           showFirstLastButtons>
+            </mat-paginator>
           }
         </mat-card-content>
       </mat-card>
@@ -153,6 +163,14 @@ export class GrnListComponent implements OnInit {
   columns = ['grn_number', 'po', 'received_date', 'received_by', 'status', 'arrow'];
   grns = signal<any[]>([]);
   loading = signal(true);
+
+  pageIndex = signal(0);
+  pageSize = signal(20);
+
+  paginatedGrns = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.grns().slice(start, start + this.pageSize());
+  });
 
   ngOnInit() {
     this.http.get<any>(`${environment.apiUrl}/grns?per_page=500`).subscribe({

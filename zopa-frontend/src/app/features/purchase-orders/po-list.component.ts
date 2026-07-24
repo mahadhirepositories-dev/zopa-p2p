@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
@@ -25,6 +26,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     DecimalPipe, DatePipe, FormsModule, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule, MatIconModule,
     MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule, SearchFieldComponent,
+    MatPaginatorModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -48,28 +50,28 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 
       <!-- Search + filters bar -->
       <div class="toolbar-bar">
-        <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
+        <app-search-field class="search-field" [value]="search()" (valueChange)="setSearch($event)"
                           placeholder="Search by PO number, vendor…" />
 
         <div class="filter-chips">
           <button class="filter-chip" [class.active]="statusFilter() === ''"
-                  (click)="statusFilter.set('')">All</button>
+                  (click)="setStatusFilter('')">All</button>
           <button class="filter-chip" [class.active]="statusFilter() === 'draft'"
-                  (click)="statusFilter.set('draft')">Draft</button>
+                  (click)="setStatusFilter('draft')">Draft</button>
           <button class="filter-chip returned" [class.active]="statusFilter() === 'returned'"
-                  (click)="statusFilter.set('returned')">⚠ Returned</button>
+                  (click)="setStatusFilter('returned')">⚠ Returned</button>
           <button class="filter-chip pending" [class.active]="statusFilter() === 'pending'"
-                  (click)="statusFilter.set('pending')">Pending</button>
+                  (click)="setStatusFilter('pending')">Pending</button>
           <button class="filter-chip approved" [class.active]="statusFilter() === 'approved'"
-                  (click)="statusFilter.set('approved')">Approved</button>
+                  (click)="setStatusFilter('approved')">Approved</button>
           <button class="filter-chip released" [class.active]="statusFilter() === 'released'"
-                  (click)="statusFilter.set('released')">Released</button>
+                  (click)="setStatusFilter('released')">Released</button>
           <button class="filter-chip delivered" [class.active]="statusFilter() === 'delivered'"
-                  (click)="statusFilter.set('delivered')">Delivered</button>
+                  (click)="setStatusFilter('delivered')">Delivered</button>
           <button class="filter-chip invoiced" [class.active]="statusFilter() === 'invoiced'"
-                  (click)="statusFilter.set('invoiced')">Invoiced</button>
+                  (click)="setStatusFilter('invoiced')">Invoiced</button>
           <button class="filter-chip payment" [class.active]="statusFilter() === 'payment_released'"
-                  (click)="statusFilter.set('payment_released')">Payment Released</button>
+                  (click)="setStatusFilter('payment_released')">Payment Released</button>
         </div>
       </div>
 
@@ -91,7 +93,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="filtered()" class="full-width">
+            <table mat-table [dataSource]="paginatedOrders()" class="full-width">
 
               <ng-container matColumnDef="po_number">
                 <th mat-header-cell *matHeaderCellDef>PO Number</th>
@@ -150,6 +152,14 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
             </table>
+
+            <mat-paginator [length]="filtered().length"
+                           [pageSize]="pageSize()"
+                           [pageIndex]="pageIndex()"
+                           [pageSizeOptions]="[10, 20, 50, 100]"
+                           (page)="pageIndex.set($event.pageIndex); pageSize.set($event.pageSize)"
+                           showFirstLastButtons>
+            </mat-paginator>
           }
         </mat-card-content>
       </mat-card>
@@ -167,88 +177,78 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
     .page-header p  { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
     .cta-btn { height: 40px !important; }
-
     .toolbar-bar {
       display: flex;
-      align-items: center;
       gap: 16px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
+      align-items: center;
     }
-    .search-field {
-      flex: 1;
-      max-width: 340px;
-    }
-    ::ng-deep .search-field .mat-mdc-form-field-infix { padding-top: 8px !important; padding-bottom: 8px !important; }
-
-    .filter-chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .search-field { flex: 1; min-width: 260px; }
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
     .filter-chip {
-      padding: 5px 14px;
-      border-radius: 99px;
+      padding: 6px 14px;
+      border-radius: 20px;
       border: 1px solid var(--border);
       background: var(--surface);
-      font-size: 12px;
-      font-weight: 500;
       color: var(--text-2);
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    .filter-chip:hover { border-color: var(--brand); color: var(--brand); }
-    .filter-chip.active { background: var(--brand); border-color: var(--brand); color: white; }
-    .filter-chip.pending.active   { background: #d97706; border-color: #d97706; }
-    .filter-chip.approved.active  { background: #16a34a; border-color: #16a34a; }
-    .filter-chip.released.active  { background: #2563eb; border-color: #2563eb; }
-    .filter-chip.delivered.active { background: #059669; border-color: #059669; }
-    .filter-chip.invoiced.active  { background: #92400e; border-color: #92400e; }
-    .filter-chip.payment.active   { background: #4f46e5; border-color: #4f46e5; }
-    .filter-chip.returned         { color: #c2410c; border-color: #fed7aa; }
-    .filter-chip.returned.active  { background: #ea580c; border-color: #ea580c; color: white; }
+    .filter-chip:hover { border-color: var(--text-3); color: var(--text-1); }
+    .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .filter-chip.returned.active { background: #ef4444; border-color: #ef4444; }
+    .filter-chip.pending.active  { background: #f59e0b; border-color: #f59e0b; }
+    .filter-chip.approved.active { background: #22c55e; border-color: #22c55e; }
+    .filter-chip.released.active { background: #3b82f6; border-color: #3b82f6; }
+    .filter-chip.delivered.active { background: #06b6d4; border-color: #06b6d4; }
+    .filter-chip.invoiced.active  { background: #8b5cf6; border-color: #8b5cf6; }
+    .filter-chip.payment.active   { background: #10b981; border-color: #10b981; }
 
-    .full-width { width: 100%; }
-    .clickable-row { cursor: pointer; }
-
-    .po-number-cell { display: flex; align-items: center; gap: 10px; }
+    .po-number-cell { display: flex; align-items: center; gap: 12px; }
     .po-icon {
-      width: 32px;
-      height: 32px;
-      background: var(--brand-light);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .po-icon mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--brand); }
-    .po-num { font-size: 13px; font-weight: 600; color: var(--text-1); }
-    .po-date { font-size: 11px; color: var(--text-3); }
-
-    .vendor-cell { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-    .vendor-avatar {
-      width: 28px;
-      height: 28px;
-      border-radius: 7px;
+      width: 36px; height: 36px;
       background: #eff6ff;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
       color: #2563eb;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
     }
+    .po-num { font-size: 14px; font-weight: 600; color: var(--text-1); }
+    .po-date { font-size: 12px; color: var(--text-3); }
+    .vendor-cell { display: flex; align-items: center; gap: 10px; }
+    .vendor-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #475569;
+      font-size: 12px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      text-transform: uppercase;
+    }
+    .amount { font-size: 14px; color: var(--text-1); }
+    .clickable-row { cursor: pointer; transition: background 0.15s ease; }
+    .clickable-row:hover { background: var(--surface-hover); }
+    .row-arrow { color: var(--text-3); font-size: 20px; }
 
-    .amount { font-size: 13px; font-weight: 700; color: var(--text-1); }
-
-    .row-arrow { color: var(--text-3); font-size: 18px; }
+    .status-draft      { background: #f1f5f9; color: #475569; }
+    .status-returned   { background: #fef2f2; color: #dc2626; }
+    .status-pending_l1 { background: #fffbeb; color: #d97706; }
+    .status-pending_l2 { background: #fffbeb; color: #d97706; }
+    .status-pending_l3 { background: #fffbeb; color: #d97706; }
+    .status-approved   { background: #f0fdf4; color: #16a34a; }
+    .status-released   { background: #eff6ff; color: #2563eb; }
+    .status-delivered  { background: #ecfeff; color: #0891b2; }
+    .status-invoiced   { background: #f5f3ff; color: #7c3aed; }
+    .status-payment_released { background: #ecfdf5; color: #059669; }
+    .status-closed     { background: #f8fafc; color: #64748b; }
+    .status-cancelled  { background: #fef2f2; color: #991b1b; }
 
     .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      padding: 60px 24px;
-      color: var(--text-3);
+      padding: 60px 20px;
       text-align: center;
+      color: var(--text-3);
     }
     .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--border); }
     .empty-state h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-2); }
@@ -267,6 +267,9 @@ export class PoListComponent implements OnInit {
   search = signal('');
   statusFilter = signal('');
 
+  pageIndex = signal(0);
+  pageSize = signal(20);
+
   filtered = computed(() => {
     const q = this.search().toLowerCase();
     const s = this.statusFilter();
@@ -279,6 +282,21 @@ export class PoListComponent implements OnInit {
       return matchSearch && matchStatus;
     });
   });
+
+  paginatedOrders = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filtered().slice(start, start + this.pageSize());
+  });
+
+  setSearch(val: string) {
+    this.search.set(val);
+    this.pageIndex.set(0);
+  }
+
+  setStatusFilter(s: string) {
+    this.statusFilter.set(s);
+    this.pageIndex.set(0);
+  }
 
   ngOnInit() {
     this.http.get<any>(`${environment.apiUrl}/purchase-orders?per_page=500`).subscribe({

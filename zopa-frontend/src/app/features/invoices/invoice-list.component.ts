@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
@@ -8,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
@@ -17,7 +18,7 @@ import { ExportService } from '../../core/services/export.service';
 @Component({
   selector: 'app-invoice-list',
   standalone: true,
-  imports: [DecimalPipe, DatePipe, RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule, MatCardModule],
+  imports: [DecimalPipe, DatePipe, RouterLink, MatTableModule, MatButtonModule, MatIconModule, MatChipsModule, MatProgressSpinnerModule, MatCardModule, MatPaginatorModule],
   template: `
     <div class="page-wrapper">
       <div class="page-header">
@@ -55,7 +56,7 @@ import { ExportService } from '../../core/services/export.service';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="invoices()" class="full-width">
+            <table mat-table [dataSource]="paginatedInvoices()" class="full-width">
 
               <ng-container matColumnDef="invoice_number">
                 <th mat-header-cell *matHeaderCellDef>Invoice #</th>
@@ -120,6 +121,14 @@ import { ExportService } from '../../core/services/export.service';
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
             </table>
+
+            <mat-paginator [length]="invoices().length"
+                           [pageSize]="pageSize()"
+                           [pageIndex]="pageIndex()"
+                           [pageSizeOptions]="[10, 20, 50, 100]"
+                           (page)="pageIndex.set($event.pageIndex); pageSize.set($event.pageSize)"
+                           showFirstLastButtons>
+            </mat-paginator>
           }
         </mat-card-content>
       </mat-card>
@@ -168,6 +177,14 @@ export class InvoiceListComponent implements OnInit {
   columns = ['invoice_number', 'vendor', 'po', 'invoice_date', 'amount', 'status', 'actions', 'arrow'];
   invoices = signal<any[]>([]);
   loading = signal(true);
+
+  pageIndex = signal(0);
+  pageSize = signal(20);
+
+  paginatedInvoices = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.invoices().slice(start, start + this.pageSize());
+  });
 
   ngOnInit() { this.load(); }
 

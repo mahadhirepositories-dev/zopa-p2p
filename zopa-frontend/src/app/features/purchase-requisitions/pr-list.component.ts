@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { ExportService } from '../../core/services/export.service';
@@ -24,7 +25,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
     DatePipe, DecimalPipe, TitleCasePipe, FormsModule, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule, MatIconModule,
     MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule, SearchFieldComponent,
-    MatCheckboxModule,
+    MatCheckboxModule, MatPaginatorModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -51,16 +52,16 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
       </div>
 
       <div class="toolbar-bar">
-        <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
+        <app-search-field class="search-field" [value]="search()" (valueChange)="setSearch($event)"
                           placeholder="Search by PR number, title…" />
 
         <div class="filter-chips">
-          <button class="filter-chip" [class.active]="statusFilter() === ''" (click)="statusFilter.set('')">All</button>
-          <button class="filter-chip" [class.active]="statusFilter() === 'draft'" (click)="statusFilter.set('draft')">Draft</button>
-          <button class="filter-chip submitted" [class.active]="statusFilter() === 'submitted'" (click)="statusFilter.set('submitted')">Submitted</button>
-          <button class="filter-chip rfq" [class.active]="statusFilter() === 'rfq_created'" (click)="statusFilter.set('rfq_created')">RFQ</button>
-          <button class="filter-chip converted" [class.active]="statusFilter() === 'converted'" (click)="statusFilter.set('converted')">Converted</button>
-          <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="statusFilter.set('rejected')">Rejected</button>
+          <button class="filter-chip" [class.active]="statusFilter() === ''" (click)="setStatusFilter('')">All</button>
+          <button class="filter-chip" [class.active]="statusFilter() === 'draft'" (click)="setStatusFilter('draft')">Draft</button>
+          <button class="filter-chip submitted" [class.active]="statusFilter() === 'submitted'" (click)="setStatusFilter('submitted')">Submitted</button>
+          <button class="filter-chip rfq" [class.active]="statusFilter() === 'rfq_created'" (click)="setStatusFilter('rfq_created')">RFQ</button>
+          <button class="filter-chip converted" [class.active]="statusFilter() === 'converted'" (click)="setStatusFilter('converted')">Converted</button>
+          <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="setStatusFilter('rejected')">Rejected</button>
         </div>
       </div>
 
@@ -73,8 +74,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
           } @else if (filtered().length === 0) {
             <div class="empty-state">
               <mat-icon>description</mat-icon>
-              <h3>No requisitions found</h3>
-              <p>{{ search() || statusFilter() ? 'Try adjusting your filters.' : 'Create your first purchase requisition.' }}</p>
+              <h3>No purchase requisitions found</h3>
+              <p>{{ search() || statusFilter() ? 'Try adjusting your search filters.' : 'Create your first requisition to get started.' }}</p>
               @if (!search() && !statusFilter() && auth.canDo('purchase_requisitions','create')) {
                 <button mat-raised-button color="primary" routerLink="create">
                   <mat-icon>add</mat-icon> Create PR
@@ -82,21 +83,22 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="filtered()" class="full-width">
+            <table mat-table [dataSource]="paginatedPrs()" class="full-width">
 
               <!-- Checkbox Column -->
               <ng-container matColumnDef="select">
                 <th mat-header-cell *matHeaderCellDef style="width: 48px;">
-                  <mat-checkbox (change)="$event ? toggleAll() : null"
+                  <mat-checkbox (change)="toggleAll()"
                                 [checked]="isAllSelected()"
                                 [indeterminate]="isAnySelected() && !isAllSelected()">
                   </mat-checkbox>
                 </th>
                 <td mat-cell *matCellDef="let pr" (click)="$event.stopPropagation()">
-                  <mat-checkbox (change)="$event ? toggleSelection(pr.id) : null"
-                                [checked]="selectedPrIds().includes(pr.id)"
-                                [disabled]="!isConvertible(pr)">
-                  </mat-checkbox>
+                  @if (isConvertible(pr)) {
+                    <mat-checkbox (change)="toggleSelection(pr.id)"
+                                  [checked]="selectedPrIds().includes(pr.id)">
+                    </mat-checkbox>
+                  }
                 </td>
               </ng-container>
 
@@ -180,6 +182,14 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
               <tr mat-row *matRowDef="let row; columns: displayedColumns();"
                   class="clickable-row" (click)="view(row.id)"></tr>
             </table>
+
+            <mat-paginator [length]="filtered().length"
+                           [pageSize]="pageSize()"
+                           [pageIndex]="pageIndex()"
+                           [pageSizeOptions]="[10, 20, 50, 100]"
+                           (page)="pageIndex.set($event.pageIndex); pageSize.set($event.pageSize)"
+                           showFirstLastButtons>
+            </mat-paginator>
           }
         </mat-card-content>
       </mat-card>
@@ -233,6 +243,8 @@ export class PrListComponent implements OnInit {
   search = signal('');
   statusFilter = signal('');
   selectedPrIds = signal<number[]>([]);
+  pageIndex = signal(0);
+  pageSize = signal(20);
 
   displayedColumns = computed(() => {
     if (this.auth.canTransact()) {
@@ -255,6 +267,21 @@ export class PrListComponent implements OnInit {
       return matchSearch && matchStatus;
     });
   });
+
+  paginatedPrs = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filtered().slice(start, start + this.pageSize());
+  });
+
+  setSearch(val: string) {
+    this.search.set(val);
+    this.pageIndex.set(0);
+  }
+
+  setStatusFilter(s: string) {
+    this.statusFilter.set(s);
+    this.pageIndex.set(0);
+  }
 
   ngOnInit() {
     this.http.get<any>(`${environment.apiUrl}/purchase-requisitions?per_page=500`).subscribe({
