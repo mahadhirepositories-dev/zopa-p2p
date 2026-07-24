@@ -281,7 +281,7 @@ export class PoListComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.http.get<any>(`${environment.apiUrl}/purchase-orders`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/purchase-orders?per_page=500`).subscribe({
       next: res => { this.orders.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

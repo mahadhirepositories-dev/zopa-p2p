@@ -173,7 +173,7 @@ export class InvoiceListComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.http.get<any>(`${environment.apiUrl}/invoices`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/invoices?per_page=500`).subscribe({
       next: res => { this.invoices.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

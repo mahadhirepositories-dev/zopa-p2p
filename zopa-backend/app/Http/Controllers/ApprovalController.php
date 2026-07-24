@@ -28,6 +28,8 @@ class ApprovalController extends Controller
     {
         $tenantId = app('currentTenant')->id;
 
+        $perPage = min((int) ($request->per_page ?? 500), 1000);
+
         $approvals = Approval::with([
                 'purchaseOrder' => fn($q) => $q->with('vendor', 'costCenter'),
                 'invoice' => fn($q) => $q->with(['purchaseOrder:id,po_number', 'purchaseOrder.vendor']),
@@ -42,7 +44,7 @@ class ApprovalController extends Controller
                   ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
             })
             ->latest()
-            ->paginate(20);
+            ->paginate($perPage);
 
         return response()->json($approvals);
     }
@@ -109,6 +111,8 @@ class ApprovalController extends Controller
         $this->requireAdminRole();
         $tenantId = app('currentTenant')->id;
 
+        $perPage = min((int) ($request->per_page ?? 500), 1000);
+
         $approvals = Approval::with([
                 'assignedTo:id,name,email',
                 'purchaseOrder' => fn($q) => $q->with('vendor', 'costCenter'),
@@ -123,7 +127,7 @@ class ApprovalController extends Controller
             })
             ->orderBy('level')
             ->latest()
-            ->paginate(50);
+            ->paginate($perPage);
 
         return response()->json($approvals);
     }

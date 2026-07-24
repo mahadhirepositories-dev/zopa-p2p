@@ -324,7 +324,7 @@ export class ApprovalQueueComponent implements OnInit {
 
   load() {
     this.loading.set(true);
-    this.http.get<any>(`${environment.apiUrl}/approvals/pending`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/approvals/pending?per_page=500`).subscribe({
       next: res => { this.approvals.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
@@ -333,7 +333,7 @@ export class ApprovalQueueComponent implements OnInit {
   /** Admin-only: all pending approvals across the org (read-only oversight). */
   loadAllPending() {
     this.loadingAll.set(true);
-    this.http.get<any>(`${environment.apiUrl}/approvals/all-pending`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/approvals/all-pending?per_page=500`).subscribe({
       next: res => { this.allPending.set(res.data ?? res); this.loadingAll.set(false); },
       error: () => this.loadingAll.set(false),
     });

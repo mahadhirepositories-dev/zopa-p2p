@@ -199,7 +199,7 @@ export class InvoiceFormComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.http.get<any>(`${environment.apiUrl}/purchase-orders`).subscribe(res => {
+    this.http.get<any>(`${environment.apiUrl}/purchase-orders?per_page=500`).subscribe(res => {
       const pos: any[] = res.data ?? res;
       this.releasedPos.set(pos.filter(p => ['delivered', 'invoiced', 'released'].includes(p.status)));
     });

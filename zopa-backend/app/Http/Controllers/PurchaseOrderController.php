@@ -77,7 +77,7 @@ class PurchaseOrderController extends Controller
             $query->where('cost_center_id', $request->cost_center_id);
         }
 
-        $perPage = min((int) ($request->per_page ?? 20), 200);
+        $perPage = min((int) ($request->per_page ?? 500), 1000);
         return response()->json($query->latest()->paginate($perPage));
     }
 

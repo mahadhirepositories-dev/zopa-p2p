@@ -155,7 +155,7 @@ export class GrnListComponent implements OnInit {
   loading = signal(true);
 
   ngOnInit() {
-    this.http.get<any>(`${environment.apiUrl}/grns`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/grns?per_page=500`).subscribe({
       next: res => { this.grns.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

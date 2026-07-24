@@ -23,7 +23,8 @@ class GrnController extends Controller
             $query->where('po_id', $request->po_id);
         }
 
-        return response()->json($query->latest()->paginate(20));
+        $perPage = min((int) ($request->per_page ?? 500), 1000);
+        return response()->json($query->latest()->paginate($perPage));
     }
 
     public function export(Request $request)

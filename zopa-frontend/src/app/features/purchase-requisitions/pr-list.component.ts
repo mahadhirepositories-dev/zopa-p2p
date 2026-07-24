@@ -257,7 +257,7 @@ export class PrListComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.http.get<any>(`${environment.apiUrl}/purchase-requisitions`).subscribe({
+    this.http.get<any>(`${environment.apiUrl}/purchase-requisitions?per_page=500`).subscribe({
       next: res => { this.prs.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
     });
