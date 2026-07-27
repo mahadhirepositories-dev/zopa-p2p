@@ -46,8 +46,6 @@ class PoResetService
             // the PO itself
             $po->update([
                 'status'              => 'draft',
-                'po_number'           => null,
-                'po_date'             => null,
                 'approved_by'         => null,
                 'approved_by_role'    => null,
                 'approved_at'         => null,
