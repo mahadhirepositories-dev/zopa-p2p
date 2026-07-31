@@ -8,10 +8,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { ActivityTimelineComponent } from '../../shared/components/activity-timeline.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
 
 @Component({
   selector: 'app-pr-detail',
@@ -19,7 +21,7 @@ import { AuthService } from '../../core/auth/auth.service';
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, RouterLink,
     MatButtonModule, MatIconModule, MatChipsModule,
-    MatProgressSpinnerModule, MatCardModule, MatDividerModule,
+    MatProgressSpinnerModule, MatCardModule, MatDividerModule, MatDialogModule,
     ActivityTimelineComponent,
   ],
   template: `
@@ -274,6 +276,7 @@ export class PrDetailComponent implements OnInit {
   private router = inject(Router);
   private notify = inject(NotificationService);
   readonly auth  = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   pr      = signal<any>(null);
   loading = signal(true);
@@ -343,22 +346,24 @@ export class PrDetailComponent implements OnInit {
   }
 
   shortClose() {
-    const reason = prompt('Please enter the reason for short closing this PR:');
-    if (!reason || !reason.trim()) {
-      if (reason !== null) this.notify.error('Reason is required for short closing.');
-      return;
-    }
-    this.acting.set(true);
-    this.http.post<any>(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/short-close`, { reason: reason.trim() }).subscribe({
-      next: r => {
-        this.pr.set(r);
-        this.acting.set(false);
-        this.notify.success(r.status === 'short_closed' ? 'PR short-closed.' : 'Short close request submitted for approval.');
-      },
-      error: e => {
-        this.notify.error(e.error?.error ?? 'Short close failed.');
-        this.acting.set(false);
-      }
+    const ref = this.dialog.open(ShortClosePrDialogComponent, {
+      width: '480px',
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (!res?.reason) return;
+      this.acting.set(true);
+      this.http.post<any>(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/short-close`, { reason: res.reason }).subscribe({
+        next: r => {
+          this.pr.set(r);
+          this.acting.set(false);
+          this.notify.success(r.status === 'short_closed' ? 'PR short-closed.' : 'Short close request submitted for approval.');
+        },
+        error: e => {
+          this.notify.error(e.error?.error ?? 'Short close failed.');
+          this.acting.set(false);
+        }
+      });
     });
   }
 

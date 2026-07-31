@@ -274,6 +274,8 @@ export interface PurchaseOrder {
   created_by_role?: string;
   created_at?: string;
   invoiced_at?: string;
+  delivery_status?: 'partially_delivered' | 'delivered' | null;
+  delivery_notes?: string | null;
 }
 
 export interface PaymentTerm {

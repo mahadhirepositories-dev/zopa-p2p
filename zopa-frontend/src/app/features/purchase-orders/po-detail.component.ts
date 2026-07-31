@@ -13,10 +13,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { ReleasePoDialogComponent } from './release-po-dialog.component';
+import { DeliveryStatusDialogComponent } from './delivery-status-dialog.component';
 
 @Component({
   selector: 'app-po-detail',
@@ -25,7 +28,7 @@ import { AuthService } from '../../core/auth/auth.service';
     DecimalPipe, DatePipe, UpperCasePipe, RouterLink, FormsModule,
     MatButtonModule, MatIconModule, MatCardModule, MatTableModule,
     MatChipsModule, MatDividerModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatInputModule, MatFormFieldModule,
+    MatInputModule, MatFormFieldModule, MatDialogModule,
   ],
   template: `
     <div class="page-wrapper">
@@ -584,6 +587,7 @@ export class PoDetailComponent implements OnInit {
   private router = inject(Router);
   private notify = inject(NotificationService);
   readonly auth = inject(AuthService);
+  private dialog = inject(MatDialog);
 
   po = signal<PurchaseOrder | null>(null);
   loading = signal(true);
@@ -645,28 +649,52 @@ export class PoDetailComponent implements OnInit {
   }
 
   releasePo() {
-    const ccEmails = prompt('Enter additional CC emails for this PO release (optional, comma-separated):');
-    if (ccEmails === null) return;
-    this.acting.set('release');
-    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release`, { cc_emails: ccEmails.trim() }).subscribe({
-      next: po => {
-        this.po.set(po);
-        this.acting.set(false);
-        this.notify.success(po?.emailed_to_vendor
-          ? 'PO released and emailed to the vendor.'
-          : 'PO released. No vendor email on file — add one, then use “Send to Vendor”.');
-      },
-      error: err => { this.notify.error(err.error?.error ?? 'Release failed.'); this.acting.set(false); },
+    const ref = this.dialog.open(ReleasePoDialogComponent, {
+      width: '480px',
+      data: {
+        poNumber: this.po()?.po_number,
+        vendorName: this.po()?.vendor?.name,
+        vendorEmail: this.po()?.vendor?.email,
+        title: 'Release Purchase Order',
+        confirmText: 'Release & Send PO',
+      }
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (!res) return;
+      this.acting.set('release');
+      this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release`, { cc_emails: res.ccEmails }).subscribe({
+        next: po => {
+          this.po.set(po);
+          this.acting.set(false);
+          this.notify.success(po?.emailed_to_vendor
+            ? 'PO released and emailed to the vendor.'
+            : 'PO released. No vendor email on file — add one, then use “Send to Vendor”.');
+        },
+        error: err => { this.notify.error(err.error?.error ?? 'Release failed.'); this.acting.set(false); },
+      });
     });
   }
 
   sendToVendor() {
-    const ccEmails = prompt('Enter additional CC emails (optional, comma-separated):');
-    if (ccEmails === null) return;
-    this.acting.set('sendVendor');
-    this.http.post<{ message: string }>(`${environment.apiUrl}/purchase-orders/${this.id()}/send-to-vendor`, { cc_emails: ccEmails.trim() }).subscribe({
-      next: res => { this.acting.set(false); this.notify.success(res?.message ?? 'PO emailed to vendor.'); },
-      error: err => { this.notify.error(err.error?.error ?? 'Could not email the vendor.'); this.acting.set(false); },
+    const ref = this.dialog.open(ReleasePoDialogComponent, {
+      width: '480px',
+      data: {
+        poNumber: this.po()?.po_number,
+        vendorName: this.po()?.vendor?.name,
+        vendorEmail: this.po()?.vendor?.email,
+        title: 'Send PO to Vendor',
+        confirmText: 'Email PO Document',
+      }
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (!res) return;
+      this.acting.set('sendVendor');
+      this.http.post<{ message: string }>(`${environment.apiUrl}/purchase-orders/${this.id()}/send-to-vendor`, { cc_emails: res.ccEmails }).subscribe({
+        next: res => { this.acting.set(false); this.notify.success(res?.message ?? 'PO emailed to vendor.'); },
+        error: err => { this.notify.error(err.error?.error ?? 'Could not email the vendor.'); this.acting.set(false); },
+      });
     });
   }
 
@@ -675,17 +703,23 @@ export class PoDetailComponent implements OnInit {
   }
 
   markDelivery(status: 'partially_delivered' | 'delivered') {
-    const label = status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered';
-    const notes = prompt(`Optional delivery notes for ${label}:`);
-    if (notes === null) return;
-    this.acting.set('deliver');
-    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/delivery-status`, { status, notes: notes.trim() }).subscribe({
-      next: po => {
-        this.po.set(po);
-        this.acting.set(false);
-        this.notify.success(`PO marked as ${label}. GRN handlers notified.`);
-      },
-      error: err => { this.notify.error(err.error?.error ?? 'Could not update delivery status.'); this.acting.set(false); },
+    const ref = this.dialog.open(DeliveryStatusDialogComponent, {
+      width: '480px',
+      data: { status, notes: this.po()?.delivery_notes }
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (!res) return;
+      this.acting.set('deliver');
+      this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/delivery-status`, { status: res.status, notes: res.notes }).subscribe({
+        next: po => {
+          this.po.set(po);
+          this.acting.set(false);
+          const label = res.status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered';
+          this.notify.success(`PO marked as ${label}. GRN handlers notified.`);
+        },
+        error: err => { this.notify.error(err.error?.error ?? 'Could not update delivery status.'); this.acting.set(false); },
+      });
     });
   }
 
