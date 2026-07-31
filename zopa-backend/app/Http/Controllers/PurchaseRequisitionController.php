@@ -355,6 +355,8 @@ class PurchaseRequisitionController extends Controller
         ]);
 
         return response()->json($purchaseRequisition->fresh());
+    }
+
     public function shortClose(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
     {
         $this->requireTransactRole();
