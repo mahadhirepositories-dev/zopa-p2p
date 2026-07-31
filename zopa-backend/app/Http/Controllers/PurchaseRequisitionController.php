@@ -25,33 +25,46 @@ class PurchaseRequisitionController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $tenant = app('currentTenant');
-        $ccIds = \App\Models\CostCenter::where('tenant_id', $tenant->id)->pluck('id');
+        try {
+            $tenant = app('currentTenant');
+            $ccIds = \App\Models\CostCenter::where('tenant_id', $tenant->id)->pluck('id');
 
-        $query = PurchaseRequisition::with([
-            'requestedBy:id,name',
-            'costCenter:id,name',
-            'project:id,name',
-            'location:id,name',
-        ])->where(function ($q) use ($tenant, $ccIds) {
-            $q->where('tenant_id', $tenant->id)
-              ->orWhereIn('cost_center_id', $ccIds);
-        });
+            $query = PurchaseRequisition::with([
+                'requestedBy:id,name',
+                'costCenter:id,name',
+                'project:id,name',
+                'location:id,name',
+            ])->where(function ($q) use ($tenant, $ccIds) {
+                $q->where('tenant_id', $tenant->id)
+                  ->orWhereIn('cost_center_id', $ccIds);
+            });
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+            if ($request->filled('requested_by')) {
+                $query->where('requested_by', $request->requested_by);
+            }
+
+            // Hide drafts from non-transact roles (like Approvers)
+            if (!$this->hasTransactRole()) {
+                $query->where('status', '!=', 'draft');
+            }
+
+            $perPage = min((int) ($request->per_page ?? 500), 1000);
+            return response()->json($query->latest()->paginate($perPage));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PR index error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
         }
-        if ($request->filled('requested_by')) {
-            $query->where('requested_by', $request->requested_by);
-        }
-
-        // Hide drafts from non-transact roles (like Approvers)
-        if (!$this->hasTransactRole()) {
-            $query->where('status', '!=', 'draft');
-        }
-
-        $perPage = min((int) ($request->per_page ?? 500), 1000);
-        return response()->json($query->latest()->paginate($perPage));
     }
 
     public function export(Request $request)
