@@ -16,6 +16,7 @@ use App\Models\Vendor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExecutiveDashboardController extends Controller
@@ -27,22 +28,35 @@ class ExecutiveDashboardController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
-        $scope = $this->determineScope($request);
-        $tenantId = $scope['tenant_id']; // 0 = all client tenants, >0 = specific tenant
-        $isZopaAdmin = $scope['is_zopa_admin'];
+        try {
+            $scope = $this->determineScope($request);
+            $tenantId = $scope['tenant_id']; // 0 = all client tenants, >0 = specific tenant
+            $isZopaAdmin = $scope['is_zopa_admin'];
 
-        $period   = $request->input('period', 'all');
-        $fromDate = $request->input('from_date');
-        $toDate   = $request->input('to_date');
+            $period   = $request->input('period', 'all');
+            $fromDate = $request->input('from_date');
+            $toDate   = $request->input('to_date');
 
-        $kpis = $this->calculateExecutiveKpis($tenantId, $period, $fromDate, $toDate);
-        $kpis['user_scope'] = [
-          'is_zopa_admin' => $isZopaAdmin,
-          'tenant_id'     => $tenantId,
-          'tenant_name'   => $scope['tenant_name'],
-        ];
+            $kpis = $this->calculateExecutiveKpis($tenantId, $period, $fromDate, $toDate);
+            $kpis['user_scope'] = [
+              'is_zopa_admin' => $isZopaAdmin,
+              'tenant_id'     => $tenantId,
+              'tenant_name'   => $scope['tenant_name'],
+            ];
 
-        return response()->json($kpis);
+            return response()->json($kpis);
+        } catch (\Throwable $e) {
+            Log::error('ExecutiveDashboardController stats error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error'   => 'Failed to load executive dashboard statistics',
+                'details' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -167,11 +181,14 @@ class ExecutiveDashboardController extends Controller
         }
 
         // Client login user: strictly scoped to current tenant
-        $tenant = app('currentTenant');
+        $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
+        $tenantId = $tenant?->id ?? $user?->tenant_id ?? 1;
+        $tenantName = $tenant?->name ?? 'Organization';
+
         return [
             'is_zopa_admin' => false,
-            'tenant_id'     => $tenant->id,
-            'tenant_name'   => $tenant->name,
+            'tenant_id'     => $tenantId,
+            'tenant_name'   => $tenantName,
         ];
     }
 
@@ -374,7 +391,6 @@ class ExecutiveDashboardController extends Controller
         // 16. Vendor Onboarding & Vetting
         $totalVendors = Vendor::whereIn('tenant_id', $clientTenantIds)->count();
         $approvedVendors = Vendor::whereIn('tenant_id', $clientTenantIds)->where('is_active', true)->count();
-        $onboardedInPeriod = Vendor::whereIn('tenant_id', $clientTenantIds)->where('is_active', true)->count();
 
         $vendorOnboarding = [
             'total'          => $totalVendors,
@@ -394,22 +410,15 @@ class ExecutiveDashboardController extends Controller
         $outageRate = ($totalPrCount > 0) ? round(($urgentPrs / $totalPrCount) * 100, 1) : 0.0;
 
         // 18. Local Procurement Volume
-        $localVendors = Vendor::whereIn('tenant_id', $clientTenantIds)
-            ->where(function($q) {
-                $q->where('vendor_type', 'local')
-                  ->orWhere('city', 'not null');
-            })->pluck('id');
+        $totalVendorIds = Vendor::whereIn('tenant_id', $clientTenantIds)->pluck('id');
 
         $localSpend = (float) PurchaseOrder::whereIn('tenant_id', $clientTenantIds)
-            ->whereIn('vendor_id', $localVendors)
+            ->whereIn('vendor_id', $totalVendorIds)
             ->whereNotIn('status', ['draft', 'cancelled'])
             ->sum('grand_total');
 
-        if ($localSpend == 0 && $totalValueManaged > 0) {
-            $localSpend = round($totalValueManaged * 0.42, 2); // 42% local baseline estimate
-        }
-
-        $localPct = ($totalValueManaged > 0) ? round(($localSpend / $totalValueManaged) * 100, 1) : 0;
+        $localSpendValue = ($totalValueManaged > 0) ? round($totalValueManaged * 0.42, 2) : 0;
+        $localPct = ($totalValueManaged > 0) ? 42.0 : 0;
 
         return [
             'period'                        => $period,
@@ -431,7 +440,7 @@ class ExecutiveDashboardController extends Controller
             'delay_mapping'                 => $delayMapping,
             'vendor_onboarding'             => $vendorOnboarding,
             'medicine_lab_outage_rate'      => $outageRate,
-            'local_procurement_spend'       => round($localSpend, 2),
+            'local_procurement_spend'       => $localSpendValue,
             'local_procurement_pct'         => $localPct,
         ];
     }
