@@ -230,6 +230,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/release', [PurchaseOrderController::class, 'release']);
         Route::post('purchase-orders/{purchaseOrder}/send-to-vendor', [PurchaseOrderController::class, 'sendToVendor']);
         Route::post('purchase-orders/{purchaseOrder}/deliver', [PurchaseOrderController::class, 'deliver']);
+        Route::post('purchase-orders/{purchaseOrder}/delivery-status', [PurchaseOrderController::class, 'markDeliveryStatus']);
         Route::post('purchase-orders/{purchaseOrder}/release-payment', [PurchaseOrderController::class, 'releasePayment']);
         Route::post('purchase-orders/{purchaseOrder}/reset-to-draft', [PurchaseOrderController::class, 'resetToDraft']);
         Route::get('purchase-orders/{purchaseOrder}/approval-diagnostic', [PurchaseOrderController::class, 'approvalDiagnostic']);
@@ -271,6 +272,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('purchase-requisitions', PurchaseRequisitionController::class);
         Route::post('purchase-requisitions/{purchaseRequisition}/submit', [PurchaseRequisitionController::class, 'submit']);
         Route::post('purchase-requisitions/{purchaseRequisition}/reject', [PurchaseRequisitionController::class, 'reject']);
+        Route::post('purchase-requisitions/{purchaseRequisition}/short-close', [PurchaseRequisitionController::class, 'shortClose']);
         Route::post('purchase-requisitions/{purchaseRequisition}/rfq-create', [PurchaseRequisitionController::class, 'rfqCreate']);
         Route::post('purchase-requisitions/{purchaseRequisition}/rfq-approve', [PurchaseRequisitionController::class, 'rfqApprove']);
         Route::get('purchase-requisitions/{purchaseRequisition}/activities', [PurchaseRequisitionController::class, 'activities']);

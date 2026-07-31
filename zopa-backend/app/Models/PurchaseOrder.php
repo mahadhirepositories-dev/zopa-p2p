@@ -16,7 +16,7 @@ class PurchaseOrder extends Model
         'vendor_id', 'vendor_address_id', 'cost_center_id',
         'po_valid_till', 'payment_terms_json', 'warranty_months',
         'terms_conditions', 'freight', 'freight_gst_rate', 'net_total', 'tax_amount',
-        'grand_total', 'round_off', 'status',
+        'grand_total', 'round_off', 'status', 'delivery_status', 'delivery_notes',
         'created_by_role', 'created_by',
         'approved_by', 'approved_by_role', 'approved_at', 'released_at',
         'delivered_at', 'invoiced_at', 'payment_released_at',

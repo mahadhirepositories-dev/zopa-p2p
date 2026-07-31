@@ -531,7 +531,7 @@ class PurchaseOrderController extends Controller
         return response()->json($purchaseOrder->fresh());
     }
 
-    public function release(PurchaseOrder $purchaseOrder): JsonResponse
+    public function release(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
         $this->requireTransactRole();
         $this->authorizePoAccess($purchaseOrder);
@@ -548,12 +548,20 @@ class PurchaseOrderController extends Controller
         $this->tat->stamp($purchaseOrder->id, 'po_released_at', now());
         $this->actLog->log('PO', $purchaseOrder->id, 'released');
 
+        // Parse optional CC emails
+        $ccEmails = [];
+        if ($request->filled('cc_emails')) {
+            $rawCc = is_array($request->cc_emails) ? $request->cc_emails : explode(',', $request->cc_emails);
+            $ccEmails = array_values(array_filter(array_map('trim', $rawCc), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+        }
+
         // Issue the PO to the vendor by email (PO PDF attached). Non-fatal:
         // a missing vendor email or any mail error never blocks the release.
-        $emailed = $this->emailPoToVendor($purchaseOrder);
+        $emailed = $this->emailPoToVendor($purchaseOrder, $ccEmails);
         if ($emailed) {
             $this->actLog->log('PO', $purchaseOrder->id, 'emailed_to_vendor', [
                 'email' => optional($purchaseOrder->vendor)->email,
+                'cc'    => $ccEmails,
             ]);
         }
 
@@ -567,12 +575,12 @@ class PurchaseOrderController extends Controller
      * "Send to Vendor" button, e.g. after adding the vendor's email address
      * or to re-issue the document.
      */
-    public function sendToVendor(PurchaseOrder $purchaseOrder): JsonResponse
+    public function sendToVendor(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
         $this->requireTransactRole();
         $this->authorizePoAccess($purchaseOrder);
 
-        if (!in_array($purchaseOrder->status, ['approved', 'released', 'delivered', 'invoiced', 'payment_released'])) {
+        if (!in_array($purchaseOrder->status, ['approved', 'released', 'partially_delivered', 'delivered', 'invoiced', 'payment_released'])) {
             return response()->json(['error' => 'Only approved or issued POs can be emailed to the vendor.'], 422);
         }
 
@@ -581,12 +589,19 @@ class PurchaseOrderController extends Controller
             return response()->json(['error' => 'This vendor has no email address on file. Add one on the vendor record first.'], 422);
         }
 
-        if (!$this->emailPoToVendor($purchaseOrder)) {
+        $ccEmails = [];
+        if ($request->filled('cc_emails')) {
+            $rawCc = is_array($request->cc_emails) ? $request->cc_emails : explode(',', $request->cc_emails);
+            $ccEmails = array_values(array_filter(array_map('trim', $rawCc), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
+        }
+
+        if (!$this->emailPoToVendor($purchaseOrder, $ccEmails)) {
             return response()->json(['error' => 'Could not send the email. Please try again.'], 500);
         }
 
         $this->actLog->log('PO', $purchaseOrder->id, 'emailed_to_vendor', [
             'email' => $purchaseOrder->vendor->email,
+            'cc'    => $ccEmails,
         ]);
 
         return response()->json(['message' => "Purchase order emailed to {$purchaseOrder->vendor->email}."]);
@@ -597,7 +612,7 @@ class PurchaseOrderController extends Controller
      * when the vendor has no email or the mail layer errors, so callers in the
      * release flow are never blocked by mail problems.
      */
-    private function emailPoToVendor(PurchaseOrder $po): bool
+    private function emailPoToVendor(PurchaseOrder $po, array $ccEmails = []): bool
     {
         $po->loadMissing([
             'items.product', 'vendor', 'vendorAddress', 'costCenter', 'tenant',
@@ -610,7 +625,7 @@ class PurchaseOrderController extends Controller
         }
 
         try {
-            Mail::to($email)->queue(new PurchaseOrderIssuedMail($po));
+            \Illuminate\Support\Facades\Mail::to($email)->queue(new \App\Mail\PurchaseOrderIssuedMail($po, $ccEmails));
         } catch (\Throwable $e) {
             report($e);
             return false;
@@ -621,20 +636,64 @@ class PurchaseOrderController extends Controller
 
     public function deliver(PurchaseOrder $purchaseOrder): JsonResponse
     {
+        return $this->markDeliveryStatus(new Request(['status' => 'delivered']), $purchaseOrder);
+    }
+
+    /**
+     * Update delivery status (partially_delivered or delivered) and send nudge notification to GRN handlers.
+     */
+    public function markDeliveryStatus(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
+    {
         $this->requireTransactRole();
         $this->authorizePoAccess($purchaseOrder);
 
-        if ($purchaseOrder->status !== 'released') {
-            return response()->json(['error' => 'Only released POs can be marked as delivered.'], 422);
-        }
-
-        $purchaseOrder->update([
-            'status'       => 'delivered',
-            'delivered_at' => now(),
+        $request->validate([
+            'status' => 'required|in:partially_delivered,delivered',
+            'notes'  => 'nullable|string|max:1000',
         ]);
 
-        $this->tat->stamp($purchaseOrder->id, 'po_delivered_at', now());
-        $this->actLog->log('PO', $purchaseOrder->id, 'delivered');
+        if (!in_array($purchaseOrder->status, ['released', 'partially_delivered', 'delivered'])) {
+            return response()->json(['error' => 'Delivery status can only be set for released POs.'], 422);
+        }
+
+        $updateData = [
+            'delivery_status' => $request->status,
+            'delivery_notes'  => $request->notes ?? null,
+        ];
+
+        if ($request->status === 'delivered') {
+            $updateData['status']       = 'delivered';
+            $updateData['delivered_at'] = now();
+            $this->tat->stamp($purchaseOrder->id, 'po_delivered_at', now());
+        }
+
+        $purchaseOrder->update($updateData);
+
+        $this->actLog->log('PO', $purchaseOrder->id, 'delivery_status_updated', [
+            'delivery_status' => $request->status,
+            'notes'           => $request->notes ?? null,
+        ]);
+
+        // Nudge GRN handlers / store managers by emailing users with transaction access in the tenant
+        try {
+            $tenant = app('currentTenant');
+            $tenantUsers = \App\Models\UserTenantRole::where('tenant_id', $tenant->id)
+                ->with('user')
+                ->get()
+                ->pluck('user')
+                ->filter()
+                ->unique('id');
+
+            foreach ($tenantUsers as $u) {
+                if (!empty($u->email)) {
+                    \Illuminate\Support\Facades\Mail::to($u->email)->queue(
+                        new \App\Mail\GrnNudgeMail($purchaseOrder, $request->status, $request->notes ?? null)
+                    );
+                }
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         return response()->json($purchaseOrder->fresh());
     }

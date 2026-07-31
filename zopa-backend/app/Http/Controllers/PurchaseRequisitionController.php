@@ -334,6 +334,25 @@ class PurchaseRequisitionController extends Controller
         ]);
 
         return response()->json($purchaseRequisition->fresh());
+    public function shortClose(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
+    {
+        $this->requireTransactRole();
+        $this->authorize($purchaseRequisition);
+
+        if (in_array($purchaseRequisition->status, ['draft', 'short_closed', 'rejected'])) {
+            return response()->json(['error' => 'PR cannot be short-closed in its current state.'], 422);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        $this->approval->routePrShortCloseForApproval($purchaseRequisition, $request->reason, auth()->id());
+        $this->actLog->log('PR', $purchaseRequisition->id, 'short_close_requested', [
+            'reason' => $request->reason,
+        ]);
+
+        return response()->json($purchaseRequisition->fresh());
     }
 
     public function destroy(PurchaseRequisition $purchaseRequisition): JsonResponse

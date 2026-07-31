@@ -86,11 +86,14 @@ import { AuthService } from '../../core/auth/auth.service';
               </button>
             }
 
-            @if (po()!.status === 'released' && auth.canTransact()) {
-              <button mat-raised-button color="primary" [disabled]="acting()" (click)="deliverPo()"
+            @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
+              <button mat-stroked-button color="accent" [disabled]="acting()" (click)="markDelivery('partially_delivered')">
+                <mat-icon>local_shipping</mat-icon> Partially Delivered
+              </button>
+              <button mat-raised-button color="primary" [disabled]="acting()" (click)="markDelivery('delivered')"
                 style="background:linear-gradient(135deg,#10b981,#059669);">
                 @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
-                @else { <ng-container><mat-icon>local_shipping</mat-icon> Mark Delivered</ng-container> }
+                @else { <ng-container><mat-icon>verified</mat-icon> Mark Delivered</ng-container> }
               </button>
             }
 
@@ -642,8 +645,10 @@ export class PoDetailComponent implements OnInit {
   }
 
   releasePo() {
+    const ccEmails = prompt('Enter additional CC emails for this PO release (optional, comma-separated):');
+    if (ccEmails === null) return;
     this.acting.set('release');
-    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release`, {}).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/release`, { cc_emails: ccEmails.trim() }).subscribe({
       next: po => {
         this.po.set(po);
         this.acting.set(false);
@@ -656,18 +661,31 @@ export class PoDetailComponent implements OnInit {
   }
 
   sendToVendor() {
+    const ccEmails = prompt('Enter additional CC emails (optional, comma-separated):');
+    if (ccEmails === null) return;
     this.acting.set('sendVendor');
-    this.http.post<{ message: string }>(`${environment.apiUrl}/purchase-orders/${this.id()}/send-to-vendor`, {}).subscribe({
+    this.http.post<{ message: string }>(`${environment.apiUrl}/purchase-orders/${this.id()}/send-to-vendor`, { cc_emails: ccEmails.trim() }).subscribe({
       next: res => { this.acting.set(false); this.notify.success(res?.message ?? 'PO emailed to vendor.'); },
       error: err => { this.notify.error(err.error?.error ?? 'Could not email the vendor.'); this.acting.set(false); },
     });
   }
 
   deliverPo() {
+    this.markDelivery('delivered');
+  }
+
+  markDelivery(status: 'partially_delivered' | 'delivered') {
+    const label = status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered';
+    const notes = prompt(`Optional delivery notes for ${label}:`);
+    if (notes === null) return;
     this.acting.set('deliver');
-    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/deliver`, {}).subscribe({
-      next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO marked as delivered.'); },
-      error: err => { this.notify.error(err.error?.error ?? 'Could not mark delivered.'); this.acting.set(false); },
+    this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/delivery-status`, { status, notes: notes.trim() }).subscribe({
+      next: po => {
+        this.po.set(po);
+        this.acting.set(false);
+        this.notify.success(`PO marked as ${label}. GRN handlers notified.`);
+      },
+      error: err => { this.notify.error(err.error?.error ?? 'Could not update delivery status.'); this.acting.set(false); },
     });
   }
 

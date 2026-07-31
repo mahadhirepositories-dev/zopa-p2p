@@ -77,6 +77,10 @@ import { AuthService } from '../../core/auth/auth.service';
               <button mat-raised-button color="accent" (click)="convertToPo()">
                 <mat-icon>add_shopping_cart</mat-icon> Create Additional PO
               </button>
+            }            @if (!['draft', 'short_closed', 'rejected'].includes(pr()!.status ?? '') && !pr()!.status?.startsWith('short_close_pending') && auth.canTransact()) {
+              <button mat-stroked-button color="warn" (click)="shortClose()" [disabled]="acting()" style="margin-left:4px;">
+                <mat-icon>do_not_disturb_on</mat-icon> Short Close PR
+              </button>
             }
             @if (['converted', 'partially_converted'].includes(pr()!.status ?? '')) {
               <button mat-stroked-button [routerLink]="['/purchase-orders']" [queryParams]="{pr_id: pr()!.id}">
@@ -108,6 +112,12 @@ import { AuthService } from '../../core/auth/auth.service';
                   <div class="info-item"><span class="info-label">Priority</span>
                     <span class="priority-badge priority-{{ pr()!.priority }}">{{ pr()!.priority | titlecase }}</span>
                   </div>
+                  @if (pr()!.short_close_reason) {
+                    <div class="info-item" style="grid-column:1/-1;background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;margin-top:8px;">
+                      <span class="info-label" style="color:#64748b;">Short Close Reason</span>
+                      <span style="font-size:13px;color:#334155;">{{ pr()!.short_close_reason }}</span>
+                    </div>
+                  }
                   <div class="info-item"><span class="info-label">Required By Date</span><span>{{ pr()!.required_by_date | date:'dd MMM yyyy' }}</span></div>
                   <div class="info-item"><span class="info-label">Required By Person</span><span>{{ pr()!.required_by_person ?? '—' }}</span></div>
                   <div class="info-item"><span class="info-label">Cost Center</span><span>{{ pr()!.cost_center?.name ?? '—' }}</span></div>
@@ -332,12 +342,34 @@ export class PrDetailComponent implements OnInit {
     });
   }
 
+  shortClose() {
+    const reason = prompt('Please enter the reason for short closing this PR:');
+    if (!reason || !reason.trim()) {
+      if (reason !== null) this.notify.error('Reason is required for short closing.');
+      return;
+    }
+    this.acting.set(true);
+    this.http.post<any>(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/short-close`, { reason: reason.trim() }).subscribe({
+      next: r => {
+        this.pr.set(r);
+        this.acting.set(false);
+        this.notify.success(r.status === 'short_closed' ? 'PR short-closed.' : 'Short close request submitted for approval.');
+      },
+      error: e => {
+        this.notify.error(e.error?.error ?? 'Short close failed.');
+        this.acting.set(false);
+      }
+    });
+  }
+
   statusIcon(s: string): string {
     const map: Record<string, string> = {
       draft: 'edit_note', submitted: 'pending_actions',
       rfq_created: 'request_quote', rfq_approved: 'verified',
       converted: 'check_circle', partially_converted: 'incomplete_circle', rejected: 'cancel',
+      short_closed: 'do_not_disturb_on',
     };
+    if (s?.startsWith('short_close_pending')) return 'pending_actions';
     return map[s] ?? 'info';
   }
 
@@ -350,7 +382,9 @@ export class PrDetailComponent implements OnInit {
       converted: 'Converted to Purchase Order',
       partially_converted: 'Partially Converted — some items still pending PO',
       rejected: 'Rejected',
+      short_closed: 'Short Closed — remaining quantities closed',
     };
+    if (s?.startsWith('short_close_pending')) return 'Short Close Pending Approval';
     return map[s] ?? s;
   }
 
@@ -360,7 +394,9 @@ export class PrDetailComponent implements OnInit {
       partially_converted: 'Partial',
       rfq_created: 'RFQ Created', rfq_approved: 'RFQ Approved',
       converted: 'Converted', rejected: 'Rejected',
+      short_closed: 'Short Closed',
     };
+    if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;
   }
 }

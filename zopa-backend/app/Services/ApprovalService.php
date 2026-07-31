@@ -51,6 +51,35 @@ class ApprovalService
         $this->notifyLevelApprovers('PR', $pr->id, $firstLevel, $pr->load('items', 'costCenter', 'requestedBy'));
     }
 
+    public function routePrShortCloseForApproval(PurchaseRequisition $pr, string $reason, ?int $userId = null): void
+    {
+        $configs = ApprovalConfig::where('cost_center_id', $pr->cost_center_id)
+            ->where('type', 'pr')
+            ->where('is_active', true)
+            ->orderBy('level')
+            ->get();
+
+        $pr->update([
+            'short_close_reason' => $reason,
+            'short_closed_by'    => $userId ?? auth()->id(),
+        ]);
+
+        // No PR approval config → auto short-close immediately
+        if ($configs->isEmpty()) {
+            $pr->update([
+                'status'          => 'short_closed',
+                'short_closed_at' => now(),
+            ]);
+            return;
+        }
+
+        $firstLevel = $configs->first();
+        $this->createApprovalRecords('PR_SHORT_CLOSE', $pr->id, $firstLevel);
+        $pr->update(['status' => 'short_close_pending_l' . $firstLevel->level]);
+
+        $this->notifyLevelApprovers('PR_SHORT_CLOSE', $pr->id, $firstLevel, $pr->load('items', 'costCenter', 'requestedBy'));
+    }
+
     // ─── PO Approval ─────────────────────────────────────────────────────────
 
     public function routeForApproval(PurchaseOrder $po): void
@@ -221,6 +250,14 @@ class ApprovalService
             if ($pr) {
                 $this->notifyStatusToSource('PR', $pr, 'rejected', $comments);
             }
+        } elseif ($approval->entity_type === 'PR_SHORT_CLOSE') {
+            $pr = PurchaseRequisition::with(['items', 'costCenter', 'requestedBy'])->find($approval->entity_id);
+            if ($pr) {
+                $linkedPoCount = $pr->purchaseOrders()->count() + $pr->linkedPurchaseOrders()->count();
+                $newStatus = $linkedPoCount > 0 ? 'partially_converted' : 'submitted';
+                $pr->update(['status' => $newStatus]);
+                $this->notifyStatusToSource('PR', $pr, 'short_close_rejected', $comments);
+            }
         }
     }
 
@@ -285,6 +322,34 @@ class ApprovalService
             $this->advanceOrCompleteInvoice($approval);
         } elseif ($approval->entity_type === 'PR') {
             $this->advanceOrCompletePr($approval);
+        } elseif ($approval->entity_type === 'PR_SHORT_CLOSE') {
+            $this->advanceOrCompletePrShortClose($approval);
+        }
+    }
+
+    private function advanceOrCompletePrShortClose(Approval $approval): void
+    {
+        $pr = PurchaseRequisition::findOrFail($approval->entity_id);
+
+        $configs = ApprovalConfig::where('cost_center_id', $pr->cost_center_id)
+            ->where('type', 'pr')
+            ->where('is_active', true)
+            ->where('level', '>', $approval->level)
+            ->orderBy('level')
+            ->get();
+
+        $nextConfig = $configs->first();
+
+        if ($nextConfig) {
+            $this->createApprovalRecords('PR_SHORT_CLOSE', $pr->id, $nextConfig);
+            $pr->update(['status' => 'short_close_pending_l' . $nextConfig->level]);
+            $this->notifyLevelApprovers('PR_SHORT_CLOSE', $pr->id, $nextConfig, $pr->load('items', 'costCenter', 'requestedBy'));
+        } else {
+            $pr->update([
+                'status'          => 'short_closed',
+                'short_closed_at' => now(),
+            ]);
+            $this->notifyStatusToSource('PR', $pr->fresh(['items', 'costCenter', 'requestedBy']), 'short_closed');
         }
     }
 

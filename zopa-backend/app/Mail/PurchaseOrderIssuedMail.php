@@ -36,15 +36,18 @@ class PurchaseOrderIssuedMail extends Mailable
     /** Buyer who raised the PO — CC'd on this vendor communication. @var array<int,string> */
     public array $ccList = [];
 
-    public function __construct(public object $po)
+    public function __construct(public object $po, array $extraCc = [])
     {
         $po->loadMissing([
             'items.product', 'vendor', 'costCenter', 'tenant',
             'billToLocation', 'shipToLocation', 'creator',
         ]);
 
-        // CC the buyer who raised the PO on all vendor communication.
-        $this->ccList = array_values(array_filter([optional($po->creator)->email]));
+        // CC the buyer who raised the PO + any extra CC emails provided at release.
+        $this->ccList = array_values(array_unique(array_filter(array_merge(
+            [optional($po->creator)->email],
+            $extraCc
+        ))));
 
         // DocumentPresenter only supplies the title/number/line-items here; the
         // header rows below are intentionally VENDOR-facing, not the approver view.

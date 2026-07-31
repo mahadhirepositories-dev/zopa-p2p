@@ -14,12 +14,14 @@ class PurchaseRequisition extends Model
         'title', 'description', 'estimated_amount', 'priority',
         'required_by_date', 'required_by_person',
         'requested_by', 'buyer_id', 'status', 'submitted_at', 'converted_at',
+        'short_close_reason', 'short_closed_at', 'short_closed_by',
     ];
 
     protected $casts = [
         'estimated_amount' => 'decimal:2',
         'submitted_at'     => 'datetime',
         'converted_at'     => 'datetime',
+        'short_closed_at'  => 'datetime',
         'required_by_date' => 'date',
     ];
 
@@ -51,6 +53,11 @@ class PurchaseRequisition extends Model
     public function buyer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'buyer_id');
+    }
+
+    public function shortClosedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'short_closed_by');
     }
 
     public function items(): HasMany
