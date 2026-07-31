@@ -131,6 +131,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Admin dashboard (consolidated + per-tenant)
         Route::get('dashboard/stats', [AdminDashboardController::class, 'stats']);
         Route::get('dashboard/tenants', [AdminDashboardController::class, 'tenants']);
+        Route::get('dashboard/export', [AdminDashboardController::class, 'export']);
 
         // Access Control — role × module permission matrix management
         Route::get('role-permissions', [RolePermissionsController::class, 'index']);

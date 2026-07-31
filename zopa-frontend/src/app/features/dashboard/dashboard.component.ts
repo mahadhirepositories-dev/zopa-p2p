@@ -11,12 +11,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 
 interface PoItem { sno: number; description: string; code: string|null; uom: string|null; qty: number; net_rate: number; gst_rate: number; amount: number; required_by: string|null; warranty_months: number; }
-interface PoKpi  { id: number; po_number: string; status: string; vendor: string; cost_center: string; grand_total: number; net_total: number; tax_amount: number; items_count: number; created_at: string; approved_at: string|null; released_at: string|null; days_to_approve: number|null; days_to_release: number|null; total_cycle_days: number|null; items: PoItem[]; }
+interface PoKpi  { id: number; po_number: string; status: string; vendor: string; cost_center: string; grand_total: number; net_total: number; tax_amount: number; items_count: number; created_at: string; approved_at: string|null; released_at: string|null; days_to_approve: number|null; days_to_release: number|null; total_cycle_days: number|null; items: PoItem[]; tat_badge?: string; badge_color?: string; }
 interface PrKpi {
   id: number; pr_number: string; title: string; status: string; cost_center: string;
   estimated_amount: number; created_at: string;
@@ -25,6 +26,8 @@ interface PrKpi {
   days_to_convert: number|null; total_cycle_days: number|null;
 }
 interface DashboardStats {
+  filter?: { period: string; from_date?: string; to_date?: string };
+  tat_summary?: { avg_approval_days: number; avg_release_days: number; avg_delivery_days: number; avg_total_days: number };
   po_counts: Record<string, number>;
   pending_approvals: number;
   recent_pos: any[];
@@ -39,7 +42,7 @@ interface DashboardStats {
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    DecimalPipe, DatePipe, RouterLink,
+    DecimalPipe, DatePipe, RouterLink, FormsModule,
     MatCardModule, MatIconModule, MatButtonModule, MatChipsModule,
     MatTableModule, MatProgressBarModule, MatProgressSpinnerModule,
     MatTooltipModule,
@@ -63,6 +66,32 @@ interface DashboardStats {
         <button mat-raised-button color="primary" routerLink="/purchase-orders/create" class="cta-btn">
           <mat-icon>add</mat-icon> New Purchase Order
         </button>
+      </div>
+
+      <!-- ── Date Filter Bar ─────────────────────────────────────────────── -->
+      <div class="filter-toolbar mb-6">
+        <div class="period-pills">
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'all'" (click)="setPeriod('all')">All Time</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'today'" (click)="setPeriod('today')">Today</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_week'" (click)="setPeriod('this_week')">This Week</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_month'" (click)="setPeriod('this_month')">This Month</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_year'" (click)="setPeriod('this_year')">This Year</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'custom'" (click)="setPeriod('custom')">Custom Range</button>
+        </div>
+
+        @if (selectedPeriod() === 'custom') {
+          <div class="custom-date-inputs">
+            <div class="date-input-group">
+              <label>From</label>
+              <input type="date" class="date-picker-input" [value]="fromDate()" (change)="onFromDateChange($event)">
+            </div>
+            <div class="date-input-group">
+              <label>To</label>
+              <input type="date" class="date-picker-input" [value]="toDate()" (change)="onToDateChange($event)">
+            </div>
+            <button mat-stroked-button color="primary" (click)="applyCustomFilter()">Apply Range</button>
+          </div>
+        }
       </div>
 
       @if (loading()) {
@@ -142,6 +171,58 @@ interface DashboardStats {
           </div>
 
         </div>
+
+        <!-- ── Intuitive TAT Summary Performance Pipeline ──────────────────────── -->
+        <mat-card class="tat-summary-card mb-6">
+          <mat-card-header>
+            <div class="tat-card-title">
+              <mat-icon color="primary">speed</mat-icon>
+              <span>Turnaround Time (TAT) Pipeline Performance</span>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="tat-pipeline">
+              <div class="tat-step">
+                <div class="tat-step-num">1</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">PO Approval TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_approval_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Created → Approved</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step">
+                <div class="tat-step-num">2</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">Vendor Release TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_release_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Approved → Released</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step">
+                <div class="tat-step-num">3</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">GRN / Delivery TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_delivery_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Released → Delivered</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step tat-step--total">
+                <div class="tat-step-num"><mat-icon>flag</mat-icon></div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">Total Cycle TAT</div>
+                  <div class="tat-step-val text-primary">{{ stats()?.tat_summary?.avg_total_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">End to End Cycle</div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
 
         <!-- ── Charts row ───────────────────────────────────── -->
         <div class="charts-row">
@@ -1009,6 +1090,53 @@ interface DashboardStats {
     /* Error state */
     .error-state { display:flex; flex-direction:column; align-items:center; gap:12px; padding:80px; color:var(--text-3); }
     .error-state mat-icon { font-size:48px; width:48px; height:48px; opacity:.4; }
+
+    /* ── Filter Toolbar ── */
+    .filter-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 10px 16px; margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .period-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill-btn {
+      background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 99px;
+      font-size: 12px; font-weight: 600; color: #475569; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn:hover { background: #e2e8f0; color: #0f172a; }
+    .pill-btn.active { background: #2563eb; color: white; }
+
+    .custom-date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .date-input-group { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; font-weight: 500; }
+    .date-picker-input {
+      border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; color: #0f172a; outline: none;
+    }
+
+    /* ── TAT Summary Card ── */
+    .tat-summary-card {
+      border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+      margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .tat-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+    .tat-pipeline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 4px; flex-wrap: wrap; }
+    .tat-step {
+      flex: 1; min-width: 140px; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .tat-step--total { background: #f0fdf4; border-color: #bbf7d0; }
+    .tat-step-num {
+      width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #475569;
+      font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .tat-step--total .tat-step-num { background: #16a34a; color: white; }
+    .tat-step-num mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .tat-step-info { display: flex; flex-direction: column; }
+    .tat-step-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tat-step-val { font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 1px; }
+    .tat-step-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+    .tat-arrow { color: #cbd5e1; display: flex; align-items: center; }
   `],
 })
 export class DashboardComponent {
@@ -1108,9 +1236,44 @@ export class DashboardComponent {
     return items.map(s => ({ ...s, pct: Math.min(100, (s.count / maxVal) * 100) }));
   });
 
+  selectedPeriod = signal<string>('all');
+  fromDate = signal<string>('');
+  toDate = signal<string>('');
+
+  setPeriod(p: string) {
+    this.selectedPeriod.set(p);
+    if (p !== 'custom') {
+      this.fromDate.set('');
+      this.toDate.set('');
+      this.reload();
+    }
+  }
+
+  onFromDateChange(e: Event) {
+    this.fromDate.set((e.target as HTMLInputElement).value);
+  }
+
+  onToDateChange(e: Event) {
+    this.toDate.set((e.target as HTMLInputElement).value);
+  }
+
+  applyCustomFilter() {
+    if (this.fromDate() && this.toDate()) {
+      this.reload();
+    }
+  }
+
   reload() {
     this.loading.set(true);
-    this.http.get<DashboardStats>(`${environment.apiUrl}/dashboard/stats`).subscribe({
+
+    const queryParams: string[] = [];
+    if (this.selectedPeriod()) queryParams.push(`period=${this.selectedPeriod()}`);
+    if (this.fromDate()) queryParams.push(`from_date=${this.fromDate()}`);
+    if (this.toDate()) queryParams.push(`to_date=${this.toDate()}`);
+
+    const queryStr = queryParams.length ? '?' + queryParams.join('&') : '';
+
+    this.http.get<DashboardStats>(`${environment.apiUrl}/dashboard/stats${queryStr}`).subscribe({
       next: s  => { this.stats.set(s); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

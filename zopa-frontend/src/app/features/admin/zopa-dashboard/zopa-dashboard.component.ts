@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,26 +15,28 @@ import { environment } from '../../../../environments/environment';
 import { SearchSelectDialogComponent, SearchSelectOption } from '../../../shared/components/search-select-dialog.component';
 
 interface TenantSummary {
-  id: number; name: string; plan: string; is_active: boolean; created_at: string;
-  kpi: { total_pos: number; total_pr: number; po_value: number; pending_approvals: number; };
+  id: number; name: string; code?: string; plan: string; is_active: boolean; created_at: string;
+  kpi: { total_pos: number; total_pr: number; po_value: number; pending_approvals: number; avg_tat_days?: number; };
 }
 
 @Component({
   selector: 'app-zopa-dashboard',
   standalone: true,
   imports: [
-    DecimalPipe, RouterLink,
+    DecimalPipe, DatePipe, RouterLink, FormsModule,
     MatButtonModule, MatIconModule, MatCardModule,
     MatProgressSpinnerModule, MatTableModule, MatChipsModule, MatTooltipModule,
   ],
   template: `
     <div class="page-wrapper">
+      <!-- ── Header ────────────────────────────────────────────────────────── -->
       <div class="page-header">
         <div>
           <h2>ZOPA Admin Dashboard</h2>
-          <p>Consolidated procurement intelligence across all organizations</p>
+          <p>Consolidated procurement intelligence & performance analytics across all organizations</p>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div class="header-actions-group">
+          <!-- Org Filter Button -->
           <button class="org-filter-btn" (click)="openOrgPicker()"
                   matTooltip="Filter by organization — searchable">
             <mat-icon class="ofb-lead">corporate_fare</mat-icon>
@@ -44,7 +46,43 @@ interface TenantSummary {
             </span>
             <mat-icon class="ofb-caret">expand_more</mat-icon>
           </button>
+
+          <!-- Export CSV Button -->
+          <button mat-raised-button color="primary" class="export-btn" (click)="exportCsv()" [disabled]="exporting()">
+            @if (exporting()) {
+              <mat-spinner diameter="18" class="inline-spinner" />
+            } @else {
+              <mat-icon>download</mat-icon>
+            }
+            Export CSV
+          </button>
         </div>
+      </div>
+
+      <!-- ── Date Filter Bar ────────────────────────────────────────────────── -->
+      <div class="filter-toolbar">
+        <div class="period-pills">
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'all'" (click)="setPeriod('all')">All Time</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'today'" (click)="setPeriod('today')">Today</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_week'" (click)="setPeriod('this_week')">This Week</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_month'" (click)="setPeriod('this_month')">This Month</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'this_year'" (click)="setPeriod('this_year')">This Year</button>
+          <button class="pill-btn" [class.active]="selectedPeriod() === 'custom'" (click)="setPeriod('custom')">Custom Range</button>
+        </div>
+
+        @if (selectedPeriod() === 'custom') {
+          <div class="custom-date-inputs">
+            <div class="date-input-group">
+              <label>From</label>
+              <input type="date" class="date-picker-input" [value]="fromDate()" (change)="onFromDateChange($event)">
+            </div>
+            <div class="date-input-group">
+              <label>To</label>
+              <input type="date" class="date-picker-input" [value]="toDate()" (change)="onToDateChange($event)">
+            </div>
+            <button mat-stroked-button color="primary" (click)="applyCustomFilter()">Apply Range</button>
+          </div>
+        }
       </div>
 
       @if (loading()) {
@@ -53,7 +91,7 @@ interface TenantSummary {
         </div>
       } @else if (stats()) {
 
-        <!-- Header KPI band -->
+        <!-- ── Header KPI band ──────────────────────────────────────────────── -->
         <div class="kpi-band">
           <div class="kpi-block">
             <div class="kpi-icon kpi-icon--blue"><mat-icon>receipt_long</mat-icon></div>
@@ -99,7 +137,60 @@ interface TenantSummary {
           </div>
         </div>
 
-        <!-- ── Charts band ──────────────────────────────── -->
+        <!-- ── Intuitive TAT Summary Performance Pipeline ──────────────────────── -->
+        <mat-card class="tat-summary-card mb-6">
+          <mat-card-header>
+            <div class="tat-card-title">
+              <mat-icon color="primary">speed</mat-icon>
+              <span>Turnaround Time (TAT) Pipeline Summary</span>
+              <span class="tat-scope-badge">{{ selectedTenantName() }}</span>
+            </div>
+          </mat-card-header>
+          <mat-card-content>
+            <div class="tat-pipeline">
+              <div class="tat-step">
+                <div class="tat-step-num">1</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">PO Approval TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_approval_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Created → Approved</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step">
+                <div class="tat-step-num">2</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">Vendor Release TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_release_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Approved → Released</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step">
+                <div class="tat-step-num">3</div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">GRN / Delivery TAT</div>
+                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_delivery_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">Released → Delivered</div>
+                </div>
+              </div>
+              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+
+              <div class="tat-step tat-step--total">
+                <div class="tat-step-num"><mat-icon>flag</mat-icon></div>
+                <div class="tat-step-info">
+                  <div class="tat-step-label">Total Cycle TAT</div>
+                  <div class="tat-step-val text-primary">{{ stats()?.tat_summary?.avg_total_days ?? 0 }} days</div>
+                  <div class="tat-step-sub">End to End Cycle</div>
+                </div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- ── Charts band ──────────────────────────────────────────────────── -->
         <div class="charts-band">
 
           <!-- PO Status Donut -->
@@ -148,349 +239,353 @@ interface TenantSummary {
                     <div class="vbar-fill" style="background:#2563eb;"
                          [style.width]="valueBarPct(stats()!.po.total_value ?? 0) + '%'"></div>
                   </div>
-                  <div class="vbar-amount">₹{{ ((stats()!.po.total_value ?? 0)/100000) | number:'1.1-1' }}L</div>
+                  <div class="vbar-val">₹{{ (stats()!.po.total_value / 100000) | number:'1.1-1' }}L</div>
                 </div>
+
                 <div class="vbar-row">
-                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#7c3aed;vertical-align:middle;">description</mat-icon> PR Est. Value</div>
+                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#f97316;vertical-align:middle;">description</mat-icon> PR Value</div>
                   <div class="vbar-track">
-                    <div class="vbar-fill" style="background:#7c3aed;"
+                    <div class="vbar-fill" style="background:#f97316;"
                          [style.width]="valueBarPct(stats()!.pr.total_value ?? 0) + '%'"></div>
                   </div>
-                  <div class="vbar-amount">₹{{ ((stats()!.pr.total_value ?? 0)/100000) | number:'1.1-1' }}L</div>
+                  <div class="vbar-val">₹{{ (stats()!.pr.total_value / 100000) | number:'1.1-1' }}L</div>
                 </div>
+
                 <div class="vbar-row">
-                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#d97706;vertical-align:middle;">request_quote</mat-icon> Invoice Total</div>
+                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#8b5cf6;vertical-align:middle;">request_quote</mat-icon> Invoice Value</div>
                   <div class="vbar-track">
-                    <div class="vbar-fill" style="background:#d97706;"
+                    <div class="vbar-fill" style="background:#8b5cf6;"
                          [style.width]="valueBarPct(stats()!.invoice.total_value ?? 0) + '%'"></div>
                   </div>
-                  <div class="vbar-amount">₹{{ ((stats()!.invoice.total_value ?? 0)/100000) | number:'1.1-1' }}L</div>
+                  <div class="vbar-val">₹{{ (stats()!.invoice.total_value / 100000) | number:'1.1-1' }}L</div>
                 </div>
-                <div class="vbar-row" style="border-top:1px solid var(--border);padding-top:10px;margin-top:4px;">
-                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#16a34a;vertical-align:middle;">verified</mat-icon> Approved PO Val.</div>
+
+                <div class="vbar-row">
+                  <div class="vbar-label"><mat-icon style="font-size:14px;color:#16a34a;vertical-align:middle;">verified</mat-icon> Approved POs</div>
                   <div class="vbar-track">
                     <div class="vbar-fill" style="background:#16a34a;"
                          [style.width]="valueBarPct(stats()!.po.approved_value ?? 0) + '%'"></div>
                   </div>
-                  <div class="vbar-amount">₹{{ ((stats()!.po.approved_value ?? 0)/100000) | number:'1.1-1' }}L</div>
+                  <div class="vbar-val">₹{{ (stats()!.po.approved_value / 100000) | number:'1.1-1' }}L</div>
                 </div>
               </div>
             </mat-card-content>
           </mat-card>
 
-          <!-- Tenant value chart (consolidated only) -->
-          @if (!selectedTenantId && tenantValueBars().length) {
-            <mat-card class="chart-card org-chart-card">
-              <mat-card-header><mat-card-title>PO Value by Organization</mat-card-title></mat-card-header>
-              <mat-card-content style="padding-top:12px!important;">
-                <div class="org-bars">
-                  @for (t of tenantValueBars(); track t.name) {
-                    <div class="org-bar-row" (click)="selectedTenantId = t.id; onTenantChange()">
-                      <div class="org-bar-name">
-                        <span class="org-avatar-sm">{{ t.name[0] }}</span>{{ t.name }}
-                      </div>
-                      <div class="org-bar-track">
-                        <div class="org-bar-fill" [style.width]="t.pct + '%'"></div>
-                      </div>
-                      <div class="org-bar-val">₹{{ (t.value/100000) | number:'1.1-1' }}L</div>
-                    </div>
-                  }
-                </div>
-              </mat-card-content>
-            </mat-card>
-          }
-
         </div>
 
-        <!-- Two-column detail -->
-        <div class="detail-grid">
-
-          <!-- PO Status Breakdown -->
-          <mat-card class="anim-1">
-            <mat-card-header><mat-card-title>Purchase Orders by Status</mat-card-title></mat-card-header>
-            <mat-card-content style="padding-top:12px!important;">
-              <div class="status-bars">
-                @for (row of poStatusRows(); track row.label) {
-                  <div class="status-bar-row">
-                    <div class="sb-label">{{ row.label }}</div>
-                    <div class="sb-track">
-                      <div class="sb-fill" [style.width]="row.pct + '%'" [style.background]="row.color"></div>
+        <!-- ── Tenant Breakdown Table ────────────────────────────────────── -->
+        <mat-card class="tenants-card">
+          <mat-card-header>
+            <mat-card-title>Organization Performance Breakdown</mat-card-title>
+          </mat-card-header>
+          <mat-card-content style="padding:0!important;">
+            <table mat-table [dataSource]="tenants()" class="tenants-table">
+              <ng-container matColumnDef="name">
+                <th mat-header-cell *matHeaderCellDef>ORGANIZATION</th>
+                <td mat-cell *matCellDef="let t">
+                  <div class="org-cell" (click)="selectTenant(t.id)">
+                    <div class="org-avatar">{{ t.name.substring(0, 2).toUpperCase() }}</div>
+                    <div>
+                      <div class="org-name">{{ t.name }}</div>
+                      <div class="org-sub">Plan: {{ t.plan | uppercase }}</div>
                     </div>
-                    <div class="sb-count">{{ row.count }}</div>
                   </div>
-                }
-              </div>
-            </mat-card-content>
-          </mat-card>
+                </td>
+              </ng-container>
 
-          <!-- PR Pipeline -->
-          <mat-card class="anim-2">
-            <mat-card-header><mat-card-title>PR Pipeline</mat-card-title></mat-card-header>
-            <mat-card-content style="padding-top:12px!important;">
-              <div class="pipeline-steps">
-                <div class="step">
-                  <div class="step-count">{{ stats()!.pr.draft ?? 0 }}</div>
-                  <div class="step-label">Draft</div>
-                </div>
-                <mat-icon class="step-arrow">chevron_right</mat-icon>
-                <div class="step">
-                  <div class="step-count accent">{{ stats()!.pr.submitted ?? 0 }}</div>
-                  <div class="step-label">Submitted</div>
-                </div>
-                <mat-icon class="step-arrow">chevron_right</mat-icon>
-                <div class="step">
-                  <div class="step-count blue">{{ (stats()!.pr.rfq_created ?? 0) + (stats()!.pr.rfq_approved ?? 0) }}</div>
-                  <div class="step-label">In RFQ</div>
-                </div>
-                <mat-icon class="step-arrow">chevron_right</mat-icon>
-                <div class="step">
-                  <div class="step-count green">{{ stats()!.pr.converted ?? 0 }}</div>
-                  <div class="step-label">Converted</div>
-                </div>
-                <mat-icon class="step-arrow">chevron_right</mat-icon>
-                <div class="step">
-                  <div class="step-count red">{{ stats()!.pr.rejected ?? 0 }}</div>
-                  <div class="step-label">Rejected</div>
-                </div>
-              </div>
-              <div style="margin-top:16px;padding:12px;background:#f8fafc;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:12px;color:var(--text-3);">Total Requisition Value</span>
-                <strong style="font-size:16px;color:var(--text-1);">₹{{ (stats()!.pr.total_value ?? 0) | number:'1.0-0' }}</strong>
-              </div>
-            </mat-card-content>
-          </mat-card>
+              <ng-container matColumnDef="pos">
+                <th mat-header-cell *matHeaderCellDef style="text-align:center;">TOTAL POs</th>
+                <td mat-cell *matCellDef="let t" style="text-align:center;">
+                  <strong style="font-size:14px;">{{ t.kpi.total_pos }}</strong>
+                </td>
+              </ng-container>
 
-          <!-- Invoice + GRN Summary -->
-          <mat-card class="anim-3">
-            <mat-card-header><mat-card-title>Invoice Summary</mat-card-title></mat-card-header>
-            <mat-card-content style="padding-top:12px!important;">
-              <div class="summary-rows">
-                <div class="summary-row">
-                  <span>Total Invoices</span><strong>{{ stats()!.invoice.total | number }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Pending Approval</span>
-                  <strong style="color:#d97706;">{{ stats()!.invoice.pending | number }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Approved</span>
-                  <strong style="color:#16a34a;">{{ stats()!.invoice.approved | number }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Rejected</span>
-                  <strong style="color:#dc2626;">{{ stats()!.invoice.rejected | number }}</strong>
-                </div>
-                <div class="summary-row" style="border-top:2px solid var(--border);margin-top:4px;padding-top:8px;">
-                  <span>Total Invoice Value</span>
-                  <strong>₹{{ (stats()!.invoice.total_value ?? 0) | number:'1.0-0' }}</strong>
-                </div>
-              </div>
-            </mat-card-content>
-          </mat-card>
+              <ng-container matColumnDef="prs">
+                <th mat-header-cell *matHeaderCellDef style="text-align:center;">TOTAL PRs</th>
+                <td mat-cell *matCellDef="let t" style="text-align:center;">
+                  <span style="font-size:13px;color:#475569;">{{ t.kpi.total_pr }}</span>
+                </td>
+              </ng-container>
 
-          <!-- GRN Summary -->
-          <mat-card class="anim-4">
-            <mat-card-header><mat-card-title>GRN Summary</mat-card-title></mat-card-header>
-            <mat-card-content style="padding-top:12px!important;">
-              <div class="summary-rows">
-                <div class="summary-row">
-                  <span>Total GRNs</span><strong>{{ stats()!.grn.total | number }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Pending</span>
-                  <strong style="color:#d97706;">{{ stats()!.grn.pending | number }}</strong>
-                </div>
-                <div class="summary-row">
-                  <span>Confirmed</span>
-                  <strong style="color:#16a34a;">{{ stats()!.grn.confirmed | number }}</strong>
-                </div>
-              </div>
-            </mat-card-content>
-          </mat-card>
+              <ng-container matColumnDef="pending">
+                <th mat-header-cell *matHeaderCellDef style="text-align:center;">PENDING APPR.</th>
+                <td mat-cell *matCellDef="let t" style="text-align:center;">
+                  @if (t.kpi.pending_approvals > 0) {
+                    <span class="pending-chip">{{ t.kpi.pending_approvals }}</span>
+                  } @else {
+                    <span class="clear-chip">0</span>
+                  }
+                </td>
+              </ng-container>
 
-        </div>
+              <ng-container matColumnDef="value">
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">PO VALUE</th>
+                <td mat-cell *matCellDef="let t" style="text-align:right;">
+                  <strong style="font-size:14px;color:#1e293b;">₹{{ (t.kpi.po_value / 100000) | number:'1.1-1' }}L</strong>
+                </td>
+              </ng-container>
 
-        <!-- Organization Table (consolidated only) -->
-        @if (!selectedTenantId && tenants().length) {
-          <mat-card style="margin-top:20px;">
-            <mat-card-header><mat-card-title>Organization Overview</mat-card-title></mat-card-header>
-            <mat-card-content style="padding:0!important;">
-              <table mat-table [dataSource]="tenants()" class="full-width">
-                <ng-container matColumnDef="name">
-                  <th mat-header-cell *matHeaderCellDef>Organization</th>
-                  <td mat-cell *matCellDef="let t">
-                    <div style="display:flex;align-items:center;gap:8px;">
-                      <div class="org-avatar">{{ t.name[0] }}</div>
-                      <div>
-                        <a class="org-link" [routerLink]="['/admin/clients', t.id]">{{ t.name }}</a>
-                        <div style="font-size:11px;color:var(--text-3);">{{ t.plan }}</div>
-                      </div>
-                    </div>
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="pos">
-                  <th mat-header-cell *matHeaderCellDef>POs</th>
-                  <td mat-cell *matCellDef="let t"><strong>{{ t.kpi.total_pos }}</strong></td>
-                </ng-container>
-                <ng-container matColumnDef="prs">
-                  <th mat-header-cell *matHeaderCellDef>PRs</th>
-                  <td mat-cell *matCellDef="let t">{{ t.kpi.total_pr }}</td>
-                </ng-container>
-                <ng-container matColumnDef="value">
-                  <th mat-header-cell *matHeaderCellDef>PO Value</th>
-                  <td mat-cell *matCellDef="let t"><strong>₹{{ t.kpi.po_value | number:'1.0-0' }}</strong></td>
-                </ng-container>
-                <ng-container matColumnDef="pending">
-                  <th mat-header-cell *matHeaderCellDef>Pending Approvals</th>
-                  <td mat-cell *matCellDef="let t">
-                    @if (t.kpi.pending_approvals > 0) {
-                      <span class="pending-badge">{{ t.kpi.pending_approvals }}</span>
-                    } @else {
-                      <span style="color:var(--text-3);">—</span>
-                    }
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="status">
-                  <th mat-header-cell *matHeaderCellDef>Status</th>
-                  <td mat-cell *matCellDef="let t">
-                    <span class="status-chip" [class.active]="t.is_active">{{ t.is_active ? 'Active' : 'Inactive' }}</span>
-                  </td>
-                </ng-container>
-                <ng-container matColumnDef="actions">
-                  <th mat-header-cell *matHeaderCellDef></th>
-                  <td mat-cell *matCellDef="let t">
-                    <button mat-icon-button (click)="selectedTenantId = t.id; onTenantChange()">
-                      <mat-icon>bar_chart</mat-icon>
-                    </button>
-                  </td>
-                </ng-container>
-                <tr mat-header-row *matHeaderRowDef="tenantCols"></tr>
-                <tr mat-row *matRowDef="let row; columns: tenantCols;" style="cursor:pointer;"
-                    (click)="selectedTenantId = row.id; onTenantChange()"></tr>
-              </table>
-            </mat-card-content>
-          </mat-card>
-        }
+              <ng-container matColumnDef="tat">
+                <th mat-header-cell *matHeaderCellDef style="text-align:center;">AVG TAT</th>
+                <td mat-cell *matCellDef="let t" style="text-align:center;">
+                  <span class="tat-badge" [class.tat-ok]="(t.kpi.avg_tat_days ?? 0) <= 3" [class.tat-warn]="(t.kpi.avg_tat_days ?? 0) > 3">
+                    {{ t.kpi.avg_tat_days ?? 0 }}d
+                  </span>
+                </td>
+              </ng-container>
+
+              <tr mat-header-row *matHeaderRowDef="['name', 'pos', 'prs', 'pending', 'value', 'tat']"></tr>
+              <tr mat-row *matRowDef="let row; columns: ['name', 'pos', 'prs', 'pending', 'value', 'tat'];" class="tenant-row"></tr>
+            </table>
+          </mat-card-content>
+        </mat-card>
 
       }
     </div>
   `,
   styles: [`
-    .page-wrapper { padding:28px;max-width:1400px; }
-    .page-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:24px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
+    .page-wrapper { padding: 28px; max-width: 1200px; margin: 0 auto; }
+    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; gap: 20px; }
+    .page-header h2 { margin: 0; font-size: 24px; font-weight: 700; color: #1e293b; }
+    .page-header p { margin: 6px 0 0; font-size: 13px; color: #64748b; }
+
+    .header-actions-group { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
     .org-filter-btn {
-      display:flex;align-items:center;gap:10px;min-width:240px;
-      padding:8px 14px;border:1px solid var(--border,#e2e8f0);border-radius:10px;
-      background:#fff;cursor:pointer;text-align:left;transition:border-color .12s,box-shadow .12s;
+      display: inline-flex; align-items: center; gap: 10px;
+      background: white; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 6px 14px; cursor: pointer; transition: all 0.15s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04); text-align: left;
     }
-    .org-filter-btn:hover { border-color:var(--brand,#f97316);box-shadow:0 1px 6px rgba(249,115,22,.12); }
-    .ofb-lead { color:var(--brand,#f97316);flex-shrink:0; }
-    .ofb-col { display:flex;flex-direction:column;flex:1;min-width:0; }
-    .ofb-cap { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#94a3b8; }
-    .ofb-name { font-size:13.5px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
-    .ofb-caret { color:#94a3b8;flex-shrink:0; }
+    .org-filter-btn:hover { border-color: #cbd5e1; background: #f8fafc; }
+    .ofb-lead { font-size: 20px; width: 20px; height: 20px; color: #3b82f6; }
+    .ofb-col { display: flex; flex-direction: column; }
+    .ofb-cap { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; }
+    .ofb-name { font-size: 13px; font-weight: 700; color: #0f172a; }
+    .ofb-caret { font-size: 18px; width: 18px; height: 18px; color: #64748b; }
 
-    .kpi-band { display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px; }
-    @media (max-width:1200px) { .kpi-band { grid-template-columns:repeat(3,1fr); } }
-    .kpi-block { background:white;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow-xs);display:flex;align-items:center;gap:12px; }
-    .kpi-icon { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-    .kpi-icon mat-icon { font-size:20px;width:20px;height:20px;color:white; }
-    .kpi-icon--blue   { background:#2563eb; }
-    .kpi-icon--orange { background:#f97316; }
-    .kpi-icon--green  { background:#16a34a; }
-    .kpi-icon--purple { background:#7c3aed; }
-    .kpi-icon--red    { background:#dc2626; }
-    .kpi-icon--teal   { background:#0891b2; }
-    .kpi-val { font-size:20px;font-weight:800;color:var(--text-1);line-height:1.1; }
-    .kpi-label { font-size:11px;color:var(--text-3);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:2px; }
+    .export-btn { height: 42px; border-radius: 8px; font-weight: 600; padding: 0 18px; }
+    .inline-spinner { display: inline-block; vertical-align: middle; margin-right: 6px; }
 
-    /* ── Charts band ── */
-    .charts-band { display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px; }
-    @media (max-width:1024px) { .charts-band { grid-template-columns:1fr; } }
-    .org-chart-card { grid-column:span 2; }
-    @media (max-width:1024px) { .org-chart-card { grid-column:span 1; } }
-    .chart-card { border-radius:12px !important; }
-    /* Donut */
-    .donut-wrap { display:flex;align-items:center;gap:20px; }
-    .donut-legend { flex:1;display:flex;flex-direction:column;gap:7px; }
-    .d-legend-row { display:flex;align-items:center;gap:7px;font-size:12px; }
-    .d-legend-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
-    .d-legend-label { flex:1;color:var(--text-2); }
-    .d-legend-count { font-weight:700;color:var(--text-1);min-width:20px;text-align:right; }
-    /* Value bars */
-    .value-bars { display:flex;flex-direction:column;gap:14px; }
-    .vbar-row { display:flex;align-items:center;gap:10px; }
-    .vbar-label { width:130px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:4px;flex-shrink:0; }
-    .vbar-track { flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden; }
-    .vbar-fill { height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1); }
-    .vbar-amount { width:60px;font-size:12px;font-weight:700;color:var(--text-1);text-align:right;flex-shrink:0; }
-    /* Org bars */
-    .org-bars { display:flex;flex-direction:column;gap:10px; }
-    .org-bar-row { display:flex;align-items:center;gap:10px;cursor:pointer;padding:4px 6px;border-radius:8px;transition:background .12s; }
-    .org-bar-row:hover { background:#f8faff; }
-    .org-bar-name { width:160px;font-size:12px;color:var(--text-2);display:flex;align-items:center;gap:6px;flex-shrink:0;font-weight:500; }
-    .org-avatar-sm { width:20px;height:20px;border-radius:5px;background:var(--brand-light);color:var(--brand);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-    .org-bar-track { flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden; }
-    .org-bar-fill { height:100%;border-radius:99px;background:linear-gradient(90deg,#2563eb,#3b82f6);transition:width .5s cubic-bezier(.4,0,.2,1); }
-    .org-bar-val { width:55px;font-size:12px;font-weight:700;color:#2563eb;text-align:right;flex-shrink:0; }
+    /* ── Date Filter Toolbar ───────────────────────────────────────── */
+    .filter-toolbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px;
+      padding: 10px 16px; margin-bottom: 24px; gap: 16px; flex-wrap: wrap;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .period-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pill-btn {
+      background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 99px;
+      font-size: 12px; font-weight: 600; color: #475569; cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .pill-btn:hover { background: #e2e8f0; color: #0f172a; }
+    .pill-btn.active { background: #2563eb; color: white; }
 
-    .detail-grid { display:grid;grid-template-columns:1fr 1fr;gap:20px; }
-    @media (max-width:1024px) { .detail-grid { grid-template-columns:1fr; } }
+    .custom-date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .date-input-group { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; font-weight: 500; }
+    .date-picker-input {
+      border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; color: #0f172a; outline: none;
+    }
 
-    /* Status bars */
-    .status-bars { display:flex;flex-direction:column;gap:10px; }
-    .status-bar-row { display:flex;align-items:center;gap:10px; }
-    .sb-label { width:120px;font-size:12px;color:var(--text-2);flex-shrink:0; }
-    .sb-track { flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden; }
-    .sb-fill { height:100%;border-radius:99px;transition:width .4s ease; }
-    .sb-count { width:36px;font-size:12px;font-weight:600;color:var(--text-1);text-align:right; }
+    /* ── KPI Band ──────────────────────────────────────────────────── */
+    .kpi-band { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-block {
+      background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px;
+      display: flex; align-items: center; gap: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .kpi-icon {
+      width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; flex-shrink: 0;
+    }
+    .kpi-icon mat-icon { font-size: 22px; width: 22px; height: 22px; }
+    .kpi-icon--blue { background: #2563eb; }
+    .kpi-icon--orange { background: #f97316; }
+    .kpi-icon--green { background: #16a34a; }
+    .kpi-icon--purple { background: #8b5cf6; }
+    .kpi-icon--red { background: #dc2626; }
+    .kpi-icon--teal { background: #0d9488; }
 
-    /* PR Pipeline */
-    .pipeline-steps { display:flex;align-items:center;justify-content:space-between;gap:4px; }
-    .step { display:flex;flex-direction:column;align-items:center;gap:4px; }
-    .step-count { font-size:22px;font-weight:800;color:var(--text-1); }
-    .step-count.accent { color:#d97706; }
-    .step-count.blue   { color:#2563eb; }
-    .step-count.green  { color:#16a34a; }
-    .step-count.red    { color:#dc2626; }
-    .step-label { font-size:10px;font-weight:600;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em; }
-    .step-arrow { font-size:20px;width:20px;height:20px;color:var(--border); }
+    .kpi-val { font-size: 20px; font-weight: 800; color: #0f172a; line-height: 1.2; }
+    .kpi-label { font-size: 12px; color: #64748b; font-weight: 500; margin-top: 2px; }
 
-    /* Summary rows */
-    .summary-rows { display:flex;flex-direction:column;gap:10px; }
-    .summary-row { display:flex;justify-content:space-between;align-items:center;font-size:13px; }
-    .summary-row span { color:var(--text-2); }
+    /* ── TAT Summary Card ───────────────────────────────────────────── */
+    .tat-summary-card {
+      border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;
+      margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .tat-card-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+    .tat-scope-badge {
+      font-size: 11px; background: #eff6ff; color: #2563eb; padding: 2px 8px;
+      border-radius: 99px; font-weight: 600; margin-left: 8px; border: 1px solid #bfdbfe;
+    }
+    .tat-pipeline { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 4px; flex-wrap: wrap; }
+    .tat-step {
+      flex: 1; min-width: 140px; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px;
+    }
+    .tat-step--total { background: #f0fdf4; border-color: #bbf7d0; }
+    .tat-step-num {
+      width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #475569;
+      font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .tat-step--total .tat-step-num { background: #16a34a; color: white; }
+    .tat-step-num mat-icon { font-size: 14px; width: 14px; height: 14px; }
+    .tat-step-info { display: flex; flex-direction: column; }
+    .tat-step-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .tat-step-val { font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 1px; }
+    .tat-step-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
+    .tat-arrow { color: #cbd5e1; display: flex; align-items: center; }
 
-    /* Org table */
-    .full-width { width:100%; }
-    .org-avatar { width:28px;height:28px;border-radius:7px;background:var(--brand-light);color:var(--brand);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center; }
-    .org-link { font-size:13px;font-weight:600;color:var(--brand);cursor:pointer; }
-    .org-link:hover { text-decoration:underline; }
-    .pending-badge { background:#fee2e2;color:#dc2626;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px; }
-    .status-chip { font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#f1f5f9;color:#64748b; }
-    .status-chip.active { background:#dcfce7;color:#16a34a; }
-  `],
+    /* ── Charts band ───────────────────────────────────────────────── */
+    .charts-band { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    .chart-card { border: 1px solid #e2e8f0; border-radius: 12px; }
+
+    .donut-wrap { display: flex; align-items: center; gap: 20px; }
+    .donut-legend { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    .d-legend-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .d-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .d-legend-label { color: #64748b; flex: 1; }
+    .d-legend-count { font-weight: 700; color: #0f172a; }
+
+    .value-bars { display: flex; flex-direction: column; gap: 14px; }
+    .vbar-row { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+    .vbar-label { width: 110px; font-weight: 600; color: #475569; flex-shrink: 0; }
+    .vbar-track { flex: 1; height: 10px; background: #f1f5f9; border-radius: 99px; overflow: hidden; }
+    .vbar-fill { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+    .vbar-val { width: 60px; font-weight: 700; color: #0f172a; text-align: right; flex-shrink: 0; }
+
+    /* ── Tenants table ─────────────────────────────────────────────── */
+    .tenants-card { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+    .tenants-table { width: 100%; }
+    .tenant-row:hover { background: #f8fafc; }
+    .org-cell { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .org-avatar {
+      width: 32px; height: 32px; border-radius: 8px; background: #3b82f6; color: white;
+      font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .org-name { font-weight: 600; color: #0f172a; font-size: 13px; }
+    .org-sub { font-size: 11px; color: #94a3b8; }
+
+    .pending-chip { background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 700; border: 1px solid #ffedd5; }
+    .clear-chip { color: #94a3b8; font-size: 12px; }
+
+    .tat-badge { padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .tat-ok { background: #f0fdf4; color: #166534; }
+    .tat-warn { background: #fff7ed; color: #c2410c; }
+
+    @media (max-width: 900px) {
+      .charts-band { grid-template-columns: 1fr; }
+    }
+  `]
 })
 export class ZopaDashboardComponent implements OnInit {
   private http = inject(HttpClient);
   private dialog = inject(MatDialog);
 
-  loading         = signal(true);
-  stats           = signal<any>(null);
-  tenants         = signal<TenantSummary[]>([]);
-  selectedTenantId = 0;
-  tenantCols      = ['name', 'pos', 'prs', 'value', 'pending', 'status', 'actions'];
+  tenants = signal<TenantSummary[]>([]);
+  stats = signal<any>(null);
+  loading = signal(true);
+  exporting = signal(false);
 
-  /** Label shown on the organization filter button. */
-  selectedTenantName(): string {
-    if (!this.selectedTenantId) return 'All Organizations';
-    return this.tenants().find(t => t.id === this.selectedTenantId)?.name ?? 'All Organizations';
+  selectedTenantId = 0;
+  selectedPeriod = signal<string>('all');
+  fromDate = signal<string>('');
+  toDate = signal<string>('');
+
+  selectedTenantName = computed(() => {
+    if (this.selectedTenantId === 0) return 'All Organizations';
+    return this.tenants().find(t => t.id === this.selectedTenantId)?.name ?? 'Selected Organization';
+  });
+
+  ngOnInit() {
+    this.loadData();
   }
 
-  /** Open the searchable organization picker (scales to 100s of orgs). */
+  setPeriod(p: string) {
+    this.selectedPeriod.set(p);
+    if (p !== 'custom') {
+      this.fromDate.set('');
+      this.toDate.set('');
+      this.loadData();
+    }
+  }
+
+  onFromDateChange(e: Event) {
+    this.fromDate.set((e.target as HTMLInputElement).value);
+  }
+
+  onToDateChange(e: Event) {
+    this.toDate.set((e.target as HTMLInputElement).value);
+  }
+
+  applyCustomFilter() {
+    if (this.fromDate() && this.toDate()) {
+      this.loadData();
+    }
+  }
+
+  selectTenant(id: number) {
+    this.selectedTenantId = id;
+    this.loadData();
+  }
+
+  loadData() {
+    this.loading.set(true);
+
+    const queryParams: string[] = [];
+    if (this.selectedTenantId > 0) queryParams.push(`tenant_id=${this.selectedTenantId}`);
+    if (this.selectedPeriod()) queryParams.push(`period=${this.selectedPeriod()}`);
+    if (this.fromDate()) queryParams.push(`from_date=${this.fromDate()}`);
+    if (this.toDate()) queryParams.push(`to_date=${this.toDate()}`);
+
+    const queryStr = queryParams.length ? '?' + queryParams.join('&') : '';
+
+    // Load tenant KPIs list
+    this.http.get<TenantSummary[]>(`${environment.apiUrl}/admin/dashboard/tenants${queryStr}`).subscribe({
+      next: t => this.tenants.set(t),
+      error: () => {},
+    });
+
+    // Load main stats
+    this.http.get<any>(`${environment.apiUrl}/admin/dashboard/stats${queryStr}`).subscribe({
+      next: s => { this.stats.set(s); this.loading.set(false); },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  exportCsv() {
+    this.exporting.set(true);
+    const queryParams: string[] = [];
+    if (this.selectedTenantId > 0) queryParams.push(`tenant_id=${this.selectedTenantId}`);
+    if (this.selectedPeriod()) queryParams.push(`period=${this.selectedPeriod()}`);
+    if (this.fromDate()) queryParams.push(`from_date=${this.fromDate()}`);
+    if (this.toDate()) queryParams.push(`to_date=${this.toDate()}`);
+
+    const queryStr = queryParams.length ? '?' + queryParams.join('&') : '';
+    const url = `${environment.apiUrl}/admin/dashboard/export${queryStr}`;
+
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `zopa_admin_dashboard_report_${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(downloadUrl);
+        this.exporting.set(false);
+      },
+      error: () => {
+        this.exporting.set(false);
+      }
+    });
+  }
+
   openOrgPicker() {
     const options: SearchSelectOption[] = [
       { id: 0, name: 'All Organizations', badge: 'All', badgeAccent: 'gray' },
@@ -517,7 +612,7 @@ export class ZopaDashboardComponent implements OnInit {
     ref.afterClosed().subscribe((id?: number) => {
       if (id !== undefined && id !== null && id !== this.selectedTenantId) {
         this.selectedTenantId = id;
-        this.loadStats();
+        this.loadData();
       }
     });
   }
@@ -546,64 +641,10 @@ export class ZopaDashboardComponent implements OnInit {
     });
   });
 
-  tenantValueBars = computed(() => {
-    const list = this.tenants();
-    if (!list.length) return [];
-    const maxVal = Math.max(1, ...list.map(t => t.kpi.po_value));
-    return list.map(t => ({
-      id: t.id,
-      name: t.name,
-      value: t.kpi.po_value,
-      pos: t.kpi.total_pos,
-      pct: Math.min(100, (t.kpi.po_value / maxVal) * 100),
-    }));
-  });
-
   valueBarPct(val: number): number {
     const s = this.stats();
     if (!s) return 0;
     const max = Math.max(1, s.po.total_value ?? 0, s.pr.total_value ?? 0, s.invoice.total_value ?? 0);
     return Math.min(100, (val / max) * 100);
-  }
-
-  ngOnInit() {
-    this.http.get<TenantSummary[]>(`${environment.apiUrl}/admin/dashboard/tenants`).subscribe({
-      next: t => this.tenants.set(t),
-      error: () => {},
-    });
-    this.loadStats();
-  }
-
-  onTenantChange() {
-    this.loadStats();
-  }
-
-  loadStats() {
-    this.loading.set(true);
-    const url = this.selectedTenantId
-      ? `${environment.apiUrl}/admin/dashboard/stats?tenant_id=${this.selectedTenantId}`
-      : `${environment.apiUrl}/admin/dashboard/stats`;
-
-    this.http.get<any>(url).subscribe({
-      next: s => { this.stats.set(s); this.loading.set(false); },
-      error: () => this.loading.set(false),
-    });
-  }
-
-  poStatusRows() {
-    const po = this.stats()?.po;
-    if (!po) return [];
-    const total = po.total || 1;
-    const rows = [
-      { label: 'Draft',       count: po.draft ?? 0,            color: '#94a3b8' },
-      { label: 'Pending Appr', count: po.pending_approvals ?? 0, color: '#f97316' },
-      { label: 'Approved',    count: po.approved ?? 0,          color: '#22c55e' },
-      { label: 'Released',    count: po.released ?? 0,          color: '#3b82f6' },
-      { label: 'Delivered',   count: po.delivered ?? 0,         color: '#10b981' },
-      { label: 'Invoiced',    count: po.invoiced ?? 0,          color: '#8b5cf6' },
-      { label: 'Pmt Released', count: po.payment_released ?? 0, color: '#0891b2' },
-      { label: 'Cancelled',   count: po.cancelled ?? 0,         color: '#ef4444' },
-    ];
-    return rows.map(r => ({ ...r, pct: Math.min(100, (r.count / total) * 100) }));
   }
 }
