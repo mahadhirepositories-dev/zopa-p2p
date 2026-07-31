@@ -32,12 +32,15 @@ class PurchaseRequisitionController extends Controller
             'costCenter:id,name',
             'project:id,name',
             'location:id,name',
-        ])->where('tenant_id', $tenant->id);
+        ])->where(function ($q) use ($tenant) {
+            $q->where('tenant_id', $tenant->id)
+              ->orWhereHas('costCenter', fn($q2) => $q2->where('tenant_id', $tenant->id));
+        });
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        if ($request->has('requested_by')) {
+        if ($request->filled('requested_by')) {
             $query->where('requested_by', $request->requested_by);
         }
 
@@ -54,12 +57,15 @@ class PurchaseRequisitionController extends Controller
     {
         $tenant = app('currentTenant');
         $query = PurchaseRequisition::with(['requestedBy:id,name', 'costCenter:id,name'])
-            ->where('tenant_id', $tenant->id);
+            ->where(function ($q) use ($tenant) {
+                $q->where('tenant_id', $tenant->id)
+                  ->orWhereHas('costCenter', fn($q2) => $q2->where('tenant_id', $tenant->id));
+            });
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
-        if ($request->has('requested_by')) {
+        if ($request->filled('requested_by')) {
             $query->where('requested_by', $request->requested_by);
         }
         if (!$this->hasTransactRole()) {

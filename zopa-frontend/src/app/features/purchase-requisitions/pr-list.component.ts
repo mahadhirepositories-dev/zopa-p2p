@@ -61,6 +61,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
           <button class="filter-chip submitted" [class.active]="statusFilter() === 'submitted'" (click)="setStatusFilter('submitted')">Submitted</button>
           <button class="filter-chip rfq" [class.active]="statusFilter() === 'rfq_created'" (click)="setStatusFilter('rfq_created')">RFQ</button>
           <button class="filter-chip converted" [class.active]="statusFilter() === 'converted'" (click)="setStatusFilter('converted')">Converted</button>
+          <button class="filter-chip" [class.active]="statusFilter() === 'short_closed'" (click)="setStatusFilter('short_closed')">Short Closed</button>
           <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="setStatusFilter('rejected')">Rejected</button>
         </div>
       </div>
@@ -263,7 +264,18 @@ export class PrListComponent implements OnInit {
         pr.cost_center?.name?.toLowerCase().includes(q) ||
         pr.project?.name?.toLowerCase().includes(q) ||
         pr.location?.name?.toLowerCase().includes(q);
-      const matchStatus = !s || pr.status === s;
+
+      let matchStatus = !s || pr.status === s;
+      if (s === 'submitted') {
+        matchStatus = !s || ['submitted', 'pending_l1', 'pending_l2', 'pending_l3'].includes(pr.status);
+      } else if (s === 'rfq_created') {
+        matchStatus = !s || ['rfq_created', 'rfq_approved'].includes(pr.status);
+      } else if (s === 'converted') {
+        matchStatus = !s || ['converted', 'partially_converted'].includes(pr.status);
+      } else if (s === 'short_closed') {
+        matchStatus = !s || ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2'].includes(pr.status);
+      }
+
       return matchSearch && matchStatus;
     });
   });
@@ -336,8 +348,11 @@ export class PrListComponent implements OnInit {
   formatStatus(s: string): string {
     const map: Record<string,string> = {
       draft: 'Draft', submitted: 'Submitted', rfq_created: 'RFQ Created',
-      rfq_approved: 'RFQ Approved', converted: 'Converted', rejected: 'Rejected',
+      rfq_approved: 'RFQ Approved', converted: 'Converted', partially_converted: 'Partial',
+      rejected: 'Rejected', short_closed: 'Short Closed',
     };
+    if (s?.startsWith('pending')) return 'Pending Approval';
+    if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;
   }
 

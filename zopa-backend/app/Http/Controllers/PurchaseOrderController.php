@@ -40,7 +40,7 @@ class PurchaseOrderController extends Controller
         $query = PurchaseOrder::with(['vendor', 'costCenter', 'creator'])
             ->where('tenant_id', $tenant->id);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
@@ -87,7 +87,7 @@ class PurchaseOrderController extends Controller
         $query = PurchaseOrder::with(['vendor', 'costCenter', 'creator'])
             ->where('tenant_id', $tenant->id);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         if ($request->has('statuses')) {
