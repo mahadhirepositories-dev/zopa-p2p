@@ -26,13 +26,17 @@ class PurchaseRequisitionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = app('currentTenant');
+        $ccIds = \App\Models\CostCenter::where('tenant_id', $tenant->id)->pluck('id');
 
         $query = PurchaseRequisition::with([
             'requestedBy:id,name',
             'costCenter:id,name',
             'project:id,name',
             'location:id,name',
-        ])->where('tenant_id', $tenant->id);
+        ])->where(function ($q) use ($tenant, $ccIds) {
+            $q->where('tenant_id', $tenant->id)
+              ->orWhereIn('cost_center_id', $ccIds);
+        });
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -53,8 +57,13 @@ class PurchaseRequisitionController extends Controller
     public function export(Request $request)
     {
         $tenant = app('currentTenant');
+        $ccIds = \App\Models\CostCenter::where('tenant_id', $tenant->id)->pluck('id');
+
         $query = PurchaseRequisition::with(['requestedBy:id,name', 'costCenter:id,name'])
-            ->where('tenant_id', $tenant->id);
+            ->where(function ($q) use ($tenant, $ccIds) {
+                $q->where('tenant_id', $tenant->id)
+                  ->orWhereIn('cost_center_id', $ccIds);
+            });
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
