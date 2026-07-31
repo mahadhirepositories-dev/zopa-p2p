@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { DecimalPipe, DatePipe } from '@angular/common';
+import { DecimalPipe, DatePipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -23,7 +23,7 @@ interface TenantSummary {
   selector: 'app-zopa-dashboard',
   standalone: true,
   imports: [
-    DecimalPipe, DatePipe, RouterLink, FormsModule,
+    DecimalPipe, DatePipe, UpperCasePipe, RouterLink, FormsModule,
     MatButtonModule, MatIconModule, MatCardModule,
     MatProgressSpinnerModule, MatTableModule, MatChipsModule, MatTooltipModule,
   ],
