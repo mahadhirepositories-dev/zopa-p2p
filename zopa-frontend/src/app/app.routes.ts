@@ -22,6 +22,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
   },
   {
+    path: 'executive-dashboard',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/executive-dashboard/executive-dashboard.component').then(m => m.ExecutiveDashboardComponent),
+  },
+  {
     path: 'purchase-orders',
     canActivate: [authGuard, permissionGuard],
     data: { module: 'purchase_orders' },

@@ -76,6 +76,9 @@ import { filter } from 'rxjs/operators';
                  [routerLinkActiveOptions]="{exact:true}">
                 <mat-icon>dashboard</mat-icon><span>Dashboard</span>
               </a>
+              <a class="nav-link" routerLink="/executive-dashboard" routerLinkActive="nav-link--active">
+                <mat-icon>analytics</mat-icon><span>Executive Dashboard</span>
+              </a>
               <a class="nav-link" routerLink="/help" routerLinkActive="nav-link--active">
                 <mat-icon>help_outline</mat-icon><span>Help &amp; Manual</span>
               </a>

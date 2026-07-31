@@ -8,6 +8,7 @@ use App\Http\Controllers\BoqController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\CostCenterController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExecutiveDashboardController;
 use App\Http\Controllers\GrnController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Master\CategoryController;
@@ -158,6 +159,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Dashboard
         Route::get('dashboard/stats', [DashboardController::class, 'stats']);
+        Route::get('executive-dashboard/stats', [ExecutiveDashboardController::class, 'stats']);
+        Route::get('executive-dashboard/export', [ExecutiveDashboardController::class, 'export']);
 
         // Org master data
         Route::get('departments', [OrgController::class, 'departments']);
