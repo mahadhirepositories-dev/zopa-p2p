@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Grn;
 use App\Models\GrnItem;
 use App\Models\PurchaseOrder;
+use App\Services\ActivityLogService;
+use App\Services\TatService;
 use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,6 +15,11 @@ use Illuminate\Support\Facades\DB;
 class GrnController extends Controller
 {
     use AuthorizesRoles;
+
+    public function __construct(
+        private ActivityLogService $actLog,
+        private TatService         $tat,
+    ) {}
     public function index(Request $request): JsonResponse
     {
         $tenant = app('currentTenant');
@@ -144,6 +151,20 @@ class GrnController extends Controller
                 $po->update(['status' => 'delivered', 'delivered_at' => now()]);
             }
         }
+
+        // ── TAT: stamp grn_received_at ────────────────────────────────────────
+        if ($po) {
+            $this->tat->stamp($po->id, 'grn_received_at', now());
+        }
+
+        // ── Activity log ──────────────────────────────────────────────────────
+        $this->actLog->log('GRN', $grn->id, 'created', [
+            'grn_number' => $grn->grn_number,
+            'po_id'      => $grn->po_id,
+            'po_number'  => $po?->po_number,
+            'received_date' => $grn->received_date,
+            'item_count' => count($request->items),
+        ]);
 
         return response()->json($grn->load('items.poItem', 'receivedBy:id,name'), 201);
     }

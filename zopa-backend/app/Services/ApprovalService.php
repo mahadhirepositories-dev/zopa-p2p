@@ -350,6 +350,12 @@ class ApprovalService
                 'short_closed_at' => now(),
             ]);
             $this->notifyStatusToSource('PR', $pr->fresh(['items', 'costCenter', 'requestedBy']), 'short_closed');
+
+            // ── Activity log: short close fully approved and completed ──────────────────
+            app(ActivityLogService::class)->log('PR', $pr->id, 'short_closed', [
+                'approved_by_level' => $approval->level,
+                'short_close_reason' => $pr->short_close_reason,
+            ]);
         }
     }
 
@@ -374,6 +380,11 @@ class ApprovalService
             // PR fully approved → back to submitted so buyer can see it
             $pr->update(['status' => 'submitted']);
             $this->notifyStatusToSource('PR', $pr->fresh(['items', 'costCenter', 'requestedBy']), 'approved');
+
+            // ── Activity log: PR fully approved through all levels ──────────────────
+            app(ActivityLogService::class)->log('PR', $pr->id, 'approved', [
+                'final_level' => $approval->level,
+            ]);
         }
     }
 

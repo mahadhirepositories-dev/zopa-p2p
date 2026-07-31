@@ -138,10 +138,12 @@ class ApprovalController extends Controller
         $this->ensureAssigned($approval);
         $this->approvals->approve($approval, $request->input('comments') ?? '');
 
+        // Log under the canonical entity type (PR_SHORT_CLOSE actions are still PR events)
+        $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
         $this->actLog->log(
-            $approval->entity_type,
+            $logType,
             $approval->entity_id,
-            'approved',
+            $approval->entity_type === 'PR_SHORT_CLOSE' ? 'short_close_l' . $approval->level . '_approved' : 'approved',
             ['level' => $approval->level, 'comments' => $request->input('comments') ?? '']
         );
 
@@ -155,10 +157,11 @@ class ApprovalController extends Controller
         $this->ensureAssigned($approval);
         $this->approvals->returnWithQuery($approval, $request->comments);
 
+        $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
         $this->actLog->log(
-            $approval->entity_type,
+            $logType,
             $approval->entity_id,
-            'returned',
+            $approval->entity_type === 'PR_SHORT_CLOSE' ? 'short_close_returned' : 'returned',
             ['level' => $approval->level, 'comments' => $request->comments]
         );
 
@@ -172,10 +175,11 @@ class ApprovalController extends Controller
         $this->ensureAssigned($approval);
         $this->approvals->reject($approval, $request->comments);
 
+        $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
         $this->actLog->log(
-            $approval->entity_type,
+            $logType,
             $approval->entity_id,
-            'rejected',
+            $approval->entity_type === 'PR_SHORT_CLOSE' ? 'short_close_rejected' : 'rejected',
             ['level' => $approval->level, 'comments' => $request->comments]
         );
 
