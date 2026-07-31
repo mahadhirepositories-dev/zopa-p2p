@@ -359,23 +359,46 @@ class PurchaseRequisitionController extends Controller
 
     public function shortClose(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
     {
-        $this->requireTransactRole();
-        $this->authorize($purchaseRequisition);
+        try {
+            $this->requireTransactRole();
+            $this->authorize($purchaseRequisition);
 
-        if (in_array($purchaseRequisition->status, ['draft', 'short_closed', 'rejected'])) {
-            return response()->json(['error' => 'PR cannot be short-closed in its current state.'], 422);
+            if (in_array($purchaseRequisition->status, ['draft', 'short_closed', 'rejected'])) {
+                return response()->json(['error' => 'PR cannot be short-closed in its current state.'], 422);
+            }
+
+            $request->validate([
+                'reason' => 'required|string|max:1000',
+            ]);
+
+            // Safely update only columns that exist — guard against missing migration columns
+            $updateData = ['status' => $purchaseRequisition->status]; // no-op default
+            if (\Illuminate\Support\Facades\Schema::hasColumn('purchase_requisitions', 'short_close_reason')) {
+                $updateData = [
+                    'short_close_reason' => $request->input('reason'),
+                    'short_closed_by'    => auth()->id(),
+                ];
+                $purchaseRequisition->update($updateData);
+            }
+
+            $this->approval->routePrShortCloseForApproval($purchaseRequisition, $request->input('reason'), auth()->id());
+            $this->actLog->log('PR', $purchaseRequisition->id, 'short_close_requested', [
+                'reason' => $request->input('reason'),
+            ]);
+
+            return response()->json($purchaseRequisition->fresh());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PR shortClose 500: ' . $e->getMessage(), [
+                'pr_id' => $purchaseRequisition->id ?? null,
+                'line'  => $e->getLine(),
+                'file'  => basename($e->getFile()),
+            ]);
+            return response()->json([
+                'error'   => $e->getMessage(),
+                'at_line' => $e->getLine(),
+                'in_file' => basename($e->getFile()),
+            ], 500);
         }
-
-        $request->validate([
-            'reason' => 'required|string|max:1000',
-        ]);
-
-        $this->approval->routePrShortCloseForApproval($purchaseRequisition, $request->reason, auth()->id());
-        $this->actLog->log('PR', $purchaseRequisition->id, 'short_close_requested', [
-            'reason' => $request->reason,
-        ]);
-
-        return response()->json($purchaseRequisition->fresh());
     }
 
     public function destroy(PurchaseRequisition $purchaseRequisition): JsonResponse
