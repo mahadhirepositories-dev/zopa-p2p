@@ -32,10 +32,7 @@ class PurchaseRequisitionController extends Controller
             'costCenter:id,name',
             'project:id,name',
             'location:id,name',
-        ])->where(function ($q) use ($tenant) {
-            $q->where('tenant_id', $tenant->id)
-              ->orWhereHas('costCenter', fn($q2) => $q2->where('tenant_id', $tenant->id));
-        });
+        ])->where('tenant_id', $tenant->id);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -57,10 +54,7 @@ class PurchaseRequisitionController extends Controller
     {
         $tenant = app('currentTenant');
         $query = PurchaseRequisition::with(['requestedBy:id,name', 'costCenter:id,name'])
-            ->where(function ($q) use ($tenant) {
-                $q->where('tenant_id', $tenant->id)
-                  ->orWhereHas('costCenter', fn($q2) => $q2->where('tenant_id', $tenant->id));
-            });
+            ->where('tenant_id', $tenant->id);
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
