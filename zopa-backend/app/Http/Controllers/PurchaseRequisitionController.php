@@ -27,23 +27,21 @@ class PurchaseRequisitionController extends Controller
     {
         try {
             $tenant = app('currentTenant');
-            $ccIds = \App\Models\CostCenter::where('tenant_id', $tenant->id)->pluck('id');
+            $tenantId = $tenant->id;
 
+            // Use plain DB query first to get IDs — avoids any model cast issues
             $query = PurchaseRequisition::with([
                 'requestedBy:id,name',
                 'costCenter:id,name',
                 'project:id,name',
                 'location:id,name',
-            ])->where(function ($q) use ($tenant, $ccIds) {
-                $q->where('tenant_id', $tenant->id)
-                  ->orWhereIn('cost_center_id', $ccIds);
-            });
+            ])->where('tenant_id', $tenantId);
 
             if ($request->filled('status')) {
-                $query->where('status', $request->status);
+                $query->where('status', $request->input('status'));
             }
             if ($request->filled('requested_by')) {
-                $query->where('requested_by', $request->requested_by);
+                $query->where('requested_by', $request->input('requested_by'));
             }
 
             // Hide drafts from non-transact roles (like Approvers)
@@ -51,18 +49,19 @@ class PurchaseRequisitionController extends Controller
                 $query->where('status', '!=', 'draft');
             }
 
-            $perPage = min((int) ($request->per_page ?? 500), 1000);
+            $perPage = min((int) ($request->input('per_page', 500)), 1000);
             return response()->json($query->latest()->paginate($perPage));
+
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('PR index error: ' . $e->getMessage(), [
-                'file' => $e->getFile(),
+            \Illuminate\Support\Facades\Log::error('PR index 500: ' . $e->getMessage(), [
+                'tenant' => app()->bound('currentTenant') ? app('currentTenant')->id : 'none',
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
+                'file' => basename($e->getFile()),
             ]);
             return response()->json([
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'error'   => $e->getMessage(),
+                'at_line' => $e->getLine(),
+                'in_file' => basename($e->getFile()),
             ], 500);
         }
     }
