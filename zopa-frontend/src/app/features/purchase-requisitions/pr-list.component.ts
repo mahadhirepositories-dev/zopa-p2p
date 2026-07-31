@@ -255,9 +255,11 @@ export class PrListComponent implements OnInit {
   });
 
   filtered = computed(() => {
-    const q = this.search().toLowerCase();
+    const list = Array.isArray(this.prs()) ? this.prs() : [];
+    const q = (this.search() || '').trim().toLowerCase();
     const s = this.statusFilter();
-    return this.prs().filter(pr => {
+    return list.filter(pr => {
+      if (!pr) return false;
       const matchSearch = !q ||
         pr.pr_number?.toLowerCase().includes(q) ||
         pr.title?.toLowerCase().includes(q) ||
@@ -297,7 +299,11 @@ export class PrListComponent implements OnInit {
 
   ngOnInit() {
     this.http.get<any>(`${environment.apiUrl}/purchase-requisitions?per_page=500`).subscribe({
-      next: res => { this.prs.set(res.data ?? res); this.loading.set(false); },
+      next: res => {
+        const items = Array.isArray(res) ? res : (res?.data ?? []);
+        this.prs.set(items);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

@@ -20,8 +20,12 @@ trait AuthorizesRoles
     protected const TRANSACT_ROLES = [
         'zopa_super_admin',
         'zopa_buyer',
+        'zopa_pr',
+        'zopa_grn',
         'client_admin',
         'client_buyer',
+        'client_pr',
+        'client_grn',
     ];
 
     /** May perform admin/financial actions — payment release, budget adjustments,
