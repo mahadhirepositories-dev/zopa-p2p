@@ -35,9 +35,11 @@ trait AuthorizesRoles
         'client_admin',
     ];
 
-    protected function requireTransactRole(): void
+    protected function requireTransactRole(string $module = 'purchase_requisitions'): void
     {
-        $this->requireRole(...self::TRANSACT_ROLES);
+        if (!$this->hasTransactRole($module)) {
+            abort(403, 'You do not have permission to perform this action.');
+        }
     }
 
     protected function requireAdminRole(): void
@@ -60,10 +62,17 @@ trait AuthorizesRoles
         return $current && in_array($current, self::ADMIN_ROLES);
     }
 
-    protected function hasTransactRole(): bool
+    protected function hasTransactRole(string $module = 'purchase_requisitions'): bool
     {
         $current = app()->bound('currentRole') ? app('currentRole') : null;
-        return $current && in_array($current, self::TRANSACT_ROLES);
+        if (!$current) {
+            return false;
+        }
+        if (in_array($current, self::TRANSACT_ROLES)) {
+            return true;
+        }
+        // If granted via Access Control matrix for the module or any transact action:
+        return $this->can($module, 'create') || $this->can($module, 'edit');
     }
 
     /**

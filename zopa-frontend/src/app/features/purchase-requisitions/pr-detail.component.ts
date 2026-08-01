@@ -183,7 +183,7 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
                       <th>Qty Requested</th>
                       <th>Qty Converted</th>
                       <th>Conversion</th>
-                      <th>Unit</th>
+                      <th>UOM</th>
                       <th>Est. Price</th>
                       <th>Amount</th>
                     </tr>

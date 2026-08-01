@@ -220,7 +220,7 @@ import { Product } from '../../core/models';
                         </mat-form-field>
 
                         <mat-form-field appearance="outline">
-                          <mat-label>Unit</mat-label>
+                          <mat-label>UOM</mat-label>
                           <input matInput formControlName="unit" placeholder="nos" />
                         </mat-form-field>
 
