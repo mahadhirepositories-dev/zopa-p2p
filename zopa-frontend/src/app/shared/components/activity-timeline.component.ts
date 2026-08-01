@@ -91,7 +91,7 @@ interface ActivityEntry {
 })
 export class ActivityTimelineComponent implements OnChanges {
   @Input() entityType!: string;
-  @Input() entityId!: number;
+  @Input() entityId?: number | null;
 
   private http = inject(HttpClient);
 

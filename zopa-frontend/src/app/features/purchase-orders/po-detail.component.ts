@@ -428,7 +428,9 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 </mat-card-title>
               </mat-card-header>
               <mat-card-content style="padding-top:12px;">
-                <app-activity-timeline entityType="PO" [entityId]="po()!.id" />
+                @if (po()?.id) {
+                  <app-activity-timeline entityType="PO" [entityId]="po()!.id!" />
+                }
               </mat-card-content>
             </mat-card>
 
