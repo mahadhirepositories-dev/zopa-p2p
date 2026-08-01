@@ -35,22 +35,23 @@ interface ActivityEntry {
         <div class="timeline">
           @for (e of entries(); track e.id) {
             <div class="tl-item">
-              <div class="tl-dot" [class]="dotClass(e.action)">
-                <mat-icon>{{ actionIcon(e.action) }}</mat-icon>
+              <div class="tl-dot" [class]="dotClass(e.action, e.meta)">
+                <mat-icon>{{ actionIcon(e.action, e.meta) }}</mat-icon>
               </div>
               <div class="tl-body">
                 <div class="tl-header">
-                  <span class="tl-action">{{ actionLabel(e.action) }}</span>
+                  <span class="tl-action">{{ actionLabel(e.action, e.meta) }}</span>
                   @if (e.user?.name) {
                     <span class="tl-by">by {{ e.user!.name }}</span>
                   }
                   <span class="tl-time">{{ e.created_at | date:'dd MMM yyyy, HH:mm' }}</span>
                 </div>
-                @if (e.meta?.['comments']) {
-                  <div class="tl-comment">"{{ e.meta!['comments'] }}"</div>
-                }
                 @if (e.meta?.['remarks']) {
                   <div class="tl-comment">{{ e.meta!['remarks'] }}</div>
+                } @else if (e.meta?.['notes']) {
+                  <div class="tl-comment">{{ e.meta!['notes'] }}</div>
+                } @else if (e.meta?.['comments']) {
+                  <div class="tl-comment">"{{ e.meta!['comments'] }}"</div>
                 }
               </div>
             </div>
@@ -115,33 +116,42 @@ export class ActivityTimelineComponent implements OnChanges {
     });
   }
 
-  actionIcon(action: string): string {
+  actionIcon(action: string, meta?: any): string {
     const map: Record<string, string> = {
       created: 'add_circle', submitted: 'send', approved: 'check_circle',
       rejected: 'cancel', returned: 'reply', updated: 'edit',
       rfq_created: 'request_quote', rfq_approved: 'verified',
       converted: 'transform', released: 'rocket_launch',
-      delivered: 'local_shipping', invoiced: 'receipt_long',
-      payment_released: 'payments', cancelled: 'block', deleted: 'delete',
+      delivered: 'local_shipping', delivery_status_updated: 'local_shipping',
+      partially_delivered: 'local_shipping',
+      invoiced: 'receipt_long', payment_released: 'payments', cancelled: 'block', deleted: 'delete',
     };
     return map[action] ?? 'circle';
   }
 
-  actionLabel(action: string): string {
+  actionLabel(action: string, meta?: any): string {
+    if (action === 'delivery_status_updated') {
+      return meta?.['delivery_status'] === 'partially_delivered' ? 'Marked Partially Delivered' : 'Marked Fully Delivered';
+    }
     const map: Record<string, string> = {
       created: 'PR Created', submitted: 'Submitted for Procurement',
       approved: 'Approved', rejected: 'Rejected', returned: 'Returned with Query',
       updated: 'Updated', rfq_created: 'RFQ Created', rfq_approved: 'RFQ Approved',
       converted: 'Converted to PO', released: 'PO Released', delivered: 'Delivered',
+      delivery_status_updated: 'Delivery Status Updated',
+      partially_delivered: 'Marked Partially Delivered',
       invoiced: 'Invoice Processed', payment_released: 'Payment Released',
       cancelled: 'Cancelled', deleted: 'Deleted',
     };
     return map[action] ?? action.replace(/_/g, ' ');
   }
 
-  dotClass(action: string): string {
+  dotClass(action: string, meta?: any): string {
+    if (action === 'delivery_status_updated') {
+      return meta?.['delivery_status'] === 'partially_delivered' ? 'tl-dot dot-amber' : 'tl-dot dot-green';
+    }
     const green  = ['created', 'approved', 'rfq_approved', 'converted', 'delivered', 'payment_released'];
-    const amber  = ['submitted', 'rfq_created', 'returned', 'updated'];
+    const amber  = ['submitted', 'rfq_created', 'returned', 'updated', 'partially_delivered'];
     const red    = ['rejected', 'cancelled', 'deleted'];
     const blue   = ['released', 'invoiced'];
     const purple = ['payment_released'];

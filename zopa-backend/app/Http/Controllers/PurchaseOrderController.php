@@ -671,6 +671,7 @@ class PurchaseOrderController extends Controller
 
         $this->actLog->log('PO', $purchaseOrder->id, 'delivery_status_updated', [
             'delivery_status' => $request->status,
+            'remarks'         => $request->notes ?? ($request->status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered'),
             'notes'           => $request->notes ?? null,
         ]);
 
