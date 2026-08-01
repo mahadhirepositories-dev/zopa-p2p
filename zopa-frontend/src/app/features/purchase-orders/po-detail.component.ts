@@ -54,18 +54,6 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
           <div style="display:flex;gap:8px;align-items:center;">
             <mat-chip [class]="'status-' + po()!.status" [highlighted]="true">{{ po()!.status | uppercase }}</mat-chip>
 
-            @if (po()!.delivery_status || po()!.delivery_notes) {
-              <div class="delivery-status-chip" [class.partial]="po()!.delivery_status === 'partially_delivered'">
-                <mat-icon style="font-size:16px;width:16px;height:16px;">local_shipping</mat-icon>
-                <span>
-                  {{ po()!.delivery_status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered' }}
-                  @if (po()!.delivery_notes) {
-                    ({{ po()!.delivery_notes }})
-                  }
-                </span>
-              </div>
-            }
-
             @if ((po()!.status === 'draft' || po()!.status === 'returned') && auth.canTransact()) {
               @if (po()!.status === 'returned') {
                 <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:#e65100;display:flex;align-items:center;gap:8px;">
@@ -243,18 +231,6 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
             <mat-card style="margin-bottom:16px;">
               <mat-card-header><mat-card-title>Line Items</mat-card-title></mat-card-header>
               <mat-card-content style="padding-top:8px;overflow-x:auto;">
-                @if (po()!.delivery_status || po()!.delivery_notes) {
-                  <div style="background:#fff7ed;border:1px solid #ffedd5;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#c2410c;display:flex;align-items:center;gap:8px;">
-                    <mat-icon style="color:#ea580c;font-size:20px;width:20px;height:20px;">local_shipping</mat-icon>
-                    <div>
-                      <strong>Delivery Progress:</strong>
-                      {{ po()!.delivery_status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered' }}
-                      @if (po()!.delivery_notes) {
-                        &nbsp;—&nbsp;<em>"{{ po()!.delivery_notes }}"</em>
-                      }
-                    </div>
-                  </div>
-                }
                 <table mat-table [dataSource]="po()!.items ?? []" class="full-width">
                   <ng-container matColumnDef="sno">
                     <th mat-header-cell *matHeaderCellDef>#</th>
