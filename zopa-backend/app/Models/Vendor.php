@@ -35,4 +35,5 @@ class Vendor extends Model
 
     public function vendorCategories(): HasMany { return $this->hasMany(VendorCategory::class); }
     public function documents(): HasMany { return $this->hasMany(VendorDocument::class); }
+    public function purchaseOrders(): HasMany { return $this->hasMany(PurchaseOrder::class, 'vendor_id')->latest(); }
 }
