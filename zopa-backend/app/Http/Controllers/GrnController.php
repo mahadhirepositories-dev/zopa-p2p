@@ -3,14 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Grn;
+use App\Models\GrnAttachment;
 use App\Models\GrnItem;
 use App\Models\PurchaseOrder;
+use App\Models\Tenant;
 use App\Services\ActivityLogService;
 use App\Services\TatService;
 use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+
 
 class GrnController extends Controller
 {
