@@ -410,17 +410,39 @@ class PurchaseRequisitionController extends Controller
 
     public function destroy(PurchaseRequisition $purchaseRequisition): JsonResponse
     {
-        // Transactional family + matrix 'delete' permission (authoritative) — a
-        // coarse admin-only gate would override a delete granted in Access Control.
-        $this->requirePermission('purchase_requisitions', 'delete');
         $this->authorize($purchaseRequisition);
 
         if ($purchaseRequisition->status !== 'draft') {
             return response()->json(['error' => 'Only draft PRs can be deleted.'], 422);
         }
 
+        if ($purchaseRequisition->requested_by !== auth()->id() && !$this->can('purchase_requisitions', 'delete') && !$this->canTransact()) {
+            return response()->json(['error' => 'You do not have permission to delete this PR.'], 403);
+        }
+
+        $purchaseRequisition->items()->delete();
         $purchaseRequisition->delete();
-        return response()->json(null, 204);
+        return response()->json(['message' => 'Draft PR deleted successfully.'], 200);
+    }
+
+    public function cleanupDrafts(Request $request): JsonResponse
+    {
+        $tenant = app('currentTenant');
+        $query = PurchaseRequisition::where('tenant_id', $tenant->id)->where('status', 'draft');
+
+        if ($request->has('today')) {
+            $query->whereDate('created_at', now()->toDateString());
+        }
+
+        $prs = $query->get();
+        $count = $prs->count();
+
+        foreach ($prs as $pr) {
+            $pr->items()->delete();
+            $pr->delete();
+        }
+
+        return response()->json(['message' => "Cleaned up {$count} draft PRs.", 'deleted_count' => $count]);
     }
 
     /**

@@ -273,6 +273,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Purchase Requisitions
         Route::get('purchase-requisitions/export', [PurchaseRequisitionController::class, 'export']);
+        Route::delete('purchase-requisitions/cleanup-drafts', [PurchaseRequisitionController::class, 'cleanupDrafts']);
         Route::apiResource('purchase-requisitions', PurchaseRequisitionController::class);
         Route::post('purchase-requisitions/{purchaseRequisition}/submit', [PurchaseRequisitionController::class, 'submit']);
         Route::post('purchase-requisitions/{purchaseRequisition}/reject', [PurchaseRequisitionController::class, 'reject']);

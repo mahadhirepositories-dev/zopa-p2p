@@ -39,12 +39,15 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
             <p>{{ pr()!.title }} · Created {{ pr()!.created_at | date:'dd MMM yyyy' }}</p>
           </div>
           <div class="header-actions">
-            @if (pr()!.status === 'draft' && auth.canTransact()) {
+            @if (pr()!.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
               <button mat-stroked-button color="primary" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']" [disabled]="acting()">
                 <mat-icon>edit</mat-icon> Edit PR
               </button>
               <button mat-stroked-button (click)="submit()" [disabled]="acting()">
                 <mat-icon>send</mat-icon> Submit for Procurement
+              </button>
+              <button mat-stroked-button color="warn" (click)="deletePr()" [disabled]="acting()" style="margin-left:4px;">
+                <mat-icon>delete</mat-icon> Delete Draft
               </button>
             }
             @if (pr()!.status === 'submitted') {
@@ -429,5 +432,20 @@ export class PrDetailComponent implements OnInit {
     };
     if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;
+  }
+
+  deletePr() {
+    if (!confirm('Are you sure you want to delete this draft PR? This action cannot be undone.')) return;
+    this.acting.set(true);
+    this.http.delete(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}`).subscribe({
+      next: () => {
+        this.notify.success('Draft PR deleted successfully.');
+        this.router.navigate(['/purchase-requisitions']);
+      },
+      error: err => {
+        this.notify.error(err.error?.error || 'Failed to delete PR.');
+        this.acting.set(false);
+      }
+    });
   }
 }

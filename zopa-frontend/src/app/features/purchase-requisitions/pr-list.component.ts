@@ -15,8 +15,10 @@ import { MatPaginatorModule } from '@angular/material/paginator';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
 import { ExportService } from '../../core/services/export.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-pr-list',
@@ -24,8 +26,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, FormsModule, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule, MatIconModule,
-    MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule, SearchFieldComponent,
-    MatCheckboxModule, MatPaginatorModule,
+    MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule,
+    MatPaginatorModule, MatCheckboxModule, MatTooltipModule, SearchFieldComponent,
   ],
   template: `
     <div class="page-wrapper">
@@ -64,6 +66,12 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
           <button class="filter-chip" [class.active]="statusFilter() === 'short_closed'" (click)="setStatusFilter('short_closed')">Short Closed</button>
           <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="setStatusFilter('rejected')">Rejected</button>
         </div>
+
+        @if (statusFilter() === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+          <button mat-stroked-button color="warn" (click)="cleanupDrafts()" style="margin-left:auto;">
+            <mat-icon>delete_sweep</mat-icon> Clean Up Today's Drafts
+          </button>
+        }
       </div>
 
       <mat-card class="table-card" style="overflow:hidden;">
@@ -175,7 +183,14 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
               <ng-container matColumnDef="arrow">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let pr">
-                  <mat-icon class="row-arrow">chevron_right</mat-icon>
+                  <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">
+                    @if (pr.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+                      <button mat-icon-button color="warn" matTooltip="Delete Draft PR" (click)="$event.stopPropagation(); deletePrRow(pr.id)">
+                        <mat-icon style="font-size:18px;width:18px;height:18px;">delete</mat-icon>
+                      </button>
+                    }
+                    <mat-icon class="row-arrow">chevron_right</mat-icon>
+                  </div>
                 </td>
               </ng-container>
 
@@ -237,6 +252,7 @@ export class PrListComponent implements OnInit {
   private router = inject(Router);
   readonly auth = inject(AuthService);
   private exportService = inject(ExportService);
+  private notify = inject(NotificationService);
 
   columns = ['pr_number', 'title', 'cost_center', 'project', 'location', 'requested_by', 'priority', 'amount', 'status', 'arrow'];
   prs = signal<any[]>([]);
@@ -297,7 +313,8 @@ export class PrListComponent implements OnInit {
     this.pageIndex.set(0);
   }
 
-  ngOnInit() {
+  loadPrs() {
+    this.loading.set(true);
     this.http.get<any>(`${environment.apiUrl}/purchase-requisitions?per_page=500`).subscribe({
       next: res => {
         const items = Array.isArray(res) ? res : (res?.data ?? []);
@@ -306,6 +323,10 @@ export class PrListComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+  }
+
+  ngOnInit() {
+    this.loadPrs();
   }
 
   view(id: number) { this.router.navigate(['/purchase-requisitions', id]); }
@@ -377,6 +398,32 @@ export class PrListComponent implements OnInit {
     if (s?.startsWith('pending')) return 'Pending Approval';
     if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;
+  }
+
+  cleanupDrafts() {
+    if (!confirm('Are you sure you want to delete all draft PRs created today?')) return;
+    this.http.delete(`${environment.apiUrl}/purchase-requisitions/cleanup-drafts?today=1`).subscribe({
+      next: (r: any) => {
+        this.notify.success(r.message || 'Draft PRs cleaned up successfully.');
+        this.loadPrs();
+      },
+      error: err => {
+        this.notify.error(err.error?.error || 'Failed to clean up draft PRs.');
+      }
+    });
+  }
+
+  deletePrRow(id: number) {
+    if (!confirm('Are you sure you want to delete this draft PR?')) return;
+    this.http.delete(`${environment.apiUrl}/purchase-requisitions/${id}`).subscribe({
+      next: () => {
+        this.notify.success('Draft PR deleted.');
+        this.loadPrs();
+      },
+      error: err => {
+        this.notify.error(err.error?.error || 'Failed to delete draft PR.');
+      }
+    });
   }
 
   exportData() {
