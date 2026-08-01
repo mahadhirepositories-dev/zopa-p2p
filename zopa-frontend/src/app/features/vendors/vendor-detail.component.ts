@@ -31,6 +31,19 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
           <button mat-icon-button routerLink="/vendors"><mat-icon>arrow_back</mat-icon></button>
           <h2>{{ vendor()?.name ?? 'Vendor' }}</h2>
         </div>
+        @if (vendor()) {
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button mat-raised-button color="primary" (click)="downloadPdf()" [disabled]="downloading()">
+              @if (downloading()) { <mat-spinner diameter="18" /> }
+              @else { <mat-icon>picture_as_pdf</mat-icon> Download Vendor PDF }
+            </button>
+            @if (auth.canDo('vendors','edit')) {
+              <button mat-stroked-button color="primary" [routerLink]="['/vendors', vendor()!.id, 'edit']">
+                <mat-icon>edit</mat-icon> Edit Vendor Details
+              </button>
+            }
+          </div>
+        }
       </div>
 
       @if (loading()) {
@@ -322,6 +335,7 @@ export class VendorDetailComponent implements OnInit {
   vendor = signal<Vendor | null>(null);
   activity = signal<any[]>([]);
   loading = signal(true);
+  downloading = signal(false);
   showAddressForm = signal(false);
   savingAddress = signal(false);
   editingAddress = signal<VendorAddress | null>(null);
@@ -464,6 +478,39 @@ export class VendorDetailComponent implements OnInit {
         this.notify.success('Address deleted.');
       },
       error: () => this.notify.error('Failed to delete address.'),
+    });
+  }
+
+  downloadPdf() {
+    if (!this.vendor()) return;
+    this.downloading.set(true);
+
+    const pdfWin = window.open('', '_blank');
+    if (pdfWin) {
+      pdfWin.document.write(
+        '<html><head><title>Loading Vendor PDF…</title></head>' +
+        '<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;">' +
+        '<div style="text-align:center;color:#555;">' +
+        '<div style="font-size:32px;margin-bottom:16px;">📄</div>' +
+        '<div style="font-size:18px;font-weight:600;">Generating Vendor Profile PDF…</div>' +
+        '</div></body></html>'
+      );
+    }
+
+    this.http.get<{ url: string }>(`${environment.apiUrl}/vendors/${this.vendor()!.id}/pdf-url`).subscribe({
+      next: ({ url }) => {
+        if (pdfWin && !pdfWin.closed) {
+          pdfWin.location.href = url;
+        } else {
+          window.open(url, '_blank');
+        }
+        this.downloading.set(false);
+      },
+      error: () => {
+        if (pdfWin && !pdfWin.closed) pdfWin.close();
+        this.notify.error('Failed to generate Vendor PDF.');
+        this.downloading.set(false);
+      },
     });
   }
 }

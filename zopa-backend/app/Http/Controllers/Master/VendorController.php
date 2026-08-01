@@ -111,7 +111,38 @@ class VendorController extends Controller
             'vendorCategories.category:id,name',
             'vendorCategories.subcategory:id,name',
             'documents',
+            'purchaseOrders:id,po_number,pr_id,vendor_id,grand_total,status,delivery_status,created_at',
         ]));
+    }
+
+    public function pdf(Vendor $vendor): \Illuminate\Http\Response
+    {
+        $this->requirePermission('vendors', 'view');
+        $this->authorizeVendor($vendor);
+
+        $bytes = \App\Services\PdfService::makeVendorPdf($vendor);
+        $safeCode = str_replace(['/', '\\'], '-', (string) ($vendor->global_vendor_code ?: $vendor->id));
+
+        return response($bytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="Vendor-' . $safeCode . '.pdf"',
+        ]);
+    }
+
+    public function pdfUrl(Vendor $vendor): JsonResponse
+    {
+        $this->requirePermission('vendors', 'view');
+        $this->authorizeVendor($vendor);
+
+        $token = bin2hex(random_bytes(32));
+        \Cache::put("pdf_dl_vendor_{$token}", [
+            'vendor_id' => $vendor->id,
+            'tenant_id' => $vendor->tenant_id,
+        ], now()->addMinutes(5));
+
+        return response()->json([
+            'url' => url("/api/vendor-pdf/{$vendor->id}") . '?token=' . $token,
+        ]);
     }
 
     public function update(Request $request, Vendor $vendor): JsonResponse

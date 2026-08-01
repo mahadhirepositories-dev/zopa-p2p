@@ -6,7 +6,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -19,6 +19,7 @@ import { BulkImportService } from '../../core/services/bulk-import.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { ExportService } from '../../core/services/export.service';
 import { SearchFieldComponent } from '../../shared/components/search-field.component';
+import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
 
 @Component({
   selector: 'app-vendor-list',
@@ -27,7 +28,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     FormsModule,
     MatTableModule, MatButtonModule, MatIconModule,
     MatChipsModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatCardModule, MatFormFieldModule, MatInputModule, SearchFieldComponent,
+    MatCardModule, MatFormFieldModule, MatInputModule, MatDialogModule, SearchFieldComponent,
   ],
   template: `
     <div class="page-wrapper">
@@ -170,16 +171,16 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let v" style="text-align:right;white-space:nowrap;">
+                  <button mat-icon-button matTooltip="View Vendor Details" (click)="$event.stopPropagation(); openViewModal(v)">
+                    <mat-icon style="color:var(--brand);">visibility</mat-icon>
+                  </button>
                   @if (auth.canDo('vendors','edit')) {
-                    <button mat-icon-button matTooltip="Edit" (click)="router.navigate(['/vendors', v.id, 'edit'])">
+                    <button mat-icon-button matTooltip="Edit Vendor" (click)="$event.stopPropagation(); router.navigate(['/vendors', v.id, 'edit'])">
                       <mat-icon>edit</mat-icon>
                     </button>
                   }
-                  <button mat-icon-button matTooltip="View addresses" (click)="goDetail(v.id)">
-                    <mat-icon>location_on</mat-icon>
-                  </button>
                   @if (auth.canDo('vendors','delete')) {
-                    <button mat-icon-button [matTooltip]="v.is_active ? 'Deactivate' : 'Activate'" (click)="toggleStatus(v)">
+                    <button mat-icon-button [matTooltip]="v.is_active ? 'Deactivate' : 'Activate'" (click)="$event.stopPropagation(); toggleStatus(v)">
                       <mat-icon [style.color]="v.is_active ? '#16a34a' : '#94a3b8'">
                         {{ v.is_active ? 'toggle_on' : 'toggle_off' }}
                       </mat-icon>
@@ -189,7 +190,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns;" class="hover-row"></tr>
+              <tr mat-row *matRowDef="let row; columns: columns;" class="hover-row" (click)="openViewModal(row)" style="cursor:pointer;"></tr>
             </table>
           }
         </mat-card-content>
@@ -266,6 +267,7 @@ export class VendorListComponent implements OnInit {
   readonly router = inject(Router);
   readonly auth = inject(AuthService);
   private exportService = inject(ExportService);
+  private dialog = inject(MatDialog);
 
   columns = ['name', 'pan', 'gstin', 'category', 'addresses', 'status', 'actions'];
   vendors = signal<Vendor[]>([]);
@@ -297,7 +299,17 @@ export class VendorListComponent implements OnInit {
     });
   }
 
-  goDetail(id: number) { this.router.navigate(['/vendors', id]); }
+  goDetail(id: number) {
+    this.openViewModal({ id } as Vendor);
+  }
+
+  openViewModal(vendor: Vendor) {
+    this.dialog.open(VendorDetailDialogComponent, {
+      data: { vendorId: vendor.id },
+      width: '880px',
+      maxHeight: '90vh',
+    });
+  }
 
   downloadTemplate() {
     this.bulk.downloadTemplate('vendors/template', 'vendor-import-template.xlsx').subscribe({

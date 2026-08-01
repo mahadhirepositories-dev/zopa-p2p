@@ -189,6 +189,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('vendors/export', [VendorController::class, 'export']);
         Route::get('vendors/template', [VendorController::class, 'template']);
         Route::post('vendors/import', [VendorController::class, 'import']);
+        Route::get('vendors/{vendor}/pdf-url', [VendorController::class, 'pdfUrl']);
+        Route::get('vendors/{vendor}/pdf', [VendorController::class, 'pdf']);
         Route::apiResource('vendors', VendorController::class);
         Route::get('vendors/{vendor}/activity', [VendorController::class, 'activity']);
         Route::get('vendors/{vendor}/addresses', [VendorController::class, 'addresses']);
@@ -286,4 +288,24 @@ Route::middleware('auth:sanctum')->group(function () {
         // Reports
         Route::get('reports/po-tat', [ReportController::class, 'poTat']);
     });
+});
+
+Route::get('api/vendor-pdf/{id}', function (\Illuminate\Http\Request $request, $id) {
+    $token = $request->query('token');
+    $payload = $token ? \Cache::pull("pdf_dl_vendor_{$token}") : null;
+
+    if (!$payload || (int) $payload['vendor_id'] !== (int) $id) {
+        abort(403, 'Invalid or expired download token.');
+    }
+
+    $vendor = \App\Models\Vendor::findOrFail($id);
+    abort_if((int) $vendor->tenant_id !== (int) $payload['tenant_id'], 403);
+
+    $bytes = \App\Services\PdfService::makeVendorPdf($vendor);
+    $safeCode = str_replace(['/', '\\'], '-', (string) ($vendor->global_vendor_code ?: $vendor->id));
+
+    return response($bytes, 200, [
+        'Content-Type'        => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="Vendor-' . $safeCode . '.pdf"',
+    ]);
 });

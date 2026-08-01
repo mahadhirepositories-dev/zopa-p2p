@@ -37,6 +37,17 @@ class PdfService
         return static::generate('pdf.purchase-requisition', ['pr' => $pr]);
     }
 
+    public static function makeVendorPdf($vendor): string
+    {
+        $vendor->loadMissing([
+            'tenant', 'category', 'subcategory',
+            'vendorCategories.category', 'vendorCategories.subcategory',
+            'addresses', 'documents', 'purchaseOrders',
+        ]);
+
+        return static::generateWithDomPdf('pdf.vendor', ['vendor' => $vendor]);
+    }
+
     private static function generate(string $view, array $data): string
     {
         try {
