@@ -22,13 +22,14 @@
         <div class="details">
             <p><strong>Vendor:</strong> {{ optional($po->vendor)->name ?? '—' }}</p>
             <p><strong>Cost Center:</strong> {{ optional($po->costCenter)->name ?? '—' }}</p>
-            <p><strong>Grand Total:</strong> ₹{{ number_format((float) $po->grand_total, 2) }}</p>
             @if ($notes)
                 <p><strong>Delivery Notes:</strong> {{ $notes }}</p>
             @endif
         </div>
 
-        <p>Please log in to ZOPA P2P and record the Goods Received Note (GRN) for this delivery.</p>
+        <p>Please log in to ZOPA P2P (<a href="https://p2p.zopapro.com" style="color: #2563eb; text-decoration: underline; font-weight: 600;">p2p.zopapro.com</a>) and record the Goods Received Note (GRN) for this delivery.</p>
+
+        <p><a href="https://p2p.zopapro.com" class="btn" style="color: #ffffff;">Log in to p2p.zopapro.com</a></p>
 
         <div class="footer">
             &copy; {{ date('Y') }} {{ optional($po->tenant)->name ?? 'ZOPA P2P' }}. All rights reserved.
