@@ -182,6 +182,7 @@ class GrnController extends Controller
         abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
 
         $request->validate([
+            'status' => 'nullable|string|in:draft,pending,confirmed,rejected',
             'grn_number' => 'nullable|string|max:255',
             'received_date' => 'nullable|date',
             'dc_number' => 'nullable|string|max:255',
@@ -192,14 +193,21 @@ class GrnController extends Controller
         ]);
 
         $data = array_filter($request->only([
-            'grn_number', 'received_date', 'dc_number', 'dc_date',
+            'status', 'grn_number', 'received_date', 'dc_number', 'dc_date',
             'invoice_number', 'invoice_date', 'remarks',
         ]), fn($v) => !is_null($v));
 
         $grn->update($data);
 
+        $this->actLog->log('GRN', $grn->id, 'updated', [
+            'grn_number' => $grn->grn_number,
+            'status' => $grn->status,
+            'updated_by' => auth()->user()->name ?? auth()->id(),
+        ]);
+
         return response()->json($grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name', 'attachments']));
     }
+
 
     public function show(Grn $grn): JsonResponse
     {

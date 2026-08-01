@@ -12,12 +12,16 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { GrnStatusDialogComponent } from './grn-status-dialog.component';
+
 @Component({
   selector: 'app-grn-detail',
   standalone: true,
   imports: [DatePipe, DecimalPipe, RouterLink,
     MatButtonModule, MatIconModule, MatCardModule,
-    MatTableModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule],
+    MatTableModule, MatChipsModule, MatProgressSpinnerModule, MatTooltipModule, MatDialogModule],
+
   template: `
     <div class="page-wrapper">
       @if (loading()) {
@@ -41,12 +45,16 @@ import { NotificationService } from '../../core/services/notification.service';
           </div>
           <div style="display:flex;align-items:center;gap:10px;">
             <mat-chip [class]="'status-' + grn()!.status" [highlighted]="true">{{ grn()!.status }}</mat-chip>
+            <button mat-raised-button color="primary" (click)="openStatusDialog()">
+              <mat-icon>edit_note</mat-icon> Update Status / Vendor Doc
+            </button>
             <button mat-stroked-button (click)="downloadPdf()" [disabled]="pdfLoading()">
               @if (pdfLoading()) { <mat-spinner diameter="16" /> }
               @else { <mat-icon>picture_as_pdf</mat-icon> }
               Download GRN PDF
             </button>
           </div>
+
         </div>
 
         <!-- ── Info Card ── -->
@@ -251,6 +259,7 @@ export class GrnDetailComponent implements OnInit {
   id = input.required<string>();
   private http = inject(HttpClient);
   private notify = inject(NotificationService);
+  private dialog = inject(MatDialog);
 
   grn = signal<any>(null);
   loading = signal(true);
@@ -260,7 +269,22 @@ export class GrnDetailComponent implements OnInit {
     this.loadGrn();
   }
 
+  openStatusDialog() {
+    const ref = this.dialog.open(GrnStatusDialogComponent, {
+      width: '520px',
+      data: { grn: this.grn() },
+    });
+
+    ref.afterClosed().subscribe(updated => {
+      if (updated) {
+        this.notify.success('GRN status & details updated.');
+        this.loadGrn();
+      }
+    });
+  }
+
   loadGrn() {
+
     this.http.get<any>(`${environment.apiUrl}/grns/${this.id()}`).subscribe({
       next: g => { this.grn.set(g); this.loading.set(false); },
       error: () => this.loading.set(false),
