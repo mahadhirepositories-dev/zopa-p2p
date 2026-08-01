@@ -65,6 +65,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
                   (click)="setStatusFilter('approved')">Approved</button>
           <button class="filter-chip released" [class.active]="statusFilter() === 'released'"
                   (click)="setStatusFilter('released')">Released</button>
+          <button class="filter-chip partial" [class.active]="statusFilter() === 'partially_delivered'"
+                  (click)="setStatusFilter('partially_delivered')">Partial Delivered</button>
           <button class="filter-chip delivered" [class.active]="statusFilter() === 'delivered'"
                   (click)="setStatusFilter('delivered')">Delivered</button>
           <button class="filter-chip invoiced" [class.active]="statusFilter() === 'invoiced'"
@@ -206,6 +208,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .filter-chip.pending.active  { background: #f59e0b; border-color: #f59e0b; }
     .filter-chip.approved.active { background: #22c55e; border-color: #22c55e; }
     .filter-chip.released.active { background: #3b82f6; border-color: #3b82f6; }
+    .filter-chip.partial.active   { background: #b45309; border-color: #b45309; }
     .filter-chip.delivered.active { background: #06b6d4; border-color: #06b6d4; }
     .filter-chip.invoiced.active  { background: #8b5cf6; border-color: #8b5cf6; }
     .filter-chip.payment.active   { background: #10b981; border-color: #10b981; }
@@ -281,10 +284,11 @@ export class PoListComponent implements OnInit {
       const matchSearch = !q
         || po.po_number?.toLowerCase().includes(q)
         || (po as any).vendor?.name?.toLowerCase().includes(q);
+      const effectiveStatus = (po.delivery_status === 'partially_delivered') ? 'partially_delivered'
+        : (po.delivery_status === 'delivered' || po.status === 'delivered') ? 'delivered'
+        : po.status;
       const matchStatus = !s
-        || po.status === s
-        || (s === 'released' && (po.status === 'released' || po.delivery_status === 'partially_delivered'))
-        || (s === 'delivered' && (po.status === 'delivered' || po.delivery_status === 'delivered'))
+        || effectiveStatus === s
         || (s === 'pending' && po.status?.startsWith('pending'));
       return matchSearch && matchStatus;
     });

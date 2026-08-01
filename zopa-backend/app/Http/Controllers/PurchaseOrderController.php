@@ -673,6 +673,9 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrder->update($updateData);
 
+        // Auto-create GRN for the delivered PO if none exists yet
+        \App\Http\Controllers\GrnController::createGrnForPo($purchaseOrder, $request->notes);
+
         $this->actLog->log('PO', $purchaseOrder->id, 'delivery_status_updated', [
             'delivery_status' => $request->status,
             'remarks'         => $request->notes ?? ($request->status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered'),

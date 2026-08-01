@@ -23,6 +23,8 @@ class GrnController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = app('currentTenant');
+        $this->syncDeliveredPosWithoutGrn($tenant->id);
+
         $query = Grn::with(['purchaseOrder:id,po_number', 'receivedBy:id,name'])
             ->where('tenant_id', $tenant->id);
 
@@ -208,5 +210,77 @@ class GrnController extends Controller
 
         // Use response()->file() to display inline (view) instead of forcing download
         return response()->file($path);
+    }
+
+    /**
+     * Auto-create a GRN for a PO if one doesn't exist yet.
+     */
+    public static function createGrnForPo(PurchaseOrder $po, ?string $remarks = null, ?int $userId = null): ?Grn
+    {
+        $po->loadMissing(['items', 'tenant']);
+        if (!$po->items || $po->items->isEmpty()) {
+            return null;
+        }
+
+        // Check if GRN already exists for this PO
+        $existingCount = Grn::where('po_id', $po->id)->count();
+        if ($existingCount > 0) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($po, $remarks, $userId) {
+            $tenant   = $po->tenant ?? app('currentTenant');
+            $tenantId = $tenant->id ?? $po->tenant_id;
+            $year     = now()->year;
+            $orgCode  = strtoupper(trim($tenant->code ?? 'ORG'));
+            $prefix   = "{$orgCode}-GRN-{$year}-";
+
+            $lastNumber = Grn::where('tenant_id', $tenantId)
+                ->where('grn_number', 'like', $prefix . '%')
+                ->lockForUpdate()
+                ->max('grn_number');
+
+            $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
+            $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+
+            $grn = Grn::create([
+                'tenant_id'     => $tenantId,
+                'po_id'         => $po->id,
+                'grn_number'     => $grnNumber,
+                'received_date' => $po->delivered_at ? $po->delivered_at->toDateString() : now()->toDateString(),
+                'received_by'   => $userId ?? auth()->id() ?? $po->created_by,
+                'status'        => 'confirmed',
+                'remarks'       => $remarks ?? ($po->delivery_notes ?? 'Auto-generated GRN for delivered PO'),
+            ]);
+
+            foreach ($po->items as $item) {
+                GrnItem::create([
+                    'grn_id'       => $grn->id,
+                    'po_item_id'   => $item->id,
+                    'received_qty' => $item->qty,
+                    'accepted_qty' => $item->qty,
+                    'rejected_qty' => 0,
+                    'remarks'      => 'Delivered',
+                ]);
+            }
+
+            return $grn;
+        });
+    }
+
+    private function syncDeliveredPosWithoutGrn($tenantId): void
+    {
+        $deliveredPosWithoutGrn = PurchaseOrder::where('tenant_id', $tenantId)
+            ->where(function ($q) {
+                $q->where('status', 'delivered')
+                  ->orWhere('delivery_status', 'delivered')
+                  ->orWhere('delivery_status', 'partially_delivered');
+            })
+            ->whereDoesntHave('grns')
+            ->get();
+
+        foreach ($deliveredPosWithoutGrn as $poToSync) {
+            self::createGrnForPo($poToSync);
+        }
     }
 }
