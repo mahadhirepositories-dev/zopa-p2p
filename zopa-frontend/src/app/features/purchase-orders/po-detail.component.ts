@@ -94,7 +94,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               </button>
             }
 
-            @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
+            @if (['released', 'partially_delivered', 'delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
               <button mat-stroked-button color="accent" [disabled]="acting()" (click)="markDelivery('partially_delivered')">
                 <mat-icon>local_shipping</mat-icon> Partially Delivered
               </button>
@@ -103,6 +103,15 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
                 @else { <ng-container><mat-icon>verified</mat-icon> Mark Delivered</ng-container> }
               </button>
+            }
+
+            @if (['released', 'partially_delivered', 'delivered', 'invoiced', 'payment_released'].includes(po()!.status ?? '') || ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
+              @if (auth.canDo('grns', 'create')) {
+                <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
+                        style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
+                  <mat-icon>inventory_2</mat-icon> Mark GRN
+                </button>
+              }
             }
 
             @if (po()!.status === 'delivered' && auth.canTransact()) {
@@ -294,6 +303,86 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 </table>
               </mat-card-content>
             </mat-card>
+
+            <!-- GRN Table Card -->
+            @if (['released', 'partially_delivered', 'delivered', 'invoiced', 'payment_released'].includes(po()!.status ?? '') || ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
+              <mat-card style="margin-bottom:16px;">
+                <mat-card-header style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;">
+                  <mat-card-title style="font-size:15px;display:flex;align-items:center;gap:8px;margin:0;">
+                    <mat-icon style="color:var(--brand);">inventory_2</mat-icon>
+                    Goods Receipt Notes (GRNs)
+                    <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
+                  </mat-card-title>
+                  @if (auth.canDo('grns', 'create')) {
+                    <button mat-stroked-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
+                      <mat-icon>add</mat-icon> Mark GRN
+                    </button>
+                  }
+                </mat-card-header>
+                <mat-card-content style="padding:0!important;">
+                  @if (loadingGrns()) {
+                    <div style="display:flex;justify-content:center;padding:24px;">
+                      <mat-spinner diameter="28" />
+                    </div>
+                  } @else if (grns().length === 0) {
+                    <div style="padding:24px;text-align:center;color:#64748b;">
+                      <mat-icon style="font-size:36px;width:36px;height:36px;color:#cbd5e1;margin-bottom:6px;">inventory_2</mat-icon>
+                      <div style="font-size:13px;font-weight:600;color:#334155;">No GRNs Recorded Yet</div>
+                      <p style="font-size:12px;color:#64748b;margin:4px 0 12px;">Record a Goods Receipt Note when goods arrive against this PO.</p>
+                      @if (auth.canDo('grns', 'create')) {
+                        <button mat-raised-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
+                          <mat-icon>add</mat-icon> Create GRN
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <table mat-table [dataSource]="grns()" class="full-width">
+                      <ng-container matColumnDef="grn_number">
+                        <th mat-header-cell *matHeaderCellDef>GRN Number</th>
+                        <td mat-cell *matCellDef="let g">
+                          <a [routerLink]="['/grns', g.id]" style="font-weight:600;color:var(--brand);text-decoration:none;">
+                            {{ g.grn_number }}
+                          </a>
+                        </td>
+                      </ng-container>
+                      <ng-container matColumnDef="received_date">
+                        <th mat-header-cell *matHeaderCellDef>Received Date</th>
+                        <td mat-cell *matCellDef="let g">{{ g.received_date | date:'dd MMM yyyy' }}</td>
+                      </ng-container>
+                      <ng-container matColumnDef="received_by">
+                        <th mat-header-cell *matHeaderCellDef>Received By</th>
+                        <td mat-cell *matCellDef="let g">{{ g.received_by?.name ?? '—' }}</td>
+                      </ng-container>
+                      <ng-container matColumnDef="dc_number">
+                        <th mat-header-cell *matHeaderCellDef>DC / Inv Ref</th>
+                        <td mat-cell *matCellDef="let g">
+                          <span style="font-family:monospace;font-size:11px;">{{ g.dc_number || g.invoice_number || '—' }}</span>
+                        </td>
+                      </ng-container>
+                      <ng-container matColumnDef="items_count">
+                        <th mat-header-cell *matHeaderCellDef>Accepted Qty</th>
+                        <td mat-cell *matCellDef="let g">
+                          <span style="background:#eff6ff;color:#1d4ed8;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">
+                            {{ getGrnTotalAccepted(g) }} units ({{ g.items?.length || 0 }} items)
+                          </span>
+                        </td>
+                      </ng-container>
+                      <ng-container matColumnDef="actions">
+                        <th mat-header-cell *matHeaderCellDef style="width:80px;text-align:right;">Actions</th>
+                        <td mat-cell *matCellDef="let g" style="text-align:right;">
+                          <button mat-icon-button color="primary" [routerLink]="['/grns', g.id]" matTooltip="View GRN">
+                            <mat-icon>visibility</mat-icon>
+                          </button>
+                        </td>
+                      </ng-container>
+
+                      <tr mat-header-row *matHeaderRowDef="grnTableCols"></tr>
+                      <tr mat-row *matRowDef="let row; columns: grnTableCols;"></tr>
+                    </table>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
 
             @if (po()!.terms_conditions) {
               <mat-card style="margin-bottom:16px;">
@@ -659,11 +748,33 @@ export class PoDetailComponent implements OnInit {
     if (this.auth.isSuperAdmin()) this.loadDiagnostic();
   }
 
+  loadingGrns = signal(false);
+  grns = signal<any[]>([]);
+  grnTableCols = ['grn_number', 'received_date', 'received_by', 'dc_number', 'items_count', 'actions'];
+
+  loadGrns(poId: number) {
+    this.loadingGrns.set(true);
+    this.http.get<any>(`${environment.apiUrl}/purchase-orders/${poId}/grns`).subscribe({
+      next: res => {
+        const list = Array.isArray(res) ? res : (res.data ?? []);
+        this.grns.set(list);
+        this.loadingGrns.set(false);
+      },
+      error: () => this.loadingGrns.set(false),
+    });
+  }
+
+  getGrnTotalAccepted(grn: any): number {
+    if (!grn.items?.length) return 0;
+    return grn.items.reduce((acc: number, item: any) => acc + Number(item.accepted_qty ?? 0), 0);
+  }
+
   loadPo() {
     this.http.get<PurchaseOrder>(`${environment.apiUrl}/purchase-orders/${this.id()}`).subscribe({
       next: po => {
         this.po.set(po);
         this.loading.set(false);
+        if (po.id) this.loadGrns(po.id);
         // Check if the current user has a pending approval for this PO
         this.http.get<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/my-approval`)
           .subscribe({ next: a => this.myApproval.set(a), error: () => {} });

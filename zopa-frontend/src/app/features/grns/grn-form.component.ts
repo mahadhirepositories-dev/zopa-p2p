@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, FormArray } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { DecimalPipe, DatePipe, UpperCasePipe } from '@angular/common';
@@ -475,6 +475,7 @@ export class GrnFormComponent implements OnInit {
   private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private notify = inject(NotificationService);
 
   releasedPos  = signal<any[]>([]);
@@ -536,10 +537,27 @@ export class GrnFormComponent implements OnInit {
   asGroup(ctrl: any): FormGroup { return ctrl as FormGroup; }
 
   ngOnInit() {
-    // grn_eligible=1 excludes POs where all items are already fully received
-    const params = 'statuses[]=released&statuses[]=approved&grn_eligible=1&per_page=100';
+    const poIdParam = this.route.snapshot.queryParamMap.get('po_id') || this.route.snapshot.queryParamMap.get('po');
+    const params = 'statuses[]=released&statuses[]=delivered&statuses[]=partially_delivered&statuses[]=approved&statuses[]=invoiced&statuses[]=payment_released&grn_eligible=1&per_page=500';
     this.http.get<any>(`${environment.apiUrl}/purchase-orders?${params}`).subscribe(res => {
-      this.releasedPos.set(res.data ?? res);
+      const pos: any[] = res.data ?? res;
+      this.releasedPos.set(pos);
+      if (poIdParam) {
+        const targetId = +poIdParam;
+        const found = pos.find(p => p.id === targetId);
+        if (!found) {
+          this.http.get<any>(`${environment.apiUrl}/purchase-orders/${targetId}`).subscribe(singlePo => {
+            if (singlePo) {
+              this.releasedPos.update(curr => [singlePo, ...curr]);
+              this.poControl.setValue(singlePo.id);
+              this.onPoSelect();
+            }
+          });
+        } else {
+          this.poControl.setValue(found.id);
+          this.onPoSelect();
+        }
+      }
     });
   }
 

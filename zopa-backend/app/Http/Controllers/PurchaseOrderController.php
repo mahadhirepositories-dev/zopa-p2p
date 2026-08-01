@@ -46,7 +46,11 @@ class PurchaseOrderController extends Controller
 
         // Multi-status filter: ?statuses[]=released&statuses[]=delivered
         if ($request->has('statuses')) {
-            $query->whereIn('status', (array) $request->statuses);
+            $statuses = (array) $request->statuses;
+            $query->where(function ($q) use ($statuses) {
+                $q->whereIn('status', $statuses)
+                  ->orWhereIn('delivery_status', $statuses);
+            });
         }
 
         // Hide drafts from non-transact roles (like Approvers)
