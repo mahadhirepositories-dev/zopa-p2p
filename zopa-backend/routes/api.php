@@ -290,7 +290,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 });
 
-Route::get('api/vendor-pdf/{id}', function (\Illuminate\Http\Request $request, $id) {
+Route::get('/vendor-pdf/{id}', function (\Illuminate\Http\Request $request, $id) {
     $token = $request->query('token');
     $payload = $token ? \Cache::pull("pdf_dl_vendor_{$token}") : null;
 

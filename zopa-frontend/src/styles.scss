@@ -448,3 +448,12 @@ mat-chip, .mat-mdc-chip {
 .anim-4 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .20s both; }
 .anim-5 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .25s both; }
 .anim-6 { animation: cardIn .36s cubic-bezier(.25,.46,.45,.94) .30s both; }
+
+.vendor-detail-dialog-panel {
+  max-width: 95vw !important;
+  .mat-mdc-dialog-container .mdc-dialog__surface {
+    padding: 0 !important;
+    border-radius: 16px !important;
+    overflow: hidden !important;
+  }
+}

@@ -306,8 +306,10 @@ export class VendorListComponent implements OnInit {
   openViewModal(vendor: Vendor) {
     this.dialog.open(VendorDetailDialogComponent, {
       data: { vendorId: vendor.id },
-      width: '880px',
+      width: '920px',
+      maxWidth: '95vw',
       maxHeight: '90vh',
+      panelClass: 'vendor-detail-dialog-panel',
     });
   }
 

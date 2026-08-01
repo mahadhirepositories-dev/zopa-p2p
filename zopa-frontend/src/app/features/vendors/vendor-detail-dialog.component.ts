@@ -259,43 +259,43 @@ import { NotificationService } from '../../core/services/notification.service';
     </div>
   `,
   styles: [`
-    .dialog-container { padding: 4px; min-width: 680px; max-width: 900px; }
-    .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-    .v-title-box { display: flex; align-items: center; gap: 12px; }
-    .avatar { width: 44px; height: 44px; border-radius: 10px; background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center; }
-    .v-name { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
-    .v-sub { display: flex; align-items: center; gap: 8px; margin-top: 2px; font-size: 12px; }
+    .dialog-container { box-sizing: border-box; width: 100%; max-width: 100%; overflow-x: hidden; }
+    .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #ffffff; }
+    .v-title-box { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 240px; }
+    .avatar { width: 44px; height: 44px; border-radius: 10px; background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .v-name { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    .v-sub { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12px; flex-wrap: wrap; }
     .mono-code { font-family: monospace; font-weight: 600; color: #475569; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; }
     .v-dot { color: #cbd5e1; }
     .badge-active { background: #dcfce7; color: #166534; font-weight: 700; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
     .badge-inactive { background: #fef2f2; color: #991b1b; font-weight: 700; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
-    .dialog-header-actions { display: flex; align-items: center; gap: 8px; }
+    .dialog-header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
     
     .dialog-content { padding: 0 !important; max-height: 75vh; }
     .tab-padding { padding: 16px 20px 24px; }
-    .card-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; margin-bottom: 14px; }
-    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand); margin-bottom: 10px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+    .card-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand); margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
     
-    .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 2px; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px 18px; }
+    .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 3px; letter-spacing: 0.5px; }
     .mono { font-family: monospace; }
     .count-badge { font-size: 11px; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
     
     .empty-docs { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 13px; padding: 12px 0; justify-content: center; }
-    .doc-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .doc-card { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; }
-    .doc-icon { width: 32px; height: 32px; border-radius: 6px; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .doc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .doc-card { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; }
+    .doc-icon { width: 34px; height: 34px; border-radius: 6px; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .doc-info { flex: 1; min-width: 0; }
-    .doc-type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #2563eb; }
+    .doc-type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 0.5px; }
     .doc-name { font-size: 12px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .doc-link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border); }
+    .doc-link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
     .doc-link-btn:hover { background: #f1f5f9; }
     
-    .address-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .addr-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; }
+    .address-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .addr-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
     .addr-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; }
     .def-badge { font-size: 9px; font-weight: 700; background: #dcfce7; color: #166534; padding: 1px 6px; border-radius: 4px; }
-    .addr-body { font-size: 12px; color: #475569; line-height: 1.4; }
+    .addr-body { font-size: 12px; color: #475569; line-height: 1.45; }
     .full-width { width: 100%; }
   `],
 })
