@@ -94,25 +94,33 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               </button>
             }
 
-            @if (['released', 'partially_delivered', 'delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
-              <button mat-stroked-button color="accent" [disabled]="acting()" (click)="markDelivery('partially_delivered')">
-                <mat-icon>local_shipping</mat-icon> Partially Delivered
-              </button>
-              <button mat-raised-button color="primary" [disabled]="acting()" (click)="markDelivery('delivered')"
-                style="background:linear-gradient(135deg,#10b981,#059669);">
-                @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
-                @else { <ng-container><mat-icon>verified</mat-icon> Mark Delivered</ng-container> }
-              </button>
-            }
-
-            @if (['released', 'partially_delivered', 'delivered', 'invoiced', 'payment_released'].includes(po()!.status ?? '') || ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
-              @if (auth.canDo('grns', 'create')) {
-                <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
-                        style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
-                  <mat-icon>inventory_2</mat-icon> Mark GRN
+            @if (isGrnFullyCaptured) {
+              <span style="font-size:12px;font-weight:700;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;padding:6px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
+                <mat-icon style="font-size:18px;width:18px;height:18px;color:#15803d;">check_circle</mat-icon>
+                GRN Fully Captured
+              </span>
+            } @else {
+              @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
+                <button mat-stroked-button color="accent" [disabled]="acting()" (click)="markDelivery('partially_delivered')">
+                  <mat-icon>local_shipping</mat-icon> Partially Delivered
+                </button>
+                <button mat-raised-button color="primary" [disabled]="acting()" (click)="markDelivery('delivered')"
+                  style="background:linear-gradient(135deg,#10b981,#059669);">
+                  @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
+                  @else { <ng-container><mat-icon>verified</mat-icon> Mark Delivered</ng-container> }
                 </button>
               }
+
+              @if (['released', 'partially_delivered'].includes(po()!.status ?? '') || ['partially_delivered'].includes(po()!.delivery_status ?? '')) {
+                @if (auth.canDo('grns', 'create')) {
+                  <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
+                          style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
+                    <mat-icon>inventory_2</mat-icon> Mark GRN
+                  </button>
+                }
+              }
             }
+
 
             @if (po()!.status === 'delivered' && auth.canTransact()) {
               <button mat-raised-button routerLink="/invoices/create"
@@ -313,11 +321,17 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     Goods Receipt Notes (GRNs)
                     <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
                   </mat-card-title>
-                  @if (auth.canDo('grns', 'create')) {
+                  @if (!isGrnFullyCaptured && auth.canDo('grns', 'create')) {
                     <button mat-stroked-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
                       <mat-icon>add</mat-icon> Mark GRN
                     </button>
+                  } @else if (isGrnFullyCaptured) {
+                    <span style="font-size:11.5px;font-weight:700;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;padding:4px 12px;border-radius:99px;display:inline-flex;align-items:center;gap:4px;">
+                      <mat-icon style="font-size:15px;width:15px;height:15px;color:#15803d;">check_circle</mat-icon>
+                      All Items Received &amp; Captured
+                    </span>
                   }
+
                 </mat-card-header>
                 <mat-card-content style="padding:0!important;">
                   @if (loadingGrns()) {
@@ -784,6 +798,26 @@ export class PoDetailComponent implements OnInit {
       default:          return status ? status.toUpperCase() : 'UNKNOWN';
     }
   }
+
+  get totalPoOrderedQty(): number {
+    return (this.po()?.items || []).reduce((sum: number, item: any) => sum + Number(item.qty || 0), 0);
+  }
+
+  get totalGrnAcceptedQty(): number {
+    return this.grns().reduce((sum: number, grn: any) => {
+      if (grn.status === 'confirmed' || !grn.status) {
+        return sum + this.getGrnTotalAccepted(grn);
+      }
+      return sum;
+    }, 0);
+  }
+
+  get isGrnFullyCaptured(): boolean {
+    const ordered = this.totalPoOrderedQty;
+    if (ordered <= 0) return false;
+    return this.totalGrnAcceptedQty >= ordered;
+  }
+
 
   getGrnTotalAccepted(grn: any): number {
 
