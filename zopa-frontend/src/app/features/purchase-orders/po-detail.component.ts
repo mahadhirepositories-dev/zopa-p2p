@@ -94,10 +94,10 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               </button>
             }
 
-            @if (isGrnFullyCaptured) {
+            @if (isFullyDelivered) {
               <span style="font-size:12px;font-weight:700;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;padding:6px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
                 <mat-icon style="font-size:18px;width:18px;height:18px;color:#15803d;">check_circle</mat-icon>
-                GRN Fully Captured
+                Delivered &amp; GRN Captured
               </span>
             } @else {
               @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
@@ -111,23 +111,21 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 </button>
               }
 
-              @if (['released', 'partially_delivered'].includes(po()!.status ?? '') || ['partially_delivered'].includes(po()!.delivery_status ?? '')) {
-                @if (auth.canDo('grns', 'create')) {
-                  <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
-                          style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
-                    <mat-icon>inventory_2</mat-icon> Mark GRN
-                  </button>
-                }
+              @if (auth.canDo('grns', 'create') && ['released', 'partially_delivered'].includes(po()!.status ?? '')) {
+                <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
+                        style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
+                  <mat-icon>inventory_2</mat-icon> Mark GRN
+                </button>
               }
             }
 
-
-            @if (po()!.status === 'delivered' && auth.canTransact()) {
-              <button mat-raised-button routerLink="/invoices/create"
+            @if (isFullyDelivered && !['invoiced', 'payment_released'].includes(po()!.status ?? '') && auth.canTransact()) {
+              <button mat-raised-button routerLink="/invoices/create" [queryParams]="{ po_id: po()!.id }"
                 style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">
                 <mat-icon>receipt</mat-icon> Raise Invoice
               </button>
             }
+
 
             @if (po()!.status === 'invoiced' && auth.isAdmin()) {
               <button mat-raised-button color="primary" [disabled]="acting()" (click)="releasePaymentPo()"
@@ -817,6 +815,15 @@ export class PoDetailComponent implements OnInit {
     if (ordered <= 0) return false;
     return this.totalGrnAcceptedQty >= ordered;
   }
+
+  get isFullyDelivered(): boolean {
+    const p = this.po();
+    if (!p) return false;
+    if (p.status === 'delivered' || p.delivery_status === 'delivered') return true;
+    if (this.isGrnFullyCaptured) return true;
+    return false;
+  }
+
 
 
   getGrnTotalAccepted(grn: any): number {
