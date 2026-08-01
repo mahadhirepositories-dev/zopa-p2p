@@ -20,12 +20,27 @@ class GrnController extends Controller
         private ActivityLogService $actLog,
         private TatService         $tat,
     ) {}
+    private function getTenant(): ?Tenant
+    {
+        if (app()->bound('currentTenant')) {
+            return app('currentTenant');
+        }
+        $tenantId = request()->header('X-Tenant-ID');
+        if ($tenantId) {
+            return Tenant::find($tenantId);
+        }
+        return null;
+    }
+
     public function index(Request $request): JsonResponse
     {
-        $tenant = app('currentTenant');
+        $tenant = $this->getTenant();
+        $tenantId = $tenant?->id ?? $request->header('X-Tenant-ID');
 
-        $query = Grn::with(['purchaseOrder:id,po_number', 'receivedBy:id,name'])
-            ->where('tenant_id', $tenant->id);
+        $query = Grn::with(['purchaseOrder:id,po_number', 'receivedBy:id,name']);
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
 
         if ($request->has('po_id')) {
             $query->where('po_id', $request->po_id);
@@ -34,6 +49,7 @@ class GrnController extends Controller
         $perPage = min((int) ($request->per_page ?? 500), 1000);
         return response()->json($query->latest()->paginate($perPage));
     }
+
 
     public function export(Request $request)
     {
@@ -179,7 +195,10 @@ class GrnController extends Controller
     public function update(Request $request, Grn $grn): JsonResponse
     {
         $this->requirePermission('grns', 'create');
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
 
         $request->validate([
             'status' => 'nullable|string|in:draft,pending,confirmed,rejected',
@@ -211,7 +230,10 @@ class GrnController extends Controller
 
     public function show(Grn $grn): JsonResponse
     {
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
         return response()->json(
             $grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name', 'attachments'])
         );
@@ -221,7 +243,10 @@ class GrnController extends Controller
     {
         $this->requirePermission('grns', 'create');
         $request->validate(['file' => 'required|file|max:20480']);
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
 
         $path = $request->file('file')->store("grn-attachments/{$grn->id}", 'local');
 
@@ -240,7 +265,10 @@ class GrnController extends Controller
 
     public function downloadAttachment(Grn $grn, \App\Models\GrnAttachment $attachment)
     {
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
         abort_if($attachment->grn_id !== $grn->id, 404);
 
         abort_if(!\Illuminate\Support\Facades\Storage::disk('local')->exists($attachment->file_path), 404, 'File not found on server.');
@@ -253,7 +281,10 @@ class GrnController extends Controller
 
     public function pdf(Grn $grn)
     {
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
         $bytes  = \App\Services\PdfService::makeGrnPdf($grn);
         $safeNo = str_replace(['/', '\\'], '-', (string) ($grn->grn_number ?: $grn->id));
 
@@ -266,7 +297,10 @@ class GrnController extends Controller
     /** Issue a short-lived signed URL so the frontend can open the PDF in a new tab without re-auth. */
     public function pdfUrl(Grn $grn)
     {
-        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $tenant = $this->getTenant();
+        if ($tenant) {
+            abort_if($grn->tenant_id !== $tenant->id, 403);
+        }
         $token = \Illuminate\Support\Facades\Cache::remember(
             "grn_pdf_token_{$grn->id}",
             now()->addMinutes(10),
@@ -279,5 +313,6 @@ class GrnController extends Controller
             'url' => url("/api/grn-pdf/{$grn->id}?token={$token}"),
         ]);
     }
+
 
 }
