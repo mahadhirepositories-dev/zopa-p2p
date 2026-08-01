@@ -481,7 +481,6 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
               </div>
             }
             <button mat-stroked-button (click)="addTerm()"
-                    [disabled]="paymentTotal >= 100"
                     style="width:100%;margin-top:8px;">
               <mat-icon>add</mat-icon> Add Payment Stage
             </button>
@@ -822,6 +821,11 @@ export class PoFormComponent implements OnInit {
     const id = this.poId();
     if (id) {
       this.http.get<any>(`${api}/purchase-orders/${id}`).subscribe(po => this.patchPo(po));
+    } else {
+      if (this.paymentTerms.length === 0) {
+        this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
+        this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
+      }
     }
 
     // Pre-fill from PR if ?pr_id or ?pr_ids is in URL
@@ -875,7 +879,12 @@ export class PoFormComponent implements OnInit {
     }
 
     po.items?.forEach((item: any) => this.items.push(this.buildItem(item)));
-    po.payment_terms_json?.forEach((t: PaymentTerm) => this.paymentTerms.push(this.buildTerm(t)));
+    if (po.payment_terms_json?.length) {
+      po.payment_terms_json.forEach((t: PaymentTerm) => this.paymentTerms.push(this.buildTerm(t)));
+    } else {
+      this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
+      this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
+    }
     this.recalc();
   }
 

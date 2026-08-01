@@ -322,15 +322,24 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                   }
                   <div class="total-row grand"><span>Grand Total</span><span>₹{{ po()!.grand_total | number:'1.2-2' }}</span></div>
                 </div>
+                <mat-divider style="margin:16px 0;" />
+                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">Payment Terms</div>
                 @if (po()!.payment_terms_json?.length) {
-                  <mat-divider style="margin:16px 0;" />
-                  <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">Payment Terms</div>
                   @for (t of po()!.payment_terms_json; track t.stage) {
                     <div class="payment-term">
                       <span>{{ t.stage }}</span>
                       <span>{{ t.percentage }}% — {{ t.credit_days }}d</span>
                     </div>
                   }
+                } @else {
+                  <div class="payment-term">
+                    <span>Advance</span>
+                    <span>80% — 0d</span>
+                  </div>
+                  <div class="payment-term">
+                    <span>Delivery</span>
+                    <span>20% — 30d</span>
+                  </div>
                 }
               </mat-card-content>
             </mat-card>

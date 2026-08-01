@@ -350,24 +350,25 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 </table>
 
 {{-- ═══════════ TERMS & CONDITIONS ═══════════ --}}
-@if(($po->payment_terms_json&&count($po->payment_terms_json))||$po->terms_conditions)
 <div class="sec-h">Terms &amp; Conditions</div>
 <table class="terms-tbl">
-  @if($po->payment_terms_json&&count($po->payment_terms_json))
-    <tr><td class="sub">Payment Schedule</td></tr>
+  <tr><td class="sub">Payment Schedule</td></tr>
+  @if($po->payment_terms_json && count($po->payment_terms_json))
     @foreach($po->payment_terms_json as $idx=>$pt)
       <tr><td>{{ $idx+1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%@if(!empty($pt['credit_days'])&&$pt['credit_days']>0)&nbsp;({{ $pt['credit_days'] }} days credit)@endif</td></tr>
     @endforeach
+  @else
+    <tr><td>1.&nbsp;Advance — 80%</td></tr>
+    <tr><td>2.&nbsp;Delivery — 20% (30 days credit)</td></tr>
   @endif
   @if($po->terms_conditions)
-    @if($po->payment_terms_json&&count($po->payment_terms_json))<tr><td class="sub">General Terms</td></tr>@endif
+    <tr><td class="sub">General Terms</td></tr>
     @foreach(_poTermsLines($po->terms_conditions) as $line)
       <tr><td>{!! $line !!}</td></tr>
     @endforeach
   @endif
 </table>
 <div style="margin-bottom:8px;"></div>
-@endif
 
 {{-- ═══════════ AUTHORISATION ═══════════ --}}
 <table class="sec nobrk">
