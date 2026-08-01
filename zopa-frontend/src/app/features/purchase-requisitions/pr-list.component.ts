@@ -168,7 +168,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Status</th>
                 <td mat-cell *matCellDef="let pr">
-                  <mat-chip [class]="'status-' + pr.status" [highlighted]="true">{{ formatStatus(pr.status) }}</mat-chip>
+                  <mat-chip [class]="'status-' + (isPrConverted(pr) && pr.status === 'short_closed' ? 'converted_short_closed' : pr.status)" [highlighted]="true">{{ formatStatus(pr) }}</mat-chip>
                 </td>
               </ng-container>
 
@@ -351,7 +351,24 @@ export class PrListComponent implements OnInit {
     });
   }
 
-  formatStatus(s: string): string {
+  isPrConverted(pr: any): boolean {
+    if (!pr) return false;
+    return !!pr.converted_at
+      || pr.status === 'converted'
+      || pr.status === 'partially_converted'
+      || (pr.purchase_orders_count ?? pr.purchase_orders?.length ?? 0) > 0;
+  }
+
+  formatStatus(prArg: any): string {
+    const s = typeof prArg === 'string' ? prArg : prArg?.status;
+    const isConverted = typeof prArg === 'string' ? false : this.isPrConverted(prArg);
+
+    if (s === 'short_closed' && isConverted) {
+      return 'Converted & Short Closed';
+    }
+    if (s?.startsWith('short_close_pending') && isConverted) {
+      return 'Converted & Short Close Pending';
+    }
     const map: Record<string,string> = {
       draft: 'Draft', submitted: 'Submitted', rfq_created: 'RFQ Created',
       rfq_approved: 'RFQ Approved', converted: 'Converted', partially_converted: 'Partial',

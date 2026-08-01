@@ -232,7 +232,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                           {{ pr.pr_number ?? 'PR #' + pr.id }}
                         </a>
                         <span style="font-size:12px;color:var(--text-2);">{{ pr.title ?? '' }}</span>
-                        <span [class]="'status-pr status-pr--' + pr.status">{{ formatPrStatus(pr.status) }}</span>
+                        <span [class]="'status-pr status-pr--' + pr.status">{{ formatPrStatus(pr) }}</span>
                       </div>
                     }
                   </div>
@@ -829,11 +829,19 @@ export class PoDetailComponent implements OnInit {
     });
   }
 
-  formatPrStatus(s: string): string {
+  formatPrStatus(pr: any): string {
+    const s = typeof pr === 'string' ? pr : pr?.status;
+    const isConverted = typeof pr === 'string' ? false : (!!pr?.converted_at || pr?.status === 'converted' || pr?.status === 'partially_converted');
+    if (s === 'short_closed' && isConverted) {
+      return 'Converted & Short Closed';
+    }
+    if (s?.startsWith('short_close_pending') && isConverted) {
+      return 'Converted & Short Close Pending';
+    }
     const map: Record<string, string> = {
       draft: 'Draft', submitted: 'Submitted',
       rfq_created: 'RFQ Created', rfq_approved: 'RFQ Approved',
-      converted: 'Converted', rejected: 'Rejected',
+      converted: 'Converted', rejected: 'Rejected', short_closed: 'Short Closed',
     };
     return map[s] ?? s;
   }

@@ -35,7 +35,7 @@ class PurchaseRequisitionController extends Controller
                 'costCenter:id,name',
                 'project:id,name',
                 'location:id,name',
-            ])->where('tenant_id', $tenantId);
+            ])->withCount('purchaseOrders')->where('tenant_id', $tenantId);
 
             if ($request->filled('status')) {
                 $query->where('status', $request->input('status'));
@@ -87,15 +87,22 @@ class PurchaseRequisitionController extends Controller
             $query->where('status', '!=', 'draft');
         }
 
-        $data = $query->latest()->get()->map(fn($pr) => [
-            'PR Number' => $pr->pr_number ?? 'Draft',
-            'Title' => $pr->title,
-            'Requested By' => optional($pr->requestedBy)->name,
-            'Cost Center' => optional($pr->costCenter)->name,
-            'Estimated Amount' => $pr->estimated_amount,
-            'Status' => ucfirst($pr->status),
-            'Created At' => $pr->created_at->format('Y-m-d'),
-        ]);
+        $data = $query->latest()->get()->map(function ($pr) {
+            $isConverted = !empty($pr->converted_at) || ($pr->purchase_orders_count ?? 0) > 0 || in_array($pr->status, ['converted', 'partially_converted']);
+            $statusText = ucfirst(str_replace('_', ' ', $pr->status));
+            if (in_array($pr->status, ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3']) && $isConverted) {
+                $statusText = 'Converted & Short Closed';
+            }
+            return [
+                'PR Number' => $pr->pr_number ?? 'Draft',
+                'Title' => $pr->title,
+                'Requested By' => optional($pr->requestedBy)->name,
+                'Cost Center' => optional($pr->costCenter)->name,
+                'Estimated Amount' => $pr->estimated_amount,
+                'Status' => $statusText,
+                'Created At' => $pr->created_at->format('Y-m-d'),
+            ];
+        });
 
         return \Maatwebsite\Excel\Facades\Excel::download(
             new \App\Exports\GenericExport($data, ['PR Number', 'Title', 'Requested By', 'Cost Center', 'Estimated Amount', 'Status', 'Created At']),

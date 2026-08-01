@@ -84,7 +84,7 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
                 <mat-icon>do_not_disturb_on</mat-icon> Short Close PR
               </button>
             }
-            @if (['converted', 'partially_converted'].includes(pr()!.status ?? '')) {
+            @if (['converted', 'partially_converted'].includes(pr()!.status ?? '') || isPrConverted(pr()!)) {
               <button mat-stroked-button [routerLink]="['/purchase-orders']" [queryParams]="{pr_id: pr()!.id}">
                 <mat-icon>receipt_long</mat-icon> View POs
               </button>
@@ -93,9 +93,9 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
         </div>
 
         <!-- Status banner -->
-        <div class="status-banner status-banner--{{ pr()!.status }}">
+        <div class="status-banner status-banner--{{ pr()!.status }}" [class.converted-short-closed]="isPrConverted(pr()!) && (pr()!.status === 'short_closed' || pr()!.status?.startsWith('short_close_pending'))">
           <mat-icon>{{ statusIcon(pr()!.status) }}</mat-icon>
-          <span>{{ statusLabel(pr()!.status) }}</span>
+          <span>{{ statusLabel(pr()!) }}</span>
         </div>
 
         <div class="detail-grid">
@@ -109,7 +109,7 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
                 <div class="info-grid">
                   <div class="info-item"><span class="info-label">PR Number</span><span>{{ pr()!.pr_number ?? '—' }}</span></div>
                   <div class="info-item"><span class="info-label">Status</span>
-                    <mat-chip [class]="'status-' + pr()!.status" [highlighted]="true">{{ formatStatus(pr()!.status) }}</mat-chip>
+                    <mat-chip [class]="'status-' + (isPrConverted(pr()!) && pr()!.status === 'short_closed' ? 'converted_short_closed' : pr()!.status)" [highlighted]="true">{{ formatStatus(pr()!) }}</mat-chip>
                   </div>
                   <div class="info-item"><span class="info-label">Priority</span>
                     <span class="priority-badge priority-{{ pr()!.priority }}">{{ pr()!.priority | titlecase }}</span>
@@ -367,6 +367,14 @@ export class PrDetailComponent implements OnInit {
     });
   }
 
+  isPrConverted(pr: any): boolean {
+    if (!pr) return false;
+    return !!pr.converted_at
+      || pr.status === 'converted'
+      || pr.status === 'partially_converted'
+      || (pr.purchase_orders_count ?? pr.purchase_orders?.length ?? 0) > 0;
+  }
+
   statusIcon(s: string): string {
     const map: Record<string, string> = {
       draft: 'edit_note', submitted: 'pending_actions',
@@ -378,7 +386,16 @@ export class PrDetailComponent implements OnInit {
     return map[s] ?? 'info';
   }
 
-  statusLabel(s: string): string {
+  statusLabel(prArg: any): string {
+    const s = typeof prArg === 'string' ? prArg : prArg?.status;
+    const isConverted = typeof prArg === 'string' ? false : this.isPrConverted(prArg);
+
+    if (s === 'short_closed' && isConverted) {
+      return 'Converted & Short Closed — converted to PO and remaining quantities short-closed';
+    }
+    if (s?.startsWith('short_close_pending') && isConverted) {
+      return 'Converted & Short Close Pending Approval';
+    }
     const map: Record<string, string> = {
       draft: 'Draft — not yet submitted',
       submitted: 'Submitted — awaiting buyer action',
@@ -393,7 +410,16 @@ export class PrDetailComponent implements OnInit {
     return map[s] ?? s;
   }
 
-  formatStatus(s: string): string {
+  formatStatus(prArg: any): string {
+    const s = typeof prArg === 'string' ? prArg : prArg?.status;
+    const isConverted = typeof prArg === 'string' ? false : this.isPrConverted(prArg);
+
+    if (s === 'short_closed' && isConverted) {
+      return 'Converted & Short Closed';
+    }
+    if (s?.startsWith('short_close_pending') && isConverted) {
+      return 'Converted & Short Close Pending';
+    }
     const map: Record<string, string> = {
       draft: 'Draft', submitted: 'Submitted',
       partially_converted: 'Partial',
