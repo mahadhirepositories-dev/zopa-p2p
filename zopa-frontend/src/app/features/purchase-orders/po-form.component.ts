@@ -806,40 +806,46 @@ export class PoFormComponent implements OnInit {
   // ─── Lifecycle ────────────────────────────────────────────────────────
   ngOnInit() {
     const api = environment.apiUrl;
-    this.http.get<any>(`${api}/vendors`).subscribe(r => {
-      const list = r.data ?? r;
-      this.vendors.set((list as Vendor[]).filter(v => v.is_active));
-    });
-    this.http.get<any>(`${api}/products`).subscribe(r => {
-      const list = r.data ?? r;
-      this.products.set((list as Product[]).filter(p => p.is_active));
-    });
-    this.http.get<any>(`${api}/cost-centers`).subscribe(r => { this.costCenters.set(r.data ?? r); });
-    this.http.get<any>(`${api}/locations`).subscribe(r => { this.locations.set(r.data ?? r); });
-    this.http.get<any>(`${api}/categories`).subscribe(r => { this.categories.set(r.data ?? r); });
-
     const id = this.poId();
-    if (id) {
-      this.http.get<any>(`${api}/purchase-orders/${id}`).subscribe(po => this.patchPo(po));
-    } else {
-      if (this.paymentTerms.length === 0) {
-        this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
-        this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
-      }
-    }
 
-    // Pre-fill from PR if ?pr_id or ?pr_ids is in URL
-    const prId = this.route.snapshot.queryParamMap.get('pr_id');
-    const prIdsStr = this.route.snapshot.queryParamMap.get('pr_ids');
-    if (prId) {
-      this.prSource.set(+prId);
-      this.http.get<any>(`${api}/purchase-requisitions/${prId}`).subscribe(pr => this.patchFromPr(pr));
-    } else if (prIdsStr) {
-      const prIds = prIdsStr.split(',').map(x => +x).filter(x => !isNaN(x));
-      if (prIds.length) {
-        this.loadMultiplePrs(prIds);
-      }
-    }
+    forkJoin({
+      vendors: this.http.get<any>(`${api}/vendors`),
+      products: this.http.get<any>(`${api}/products`),
+      costCenters: this.http.get<any>(`${api}/cost-centers`),
+      locations: this.http.get<any>(`${api}/locations`),
+      categories: this.http.get<any>(`${api}/categories`),
+    }).subscribe({
+      next: res => {
+        this.vendors.set(((res.vendors.data ?? res.vendors) as Vendor[]).filter(v => v.is_active));
+        this.products.set(((res.products.data ?? res.products) as Product[]).filter(p => p.is_active));
+        this.costCenters.set(res.costCenters.data ?? res.costCenters);
+        this.locations.set(res.locations.data ?? res.locations);
+        this.categories.set(res.categories.data ?? res.categories);
+
+        if (id) {
+          this.http.get<any>(`${api}/purchase-orders/${id}`).subscribe(po => this.patchPo(po));
+        } else {
+          if (this.paymentTerms.length === 0) {
+            this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
+            this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
+          }
+        }
+
+        // Pre-fill from PR if ?pr_id or ?pr_ids is in URL
+        const prId = this.route.snapshot.queryParamMap.get('pr_id');
+        const prIdsStr = this.route.snapshot.queryParamMap.get('pr_ids');
+        if (prId) {
+          this.prSource.set(+prId);
+          this.http.get<any>(`${api}/purchase-requisitions/${prId}`).subscribe(pr => this.patchFromPr(pr));
+        } else if (prIdsStr) {
+          const prIds = prIdsStr.split(',').map(x => +x).filter(x => !isNaN(x));
+          if (prIds.length) {
+            this.loadMultiplePrs(prIds);
+          }
+        }
+      },
+      error: () => this.notify.error('Could not load required master data.')
+    });
   }
 
   // ─── Patch existing PO ────────────────────────────────────────────────
@@ -859,26 +865,23 @@ export class PoFormComponent implements OnInit {
     this.attachments.set(po.attachments ?? []);
 
     if (po.vendor_id) {
-      this.loadVendorAddresses(po.vendor_id);
-      setTimeout(() => {
-        this.selectedVendor.set(this.vendors().find(v => v.id === po.vendor_id) ?? null);
-        this.selectedAddress.set(this.vendorAddresses().find(a => a.id === po.vendor_address_id) ?? null);
-      }, 300);
+      this.selectedVendor.set(this.vendors().find(v => v.id === po.vendor_id) ?? null);
+      this.loadVendorAddresses(po.vendor_id, po.vendor_address_id);
     }
     if (po.cost_center_id) {
+      this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === po.cost_center_id) ?? null);
       this.loadBudget(po.cost_center_id);
-      setTimeout(() => {
-        this.selectedCostCenter.set(this.costCenters().find(cc => cc.id === po.cost_center_id) ?? null);
-      }, 300);
     }
     if (po.bill_to_location_id || po.ship_to_location_id) {
-      setTimeout(() => {
-        this.selectedBillTo.set(this.locations().find(l => l.id === po.bill_to_location_id) ?? null);
-        this.selectedShipTo.set(this.locations().find(l => l.id === po.ship_to_location_id) ?? null);
-      }, 300);
+      this.selectedBillTo.set(this.locations().find(l => l.id === po.bill_to_location_id) ?? null);
+      this.selectedShipTo.set(this.locations().find(l => l.id === po.ship_to_location_id) ?? null);
     }
 
+    // Clear existing item arrays to prevent duplicates on patch
+    while (this.items.length > 0) this.items.removeAt(0);
     po.items?.forEach((item: any) => this.items.push(this.buildItem(item)));
+
+    while (this.paymentTerms.length > 0) this.paymentTerms.removeAt(0);
     if (po.payment_terms_json?.length) {
       po.payment_terms_json.forEach((t: PaymentTerm) => this.paymentTerms.push(this.buildTerm(t)));
     } else {
@@ -887,6 +890,7 @@ export class PoFormComponent implements OnInit {
     }
     this.recalc();
   }
+
 
   // ─── Patch from PR ────────────────────────────────────────────────────
   private patchFromPr(pr: any) {
@@ -1017,10 +1021,18 @@ export class PoFormComponent implements OnInit {
     return loc.pincode ? (cityState ? `${cityState} - ${loc.pincode}` : `${loc.pincode}`) : cityState;
   }
 
-  private loadVendorAddresses(vendorId: number) {
+  private loadVendorAddresses(vendorId: number, targetAddressId?: number | null) {
     this.http.get<VendorAddress[]>(`${environment.apiUrl}/vendors/${vendorId}/addresses`)
       .subscribe(a => {
         this.vendorAddresses.set(a);
+        if (targetAddressId) {
+          const match = a.find(x => x.id === targetAddressId);
+          if (match) {
+            this.headerForm.patchValue({ vendor_address_id: match.id });
+            this.selectedAddress.set(match);
+            return;
+          }
+        }
         const def = a.find(x => x.is_default);
         if (def && !this.headerForm.value.vendor_address_id) {
           this.headerForm.patchValue({ vendor_address_id: def.id });
@@ -1028,6 +1040,7 @@ export class PoFormComponent implements OnInit {
         }
       });
   }
+
 
   private loadBudget(ccId: number) {
     this.http.get<Budget>(`${environment.apiUrl}/cost-centers/${ccId}/budget`)
