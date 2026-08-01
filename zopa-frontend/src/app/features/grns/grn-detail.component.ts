@@ -39,8 +39,9 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
               <div style="display:flex;align-items:center;gap:10px;">
                 <h1 class="page-title">{{ grn()!.grn_number }}</h1>
                 <span class="status-badge" [class]="'badge-' + (grn()!.status || 'confirmed')">
-                  {{ grn()!.status || 'confirmed' }}
+                  {{ getStatusLabel(grn()!.status) }}
                 </span>
+
               </div>
               <div class="po-subtext">
                 <mat-icon class="sub-icon">description</mat-icon>
@@ -623,7 +624,18 @@ export class GrnDetailComponent implements OnInit {
   loading = signal(true);
   pdfLoading = signal(false);
 
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'confirmed': return 'GRN Captured';
+      case 'pending':   return 'Pending GRN';
+      case 'rejected':  return 'Rejected';
+      case 'draft':     return 'Draft GRN';
+      default:          return status ? status.toUpperCase() : 'UNKNOWN';
+    }
+  }
+
   ngOnInit() {
+
     this.loadGrn();
   }
 

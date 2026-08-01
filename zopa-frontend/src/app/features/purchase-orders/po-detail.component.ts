@@ -348,11 +348,12 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                       <ng-container matColumnDef="status">
                         <th mat-header-cell *matHeaderCellDef>Status</th>
                         <td mat-cell *matCellDef="let g">
-                          <mat-chip [class]="'status-' + (g.status || 'confirmed')" [highlighted]="true" style="font-size:10px;height:22px;min-height:22px;">
-                            {{ g.status || 'confirmed' }}
-                          </mat-chip>
+                          <span class="status-badge" [class]="'badge-' + (g.status || 'confirmed')">
+                            {{ getGrnStatusLabel(g.status) }}
+                          </span>
                         </td>
                       </ng-container>
+
 
                       <ng-container matColumnDef="received_date">
                         <th mat-header-cell *matHeaderCellDef>Received Date</th>
@@ -774,7 +775,18 @@ export class PoDetailComponent implements OnInit {
     });
   }
 
+  getGrnStatusLabel(status: string): string {
+    switch (status) {
+      case 'confirmed': return 'GRN Captured';
+      case 'pending':   return 'Pending GRN';
+      case 'rejected':  return 'Rejected';
+      case 'draft':     return 'Draft GRN';
+      default:          return status ? status.toUpperCase() : 'UNKNOWN';
+    }
+  }
+
   getGrnTotalAccepted(grn: any): number {
+
     if (!grn.items?.length) return 0;
     return grn.items.reduce((acc: number, item: any) => acc + Number(item.accepted_qty ?? 0), 0);
   }

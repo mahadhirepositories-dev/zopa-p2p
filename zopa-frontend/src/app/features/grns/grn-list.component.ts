@@ -97,9 +97,12 @@ import { ExportService } from '../../core/services/export.service';
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Status</th>
                 <td mat-cell *matCellDef="let g">
-                  <mat-chip [class]="'status-' + g.status" [highlighted]="true">{{ g.status }}</mat-chip>
+                  <span class="status-badge" [class]="'badge-' + (g.status || 'confirmed')">
+                    {{ getStatusLabel(g.status) }}
+                  </span>
                 </td>
               </ng-container>
+
 
               <ng-container matColumnDef="arrow">
                 <th mat-header-cell *matHeaderCellDef></th>
@@ -152,7 +155,16 @@ import { ExportService } from '../../core/services/export.service';
     }
     .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
     .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
-    .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
+    .status-badge {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: 99px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .badge-confirmed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-pending   { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+    .badge-rejected  { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
+    .badge-draft     { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
   `],
 })
 export class GrnListComponent implements OnInit {
@@ -172,7 +184,18 @@ export class GrnListComponent implements OnInit {
     return this.grns().slice(start, start + this.pageSize());
   });
 
+  getStatusLabel(status: string): string {
+    switch (status) {
+      case 'confirmed': return 'GRN Captured';
+      case 'pending':   return 'Pending GRN';
+      case 'rejected':  return 'Rejected';
+      case 'draft':     return 'Draft GRN';
+      default:          return status ? status.toUpperCase() : 'UNKNOWN';
+    }
+  }
+
   ngOnInit() {
+
     this.http.get<any>(`${environment.apiUrl}/grns?per_page=500`).subscribe({
       next: res => { this.grns.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),
