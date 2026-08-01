@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -7,6 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { DecimalPipe } from '@angular/common';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -14,21 +15,21 @@ import { environment } from '../../../environments/environment';
   standalone: true,
   imports: [
     MatDialogModule, MatButtonModule, MatFormFieldModule,
-    MatInputModule, MatSelectModule, MatIconModule, FormsModule,
+    MatInputModule, MatSelectModule, MatIconModule, FormsModule, DecimalPipe,
   ],
   template: `
     <div style="padding:4px 0;">
       <h2 mat-dialog-title style="display:flex;align-items:center;gap:10px;margin:0 0 12px 0;font-size:18px;font-weight:600;">
         <mat-icon style="color:var(--brand);font-size:24px;width:24px;height:24px;">edit_note</mat-icon>
-        Update GRN Status & Vendor Document
+        Complete GRN &amp; Verify Line Items
       </h2>
 
-      <mat-dialog-content style="padding-top:12px!important;">
+      <mat-dialog-content style="padding-top:12px!important;max-height:75vh;overflow-y:auto;">
         <!-- Status Select -->
         <mat-form-field appearance="outline" style="width:100%;margin-bottom:12px;">
           <mat-label>GRN Status *</mat-label>
           <mat-select [(ngModel)]="status">
-            <mat-option value="confirmed">Confirmed (Goods Received & Verified)</mat-option>
+            <mat-option value="confirmed">Confirmed (Goods Received &amp; Verified)</mat-option>
             <mat-option value="pending">Pending (Awaiting Physical Receipt / Verification)</mat-option>
             <mat-option value="rejected">Rejected / Returned</mat-option>
           </mat-select>
@@ -53,10 +54,47 @@ import { environment } from '../../../environments/environment';
         </div>
 
         <!-- Remarks -->
-        <mat-form-field appearance="outline" style="width:100%;margin-bottom:12px;">
+        <mat-form-field appearance="outline" style="width:100%;margin-bottom:14px;">
           <mat-label>Physical Receipt Remarks</mat-label>
           <textarea matInput [(ngModel)]="remarks" rows="2" placeholder="e.g. Goods physically received and checked against vendor DC..."></textarea>
         </mat-form-field>
+
+        <!-- Line Items Quantities Section -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+            <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--brand);">inventory_2</mat-icon>
+            Item Quantities Delivered &amp; Accepted
+          </div>
+          <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+            @for (item of items; track item.id; let i = $index) {
+              <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;background:#fafafa;">
+                <div style="font-weight:600;font-size:12.5px;color:#1e293b;margin-bottom:6px;">
+                  {{ i + 1 }}. {{ item.po_item?.description || 'Item' }}
+                  <span style="font-size:11px;color:#64748b;font-weight:normal;margin-left:6px;">
+                    (Ordered: {{ item.po_item?.qty | number:'1.0-3' }})
+                  </span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                  <div>
+                    <label style="font-size:10px;color:#64748b;font-weight:600;display:block;margin-bottom:2px;">RECEIVED QTY</label>
+                    <input type="number" [(ngModel)]="item.received_qty" (ngModelChange)="onReceivedQtyChange(item)"
+                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;" min="0" />
+                  </div>
+                  <div>
+                    <label style="font-size:10px;color:#15803d;font-weight:600;display:block;margin-bottom:2px;">ACCEPTED QTY</label>
+                    <input type="number" [(ngModel)]="item.accepted_qty"
+                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#15803d;" min="0" />
+                  </div>
+                  <div>
+                    <label style="font-size:10px;color:#dc2626;font-weight:600;display:block;margin-bottom:2px;">REJECTED QTY</label>
+                    <input type="number" [(ngModel)]="item.rejected_qty"
+                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#dc2626;" min="0" />
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
 
         <!-- File Upload Section -->
         <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:14px;text-align:center;">
@@ -71,7 +109,7 @@ import { environment } from '../../../environments/environment';
       <mat-dialog-actions align="end" style="margin-top:16px;padding:0;">
         <button mat-button mat-dialog-close>Cancel</button>
         <button mat-raised-button color="primary" [disabled]="saving" (click)="save()" style="padding:0 20px;">
-          <mat-icon style="margin-right:6px;">save</mat-icon> Save & Update Status
+          <mat-icon style="margin-right:6px;">save</mat-icon> Save &amp; Update Status
         </button>
       </mat-dialog-actions>
     </div>
@@ -88,8 +126,22 @@ export class GrnStatusDialogComponent {
   dcNumber = this.data.grn?.dc_number || '';
   invoiceNumber = this.data.grn?.invoice_number || '';
   remarks = this.data.grn?.remarks || '';
+  items: any[] = (this.data.grn?.items || []).map((i: any) => ({
+    id: i.id,
+    po_item: i.po_item,
+    received_qty: +i.received_qty,
+    accepted_qty: +i.accepted_qty,
+    rejected_qty: +i.rejected_qty,
+    remarks: i.remarks || '',
+  }));
+
   selectedFile: File | null = null;
   saving = false;
+
+  onReceivedQtyChange(item: any) {
+    // Default accepted qty to received qty if rejected qty is 0
+    item.accepted_qty = Math.max(0, +item.received_qty - (+item.rejected_qty || 0));
+  }
 
   onFileChange(event: Event) {
     const input = event.target as HTMLInputElement;
@@ -106,6 +158,12 @@ export class GrnStatusDialogComponent {
       dc_number: this.dcNumber.trim() || undefined,
       invoice_number: this.invoiceNumber.trim() || undefined,
       remarks: this.remarks.trim() || undefined,
+      items: this.items.map(i => ({
+        id: i.id,
+        received_qty: +i.received_qty,
+        accepted_qty: +i.accepted_qty,
+        rejected_qty: +i.rejected_qty,
+      })),
     };
 
     this.http.put<any>(`${environment.apiUrl}/grns/${this.grnId}`, payload).subscribe({

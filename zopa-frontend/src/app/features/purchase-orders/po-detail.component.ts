@@ -345,6 +345,15 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                           </a>
                         </td>
                       </ng-container>
+                      <ng-container matColumnDef="status">
+                        <th mat-header-cell *matHeaderCellDef>Status</th>
+                        <td mat-cell *matCellDef="let g">
+                          <mat-chip [class]="'status-' + (g.status || 'confirmed')" [highlighted]="true" style="font-size:10px;height:22px;min-height:22px;">
+                            {{ g.status || 'confirmed' }}
+                          </mat-chip>
+                        </td>
+                      </ng-container>
+
                       <ng-container matColumnDef="received_date">
                         <th mat-header-cell *matHeaderCellDef>Received Date</th>
                         <td mat-cell *matCellDef="let g">{{ g.received_date | date:'dd MMM yyyy' }}</td>
@@ -750,7 +759,8 @@ export class PoDetailComponent implements OnInit {
 
   loadingGrns = signal(false);
   grns = signal<any[]>([]);
-  grnTableCols = ['grn_number', 'received_date', 'received_by', 'dc_number', 'items_count', 'actions'];
+  grnTableCols = ['grn_number', 'status', 'received_date', 'received_by', 'dc_number', 'items_count', 'actions'];
+
 
   loadGrns(poId: number) {
     this.loadingGrns.set(true);

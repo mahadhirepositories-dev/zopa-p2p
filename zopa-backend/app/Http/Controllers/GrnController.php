@@ -209,6 +209,12 @@ class GrnController extends Controller
             'invoice_number' => 'nullable|string|max:255',
             'invoice_date' => 'nullable|date',
             'remarks' => 'nullable|string',
+            'items' => 'nullable|array',
+            'items.*.id' => 'nullable|integer',
+            'items.*.received_qty' => 'nullable|numeric|min:0',
+            'items.*.accepted_qty' => 'nullable|numeric|min:0',
+            'items.*.rejected_qty' => 'nullable|numeric|min:0',
+            'items.*.remarks' => 'nullable|string',
         ]);
 
         $data = array_filter($request->only([
@@ -218,6 +224,48 @@ class GrnController extends Controller
 
         $grn->update($data);
 
+        if ($request->has('items') && is_array($request->items)) {
+            foreach ($request->items as $itemData) {
+                if (!empty($itemData['id'])) {
+                    GrnItem::where('id', $itemData['id'])
+                        ->where('grn_id', $grn->id)
+                        ->update([
+                            'received_qty' => $itemData['received_qty'] ?? 0,
+                            'accepted_qty' => $itemData['accepted_qty'] ?? 0,
+                            'rejected_qty' => $itemData['rejected_qty'] ?? 0,
+                            'remarks'      => $itemData['remarks'] ?? null,
+                        ]);
+                }
+            }
+        }
+
+        // ── Tally PO delivery status across all confirmed GRNs ───────────────
+        $po = PurchaseOrder::with('items')->find($grn->po_id);
+        if ($po) {
+            $allFullyReceived = true;
+            $anyReceived = false;
+
+            foreach ($po->items as $poItem) {
+                $totalAccepted = GrnItem::whereHas('grn', function($q) use ($po) {
+                    $q->where('po_id', $po->id)->where('status', 'confirmed');
+                })->where('po_item_id', $poItem->id)->sum('accepted_qty');
+
+                if ((float) $totalAccepted > 0) {
+                    $anyReceived = true;
+                }
+
+                if ((float) $totalAccepted < (float) $poItem->qty) {
+                    $allFullyReceived = false;
+                }
+            }
+
+            if ($allFullyReceived) {
+                $po->update(['status' => 'delivered', 'delivery_status' => 'delivered', 'delivered_at' => now()]);
+            } elseif ($anyReceived) {
+                $po->update(['delivery_status' => 'partially_delivered']);
+            }
+        }
+
         $this->actLog->log('GRN', $grn->id, 'updated', [
             'grn_number' => $grn->grn_number,
             'status' => $grn->status,
@@ -226,6 +274,7 @@ class GrnController extends Controller
 
         return response()->json($grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name', 'attachments']));
     }
+
 
 
     public function show(Grn $grn): JsonResponse
