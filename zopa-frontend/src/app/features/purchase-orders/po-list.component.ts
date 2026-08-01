@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -12,7 +12,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { RouterLink } from '@angular/router';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
 import { AuthService } from '../../core/auth/auth.service';
@@ -137,7 +136,11 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <ng-container matColumnDef="status">
                 <th mat-header-cell *matHeaderCellDef>Status</th>
                 <td mat-cell *matCellDef="let po">
-                  <mat-chip [class]="'status-' + po.status" [highlighted]="true">{{ formatStatus(po.status) }}</mat-chip>
+                  @if (po.delivery_status === 'partially_delivered') {
+                    <mat-chip class="status-partially_delivered" [highlighted]="true">Partially Delivered</mat-chip>
+                  } @else {
+                    <mat-chip [class]="'status-' + po.status" [highlighted]="true">{{ formatStatus(po.status) }}</mat-chip>
+                  }
                 </td>
               </ng-container>
 
@@ -239,6 +242,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .status-pending_l3 { background: #fffbeb; color: #d97706; }
     .status-approved   { background: #f0fdf4; color: #16a34a; }
     .status-released   { background: #eff6ff; color: #2563eb; }
+    .status-partially_delivered { background: #fef3c7; color: #b45309; font-weight: 600; }
     .status-delivered  { background: #ecfeff; color: #0891b2; }
     .status-invoiced   { background: #f5f3ff; color: #7c3aed; }
     .status-payment_released { background: #ecfdf5; color: #059669; }
@@ -277,7 +281,10 @@ export class PoListComponent implements OnInit {
       const matchSearch = !q
         || po.po_number?.toLowerCase().includes(q)
         || (po as any).vendor?.name?.toLowerCase().includes(q);
-      const matchStatus = !s || po.status === s
+      const matchStatus = !s
+        || po.status === s
+        || (s === 'released' && (po.status === 'released' || po.delivery_status === 'partially_delivered'))
+        || (s === 'delivered' && (po.status === 'delivered' || po.delivery_status === 'delivered'))
         || (s === 'pending' && po.status?.startsWith('pending'));
       return matchSearch && matchStatus;
     });
@@ -315,6 +322,7 @@ export class PoListComponent implements OnInit {
       pending_l3: 'Pending L3',
       approved: 'Approved',
       released: 'Released',
+      partially_delivered: 'Partially Delivered',
       delivered: 'Delivered',
       invoiced: 'Invoiced',
       payment_released: 'Payment Released',

@@ -52,7 +52,11 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;">
-            <mat-chip [class]="'status-' + po()!.status" [highlighted]="true">{{ po()!.status | uppercase }}</mat-chip>
+            @if (po()!.delivery_status === 'partially_delivered') {
+              <mat-chip class="status-partially_delivered" [highlighted]="true">PARTIALLY DELIVERED</mat-chip>
+            } @else {
+              <mat-chip [class]="'status-' + po()!.status" [highlighted]="true">{{ po()!.status | uppercase }}</mat-chip>
+            }
 
             @if ((po()!.status === 'draft' || po()!.status === 'returned') && auth.canTransact()) {
               @if (po()!.status === 'returned') {
@@ -572,6 +576,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .approval-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .approval-icon mat-icon { font-size: 20px; width: 20px; height: 20px; }
     /* Status pill overrides for chips */
+    .status-partially_delivered { background: #fef3c7 !important; color: #b45309 !important; font-weight: 700 !important; }
     .status-delivered        { background: #ecfdf5 !important; color: #065f46 !important; }
     .status-payment_released { background: #eef2ff !important; color: #3730a3 !important; }
 
@@ -641,6 +646,11 @@ export class PoDetailComponent implements OnInit {
   itemCols = ['sno', 'description', 'hsn', 'qty', 'unit', 'net_rate', 'gst_rate', 'warranty', 'amount', 'required_by'];
 
   ngOnInit() {
+    this.loadPo();
+    if (this.auth.isSuperAdmin()) this.loadDiagnostic();
+  }
+
+  loadPo() {
     this.http.get<PurchaseOrder>(`${environment.apiUrl}/purchase-orders/${this.id()}`).subscribe({
       next: po => {
         this.po.set(po);
@@ -656,7 +666,6 @@ export class PoDetailComponent implements OnInit {
       },
       error: () => { this.notify.error('Could not load PO.'); this.loading.set(false); },
     });
-    if (this.auth.isSuperAdmin()) this.loadDiagnostic();
   }
 
   /** Super-admin: fetch why this PO routed the way it did (config state + verdict). */
@@ -739,6 +748,7 @@ export class PoDetailComponent implements OnInit {
       this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/delivery-status`, { status: res.status, notes: res.notes }).subscribe({
         next: po => {
           this.po.set(po);
+          this.loadPo();
           this.acting.set(false);
           const label = res.status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered';
           this.notify.success(`PO marked as ${label}. GRN handlers notified.`);

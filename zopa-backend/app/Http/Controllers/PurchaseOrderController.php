@@ -696,7 +696,12 @@ class PurchaseOrderController extends Controller
             report($e);
         }
 
-        return response()->json($purchaseOrder->fresh());
+        return response()->json($purchaseOrder->fresh([
+            'items.product', 'vendor', 'vendorAddress',
+            'costCenter.department', 'costCenter.project', 'costCenter.location',
+            'approvals.assignedTo', 'billToLocation', 'shipToLocation',
+            'tenant', 'creator', 'approver', 'attachments'
+        ]));
     }
 
     /**
