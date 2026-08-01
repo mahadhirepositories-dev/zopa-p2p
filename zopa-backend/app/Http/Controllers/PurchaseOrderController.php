@@ -897,77 +897,8 @@ class PurchaseOrderController extends Controller
         ]);
     }
 
-    /**
-     * Amend prices on a PO's line items (admin / super-admin only).
-     * Recalculates tax proportionally and updates the PO grand total.
-     * Works even on released/delivered POs for price-correction scenarios.
-     */
-    public function amendPrices(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
-    {
-        // Only super-admins or org-admins may amend prices after release
-        $user = auth()->user();
-        $tenant = app('currentTenant');
-        abort_if($purchaseOrder->tenant_id !== $tenant->id, 403);
-
-        $request->validate([
-            'items'                  => 'required|array|min:1',
-            'items.*.po_item_id'     => 'required|integer|exists:po_items,id',
-            'items.*.unit_price'     => 'required|numeric|min:0',
-        ]);
-
-        DB::transaction(function () use ($request, $purchaseOrder) {
-            foreach ($request->items as $row) {
-                $item = \App\Models\PoItem::where('id', $row['po_item_id'])
-                    ->where('po_id', $purchaseOrder->id)
-                    ->firstOrFail();
-
-                $newPrice      = (float) $row['unit_price'];
-                $oldPrice      = (float) $item->unit_price;
-                $oldBase       = $oldPrice * (float) $item->qty;
-                $taxRate       = $oldBase > 0 ? (float) $item->tax_amount / $oldBase : 0;
-
-                $newBase       = round($newPrice * (float) $item->qty, 2);
-                $newTax        = round($newBase * $taxRate, 2);
-                $newTotal      = round($newBase + $newTax, 2);
-
-                $item->update([
-                    'unit_price'   => $newPrice,
-                    'amount'       => $newBase,
-                    'tax_amount'   => $newTax,
-                    'total_amount' => $newTotal,
-                ]);
-            }
-
-            // Recalculate PO-level totals
-            $purchaseOrder->load('items');
-            $subtotal   = $purchaseOrder->items->sum(fn($i) => (float) $i->amount);
-            $taxTotal   = $purchaseOrder->items->sum(fn($i) => (float) $i->tax_amount);
-            $grandTotal = round($subtotal + $taxTotal, 2);
-
-            $purchaseOrder->update([
-                'subtotal'    => round($subtotal, 2),
-                'tax_amount'  => round($taxTotal, 2),
-                'grand_total' => $grandTotal,
-            ]);
-        });
-
-        $this->actLog->log('PO', $purchaseOrder->id, 'prices_amended', [
-            'amended_by' => $user->name ?? $user->email,
-            'changes'    => collect($request->items)->map(fn($r) => [
-                'po_item_id' => $r['po_item_id'],
-                'new_price'  => $r['unit_price'],
-            ])->toArray(),
-        ]);
-
-        return response()->json($purchaseOrder->fresh([
-            'items.product', 'vendor',
-            'costCenter.department', 'costCenter.project', 'costCenter.location',
-            'approvals.assignedTo', 'billToLocation', 'shipToLocation',
-            'tenant', 'creator', 'approver', 'attachments'
-        ]));
-    }
-
     private function authorizePoAccess(PurchaseOrder $po): void
+
     {
         $tenant = app('currentTenant');
         abort_if($po->tenant_id !== $tenant->id, 403);
