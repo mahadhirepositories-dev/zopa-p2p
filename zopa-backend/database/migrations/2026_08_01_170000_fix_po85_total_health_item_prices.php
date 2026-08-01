@@ -28,28 +28,24 @@ return new class extends Migration
             DB::table('po_items')
                 ->where('po_id', $poId)
                 ->where(function ($q) {
-                    $q->where('product_code', 'TH16')
-                      ->orWhere('description', 'LIKE', '%MINDIL%');
+                    $q->where('description', 'LIKE', '%MINDIL%');
                 })
                 ->update([
-                    'unit_price' => 4850.00,
                     'net_rate' => 4850.00,
                     'gross_rate' => 4850.00 * 1.05,
-                    'amount' => round(4850.00 * 3, 2),
+                    'amount' => round((4850.00 * 1.05) * 3, 2),
                 ]);
 
             // Item 2: ABX MINCLEAN 1 LETER / TH17 -> Net Rate 1450
             DB::table('po_items')
                 ->where('po_id', $poId)
                 ->where(function ($q) {
-                    $q->where('product_code', 'TH17')
-                      ->orWhere('description', 'LIKE', '%MINCLEAN%');
+                    $q->where('description', 'LIKE', '%MINCLEAN%');
                 })
                 ->update([
-                    'unit_price' => 1450.00,
                     'net_rate' => 1450.00,
                     'gross_rate' => 1450.00 * 1.05,
-                    'amount' => round(1450.00 * 5, 2),
+                    'amount' => round((1450.00 * 1.05) * 5, 2),
                 ]);
 
             // Recalculate PO totals
@@ -64,7 +60,7 @@ return new class extends Migration
             $itemsArray = [];
             foreach ($items as $item) {
                 $itemsArray[] = [
-                    'net_rate' => (float)($item->net_rate ?? $item->unit_price),
+                    'net_rate' => (float)$item->net_rate,
                     'qty' => (float)$item->qty,
                     'gst_rate' => (float)($item->gst_rate ?? 5),
                 ];
@@ -79,7 +75,6 @@ return new class extends Migration
             );
 
             DB::table('purchase_orders')->where('id', $poId)->update([
-                'subtotal' => $totals['net_total'],
                 'net_total' => $totals['net_total'],
                 'freight' => $totals['freight'],
                 'tax_amount' => $totals['tax_amount'],
