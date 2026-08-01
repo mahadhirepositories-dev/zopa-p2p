@@ -57,7 +57,23 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
 
         </div>
 
+        @if (grn()!.status === 'pending' || grn()!.status === 'draft') {
+          <div style="display:flex;align-items:center;gap:12px;background:#fffbebf5;border:1px solid #fde68a;border-radius:12px;padding:14px 20px;margin-bottom:16px;">
+            <mat-icon style="color:#d97706;font-size:24px;width:24px;height:24px;">warning</mat-icon>
+            <div>
+              <strong style="color:#92400e;font-size:14px;">Pending Physical Verification &amp; Vendor Document</strong>
+              <div style="font-size:12px;color:#b45309;margin-top:2px;">
+                Delivery status logged from vendor info. Store receiver must verify physical items, record GRN/DC number, and upload vendor photo/PDF.
+              </div>
+            </div>
+            <button mat-raised-button color="accent" (click)="openStatusDialog()" style="margin-left:auto;white-space:nowrap;background:#d97706;color:#fff;">
+              <mat-icon>task_alt</mat-icon> Complete GRN &amp; Upload PDF
+            </button>
+          </div>
+        }
+
         <!-- ── Info Card ── -->
+
         <mat-card style="margin-bottom:16px;">
           <mat-card-content style="padding-top:16px;">
             <div class="detail-grid">

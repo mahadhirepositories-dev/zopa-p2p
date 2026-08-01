@@ -545,8 +545,9 @@ export class GrnFormComponent implements OnInit {
 
   ngOnInit() {
     const poIdParam = this.route.snapshot.queryParamMap.get('po_id') || this.route.snapshot.queryParamMap.get('po');
-    const params = 'statuses[]=released&statuses[]=delivered&statuses[]=partially_delivered&statuses[]=approved&statuses[]=invoiced&statuses[]=payment_released&grn_eligible=1&per_page=500';
+    const params = 'statuses[]=released&statuses[]=delivered&statuses[]=partially_delivered&statuses[]=approved&statuses[]=invoiced&statuses[]=payment_released&per_page=500';
     this.http.get<any>(`${environment.apiUrl}/purchase-orders?${params}`).subscribe(res => {
+
       const pos: any[] = res.data ?? res;
       this.releasedPos.set(pos);
       if (poIdParam) {
