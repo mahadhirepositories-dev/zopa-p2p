@@ -78,6 +78,29 @@ Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword'])->
 // Uses a plain integer {id} — NO route-model binding — so no middleware or global scope can fire.
 Route::get('/po-pdf/{id}', [PurchaseOrderController::class, 'pdfByToken'])->where('id', '[0-9]+');
 
+// GRN PDF via one-time token
+Route::get('/grn-pdf/{id}', function ($id, \Illuminate\Http\Request $request) {
+    $token = $request->query('token');
+    $cachedId = \Illuminate\Support\Facades\Cache::get("grn_pdf_tkn_{$token}");
+    abort_if(!$cachedId || (int) $cachedId !== (int) $id, 403, 'Invalid or expired token.');
+    \Illuminate\Support\Facades\Cache::forget("grn_pdf_tkn_{$token}");
+
+    $grn = \App\Models\Grn::with([
+        'items.poItem.product',
+        'purchaseOrder.vendor', 'purchaseOrder.tenant',
+        'purchaseOrder.billToLocation', 'purchaseOrder.shipToLocation',
+        'receivedBy',
+    ])->findOrFail($id);
+
+    $bytes  = \App\Services\PdfService::makeGrnPdf($grn);
+    $safeNo = str_replace(['/', '\\'], '-', (string) ($grn->grn_number ?: $grn->id));
+
+    return response($bytes, 200, [
+        'Content-Type'        => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="GRN-' . $safeNo . '.pdf"',
+    ]);
+})->where('id', '[0-9]+');
+
 // Pincode lookup — auth only, no tenant scope needed
 Route::middleware('auth:sanctum')->get('/pincode/{pincode}', [PincodeController::class, 'lookup']);
 
@@ -239,7 +262,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/delivery-status', [PurchaseOrderController::class, 'markDeliveryStatus']);
         Route::post('purchase-orders/{purchaseOrder}/release-payment', [PurchaseOrderController::class, 'releasePayment']);
         Route::post('purchase-orders/{purchaseOrder}/reset-to-draft', [PurchaseOrderController::class, 'resetToDraft']);
+        Route::post('purchase-orders/{purchaseOrder}/amend-prices', [PurchaseOrderController::class, 'amendPrices']);
         Route::get('purchase-orders/{purchaseOrder}/approval-diagnostic', [PurchaseOrderController::class, 'approvalDiagnostic']);
+
         Route::post('purchase-orders/{purchaseOrder}/upload', [PurchaseOrderController::class, 'upload']);
         Route::get('purchase-orders/{purchaseOrder}/pdf', [PurchaseOrderController::class, 'pdf']);
         Route::get('purchase-orders/{purchaseOrder}/pdf-url', [PurchaseOrderController::class, 'pdfUrl']);
@@ -262,6 +287,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('grns', [GrnController::class, 'index']);
         Route::post('grns', [GrnController::class, 'store']);
         Route::get('grns/{grn}', [GrnController::class, 'show']);
+        Route::put('grns/{grn}', [GrnController::class, 'update']);
+        Route::get('grns/{grn}/pdf', [GrnController::class, 'pdf']);
+        Route::get('grns/{grn}/pdf-url', [GrnController::class, 'pdfUrl']);
         Route::post('grns/{grn}/upload', [GrnController::class, 'upload']);
         Route::get('grns/{grn}/attachments/{attachment}', [GrnController::class, 'downloadAttachment']);
         Route::get('purchase-orders/{purchaseOrder}/grns', [GrnController::class, 'forPo']);

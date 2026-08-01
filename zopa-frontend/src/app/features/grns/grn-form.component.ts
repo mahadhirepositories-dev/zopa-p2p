@@ -69,6 +69,10 @@ interface PoItemMeta {
             }
           </mat-form-field>
           <mat-form-field appearance="outline">
+            <mat-label>GRN Number (Auto if blank)</mat-label>
+            <input matInput [formControl]="grnNumberControl" placeholder="Auto-generated e.g. GRN-2026-0001" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Received Date *</mat-label>
             <input matInput [matDatepicker]="dp" [formControl]="dateControl" />
             <mat-datepicker-toggle matSuffix [for]="dp" />
@@ -76,7 +80,7 @@ interface PoItemMeta {
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Remarks</mat-label>
-            <input matInput [formControl]="remarksControl" />
+            <input matInput [formControl]="remarksControl" placeholder="Delivery notes / call info..." />
           </mat-form-field>
         </div>
         
@@ -93,21 +97,22 @@ interface PoItemMeta {
           </mat-form-field>
           <div class="file-upload-wrap">
             <label class="file-upload-btn">
-              <mat-icon>attach_file</mat-icon> Add Attachments
-              <input type="file" multiple (change)="onFileSelect($event)" style="display:none;" />
+              <mat-icon>cloud_upload</mat-icon> Upload Vendor GRN / Photo / PDF
+              <input type="file" multiple accept="image/*,application/pdf" (change)="onFileSelect($event)" style="display:none;" />
             </label>
             @if (attachments().length > 0) {
               <div class="file-list">
                 @for (file of attachments(); track file.name; let i = $index) {
                   <span class="file-badge">
-                    {{ file.name }}
-                    <mat-icon (click)="removeFile(i)">close</mat-icon>
+                    <mat-icon>insert_drive_file</mat-icon> {{ file.name }}
+                    <mat-icon (click)="removeFile(i)" title="Remove">close</mat-icon>
                   </span>
                 }
               </div>
             }
           </div>
         </div>
+
 
         <div class="fields-row" style="margin-top: 12px;">
           <mat-form-field appearance="outline">
@@ -485,12 +490,14 @@ export class GrnFormComponent implements OnInit {
   saving       = signal(false);
 
   poControl          = this.fb.control<number | null>(null, Validators.required);
-  dateControl        = this.fb.control<Date | null>(null, Validators.required);
+  grnNumberControl   = this.fb.control<string>('');
+  dateControl        = this.fb.control<Date | null>(new Date(), Validators.required);
   dcNumberControl    = this.fb.control<string>('');
   dcDateControl      = this.fb.control<Date | null>(null);
   invoiceNumberControl = this.fb.control<string>('');
   invoiceDateControl = this.fb.control<Date | null>(null);
   remarksControl     = this.fb.control('');
+
   
   attachments = signal<File[]>([]);
 
@@ -662,10 +669,12 @@ export class GrnFormComponent implements OnInit {
 
     const payload = {
       po_id: this.poControl.value,
+      grn_number: this.grnNumberControl.value?.trim() || undefined,
       received_date: this.dateControl.value instanceof Date
         ? this.dateControl.value.toISOString().split('T')[0]
         : this.dateControl.value,
       dc_number: this.dcNumberControl.value,
+
       dc_date: this.dcDateControl.value instanceof Date ? this.dcDateControl.value.toISOString().split('T')[0] : this.dcDateControl.value,
       invoice_number: this.invoiceNumberControl.value,
       invoice_date: this.invoiceDateControl.value instanceof Date ? this.invoiceDateControl.value.toISOString().split('T')[0] : this.invoiceDateControl.value,

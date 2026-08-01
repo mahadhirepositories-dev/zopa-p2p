@@ -23,7 +23,6 @@ class GrnController extends Controller
     public function index(Request $request): JsonResponse
     {
         $tenant = app('currentTenant');
-        $this->syncDeliveredPosWithoutGrn($tenant->id);
 
         $query = Grn::with(['purchaseOrder:id,po_number', 'receivedBy:id,name'])
             ->where('tenant_id', $tenant->id);
@@ -76,6 +75,7 @@ class GrnController extends Controller
 
         $request->validate([
             'po_id' => 'required|integer|exists:purchase_orders,id',
+            'grn_number' => 'nullable|string|max:255',
             'received_date' => 'required|date',
             'dc_number' => 'nullable|string|max:255',
             'dc_date' => 'nullable|date',
@@ -95,18 +95,21 @@ class GrnController extends Controller
         abort_if($po->tenant_id !== $tenant->id, 403);
 
         $grn = DB::transaction(function () use ($request, $tenant) {
-            $year    = now()->year;
-            $orgCode = strtoupper(trim($tenant->code ?? 'ORG'));
-            $prefix  = "{$orgCode}-GRN-{$year}-";
+            if ($request->filled('grn_number')) {
+                $grnNumber = trim($request->grn_number);
+            } else {
+                $year    = now()->year;
+                $orgCode = strtoupper(trim($tenant->code ?? 'ORG'));
+                $prefix  = "{$orgCode}-GRN-{$year}-";
 
-            // Lock the latest row to prevent race conditions, then derive next seq
-            $lastNumber = Grn::where('tenant_id', $tenant->id)
-                ->where('grn_number', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->max('grn_number');
+                $lastNumber = Grn::where('tenant_id', $tenant->id)
+                    ->where('grn_number', 'like', $prefix . '%')
+                    ->lockForUpdate()
+                    ->max('grn_number');
 
-            $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
-            $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+                $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
+                $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            }
 
             $grn = Grn::create([
                 'tenant_id' => $tenant->id,
@@ -151,6 +154,8 @@ class GrnController extends Controller
             }
             if ($allFullyReceived) {
                 $po->update(['status' => 'delivered', 'delivered_at' => now()]);
+            } else {
+                $po->update(['delivery_status' => 'partially_delivered']);
             }
         }
 
@@ -171,6 +176,31 @@ class GrnController extends Controller
         return response()->json($grn->load('items.poItem', 'receivedBy:id,name'), 201);
     }
 
+    public function update(Request $request, Grn $grn): JsonResponse
+    {
+        $this->requirePermission('grns', 'create');
+        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+
+        $request->validate([
+            'grn_number' => 'nullable|string|max:255',
+            'received_date' => 'nullable|date',
+            'dc_number' => 'nullable|string|max:255',
+            'dc_date' => 'nullable|date',
+            'invoice_number' => 'nullable|string|max:255',
+            'invoice_date' => 'nullable|date',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $data = array_filter($request->only([
+            'grn_number', 'received_date', 'dc_number', 'dc_date',
+            'invoice_number', 'invoice_date', 'remarks',
+        ]), fn($v) => !is_null($v));
+
+        $grn->update($data);
+
+        return response()->json($grn->load(['items.poItem.product', 'purchaseOrder.vendor', 'receivedBy:id,name', 'attachments']));
+    }
+
     public function show(Grn $grn): JsonResponse
     {
         abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
@@ -182,7 +212,7 @@ class GrnController extends Controller
     public function upload(Request $request, Grn $grn): JsonResponse
     {
         $this->requirePermission('grns', 'create');
-        $request->validate(['file' => 'required|file|max:10240']);
+        $request->validate(['file' => 'required|file|max:20480']);
         abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
 
         $path = $request->file('file')->store("grn-attachments/{$grn->id}", 'local');
@@ -199,6 +229,7 @@ class GrnController extends Controller
         return response()->json($attachment, 201);
     }
 
+
     public function downloadAttachment(Grn $grn, \App\Models\GrnAttachment $attachment)
     {
         abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
@@ -212,75 +243,33 @@ class GrnController extends Controller
         return response()->file($path);
     }
 
-    /**
-     * Auto-create a GRN for a PO if one doesn't exist yet.
-     */
-    public static function createGrnForPo(PurchaseOrder $po, ?string $remarks = null, ?int $userId = null): ?Grn
+    public function pdf(Grn $grn)
     {
-        $po->loadMissing(['items', 'tenant']);
-        if (!$po->items || $po->items->isEmpty()) {
-            return null;
-        }
+        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $bytes  = \App\Services\PdfService::makeGrnPdf($grn);
+        $safeNo = str_replace(['/', '\\'], '-', (string) ($grn->grn_number ?: $grn->id));
 
-        // Check if GRN already exists for this PO
-        $existingCount = Grn::where('po_id', $po->id)->count();
-        if ($existingCount > 0) {
-            return null;
-        }
-
-        return DB::transaction(function () use ($po, $remarks, $userId) {
-            $tenant   = $po->tenant ?? app('currentTenant');
-            $tenantId = $tenant->id ?? $po->tenant_id;
-            $year     = now()->year;
-            $orgCode  = strtoupper(trim($tenant->code ?? 'ORG'));
-            $prefix   = "{$orgCode}-GRN-{$year}-";
-
-            $lastNumber = Grn::where('tenant_id', $tenantId)
-                ->where('grn_number', 'like', $prefix . '%')
-                ->lockForUpdate()
-                ->max('grn_number');
-
-            $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
-            $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
-
-            $grn = Grn::create([
-                'tenant_id'     => $tenantId,
-                'po_id'         => $po->id,
-                'grn_number'     => $grnNumber,
-                'received_date' => $po->delivered_at ? $po->delivered_at->toDateString() : now()->toDateString(),
-                'received_by'   => $userId ?? auth()->id() ?? $po->created_by,
-                'status'        => 'confirmed',
-                'remarks'       => $remarks ?? ($po->delivery_notes ?? 'Auto-generated GRN for delivered PO'),
-            ]);
-
-            foreach ($po->items as $item) {
-                GrnItem::create([
-                    'grn_id'       => $grn->id,
-                    'po_item_id'   => $item->id,
-                    'received_qty' => $item->qty,
-                    'accepted_qty' => $item->qty,
-                    'rejected_qty' => 0,
-                    'remarks'      => 'Delivered',
-                ]);
-            }
-
-            return $grn;
-        });
+        return response($bytes, 200, [
+            'Content-Type'        => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="GRN-' . $safeNo . '.pdf"',
+        ]);
     }
 
-    private function syncDeliveredPosWithoutGrn($tenantId): void
+    /** Issue a short-lived signed URL so the frontend can open the PDF in a new tab without re-auth. */
+    public function pdfUrl(Grn $grn)
     {
-        $deliveredPosWithoutGrn = PurchaseOrder::where('tenant_id', $tenantId)
-            ->where(function ($q) {
-                $q->where('status', 'delivered')
-                  ->orWhere('delivery_status', 'delivered')
-                  ->orWhere('delivery_status', 'partially_delivered');
-            })
-            ->whereDoesntHave('grns')
-            ->get();
+        abort_if($grn->tenant_id !== app('currentTenant')->id, 403);
+        $token = \Illuminate\Support\Facades\Cache::remember(
+            "grn_pdf_token_{$grn->id}",
+            now()->addMinutes(10),
+            fn () => \Illuminate\Support\Str::random(40)
+        );
+        // Store token → grn id mapping
+        \Illuminate\Support\Facades\Cache::put("grn_pdf_tkn_{$token}", $grn->id, now()->addMinutes(10));
 
-        foreach ($deliveredPosWithoutGrn as $poToSync) {
-            self::createGrnForPo($poToSync);
-        }
+        return response()->json([
+            'url' => url("/api/grn-pdf/{$grn->id}?token={$token}"),
+        ]);
     }
+
 }

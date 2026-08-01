@@ -48,6 +48,21 @@ class PdfService
         return static::generateWithDomPdf('pdf.vendor', ['vendor' => $vendor]);
     }
 
+    public static function makeGrnPdf(\App\Models\Grn $grn): string
+    {
+        $grn->loadMissing([
+            'items.poItem.product',
+            'purchaseOrder.vendor',
+            'purchaseOrder.tenant',
+            'purchaseOrder.billToLocation',
+            'purchaseOrder.shipToLocation',
+            'receivedBy',
+            'attachments',
+        ]);
+
+        return static::generateWithDomPdf('pdf.grn', ['grn' => $grn]);
+    }
+
     private static function generate(string $view, array $data): string
     {
         try {

@@ -864,6 +864,10 @@ export class PoDetailComponent implements OnInit {
 
     ref.afterClosed().subscribe(res => {
       if (!res) return;
+      if (res.action === 'create_grn') {
+        this.router.navigate(['/grns/create'], { queryParams: { po_id: this.id() } });
+        return;
+      }
       this.acting.set('deliver');
       this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/delivery-status`, { status: res.status, notes: res.notes }).subscribe({
         next: po => {
@@ -871,12 +875,13 @@ export class PoDetailComponent implements OnInit {
           this.loadPo();
           this.acting.set(false);
           const label = res.status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered';
-          this.notify.success(`PO marked as ${label}. GRN handlers notified.`);
+          this.notify.success(`PO marked as ${label}.`);
         },
         error: err => { this.notify.error(err.error?.error ?? 'Could not update delivery status.'); this.acting.set(false); },
       });
     });
   }
+
 
   releasePaymentPo() {
     this.acting.set('payment');

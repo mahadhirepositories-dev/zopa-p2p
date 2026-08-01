@@ -19,8 +19,8 @@ import { FormsModule } from '@angular/forms';
       </h2>
 
       <mat-dialog-content style="padding-top:12px!important;">
-        <p style="font-size:13px;color:#64748b;margin:0 0 16px 0;">
-          Updating delivery status will automatically send a GRN nudge notification to store managers and GRN handlers.
+        <p style="font-size:13px;color:#64748b;margin:0 0 14px 0;">
+          Update delivery status based on vendor dispatch or call information.
         </p>
 
         <!-- Status Select -->
@@ -33,10 +33,21 @@ import { FormsModule } from '@angular/forms';
         </mat-form-field>
 
         <!-- Notes Input -->
-        <mat-form-field appearance="outline" style="width:100%;">
+        <mat-form-field appearance="outline" style="width:100%;margin-bottom:12px;">
           <mat-label>Delivery Notes / Invoice / Transporter Details (Optional)</mat-label>
-          <textarea matInput [(ngModel)]="notes" rows="3" placeholder="Enter delivery remarks or dispatch reference..."></textarea>
+          <textarea matInput [(ngModel)]="notes" rows="2" placeholder="Enter delivery remarks or dispatch reference..."></textarea>
         </mat-form-field>
+
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="font-size:12px;color:#1e40af;">
+            <strong>Create GRN with Vendor Photo/PDF:</strong><br>
+            Record actual GRN number, received items & upload vendor document.
+          </div>
+          <button mat-flat-button color="accent" (click)="openGrnForm()" style="font-size:12px;white-space:nowrap;">
+            <mat-icon style="font-size:16px;width:16px;height:16px;margin-right:4px;">inventory_2</mat-icon>
+            Create GRN
+          </button>
+        </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end" style="margin-top:16px;padding:0;">
@@ -45,6 +56,7 @@ import { FormsModule } from '@angular/forms';
           <mat-icon style="margin-right:6px;">check_circle</mat-icon> Update Delivery Status
         </button>
       </mat-dialog-actions>
+
     </div>
   `,
 })
@@ -55,7 +67,12 @@ export class DeliveryStatusDialogComponent {
   status: 'partially_delivered' | 'delivered' = this.data.status || 'delivered';
   notes = this.data.notes || '';
 
+  openGrnForm() {
+    this.dialogRef.close({ action: 'create_grn' });
+  }
+
   confirm() {
     this.dialogRef.close({ status: this.status, notes: this.notes.trim() });
   }
 }
+
