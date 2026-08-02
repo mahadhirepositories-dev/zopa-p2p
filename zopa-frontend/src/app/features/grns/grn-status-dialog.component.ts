@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from '../../core/services/notification.service';
 
 @Component({
   selector: 'app-grn-status-dialog',
@@ -29,8 +30,8 @@ import { environment } from '../../../environments/environment';
         <mat-form-field appearance="outline" style="width:100%;margin-bottom:12px;">
           <mat-label>GRN Status *</mat-label>
           <mat-select [(ngModel)]="status">
-            <mat-option value="confirmed">Confirmed (Goods Received &amp; Verified)</mat-option>
-            <mat-option value="pending">Pending (Awaiting Physical Receipt / Verification)</mat-option>
+            <mat-option value="confirmed">GRN Captured &amp; Goods Verified</mat-option>
+            <mat-option value="pending">Pending GRN (Awaiting Verification)</mat-option>
             <mat-option value="rejected">Rejected / Returned</mat-option>
           </mat-select>
         </mat-form-field>
@@ -74,7 +75,7 @@ import { environment } from '../../../environments/environment';
                     (Ordered: {{ item.po_item?.qty | number:'1.0-3' }})
                   </span>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
                   <div>
                     <label style="font-size:10px;color:#64748b;font-weight:600;display:block;margin-bottom:2px;">RECEIVED QTY</label>
                     <input type="number" [(ngModel)]="item.received_qty" (ngModelChange)="onReceivedQtyChange(item)"
@@ -82,15 +83,27 @@ import { environment } from '../../../environments/environment';
                   </div>
                   <div>
                     <label style="font-size:10px;color:#15803d;font-weight:600;display:block;margin-bottom:2px;">ACCEPTED QTY</label>
-                    <input type="number" [(ngModel)]="item.accepted_qty"
+                    <input type="number" [(ngModel)]="item.accepted_qty" (ngModelChange)="onAcceptedQtyChange(item)"
                            style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#15803d;" min="0" />
                   </div>
                   <div>
                     <label style="font-size:10px;color:#dc2626;font-weight:600;display:block;margin-bottom:2px;">REJECTED QTY</label>
-                    <input type="number" [(ngModel)]="item.rejected_qty"
+                    <input type="number" [(ngModel)]="item.rejected_qty" (ngModelChange)="onRejectedQtyChange(item)"
                            style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#dc2626;" min="0" />
                   </div>
                 </div>
+
+                <!-- Rejection / Defect Reason Dropdown -->
+                @if (+item.rejected_qty > 0) {
+                  <div style="margin-top:6px;">
+                    <label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:2px;">REJECTION REASON</label>
+                    <select [(ngModel)]="item.rejection_reason" style="width:100%;padding:4px 8px;border:1px solid #fecdd3;border-radius:4px;font-size:12px;background:#fff1f2;color:#991b1b;">
+                      <option value="Damaged">Damaged in Transit</option>
+                      <option value="Not as per specification">Not as per specification</option>
+                      <option value="Others">Others</option>
+                    </select>
+                  </div>
+                }
               </div>
             }
           </div>
@@ -119,6 +132,7 @@ export class GrnStatusDialogComponent {
   data: any = inject(MAT_DIALOG_DATA) || {};
   private dialogRef = inject(MatDialogRef<GrnStatusDialogComponent>);
   private http = inject(HttpClient);
+  private notify = inject(NotificationService);
 
   grnId = this.data.grn?.id;
   status = this.data.grn?.status || 'confirmed';
@@ -132,6 +146,7 @@ export class GrnStatusDialogComponent {
     received_qty: +i.received_qty,
     accepted_qty: +i.accepted_qty,
     rejected_qty: +i.rejected_qty,
+    rejection_reason: i.remarks || 'Not as per specification',
     remarks: i.remarks || '',
   }));
 
@@ -139,8 +154,28 @@ export class GrnStatusDialogComponent {
   saving = false;
 
   onReceivedQtyChange(item: any) {
-    // Default accepted qty to received qty if rejected qty is 0
+    const maxQty = +(item.po_item?.qty || 999999);
+    if (+item.received_qty > maxQty) {
+      this.notify.error(`Received Qty cannot exceed ordered quantity (${maxQty}).`);
+      item.received_qty = maxQty;
+    }
     item.accepted_qty = Math.max(0, +item.received_qty - (+item.rejected_qty || 0));
+  }
+
+  onAcceptedQtyChange(item: any) {
+    if (+item.accepted_qty > +item.received_qty) {
+      this.notify.error(`Accepted Qty cannot exceed Received Qty (${item.received_qty}).`);
+      item.accepted_qty = item.received_qty;
+    }
+    item.rejected_qty = Math.max(0, +item.received_qty - +item.accepted_qty);
+  }
+
+  onRejectedQtyChange(item: any) {
+    if (+item.rejected_qty > +item.received_qty) {
+      this.notify.error(`Rejected Qty cannot exceed Received Qty (${item.received_qty}).`);
+      item.rejected_qty = item.received_qty;
+    }
+    item.accepted_qty = Math.max(0, +item.received_qty - +item.rejected_qty);
   }
 
   onFileChange(event: Event) {
@@ -163,6 +198,7 @@ export class GrnStatusDialogComponent {
         received_qty: +i.received_qty,
         accepted_qty: +i.accepted_qty,
         rejected_qty: +i.rejected_qty,
+        remarks: +i.rejected_qty > 0 ? (i.rejection_reason || 'Rejected') : undefined,
       })),
     };
 

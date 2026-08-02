@@ -65,7 +65,8 @@ export class DeliveryStatusDialogComponent {
   private dialogRef = inject(MatDialogRef<DeliveryStatusDialogComponent>);
 
   status: 'partially_delivered' | 'delivered' = this.data.status || 'delivered';
-  notes = this.data.notes || '';
+  notes = '';
+
 
   openGrnForm() {
     this.dialogRef.close({ action: 'create_grn' });

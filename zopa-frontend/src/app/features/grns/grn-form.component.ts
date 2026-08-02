@@ -67,16 +67,20 @@ interface PoItemMeta {
             @if (releasedPos().length === 0) {
               <mat-hint style="color:#dc2626;">No eligible POs found (need Approved / Released status)</mat-hint>
             }
+          <mat-form-field appearance="outline">
+            <mat-label>Delivery Marked Date (Vendor Word)</mat-label>
+            <input matInput [value]="deliveryMarkedDate() ? (deliveryMarkedDate() | date:'dd MMM yyyy') : 'Not marked'" readonly style="font-weight:600;color:#0369a1;" />
+            <mat-icon matSuffix style="color:#0369a1;">local_shipping</mat-icon>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Received Date *</mat-label>
+            <input matInput [matDatepicker]="dp" [formControl]="dateControl" [max]="todayDate" />
+            <mat-datepicker-toggle matSuffix [for]="dp" />
+            <mat-datepicker #dp />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>GRN Number (Auto if blank)</mat-label>
             <input matInput [formControl]="grnNumberControl" placeholder="Auto-generated e.g. GRN-2026-0001" />
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Received Date *</mat-label>
-            <input matInput [matDatepicker]="dp" [formControl]="dateControl" />
-            <mat-datepicker-toggle matSuffix [for]="dp" />
-            <mat-datepicker #dp />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Remarks</mat-label>
@@ -91,7 +95,7 @@ interface PoItemMeta {
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>DC Date</mat-label>
-            <input matInput [matDatepicker]="dpDc" [formControl]="dcDateControl" />
+            <input matInput [matDatepicker]="dpDc" [formControl]="dcDateControl" [max]="todayDate" />
             <mat-datepicker-toggle matSuffix [for]="dpDc" />
             <mat-datepicker #dpDc />
           </mat-form-field>
@@ -112,6 +116,7 @@ interface PoItemMeta {
             }
           </div>
         </div>
+
 
 
         <div class="fields-row" style="margin-top: 12px;">
@@ -193,9 +198,10 @@ interface PoItemMeta {
                       }
                     </th>
                     <th class="ta-center">Remaining</th>
-                    <th>Receive Now *</th>
+                    <th>RECEIVED QTY *</th>
                     <th>Accept *</th>
                     <th>Remarks</th>
+
                   </tr>
                 </thead>
                 <tbody>
@@ -488,6 +494,9 @@ export class GrnFormComponent implements OnInit {
   priorGrns    = signal<any[]>([]);
   loadingItems = signal(false);
   saving       = signal(false);
+  todayDate    = new Date();
+  deliveryMarkedDate = signal<string | null>(null);
+
 
   poControl          = this.fb.control<number | null>(null, Validators.required);
   grnNumberControl   = this.fb.control<string>('');
@@ -617,6 +626,7 @@ export class GrnFormComponent implements OnInit {
           };
         });
 
+        this.deliveryMarkedDate.set(po.delivered_at || po.updated_at || null);
         this.poItemMeta.set(meta);
         this.itemGroups.clear();
 
@@ -632,10 +642,34 @@ export class GrnFormComponent implements OnInit {
             group.get('received_qty')?.disable();
             group.get('accepted_qty')?.disable();
           }
+
+          group.get('received_qty')?.valueChanges.subscribe(val => {
+            const num = Number(val ?? 0);
+            if (num > m.remaining) {
+              this.notify.error(`Cannot receive more than remaining quantity (${m.remaining}).`);
+              group.get('received_qty')?.setValue(m.remaining, { emitEvent: false });
+              group.get('accepted_qty')?.setValue(m.remaining, { emitEvent: false });
+            } else if (num < 0) {
+              group.get('received_qty')?.setValue(0, { emitEvent: false });
+            } else {
+              group.get('accepted_qty')?.setValue(num, { emitEvent: false });
+            }
+          });
+
+          group.get('accepted_qty')?.valueChanges.subscribe(val => {
+            const num = Number(val ?? 0);
+            const rQty = Number(group.get('received_qty')?.value ?? 0);
+            if (num > rQty) {
+              this.notify.error(`Accepted Qty cannot exceed Received Qty (${rQty}).`);
+              group.get('accepted_qty')?.setValue(rQty, { emitEvent: false });
+            }
+          });
+
           this.itemGroups.push(group);
         });
 
         this.loadingItems.set(false);
+
       },
       error: () => {
         this.notify.error('Could not load PO items.');

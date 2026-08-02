@@ -39,8 +39,9 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
               <div style="display:flex;align-items:center;gap:10px;">
                 <h1 class="page-title">{{ grn()!.grn_number }}</h1>
                 <span class="status-badge" [class]="'badge-' + (grn()!.status || 'confirmed')">
-                  {{ getStatusLabel(grn()!.status) }}
+                  {{ getStatusLabel(grn()!) }}
                 </span>
+
 
               </div>
               <div class="po-subtext">
@@ -624,15 +625,18 @@ export class GrnDetailComponent implements OnInit {
   loading = signal(true);
   pdfLoading = signal(false);
 
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'confirmed': return 'GRN Captured';
-      case 'pending':   return 'Pending GRN';
-      case 'rejected':  return 'Rejected';
-      case 'draft':     return 'Draft GRN';
-      default:          return status ? status.toUpperCase() : 'UNKNOWN';
+  getStatusLabel(g: any): string {
+    const status = typeof g === 'string' ? g : g?.status;
+    if (status === 'confirmed') {
+      const isPartial = (g?.items || []).some((i: any) => +i.accepted_qty < +(i.po_item?.qty || 0));
+      return isPartial ? 'Partial GRN Captured' : 'GRN Captured';
     }
+    if (status === 'pending') return 'Pending GRN';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'draft') return 'Draft GRN';
+    return status ? String(status).toUpperCase() : 'UNKNOWN';
   }
+
 
   ngOnInit() {
 

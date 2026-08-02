@@ -98,8 +98,9 @@ import { ExportService } from '../../core/services/export.service';
                 <th mat-header-cell *matHeaderCellDef>Status</th>
                 <td mat-cell *matCellDef="let g">
                   <span class="status-badge" [class]="'badge-' + (g.status || 'confirmed')">
-                    {{ getStatusLabel(g.status) }}
+                    {{ getStatusLabel(g) }}
                   </span>
+
                 </td>
               </ng-container>
 
@@ -184,15 +185,18 @@ export class GrnListComponent implements OnInit {
     return this.grns().slice(start, start + this.pageSize());
   });
 
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'confirmed': return 'GRN Captured';
-      case 'pending':   return 'Pending GRN';
-      case 'rejected':  return 'Rejected';
-      case 'draft':     return 'Draft GRN';
-      default:          return status ? status.toUpperCase() : 'UNKNOWN';
+  getStatusLabel(g: any): string {
+    const status = typeof g === 'string' ? g : g?.status;
+    if (status === 'confirmed') {
+      const isPartial = (g.items || []).some((i: any) => +i.accepted_qty < +(i.po_item?.qty || 0));
+      return isPartial ? 'Partial GRN Captured' : 'GRN Captured';
     }
+    if (status === 'pending') return 'Pending GRN';
+    if (status === 'rejected') return 'Rejected';
+    if (status === 'draft') return 'Draft GRN';
+    return status ? String(status).toUpperCase() : 'UNKNOWN';
   }
+
 
   ngOnInit() {
 
