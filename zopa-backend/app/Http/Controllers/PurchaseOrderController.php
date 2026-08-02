@@ -675,21 +675,21 @@ class PurchaseOrderController extends Controller
 
         // ── Auto-create pending GRN temp entry in GRN list ──────────────────
         try {
-            $tenant = app('currentTenant');
+            $tenant  = $purchaseOrder->tenant ?? (app()->bound('currentTenant') ? app('currentTenant') : null);
+            $tenantId = $tenant?->id ?? $purchaseOrder->tenant_id;
             $year    = now()->year;
-            $orgCode = strtoupper(trim($tenant->code ?? 'ORG'));
+            $orgCode = strtoupper(trim($tenant?->code ?? 'ORG'));
             $prefix  = "{$orgCode}-GRN-{$year}-";
 
-            $lastNumber = \App\Models\Grn::where('tenant_id', $tenant->id)
+            $lastNumber = \App\Models\Grn::where('tenant_id', $tenantId)
                 ->where('grn_number', 'like', $prefix . '%')
-                ->lockForUpdate()
                 ->max('grn_number');
 
             $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
             $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
 
             $grn = \App\Models\Grn::create([
-                'tenant_id'     => $tenant->id,
+                'tenant_id'     => $tenantId,
                 'po_id'         => $purchaseOrder->id,
                 'grn_number'    => $grnNumber,
                 'received_date' => now(),
@@ -697,6 +697,7 @@ class PurchaseOrderController extends Controller
                 'status'        => 'pending',
                 'remarks'       => $request->notes ?? ('Delivery logged from vendor info (' . ($request->status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered') . ')'),
             ]);
+
 
             $purchaseOrder->loadMissing('items');
             foreach ($purchaseOrder->items as $poItem) {
@@ -712,6 +713,8 @@ class PurchaseOrderController extends Controller
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Could not create pending GRN on PO delivery status update: ' . $e->getMessage());
         }
+
+
 
         $this->actLog->log('PO', $purchaseOrder->id, 'delivery_status_updated', [
             'delivery_status' => $request->status,

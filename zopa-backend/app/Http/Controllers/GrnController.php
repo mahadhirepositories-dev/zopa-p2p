@@ -257,10 +257,12 @@ class GrnController extends Controller
                     $anyReceived = true;
                 }
 
+
                 if ((float) $totalAccepted < (float) $poItem->qty) {
                     $allFullyReceived = false;
                 }
             }
+
 
             if ($allFullyReceived) {
                 $po->update(['status' => 'delivered', 'delivery_status' => 'delivered', 'delivered_at' => now()]);
