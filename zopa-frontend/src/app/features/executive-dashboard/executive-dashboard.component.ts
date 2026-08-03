@@ -524,14 +524,19 @@ export class ExecutiveDashboardComponent implements OnInit {
   loading = signal(true);
   exporting = signal(false);
 
-  selectedTenantId = 0;
+  selectedTenantId = signal<number>(0);
   selectedPeriod = signal<string>('all');
   fromDate = signal<string>('');
   toDate = signal<string>('');
 
   selectedTenantName = computed(() => {
-    if (this.selectedTenantId === 0) return 'All Organizations';
-    return this.tenants().find(t => t.id === this.selectedTenantId)?.name ?? 'Selected Organization';
+    const id = this.selectedTenantId();
+    if (id === 0) return 'All Organizations';
+    const found = this.tenants().find(t => t.id === id);
+    if (found) return found.name;
+    const scopeName = this.userScope()?.tenant_name;
+    if (scopeName && this.userScope()?.tenant_id === id) return scopeName;
+    return `Organization #${id}`;
   });
 
   prDistributionEntries = computed(() => {
@@ -590,7 +595,7 @@ export class ExecutiveDashboardComponent implements OnInit {
     this.loading.set(true);
     const queryParams: string[] = [];
 
-    if (this.selectedTenantId > 0) queryParams.push(`tenant_id=${this.selectedTenantId}`);
+    if (this.selectedTenantId() > 0) queryParams.push(`tenant_id=${this.selectedTenantId()}`);
     if (this.selectedPeriod()) queryParams.push(`period=${this.selectedPeriod()}`);
     if (this.fromDate()) queryParams.push(`from_date=${this.fromDate()}`);
     if (this.toDate()) queryParams.push(`to_date=${this.toDate()}`);
@@ -601,6 +606,9 @@ export class ExecutiveDashboardComponent implements OnInit {
       next: (res) => {
         this.kpis.set(res);
         this.userScope.set(res.user_scope);
+        if (!res.user_scope?.is_zopa_admin && res.user_scope?.tenant_id) {
+          this.selectedTenantId.set(res.user_scope.tenant_id);
+        }
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
@@ -610,7 +618,7 @@ export class ExecutiveDashboardComponent implements OnInit {
   exportCsv() {
     this.exporting.set(true);
     const queryParams: string[] = [];
-    if (this.selectedTenantId > 0) queryParams.push(`tenant_id=${this.selectedTenantId}`);
+    if (this.selectedTenantId() > 0) queryParams.push(`tenant_id=${this.selectedTenantId()}`);
     if (this.selectedPeriod()) queryParams.push(`period=${this.selectedPeriod()}`);
     if (this.fromDate()) queryParams.push(`from_date=${this.fromDate()}`);
     if (this.toDate()) queryParams.push(`to_date=${this.toDate()}`);
@@ -655,13 +663,13 @@ export class ExecutiveDashboardComponent implements OnInit {
       data: {
         title: 'Select organization scope',
         options,
-        currentId: this.selectedTenantId,
+        currentId: this.selectedTenantId(),
         searchPlaceholder: 'Search organizations…',
       },
     });
     ref.afterClosed().subscribe((id?: number) => {
-      if (id !== undefined && id !== null && id !== this.selectedTenantId) {
-        this.selectedTenantId = id;
+      if (id !== undefined && id !== null && id !== this.selectedTenantId()) {
+        this.selectedTenantId.set(id);
         this.loadData();
       }
     });

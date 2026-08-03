@@ -48,8 +48,7 @@ class AdminDashboardController extends Controller
         $fromDate = $request->input('from_date');
         $toDate   = $request->input('to_date');
 
-        $tenants = Tenant::where('is_internal', false)
-            ->select('id', 'name', 'code', 'plan', 'is_active', 'created_at')
+        $tenants = Tenant::select('id', 'name', 'code', 'plan', 'is_active', 'is_internal', 'created_at')
             ->orderBy('name')
             ->get();
 
