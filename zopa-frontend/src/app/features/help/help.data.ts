@@ -173,67 +173,87 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
 
   // ── Procurement ───────────────────────────────────────────────────────────
+  // ── Procurement ───────────────────────────────────────────────────────────
   {
     id: 'create-pr',
-    title: 'Create a Purchase Requisition (PR)',
+    title: 'Create & Manage Purchase Requisitions (PR)',
     category: 'Procurement',
     icon: 'description',
-    summary: 'Request something to be purchased.',
-    keywords: ['pr', 'requisition', 'request', 'create', 'new'],
+    summary: 'Request items, request clarifications, and manage PR short-closing.',
+    keywords: ['pr', 'requisition', 'request', 'create', 'new', 'clarification', 'short close'],
     modules: ['purchase_requisitions'],
     body: `<ol>
         <li>Go to <strong>Requisitions → New Requisition</strong>.</li>
-        <li>Fill the title, cost center, project/location, priority and required-by date.</li>
-        <li>Add <strong>line items</strong>: description, quantity, unit and estimated price.</li>
-        <li><strong>Save as Draft</strong>, then <strong>Submit</strong>.</li>
+        <li>Select title, cost center, project/location, priority, and required-by date.</li>
+        <li>Add <strong>line items</strong>: description, quantity, unit, and estimated price.</li>
+        <li><strong>Save as Draft</strong>, then <strong>Submit for Procurement</strong>.</li>
       </ol>
-      <p>If an approval chain is configured, the PR routes to approvers. A PR can later be converted into one or more POs (full or partial — converted quantity is tracked).</p>
-      <p><strong>Statuses:</strong> Draft → Submitted → (RFQ Created → RFQ Approved) → Converted / Partially Converted → Rejected.</p>`,
+      <p><strong>PR Needs Clarification Workflow:</strong></p>
+      <ul>
+        <li>If a Buyer finds missing specifications or details, they click <strong>Request Clarification</strong>. The PR moves to <em>Needs Clarification</em> (Amber Badge) and standard PR TAT processing calculation <strong>pauses</strong>.</li>
+        <li>The Requester receives a notification banner <code>⚠️ Action Required: Clarification Requested</code> and clicks <strong>Provide Clarification</strong> to post response notes and edit line items, resuming PR processing.</li>
+      </ul>
+      <p><strong>PR Short-Close:</strong> If a PR is partially converted into POs and remaining items are no longer required, click <strong>Short Close PR</strong> to transition status to <em>Converted &amp; Short Closed</em>.</p>
+      <p><strong>Statuses:</strong> Draft → Submitted → Needs Clarification → (RFQ Created → RFQ Approved) → Converted / Partially Converted → Short Closed / Rejected.</p>`,
+  },
+  {
+    id: 'pr-clarification-workflow',
+    title: 'PR Clarification & TAT Pause Workflow',
+    category: 'Procurement',
+    icon: 'help_outline',
+    summary: 'How buyers request clarification and requesters respond with TAT pause calculation.',
+    keywords: ['pr clarification', 'need clarification', 'tat pause', 'missing info', 'query', 'response'],
+    modules: ['purchase_requisitions'],
+    body: `<p>When clients or requesters submit PRs with incomplete or ambiguous specifications, Buyers can request clarification without hurting PR-to-PO Turnaround Time (TAT) metrics.</p>
+      <ol>
+        <li><strong>Buyer Requests Clarification:</strong> Click <strong>Request Clarification</strong> on a submitted PR and type query notes. The PR status changes to <em>Needs Clarification</em> and standard PR processing TAT is <strong>paused</strong>.</li>
+        <li><strong>Requester Responds:</strong> The Requester or Creator sees the amber alert banner and clicks <strong>Provide Clarification</strong> or <strong>Edit PR</strong>. They input resolution notes, update item specs, and click <strong>Submit Response</strong>.</li>
+        <li><strong>TAT Calculation Adjustment:</strong> The system automatically calculates clarification pause duration (<code>provided_at - requested_at</code>) and subtracts it from PR-to-PO TAT.</li>
+        <li><strong>Clarification TAT KPI:</strong> The Executive Dashboard tracks <strong>PR Clarification TAT</strong> (average hours taken to resolve queries) as a dedicated performance metric.</li>
+      </ol>`,
   },
   {
     id: 'create-po',
-    title: 'Create a Purchase Order (PO)',
+    title: 'Create a Purchase Order & Mark Delivery',
     category: 'Procurement',
     icon: 'receipt_long',
-    summary: 'Place an order with a vendor.',
-    keywords: ['po', 'purchase order', 'create', 'vendor', 'order', 'gst'],
+    summary: 'Place orders with vendors and punch delivery status updates.',
+    keywords: ['po', 'purchase order', 'create', 'vendor', 'order', 'delivery', 'mark delivered', 'gst'],
     modules: ['purchase_orders'],
     body: `<ol>
-        <li>Go to <strong>Purchase Orders → New Purchase Order</strong> (or convert from a PR).</li>
-        <li>Choose the <strong>vendor</strong>, vendor address, <strong>cost center</strong>, <strong>Bill-to</strong> and <strong>Ship-to</strong> locations and validity date — a preview shows the exact address that will print on the PO.</li>
-        <li>Add line items — the system computes <strong>GST</strong> (IGST vs CGST+SGST) and totals automatically. (Tip: use <strong>BOQ Template → Upload BOQ</strong> to import line items from Excel.)</li>
-        <li>Add payment terms, freight and terms &amp; conditions (an AI helper can suggest terms).</li>
-        <li><strong>Submit</strong> — it routes through the PO approval chain (respecting amount limits).</li>
+        <li>Go to <strong>Purchase Orders → New Purchase Order</strong> (or click <strong>Convert to PO</strong> from an approved PR).</li>
+        <li>Choose vendor, cost center, Bill-to and Ship-to locations — a preview shows the exact address printed on the PO.</li>
+        <li>Add line items — GST (IGST vs CGST+SGST) and grand total calculate automatically.</li>
+        <li>Add payment terms (must total 100%) and freight details.</li>
+        <li><strong>Submit</strong> — routes through L1/L2/L3 approval workflows.</li>
       </ol>
-      <p><strong>Statuses:</strong> Draft → Pending L1/L2/L3 → Approved → Released → Delivered → Invoiced → Payment Released (or Cancelled).</p>`,
-  },
-  {
-    id: 'release-po',
-    title: 'Release a PO & download the PDF',
-    category: 'Procurement',
-    icon: 'picture_as_pdf',
-    summary: 'Send the approved PO to the vendor.',
-    keywords: ['release', 'pdf', 'download', 'vendor', 'send', 'po'],
-    modules: ['purchase_orders'],
-    body: `<p>Once a PO is fully approved it gets a <strong>PO number</strong>. Open the PO and use <strong>Release</strong> — the PO is then <strong>automatically emailed to the vendor</strong> with the PO PDF. Use <strong>Send to Vendor</strong> to (re-)send it, e.g. after adding the vendor's email address.</p>
-      <p><strong>Download PDF</strong> gives a printable copy showing the line items, the <strong>preparer</strong> and <strong>approver</strong> names, and the full <strong>Bill-to / Ship-to</strong> addresses.</p>`,
+      <p><strong>Delivery Status Punching:</strong></p>
+      <ul>
+        <li>Once a PO is released and vendor delivers goods, Buyers click <strong>Partially Delivered</strong> or <strong>Mark Delivered</strong> on the PO detail view.</li>
+        <li>Comment fields reset blank on every modal invocation so previous notes never persist.</li>
+        <li>Punching delivery records the <em>Delivery Marked Date (Vendor Word)</em> and enables the <strong>Mark GRN</strong> option for stores.</li>
+      </ul>
+      <p><strong>Statuses:</strong> Draft → Pending L1/L2/L3 → Approved → Released → Partially Delivered / Delivered → Invoiced → Payment Released (or Cancelled).</p>`,
   },
   {
     id: 'grn',
-    title: 'Record a Goods Receipt (GRN)',
+    title: 'Record & Verify Goods Receipt (GRN)',
     category: 'Procurement',
     icon: 'inventory_2',
-    summary: 'Confirm goods that have arrived.',
-    keywords: ['grn', 'goods', 'receipt', 'received', 'delivery'],
+    summary: 'Strict GRN gating, physical item verification, overflow warnings, and auto-completion.',
+    keywords: ['grn', 'goods receipt', 'received qty', 'rejection reason', 'date constraint', 'gating', 'toast'],
     modules: ['grns'],
-    body: `<ol>
-        <li>Go to <strong>Goods Receipt → New GRN</strong>.</li>
-        <li>Pick a released/approved <strong>PO</strong> (fully-received POs are hidden).</li>
-        <li>Enter the <strong>received quantity</strong> for each line. Partial receipts are allowed — record several GRNs over time.</li>
-        <li>Click <strong>Save</strong>.</li>
-      </ol>
-      <p>When every line is fully received, the PO is automatically marked <strong>Delivered</strong>.</p>`,
+    body: `<p>Store and Site Engineers perform physical item verification and log Goods Receipt Notes (GRNs):</p>
+      <ol>
+        <li><strong>GRN Creation Gating:</strong> The <strong>Mark GRN</strong> button is strictly gated and only appears <em>after</em> delivery status has been punched on the PO.</li>
+        <li><strong>Delivery Marked Date:</strong> The Create GRN page displays a read-only <em>Delivery Marked Date (Vendor Word)</em> header auto-populated from vendor delivery punching.</li>
+        <li><strong>Max Date Limits:</strong> <em>Received Date</em> and <em>DC Date</em> are strictly capped to <strong>Today's Date</strong> (future dates disabled).</li>
+        <li><strong>Quantity Overflow Error Toasts:</strong> Entering a received or accepted quantity greater than available PO item remaining quantity triggers a real-time error toast: <code>❌ Cannot receive/accept more than remaining quantity</code>.</li>
+        <li><strong>Rejection Reason Selection:</strong> If items are rejected, store officers must select a valid reason from the dropdown (<em>Damaged</em>, <em>Not as per specification</em>, <em>Others</em>).</li>
+        <li><strong>Automated Completion:</strong> Displays <em>Partial GRN Captured</em> vs <em>GRN Captured</em> badges. Once all PO items are fully accepted across confirmed GRNs, the PO automatically transitions to <strong>✓ Delivered &amp; GRN Captured</strong>.</li>
+      </ol>`,
   },
+
   {
     id: 'invoice',
     title: 'Create an Invoice',
@@ -345,19 +365,27 @@ export const HELP_ARTICLES: HelpArticle[] = [
   // ── Dashboards & Reports ──────────────────────────────────────────────────
   {
     id: 'dashboard',
-    title: 'Understanding your Dashboard KPIs',
+    title: 'Executive Summary Dashboard & Organization Data Privacy',
     category: 'Dashboards & Reports',
     icon: 'dashboard',
-    summary: 'What the home dashboard numbers mean.',
-    keywords: ['dashboard', 'kpi', 'stats', 'budget', 'pending', 'home'],
-    body: `<p>Your Dashboard shows your organization's procurement health:</p>
+    summary: 'Understanding Executive KPIs and strict organization data isolation.',
+    keywords: ['dashboard', 'kpi', 'stats', 'budget', 'executive', 'privacy', 'tenant', 'isolation'],
+    body: `<p>The Executive Summary Dashboard provides real-time procurement health and risk metrics tailored to your role:</p>
+      <p><strong>🔒 Strict Organization Data Isolation:</strong></p>
       <ul>
-        <li><strong>Total POs</strong>, <strong>Pending Approvals</strong> (waiting for you — click to jump there), <strong>Approved</strong>, and later stages.</li>
-        <li><strong>Total PO Value</strong> — combined ₹ value.</li>
-        <li><strong>Budget per Cost Center</strong> — Annual · Frozen · Consumed · Available.</li>
-        <li><strong>Recent activity</strong> and <strong>turnaround (TAT)</strong> tables for POs and PRs.</li>
+        <li><strong>Organization Data Privacy Guarantee:</strong> All document records (PRs, POs, GRNs, Invoices), budgets, cost centers, and report analytics are strictly isolated per Organization (<code>tenant_id</code>).</li>
+        <li><strong>Organization Users:</strong> Organization Admins, Buyers, Requesters, and Approvers exclusively view their own Organization's Executive Summary Dashboard. Non-associated organization data is strictly inaccessible.</li>
+        <li><strong>ZOPA Super Admins:</strong> Only platform Super Admins can access cross-organization aggregate stats or use the Organization Switcher picker.</li>
+      </ul>
+      <p><strong>18 Executive KPIs Tracked:</strong></p>
+      <ul>
+        <li><strong>Headline Volume &amp; Spend:</strong> Orders Processed, Total Value Managed, Active Vendors, Categories Handled, Projects &amp; Locations Served.</li>
+        <li><strong>Savings Realized:</strong> Total Savings Realized &amp; Average Savings % against PR budgets.</li>
+        <li><strong>Turnaround (TAT) Analytics:</strong> PR Net TAT (excluding clarification pauses), Dedicated <strong>PR Clarification TAT</strong> (hours taken to respond to missing info queries), and PO Issue TAT.</li>
+        <li><strong>Risk &amp; Outage Metrics:</strong> PR TAT distribution (1d, 3d, 7d, 7d+), Max TAT case trace, Risk Delay Mapping (Approvals, Vendor Release, GRN Lead Times), and Medicine/Lab Outage Rates.</li>
       </ul>`,
   },
+
   {
     id: 'reports',
     title: 'TAT Reports & exports',
