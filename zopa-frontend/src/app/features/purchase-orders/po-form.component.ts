@@ -454,22 +454,22 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
           <mat-card-content style="padding-top:16px;">
             @for (term of paymentTerms.controls; track i; let i = $index) {
               <div [formGroup]="asGroup(term)" class="term-row">
-                <mat-form-field appearance="outline" style="flex:2;">
+                <mat-form-field appearance="outline" class="field-stage">
                   <mat-label>Stage</mat-label>
                   <input matInput formControlName="stage"
                          placeholder="e.g. Advance, On Delivery" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="field-xs">
+                <mat-form-field appearance="outline" class="field-pct">
                   <mat-label>%</mat-label>
                   <input matInput type="number" formControlName="percentage"
                          min="0" max="100" (input)="onTermChange()" />
                 </mat-form-field>
-                <mat-form-field appearance="outline" class="field-xs">
+                <mat-form-field appearance="outline" class="field-days">
                   <mat-label>Credit Days</mat-label>
                   <input matInput type="number" formControlName="credit_days"
                          min="0" />
                 </mat-form-field>
-                <button mat-icon-button color="warn" (click)="removeTerm(i)">
+                <button mat-icon-button color="warn" (click)="removeTerm(i)" class="term-del-btn" matTooltip="Remove stage">
                   <mat-icon>delete_outline</mat-icon>
                 </button>
               </div>
@@ -651,10 +651,19 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     }
     .empty-items mat-icon { font-size: 40px; width: 40px; height: 40px; }
 
-    .term-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 4px; }
+    .term-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 4px;
+      width: 100%; box-sizing: border-box;
+    }
+    .field-stage { flex: 2; min-width: 110px; }
+    .field-pct { flex: 1; min-width: 65px; max-width: 85px; }
+    .field-days { flex: 1.2; min-width: 95px; max-width: 115px; }
+    .term-del-btn { flex-shrink: 0; margin-bottom: 16px; }
+
     .terms-total {
       font-size: 12px; font-weight: 600; padding: 4px 10px;
       border-radius: 6px; background: #f1f5f9; color: var(--text-2);
+      white-space: nowrap;
     }
     .terms-total.terms-over { background: #fff1f2; color: #e11d48; }
     .terms-total.terms-ok   { background: #f0fdf4; color: #16a34a; }
@@ -666,7 +675,11 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     }
     .terms-warn mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
-    .two-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .two-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; box-sizing: border-box; }
+    .two-panel mat-card { overflow: hidden; box-sizing: border-box; }
+    @media (max-width: 1150px) {
+      .two-panel { grid-template-columns: 1fr; }
+    }
 
     .totals-table { display: flex; flex-direction: column; gap: 6px; }
     .totals-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
