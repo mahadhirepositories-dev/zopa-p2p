@@ -182,15 +182,17 @@ class ExecutiveDashboardController extends Controller
 
         // Client login user: strictly scoped to current tenant
         $tenant = app()->bound('currentTenant') ? app('currentTenant') : null;
-        $tenantId = $tenant?->id ?? $user?->tenant_id ?? 1;
+        $tenantId = $tenant?->id ?? $user?->tenant_id;
+        abort_if(!$tenantId, 403, 'Unauthorized organization access.');
         $tenantName = $tenant?->name ?? 'Organization';
 
         return [
             'is_zopa_admin' => false,
-            'tenant_id'     => $tenantId,
+            'tenant_id'     => (int) $tenantId,
             'tenant_name'   => $tenantName,
         ];
     }
+
 
     private function applyDateFilter($query, string $period, ?string $fromDate, ?string $toDate, string $column = 'created_at')
     {
