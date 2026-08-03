@@ -673,49 +673,6 @@ class PurchaseOrderController extends Controller
 
         $purchaseOrder->update($updateData);
 
-        // ── Auto-create pending GRN temp entry in GRN list ──────────────────
-        try {
-            $tenant  = $purchaseOrder->tenant ?? (app()->bound('currentTenant') ? app('currentTenant') : null);
-            $tenantId = $tenant?->id ?? $purchaseOrder->tenant_id;
-            $year    = now()->year;
-            $orgCode = strtoupper(trim($tenant?->code ?? 'ORG'));
-            $prefix  = "{$orgCode}-GRN-{$year}-";
-
-            $lastNumber = \App\Models\Grn::where('tenant_id', $tenantId)
-                ->where('grn_number', 'like', $prefix . '%')
-                ->max('grn_number');
-
-            $seq       = $lastNumber ? ((int) substr($lastNumber, strlen($prefix))) + 1 : 1;
-            $grnNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
-
-            $grn = \App\Models\Grn::create([
-                'tenant_id'     => $tenantId,
-                'po_id'         => $purchaseOrder->id,
-                'grn_number'    => $grnNumber,
-                'received_date' => now(),
-                'received_by'   => auth()->id(),
-                'status'        => 'pending',
-                'remarks'       => $request->notes ?? ('Delivery logged from vendor info (' . ($request->status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered') . ')'),
-            ]);
-
-
-            $purchaseOrder->loadMissing('items');
-            foreach ($purchaseOrder->items as $poItem) {
-                \App\Models\GrnItem::create([
-                    'grn_id'       => $grn->id,
-                    'po_item_id'   => $poItem->id,
-                    'received_qty' => $poItem->qty,
-                    'accepted_qty' => $poItem->qty,
-                    'rejected_qty' => 0,
-                    'remarks'      => 'Pending physical verification',
-                ]);
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Could not create pending GRN on PO delivery status update: ' . $e->getMessage());
-        }
-
-
-
         $this->actLog->log('PO', $purchaseOrder->id, 'delivery_status_updated', [
             'delivery_status' => $request->status,
             'remarks'         => $request->notes ?? ($request->status === 'partially_delivered' ? 'Partially Delivered' : 'Fully Delivered'),

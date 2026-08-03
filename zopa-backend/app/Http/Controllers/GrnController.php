@@ -49,6 +49,9 @@ class GrnController extends Controller
             $query->where('po_id', $request->po_id);
         }
 
+        // Exclude legacy unconfirmed auto-drafted pending GRNs
+        $query->where('status', '!=', 'pending');
+
         $perPage = min((int) ($request->per_page ?? 500), 1000);
         return response()->json($query->latest()->paginate($perPage));
     }
@@ -172,7 +175,7 @@ class GrnController extends Controller
                 }
             }
             if ($allFullyReceived) {
-                $po->update(['status' => 'delivered', 'delivered_at' => now()]);
+                $po->update(['status' => 'delivered', 'delivery_status' => 'delivered', 'delivered_at' => now()]);
             } else {
                 $po->update(['delivery_status' => 'partially_delivered']);
             }
