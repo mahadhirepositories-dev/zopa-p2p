@@ -299,15 +299,25 @@ class ExecutiveDashboardController extends Controller
         }
         usort($categorySpendList, fn($a, $b) => $b['spend'] <=> $a['spend']);
 
-        // 11. Average PR TAT
+        // 11. Average PR Net TAT (Excluding Clarification Pause Duration)
         $prTats = TatRecord::whereHas('pr', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))->get();
         $avgPrTatDays = round($prTats->filter(fn($t) => $t->pr_submitted_at && $t->po_created_at)
-            ->avg(fn($t) => $t->pr_submitted_at->diffInHours($t->po_created_at) / 24) ?? 1.4, 1);
+            ->avg(function($t) {
+                $totalSec = $t->pr_submitted_at->diffInSeconds($t->po_created_at);
+                $clarificationSec = $t->clarification_duration_seconds ?? 0;
+                $netSec = max(0, $totalSec - $clarificationSec);
+                return $netSec / 86400; // convert seconds to days
+            }) ?? 1.4, 1);
+
+        // 11b. Dedicated KPI: PR Clarification TAT (Average time taken to resolve clarification requests)
+        $avgClarificationTatHours = round($prTats->filter(fn($t) => $t->clarification_requested_at && $t->clarification_provided_at)
+            ->avg(fn($t) => $t->clarification_requested_at->diffInHours($t->clarification_provided_at)) ?? 0, 1);
 
         // 12. Average PO Issue TAT
         $poTats = TatRecord::whereHas('po', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))->get();
         $avgPoIssueTatDays = round($poTats->filter(fn($t) => $t->po_created_at && $t->po_released_at)
             ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_released_at) / 24) ?? 1.8, 1);
+
 
         // 13. PR TAT Distribution
         $allPrs = (clone $prBase)->get();
@@ -434,7 +444,9 @@ class ExecutiveDashboardController extends Controller
             'avg_savings_percentage'        => $avgSavingsPercentage,
             'category_spend'                => $categorySpendList,
             'avg_pr_tat_days'               => $avgPrTatDays,
+            'avg_clarification_tat_hours'   => $avgClarificationTatHours,
             'avg_po_issue_tat_days'         => $avgPoIssueTatDays,
+
             'pr_tat_distribution'           => $prTatDistribution,
             'max_tat_case'                  => $maxTatCase,
             'delay_mapping'                 => $delayMapping,

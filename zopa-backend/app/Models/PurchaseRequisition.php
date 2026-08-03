@@ -15,15 +15,22 @@ class PurchaseRequisition extends Model
         'required_by_date', 'required_by_person',
         'requested_by', 'buyer_id', 'status', 'submitted_at', 'converted_at',
         'short_close_reason', 'short_closed_at', 'short_closed_by',
+        'needs_clarification', 'clarification_requested_at', 'clarification_requested_by',
+        'clarification_provided_at', 'clarification_provided_by', 'total_clarification_duration_seconds',
     ];
 
     protected $casts = [
-        'estimated_amount' => 'decimal:2',
-        'submitted_at'     => 'datetime',
-        'converted_at'     => 'datetime',
-        'short_closed_at'  => 'datetime',
-        'required_by_date' => 'date',
+        'estimated_amount'                  => 'decimal:2',
+        'needs_clarification'               => 'boolean',
+        'submitted_at'                      => 'datetime',
+        'converted_at'                      => 'datetime',
+        'short_closed_at'                   => 'datetime',
+        'clarification_requested_at'        => 'datetime',
+        'clarification_provided_at'         => 'datetime',
+        'required_by_date'                  => 'date',
+        'total_clarification_duration_seconds' => 'integer',
     ];
+
 
     public function tenant(): BelongsTo
     {
@@ -82,4 +89,10 @@ class PurchaseRequisition extends Model
             ->where('entity_type', 'PR')
             ->orderByDesc('created_at');
     }
+
+    public function clarifications(): HasMany
+    {
+        return $this->hasMany(PrClarification::class, 'pr_id')->orderByDesc('created_at');
+    }
 }
+

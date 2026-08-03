@@ -14,6 +14,8 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ActivityTimelineComponent } from '../../shared/components/activity-timeline.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
+import { RequestClarificationDialogComponent } from './request-clarification-dialog.component';
+import { ProvideClarificationDialogComponent } from './provide-clarification-dialog.component';
 
 @Component({
   selector: 'app-pr-detail',
@@ -24,6 +26,7 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
     MatProgressSpinnerModule, MatCardModule, MatDividerModule, MatDialogModule,
     ActivityTimelineComponent,
   ],
+
   template: `
     <div class="page-wrapper">
       @if (loading()) {
@@ -82,9 +85,20 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
               <button mat-raised-button color="accent" (click)="convertToPo()">
                 <mat-icon>add_shopping_cart</mat-icon> Create Additional PO
               </button>
-            }            @if (!['draft', 'short_closed', 'rejected'].includes(pr()!.status ?? '') && !pr()!.status?.startsWith('short_close_pending') && auth.canTransact()) {
+            }            @if (!['draft', 'short_closed', 'rejected', 'needs_clarification'].includes(pr()!.status ?? '') && !pr()!.status?.startsWith('short_close_pending') && auth.canTransact()) {
+              <button mat-stroked-button color="accent" (click)="requestClarification()" [disabled]="acting()" style="margin-left:4px;">
+                <mat-icon>help_outline</mat-icon> Request Clarification
+              </button>
               <button mat-stroked-button color="warn" (click)="shortClose()" [disabled]="acting()" style="margin-left:4px;">
                 <mat-icon>do_not_disturb_on</mat-icon> Short Close PR
+              </button>
+            }
+            @if (pr()!.status === 'needs_clarification') {
+              <button mat-raised-button color="primary" (click)="provideClarification()" style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
+                <mat-icon>mark_chat_read</mat-icon> Provide Clarification
+              </button>
+              <button mat-stroked-button color="primary" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']">
+                <mat-icon>edit</mat-icon> Edit PR
               </button>
             }
             @if (['converted', 'partially_converted'].includes(pr()!.status ?? '') || isPrConverted(pr()!)) {
@@ -95,11 +109,30 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
           </div>
         </div>
 
+        <!-- Needs Clarification Alert Banner -->
+        @if (pr()!.status === 'needs_clarification') {
+          <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:16px;box-shadow:0 2px 8px rgba(217,119,6,0.08);">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <mat-icon style="color:#d97706;font-size:28px;width:28px;height:28px;">warning_amber</mat-icon>
+              <div>
+                <strong style="color:#92400e;font-size:14px;display:block;">Action Required: Clarification Requested by Buyer</strong>
+                <span style="color:#78350f;font-size:13px;">
+                  "{{ pr()!.clarifications?.[0]?.request_notes || 'Please provide updated specifications or details requested by procurement.' }}"
+                </span>
+              </div>
+            </div>
+            <button mat-raised-button (click)="provideClarification()" style="background:#d97706;color:#ffffff;font-weight:600;white-space:nowrap;">
+              <mat-icon style="margin-right:4px;">mark_chat_read</mat-icon> Respond &amp; Provide Clarification
+            </button>
+          </div>
+        }
+
         <!-- Status banner -->
         <div class="status-banner status-banner--{{ pr()!.status }}" [class.converted-short-closed]="isPrConverted(pr()!) && (pr()!.status === 'short_closed' || pr()!.status?.startsWith('short_close_pending'))">
           <mat-icon>{{ statusIcon(pr()!.status) }}</mat-icon>
           <span>{{ statusLabel(pr()!) }}</span>
         </div>
+
 
         <div class="detail-grid">
 
@@ -135,11 +168,59 @@ import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
                 @if (pr()!.description) {
                   <mat-divider style="margin:14px 0;" />
                   <div style="font-size:13px;color:var(--text-2);white-space:pre-line;">{{ pr()!.description }}</div>
-                }
-              </mat-card-content>
             </mat-card>
 
+            <!-- Clarification History Log -->
+            @if (pr()!.clarifications?.length) {
+              <mat-card class="info-card" style="border-left:4px solid #d97706;">
+                <mat-card-header>
+                  <mat-card-title style="display:flex;align-items:center;gap:8px;color:#92400e;">
+                    <mat-icon style="color:#d97706;font-size:20px;width:20px;height:20px;">chat_bubble_outline</mat-icon>
+                    Clarification History Log ({{ pr()!.clarifications!.length }})
+                  </mat-card-title>
+                </mat-card-header>
+                <mat-card-content style="padding-top:8px!important;">
+                  @for (c of pr()!.clarifications; track c.id; let i = $index) {
+                    <div style="background:#fffbe6;border:1px solid #ffe58f;border-radius:8px;padding:12px;margin-bottom:12px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                        <span style="font-size:12px;font-weight:700;color:#d97706;">
+                          Query #{{ pr()!.clarifications!.length - i }} by {{ c.requester?.name || 'Buyer' }}
+                        </span>
+                        <span style="font-size:11px;color:#92400e;">
+                          {{ c.requested_at | date:'dd MMM yyyy HH:mm' }}
+                        </span>
+                      </div>
+                      <div style="font-size:13px;color:#1e293b;margin-bottom:8px;white-space:pre-line;">
+                        "{{ c.request_notes }}"
+                      </div>
+
+                      @if (c.status === 'resolved' && c.response_notes) {
+                        <div style="background:#ffffff;border-left:3px solid #0284c7;padding:8px 12px;border-radius:4px;margin-top:8px;">
+                          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                            <span style="font-size:11.5px;font-weight:700;color:#0284c7;">
+                              ✓ Response by {{ c.responder?.name || 'Requester' }}
+                            </span>
+                            <span style="font-size:11px;color:#64748b;">
+                              {{ c.provided_at | date:'dd MMM yyyy HH:mm' }}
+                            </span>
+                          </div>
+                          <div style="font-size:12.5px;color:#334155;white-space:pre-line;">
+                            {{ c.response_notes }}
+                          </div>
+                        </div>
+                      } @else {
+                        <span style="font-size:11px;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:4px;">
+                          ⏳ Awaiting Response
+                        </span>
+                      }
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+
             <!-- Linked POs -->
+
             @if (allLinkedPos().length > 0) {
               <mat-card class="info-card">
                 <mat-card-header>
@@ -348,6 +429,45 @@ export class PrDetailComponent implements OnInit {
     });
   }
 
+  requestClarification() {
+    const ref = this.dialog.open(RequestClarificationDialogComponent, {
+      width: '520px',
+      data: { prId: this.pr()!.id, prNumber: this.pr()!.pr_number },
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (res?.pr) {
+        this.pr.set(res.pr);
+      } else if (res) {
+        this.loadPr();
+      }
+    });
+  }
+
+  provideClarification() {
+    const ref = this.dialog.open(ProvideClarificationDialogComponent, {
+      width: '560px',
+      data: {
+        prId: this.pr()!.id,
+        requestNotes: this.pr()!.clarifications?.[0]?.request_notes,
+      },
+    });
+
+    ref.afterClosed().subscribe(res => {
+      if (res?.pr) {
+        this.pr.set(res.pr);
+      } else if (res) {
+        this.loadPr();
+      }
+    });
+  }
+
+  private loadPr() {
+    this.http.get<any>(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}`).subscribe({
+      next: r => this.pr.set(r),
+    });
+  }
+
   shortClose() {
     const ref = this.dialog.open(ShortClosePrDialogComponent, {
       width: '480px',
@@ -370,6 +490,7 @@ export class PrDetailComponent implements OnInit {
     });
   }
 
+
   isPrConverted(pr: any): boolean {
     if (!pr) return false;
     return !!pr.converted_at
@@ -381,6 +502,7 @@ export class PrDetailComponent implements OnInit {
   statusIcon(s: string): string {
     const map: Record<string, string> = {
       draft: 'edit_note', submitted: 'pending_actions',
+      needs_clarification: 'warning_amber',
       rfq_created: 'request_quote', rfq_approved: 'verified',
       converted: 'check_circle', partially_converted: 'incomplete_circle', rejected: 'cancel',
       short_closed: 'do_not_disturb_on',
@@ -393,6 +515,7 @@ export class PrDetailComponent implements OnInit {
     const s = typeof prArg === 'string' ? prArg : prArg?.status;
     const isConverted = typeof prArg === 'string' ? false : this.isPrConverted(prArg);
 
+    if (s === 'needs_clarification') return 'Needs Clarification — Awaiting Requester Response';
     if (s === 'short_closed' && isConverted) {
       return 'Converted & Short Closed — converted to PO and remaining quantities short-closed';
     }
@@ -402,6 +525,7 @@ export class PrDetailComponent implements OnInit {
     const map: Record<string, string> = {
       draft: 'Draft — not yet submitted',
       submitted: 'Submitted — awaiting buyer action',
+      needs_clarification: 'Needs Clarification — awaiting requester response',
       rfq_created: 'RFQ Created — quotation sent to vendors',
       rfq_approved: 'RFQ Approved — ready for PO conversion',
       converted: 'Converted to Purchase Order',
@@ -417,6 +541,7 @@ export class PrDetailComponent implements OnInit {
     const s = typeof prArg === 'string' ? prArg : prArg?.status;
     const isConverted = typeof prArg === 'string' ? false : this.isPrConverted(prArg);
 
+    if (s === 'needs_clarification') return 'Needs Clarification';
     if (s === 'short_closed' && isConverted) {
       return 'Converted & Short Closed';
     }
@@ -425,6 +550,7 @@ export class PrDetailComponent implements OnInit {
     }
     const map: Record<string, string> = {
       draft: 'Draft', submitted: 'Submitted',
+      needs_clarification: 'Needs Clarification',
       partially_converted: 'Partial',
       rfq_created: 'RFQ Created', rfq_approved: 'RFQ Approved',
       converted: 'Converted', rejected: 'Rejected',
@@ -433,6 +559,7 @@ export class PrDetailComponent implements OnInit {
     if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;
   }
+
 
   deletePr() {
     if (!confirm('Are you sure you want to delete this draft PR? This action cannot be undone.')) return;

@@ -203,9 +203,12 @@ class PurchaseRequisitionController extends Controller
                 'location:id,name',
                 'purchaseOrders.vendor:id,name',
                 'linkedPurchaseOrders.vendor:id,name',
+                'clarifications.requester:id,name',
+                'clarifications.responder:id,name',
             ])
         );
     }
+
 
     public function update(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
     {
@@ -454,8 +457,120 @@ class PurchaseRequisitionController extends Controller
         return response()->json($this->actLog->forEntity('PR', $purchaseRequisition->id));
     }
 
+    /**
+     * Request clarification on a PR (Buyer / Procurement User).
+     */
+    public function requestClarification(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
+    {
+        $this->authorize($purchaseRequisition);
+        $this->requireTransactRole();
+
+        $request->validate([
+            'notes' => 'required|string|max:2000',
+        ]);
+
+        if (in_array($purchaseRequisition->status, ['draft', 'short_closed', 'rejected'])) {
+            return response()->json(['error' => 'Cannot request clarification on draft, short-closed, or rejected PRs.'], 422);
+        }
+
+        $now = now();
+        $purchaseRequisition->update([
+            'status'                     => 'needs_clarification',
+            'needs_clarification'        => true,
+            'clarification_requested_at' => $now,
+            'clarification_requested_by' => auth()->id(),
+        ]);
+
+        $clarification = \App\Models\PrClarification::create([
+            'tenant_id'    => $purchaseRequisition->tenant_id,
+            'pr_id'        => $purchaseRequisition->id,
+            'requested_by' => auth()->id(),
+            'request_notes' => trim($request->notes),
+            'requested_at' => $now,
+            'status'       => 'pending',
+        ]);
+
+        // Stamp TAT record
+        $this->tat->stampPr($purchaseRequisition->id, 'clarification_requested_at', $now);
+
+
+        // Activity log
+        $this->actLog->log('PR', $purchaseRequisition->id, 'clarification_requested', [
+            'pr_number'     => $purchaseRequisition->pr_number,
+            'request_notes' => trim($request->notes),
+            'requested_by'  => auth()->user()->name ?? auth()->id(),
+        ]);
+
+        return response()->json([
+            'message'       => 'Clarification request logged successfully.',
+            'pr'            => $purchaseRequisition->fresh(['clarifications.requester', 'clarifications.responder']),
+            'clarification' => $clarification->load('requester:id,name'),
+        ]);
+    }
+
+    /**
+     * Provide clarification / answer notes on a PR (Requester / Creator / Buyer).
+     */
+    public function provideClarification(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
+    {
+        $this->authorize($purchaseRequisition);
+
+        $request->validate([
+            'response_notes' => 'required|string|max:2000',
+            'status'         => 'nullable|string|in:submitted,approved',
+        ]);
+
+        $now = now();
+        $activeClarification = \App\Models\PrClarification::where('pr_id', $purchaseRequisition->id)
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        $durationSec = 0;
+        if ($activeClarification) {
+            $durationSec = max(0, $now->diffInSeconds($activeClarification->requested_at));
+            $activeClarification->update([
+                'provided_by'      => auth()->id(),
+                'response_notes'   => trim($request->response_notes),
+                'provided_at'      => $now,
+                'duration_seconds' => $durationSec,
+                'status'           => 'resolved',
+            ]);
+        }
+
+        $newTotalDuration = ($purchaseRequisition->total_clarification_duration_seconds ?? 0) + $durationSec;
+        $targetStatus = $request->status ?? ($purchaseRequisition->converted_at ? 'partially_converted' : 'submitted');
+
+        $purchaseRequisition->update([
+            'status'                               => $targetStatus,
+            'needs_clarification'                  => false,
+            'clarification_provided_at'            => $now,
+            'clarification_provided_by'            => auth()->id(),
+            'total_clarification_duration_seconds' => $newTotalDuration,
+        ]);
+
+        // Stamp TAT record
+        $this->tat->stampPr($purchaseRequisition->id, 'clarification_provided_at', $now);
+        $this->tat->stampPr($purchaseRequisition->id, 'clarification_duration_seconds', $newTotalDuration);
+
+
+        // Activity log
+        $this->actLog->log('PR', $purchaseRequisition->id, 'clarification_provided', [
+            'pr_number'        => $purchaseRequisition->pr_number,
+            'response_notes'   => trim($request->response_notes),
+            'duration_seconds' => $durationSec,
+            'provided_by'      => auth()->user()->name ?? auth()->id(),
+        ]);
+
+        return response()->json([
+            'message' => 'Clarification response submitted successfully.',
+            'pr'      => $purchaseRequisition->fresh(['clarifications.requester', 'clarifications.responder']),
+        ]);
+    }
+
     private function authorize(PurchaseRequisition $pr): void
     {
         abort_if($pr->tenant_id !== app('currentTenant')->id, 403);
     }
 }
+

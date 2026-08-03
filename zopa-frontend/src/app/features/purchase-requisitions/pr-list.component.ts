@@ -61,7 +61,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <button class="filter-chip" [class.active]="statusFilter() === ''" (click)="setStatusFilter('')">All</button>
           <button class="filter-chip" [class.active]="statusFilter() === 'draft'" (click)="setStatusFilter('draft')">Draft</button>
           <button class="filter-chip submitted" [class.active]="statusFilter() === 'submitted'" (click)="setStatusFilter('submitted')">Submitted</button>
+          <button class="filter-chip warning" [class.active]="statusFilter() === 'needs_clarification'" (click)="setStatusFilter('needs_clarification')">Needs Clarification</button>
           <button class="filter-chip rfq" [class.active]="statusFilter() === 'rfq_created'" (click)="setStatusFilter('rfq_created')">RFQ</button>
+
           <button class="filter-chip converted" [class.active]="statusFilter() === 'converted'" (click)="setStatusFilter('converted')">Converted</button>
           <button class="filter-chip" [class.active]="statusFilter() === 'short_closed'" (click)="setStatusFilter('short_closed')">Short Closed</button>
           <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="setStatusFilter('rejected')">Rejected</button>
@@ -391,10 +393,12 @@ export class PrListComponent implements OnInit {
       return 'Converted & Short Close Pending';
     }
     const map: Record<string,string> = {
-      draft: 'Draft', submitted: 'Submitted', rfq_created: 'RFQ Created',
-      rfq_approved: 'RFQ Approved', converted: 'Converted', partially_converted: 'Partial',
-      rejected: 'Rejected', short_closed: 'Short Closed',
+      draft: 'Draft', submitted: 'Submitted', needs_clarification: 'Needs Clarification',
+      rfq_created: 'RFQ Created', rfq_approved: 'RFQ Approved', converted: 'Converted',
+      partially_converted: 'Partial', rejected: 'Rejected', short_closed: 'Short Closed',
     };
+    if (s === 'needs_clarification') return 'Needs Clarification';
+
     if (s?.startsWith('pending')) return 'Pending Approval';
     if (s?.startsWith('short_close_pending')) return 'Short Close Pending';
     return map[s] ?? s;

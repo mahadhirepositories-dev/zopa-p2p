@@ -309,8 +309,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-requisitions/{purchaseRequisition}/reject', [PurchaseRequisitionController::class, 'reject']);
         Route::post('purchase-requisitions/{purchaseRequisition}/short-close', [PurchaseRequisitionController::class, 'shortClose']);
         Route::post('purchase-requisitions/{purchaseRequisition}/rfq-create', [PurchaseRequisitionController::class, 'rfqCreate']);
-        Route::post('purchase-requisitions/{purchaseRequisition}/rfq-approve', [PurchaseRequisitionController::class, 'rfqApprove']);
+        Route::post('purchase-requisitions/{purchaseRequisition}/request-clarification', [PurchaseRequisitionController::class, 'requestClarification']);
+        Route::post('purchase-requisitions/{purchaseRequisition}/provide-clarification', [PurchaseRequisitionController::class, 'provideClarification']);
         Route::get('purchase-requisitions/{purchaseRequisition}/activities', [PurchaseRequisitionController::class, 'activities']);
+
         Route::get('purchase-orders/{purchaseOrder}/activities', [PurchaseOrderController::class, 'activities']);
 
         // Reports
