@@ -67,7 +67,9 @@ interface PoItemMeta {
             @if (releasedPos().length === 0) {
               <mat-hint style="color:#dc2626;">No eligible POs found (need Approved / Released status)</mat-hint>
             }
+          </mat-form-field>
           <mat-form-field appearance="outline">
+
             <mat-label>Delivery Marked Date (Vendor Word)</mat-label>
             <input matInput [value]="deliveryMarkedDate() ? (deliveryMarkedDate() | date:'dd MMM yyyy') : 'Not marked'" readonly style="font-weight:600;color:#0369a1;" />
             <mat-icon matSuffix style="color:#0369a1;">local_shipping</mat-icon>

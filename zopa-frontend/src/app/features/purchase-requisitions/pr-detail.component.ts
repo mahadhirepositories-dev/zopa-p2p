@@ -168,7 +168,10 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
                 @if (pr()!.description) {
                   <mat-divider style="margin:14px 0;" />
                   <div style="font-size:13px;color:var(--text-2);white-space:pre-line;">{{ pr()!.description }}</div>
+                }
+              </mat-card-content>
             </mat-card>
+
 
             <!-- Clarification History Log -->
             @if (pr()!.clarifications?.length) {
