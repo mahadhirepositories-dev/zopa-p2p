@@ -37,17 +37,6 @@ import { FormsModule } from '@angular/forms';
           <mat-label>Delivery Notes / Invoice / Transporter Details (Optional)</mat-label>
           <textarea matInput [(ngModel)]="notes" rows="2" placeholder="Enter delivery remarks or dispatch reference..."></textarea>
         </mat-form-field>
-
-        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
-          <div style="font-size:12px;color:#1e40af;">
-            <strong>Create GRN with Vendor Photo/PDF:</strong><br>
-            Record actual GRN number, received items & upload vendor document.
-          </div>
-          <button mat-flat-button color="accent" (click)="openGrnForm()" style="font-size:12px;white-space:nowrap;">
-            <mat-icon style="font-size:16px;width:16px;height:16px;margin-right:4px;">inventory_2</mat-icon>
-            Create GRN
-          </button>
-        </div>
       </mat-dialog-content>
 
       <mat-dialog-actions align="end" style="margin-top:16px;padding:0;">
@@ -66,11 +55,6 @@ export class DeliveryStatusDialogComponent {
 
   status: 'partially_delivered' | 'delivered' = this.data.status || 'delivered';
   notes = '';
-
-
-  openGrnForm() {
-    this.dialogRef.close({ action: 'create_grn' });
-  }
 
   confirm() {
     this.dialogRef.close({ status: this.status, notes: this.notes.trim() });
