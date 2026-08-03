@@ -839,8 +839,7 @@ export class PoFormComponent implements OnInit {
           this.http.get<any>(`${api}/purchase-orders/${id}`).subscribe(po => this.patchPo(po));
         } else {
           if (this.paymentTerms.length === 0) {
-            this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
-            this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
+            this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 100, credit_days: 30 }));
           }
         }
 
@@ -898,8 +897,7 @@ export class PoFormComponent implements OnInit {
     if (po.payment_terms_json?.length) {
       po.payment_terms_json.forEach((t: PaymentTerm) => this.paymentTerms.push(this.buildTerm(t)));
     } else {
-      this.paymentTerms.push(this.buildTerm({ stage: 'Advance', percentage: 80, credit_days: 0 }));
-      this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 20, credit_days: 30 }));
+      this.paymentTerms.push(this.buildTerm({ stage: 'Delivery', percentage: 100, credit_days: 30 }));
     }
     this.recalc();
   }
