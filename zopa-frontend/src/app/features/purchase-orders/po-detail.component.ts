@@ -111,7 +111,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 </button>
               }
 
-              @if (auth.canDo('grns', 'create') && ['released', 'partially_delivered'].includes(po()!.status ?? '')) {
+              @if (auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
                 <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
                         style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
                   <mat-icon>inventory_2</mat-icon> Mark GRN
@@ -319,7 +319,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     Goods Receipt Notes (GRNs)
                     <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
                   </mat-card-title>
-                  @if (!isGrnFullyCaptured && auth.canDo('grns', 'create')) {
+                  @if (!isGrnFullyCaptured && auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
                     <button mat-stroked-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
                       <mat-icon>add</mat-icon> Mark GRN
                     </button>

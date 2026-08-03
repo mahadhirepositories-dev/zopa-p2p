@@ -68,6 +68,15 @@ interface PoItemMeta {
               <mat-hint style="color:#dc2626;">No eligible POs found (need Approved / Released status)</mat-hint>
             }
           </mat-form-field>
+          @if (deliveryNotPunched()) {
+            <div style="grid-column:1/-1;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:12px 16px;display:flex;align-items:center;gap:10px;color:#b91c1c;font-size:13px;font-weight:500;">
+              <mat-icon style="color:#dc2626;flex-shrink:0;">warning</mat-icon>
+              <span>
+                <strong>Delivery not punched.</strong>
+                The Buyer must mark this PO as <strong>Partially Delivered</strong> or <strong>Delivered</strong> before a GRN can be created. Go back to the PO and punch delivery status first.
+              </span>
+            </div>
+          }
           <mat-form-field appearance="outline">
 
             <mat-label>Delivery Marked Date (Vendor Word)</mat-label>
@@ -491,13 +500,14 @@ export class GrnFormComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private notify = inject(NotificationService);
 
-  releasedPos  = signal<any[]>([]);
-  poItemMeta   = signal<PoItemMeta[]>([]);
-  priorGrns    = signal<any[]>([]);
-  loadingItems = signal(false);
-  saving       = signal(false);
-  todayDate    = new Date();
+  releasedPos        = signal<any[]>([]);
+  poItemMeta         = signal<PoItemMeta[]>([]);
+  priorGrns          = signal<any[]>([]);
+  loadingItems       = signal(false);
+  saving             = signal(false);
+  todayDate          = new Date();
   deliveryMarkedDate = signal<string | null>(null);
+  deliveryNotPunched = signal(false); // true when selected PO has no delivery status punched
 
 
   poControl          = this.fb.control<number | null>(null, Validators.required);
@@ -531,6 +541,7 @@ export class GrnFormComponent implements OnInit {
   }
 
   get formInvalid() {
+    if (this.deliveryNotPunched()) return true;
     if (!this.poControl.value || !this.dateControl.value) return true;
     if (this.itemGroups.length === 0) return true;
     // Check enabled controls are valid (disabled ones are excluded from .invalid)
@@ -594,6 +605,15 @@ export class GrnFormComponent implements OnInit {
       grns: this.http.get<any>(`${environment.apiUrl}/purchase-orders/${poId}/grns`),
     }).subscribe({
       next: ({ po, grns }) => {
+        // Gate: delivery must be punched before GRN can be captured
+        const deliveryPunched = ['partially_delivered', 'delivered'].includes(po.delivery_status ?? '');
+        this.deliveryNotPunched.set(!deliveryPunched);
+        if (!deliveryPunched) {
+          this.loadingItems.set(false);
+          this.poItemMeta.set([]);
+          this.itemGroups.clear();
+          return;
+        }
         const grnList: any[] = Array.isArray(grns) ? grns : (grns.data ?? []);
         this.priorGrns.set(grnList);
 

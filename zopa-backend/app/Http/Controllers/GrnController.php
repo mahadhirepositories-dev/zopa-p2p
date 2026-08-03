@@ -116,6 +116,13 @@ class GrnController extends Controller
         $po = PurchaseOrder::findOrFail($request->po_id);
         abort_if($po->tenant_id !== $tenant->id, 403);
 
+        // GRN can only be created after delivery has been punched by the Buyer
+        if (!in_array($po->delivery_status, ['partially_delivered', 'delivered'])) {
+            return response()->json([
+                'error' => 'Delivery status must be punched (Partially Delivered or Delivered) before creating a GRN. Please mark the delivery status first.',
+            ], 422);
+        }
+
         $grn = DB::transaction(function () use ($request, $tenant) {
             if ($request->filled('grn_number')) {
                 $grnNumber = trim($request->grn_number);
