@@ -231,7 +231,7 @@ import { filter } from 'rxjs/operators';
               <button mat-icon-button matTooltip="Notifications" class="topbar-btn">
                 <mat-icon>notifications_none</mat-icon>
               </button>
-              <a class="topbar-avatar" routerLink="/profile" matTooltip="My Profile">{{ auth.user()?.name?.[0]?.toUpperCase() }}</a>
+              <a class="topbar-avatar" (click)="router.navigate(['/profile'])" matTooltip="My Profile">{{ auth.user()?.name?.[0]?.toUpperCase() }}</a>
             </div>
           </header>
 
@@ -524,7 +524,7 @@ export class App {
   private dialog = inject(MatDialog);
   private orgSwitcherOpen = false;
 
-  constructor(public auth: AuthService, private router: Router) {
+  constructor(public auth: AuthService, public router: Router) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
       .subscribe((e: NavigationEnd) => this.routeUrl.set(e.urlAfterRedirects));
   }
