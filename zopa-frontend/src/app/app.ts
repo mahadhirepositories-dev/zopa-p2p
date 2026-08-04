@@ -30,8 +30,13 @@ import { filter } from 'rxjs/operators';
     @if (auth.isLoggedIn()) {
       <div class="app-layout">
 
+        <!-- Backdrop for mobile sidebar -->
+        @if (sidebarOpen()) {
+          <div class="sidebar-backdrop" (click)="sidebarOpen.set(false)"></div>
+        }
+
         <!-- ── Sidebar ─────────────────────────────────────── -->
-        <aside class="sidebar">
+        <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
 
           <!-- Brand / Logo -->
           <div class="sidebar-brand">
@@ -214,6 +219,9 @@ import { filter } from 'rxjs/operators';
         <!-- ── Main area ────────────────────────────────────── -->
         <div class="main-area">
           <header class="topbar">
+            <button mat-icon-button (click)="sidebarOpen.set(!sidebarOpen())" class="menu-toggle-btn" matTooltip="Toggle menu">
+              <mat-icon>menu</mat-icon>
+            </button>
             @if (auth.isImpersonating()) {
               <div class="impersonation-banner">
                 <mat-icon>supervisor_account</mat-icon>
@@ -517,16 +525,71 @@ import { filter } from 'rxjs/operators';
     .page-content::-webkit-scrollbar { width: 6px; }
     .page-content::-webkit-scrollbar-track { background: transparent; }
     .page-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* Menu toggle button on topbar (mobile-only) */
+    .menu-toggle-btn {
+      display: none;
+      margin-right: 8px;
+    }
+
+    /* Backdrop for mobile menu overlay */
+    .sidebar-backdrop {
+      display: none;
+    }
+
+    /* ── Mobile responsiveness (max-width: 768px) ── */
+    @media (max-width: 768px) {
+      .menu-toggle-btn {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(2px);
+        z-index: 99;
+      }
+
+      .sidebar {
+        position: fixed !important;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        transform: translateX(-100%);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100 !important;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .sidebar--open {
+        transform: translateX(0) !important;
+      }
+
+      .topbar {
+        padding: 0 12px !important;
+      }
+    }
   `],
 })
 export class App {
   readonly routeUrl = signal('');
+  readonly sidebarOpen = signal(false);
   private dialog = inject(MatDialog);
   private orgSwitcherOpen = false;
 
   constructor(public auth: AuthService, public router: Router) {
     this.router.events.pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: NavigationEnd) => this.routeUrl.set(e.urlAfterRedirects));
+      .subscribe((e: NavigationEnd) => {
+        this.routeUrl.set(e.urlAfterRedirects);
+        this.sidebarOpen.set(false);
+      });
   }
 
   /** Open the searchable organization switcher (scales to 100s of orgs). */
