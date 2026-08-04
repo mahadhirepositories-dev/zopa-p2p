@@ -39,14 +39,19 @@ class DocumentStatusMail extends Mailable
             'approved' => 'Approved',
             'rejected' => 'Rejected',
             'returned' => 'Returned for Revision',
+            'needs_clarification' => 'Needs Clarification',
             default    => ucfirst($event),
         };
     }
 
     public function envelope(): Envelope
     {
+        $subject = $this->event === 'needs_clarification'
+            ? "Clarification Requested for {$this->docTitle} {$this->docNumber}"
+            : "{$this->docTitle} {$this->docNumber} has been {$this->statusLabel}";
+
         return new Envelope(
-            subject: "{$this->docTitle} {$this->docNumber} has been {$this->statusLabel}",
+            subject: $subject,
         );
     }
 

@@ -493,6 +493,17 @@ class PurchaseRequisitionController extends Controller
         // Stamp TAT record
         $this->tat->stampPr($purchaseRequisition->id, 'clarification_requested_at', $now);
 
+        // Send email notification to the PR raiser
+        $prRaiserEmail = optional($purchaseRequisition->requestedBy)->email ?? optional(\App\Models\User::find($purchaseRequisition->requested_by))->email;
+        if ($prRaiserEmail) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($prRaiserEmail)->queue(
+                    new \App\Mail\DocumentStatusMail('PR', $purchaseRequisition, 'needs_clarification', trim($request->notes))
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send clarification request email: ' . $e->getMessage());
+            }
+        }
 
         // Activity log
         $this->actLog->log('PR', $purchaseRequisition->id, 'clarification_requested', [
