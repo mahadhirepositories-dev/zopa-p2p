@@ -301,6 +301,60 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     .awaiting-col { flex-shrink: 0; text-align: right; min-width: 140px; }
     .awaiting-name { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); margin-top: 4px; }
     .approver-chip { width: 24px; height: 24px; border-radius: 6px; background: var(--brand-light); color: var(--brand); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; }
+
+    /* ── Mobile responsiveness for approvals ── */
+    @media (max-width: 768px) {
+      .page-wrapper {
+        padding: 16px !important;
+      }
+      .page-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch !important;
+      }
+      .approval-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 16px;
+        padding: 16px;
+      }
+      .approval-po-ref {
+        align-items: flex-start;
+      }
+      .approval-metrics {
+        justify-content: space-between;
+        border-top: 1px dashed var(--border);
+        border-bottom: 1px dashed var(--border);
+        padding: 12px 0;
+        gap: 16px;
+      }
+      .metric {
+        text-align: left;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .metric-label {
+        margin-bottom: 0;
+      }
+      .awaiting-col {
+        text-align: left;
+        min-width: 0;
+      }
+      .awaiting-name {
+        margin-top: 2px;
+      }
+      .approval-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+      .approval-actions button {
+        width: 100%;
+        margin: 0 !important;
+      }
+    }
   `],
 })
 export class ApprovalQueueComponent implements OnInit {

@@ -94,7 +94,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="paginatedPrs()" class="full-width">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="paginatedPrs()" class="full-width">
 
               <!-- Checkbox Column -->
               <ng-container matColumnDef="select">
@@ -199,7 +200,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
               <tr mat-header-row *matHeaderRowDef="displayedColumns()"></tr>
               <tr mat-row *matRowDef="let row; columns: displayedColumns();"
                   class="clickable-row" (click)="view(row.id)"></tr>
-            </table>
+              </table>
+            </div>
 
             <mat-paginator [length]="filtered().length"
                            [pageSize]="pageSize()"
@@ -246,7 +248,26 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     .empty-state { display:flex;flex-direction:column;align-items:center;gap:8px;padding:60px 24px;color:var(--text-3);text-align:center; }
     .empty-state mat-icon { font-size:48px;width:48px;height:48px;color:var(--border); }
     .empty-state h3 { margin:0;font-size:16px;font-weight:600;color:var(--text-2); }
-    .empty-state p { margin:0;font-size:13px; }
+    .empty-state p { margin:0; font-size:13px; }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 8px;
+    }
+    .table-responsive table {
+      min-width: 1000px;
+    }
+
+    /* Mobile header layout adjustments */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: 16px !important; }
+      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
+      .toolbar-bar { flex-direction: column; align-items: stretch !important; }
+      .search-field { max-width: none !important; }
+    }
   `],
 })
 export class PrListComponent implements OnInit {

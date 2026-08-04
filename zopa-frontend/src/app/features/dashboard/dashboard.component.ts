@@ -379,7 +379,8 @@ interface DashboardStats {
                 <button mat-stroked-button routerLink="/purchase-requisitions/create">Create first PR</button>
               </div>
             } @else {
-              <table mat-table [dataSource]="stats()!.recent_prs" class="full-width">
+              <div class="table-responsive">
+                <table mat-table [dataSource]="stats()!.recent_prs" class="full-width">
                 <ng-container matColumnDef="pr_number">
                   <th mat-header-cell *matHeaderCellDef>PR Number</th>
                   <td mat-cell *matCellDef="let pr">
@@ -413,7 +414,8 @@ interface DashboardStats {
                 <tr mat-header-row *matHeaderRowDef="recentPrCols"></tr>
                 <tr mat-row *matRowDef="let row; columns: recentPrCols;" class="clickable-row"
                     (click)="router.navigate(['/purchase-requisitions', row.id])"></tr>
-              </table>
+                </table>
+              </div>
             }
           </mat-card-content>
         </mat-card>
@@ -437,7 +439,8 @@ interface DashboardStats {
                   <button mat-stroked-button routerLink="/purchase-orders/create">Create first PO</button>
                 </div>
               } @else {
-                <table mat-table [dataSource]="stats()!.recent_pos" class="full-width">
+                <div class="table-responsive">
+                  <table mat-table [dataSource]="stats()!.recent_pos" class="full-width">
                   <ng-container matColumnDef="po_number">
                     <th mat-header-cell *matHeaderCellDef>PO Number</th>
                     <td mat-cell *matCellDef="let po">
@@ -472,7 +475,8 @@ interface DashboardStats {
                   <tr mat-header-row *matHeaderRowDef="recentCols"></tr>
                   <tr mat-row *matRowDef="let row; columns: recentCols;" class="clickable-row"
                       (click)="router.navigate(['/purchase-orders', row.id])"></tr>
-                </table>
+                  </table>
+                </div>
               }
             </mat-card-content>
           </mat-card>
@@ -548,8 +552,9 @@ interface DashboardStats {
           <mat-card-content style="padding:0 !important;">
 
             <!-- PO-level KPI table -->
-            <table mat-table [dataSource]="stats()!.po_kpi" class="kpi-table full-width"
-                   multiTemplateDataRows>
+            <div class="table-responsive">
+              <table mat-table [dataSource]="stats()!.po_kpi" class="kpi-table full-width"
+                     multiTemplateDataRows>
 
               <!-- Expand toggle -->
               <ng-container matColumnDef="expand">
@@ -728,7 +733,8 @@ interface DashboardStats {
               <tr mat-row *matRowDef="let row; columns: ['expandedDetail']" class="detail-row"></tr>
 
             </table>
-          </mat-card-content>
+          </div>
+        </mat-card-content>
         </mat-card>
         }
 
@@ -752,7 +758,8 @@ interface DashboardStats {
             </div>
           </mat-card-header>
           <mat-card-content style="padding:0 !important;">
-            <table mat-table [dataSource]="stats()!.pr_kpi" class="kpi-table full-width">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="stats()!.pr_kpi" class="kpi-table full-width">
 
               <!-- PR Number -->
               <ng-container matColumnDef="pr_kpi_number">
@@ -853,7 +860,8 @@ interface DashboardStats {
               <tr mat-header-row *matHeaderRowDef="prKpiCols"></tr>
               <tr mat-row *matRowDef="let row; columns: prKpiCols;" class="kpi-row"
                   (click)="router.navigate(['/purchase-requisitions', row.id])"></tr>
-            </table>
+              </table>
+            </div>
           </mat-card-content>
         </mat-card>
         }
@@ -1137,6 +1145,57 @@ interface DashboardStats {
     .tat-step-val { font-size: 16px; font-weight: 800; color: #0f172a; margin-top: 1px; }
     .tat-step-sub { font-size: 10px; color: #94a3b8; margin-top: 1px; }
     .tat-arrow { color: #cbd5e1; display: flex; align-items: center; }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive table {
+      min-width: 800px;
+    }
+    .kpi-table {
+      min-width: 1100px !important;
+    }
+
+    /* ── Mobile responsiveness ── */
+    @media (max-width: 992px) {
+      .stat-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
+      .dashboard-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .page-wrapper {
+        padding: 16px !important;
+      }
+      .filter-toolbar {
+        flex-direction: column;
+        align-items: stretch !important;
+        padding: 12px !important;
+      }
+      .period-pills {
+        justify-content: center;
+      }
+      .custom-date-inputs {
+        justify-content: center;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .stat-grid {
+        grid-template-columns: 1fr !important;
+      }
+      .page-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch !important;
+      }
+      .cta-btn {
+        width: 100%;
+      }
+    }
   `],
 })
 export class DashboardComponent {

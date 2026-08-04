@@ -56,7 +56,8 @@ import { ExportService } from '../../core/services/export.service';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="paginatedInvoices()" class="full-width">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="paginatedInvoices()" class="full-width">
 
               <ng-container matColumnDef="invoice_number">
                 <th mat-header-cell *matHeaderCellDef>Invoice #</th>
@@ -120,7 +121,8 @@ import { ExportService } from '../../core/services/export.service';
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
-            </table>
+              </table>
+            </div>
 
             <mat-paginator [length]="invoices().length"
                            [pageSize]="pageSize()"
@@ -165,6 +167,23 @@ import { ExportService } from '../../core/services/export.service';
     .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
     .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
     .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 8px;
+    }
+    .table-responsive table {
+      min-width: 1000px;
+    }
+
+    /* Mobile header layout adjustments */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: 16px !important; }
+      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
+    }
   `],
 })
 export class InvoiceListComponent implements OnInit {

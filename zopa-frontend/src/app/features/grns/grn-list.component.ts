@@ -60,7 +60,8 @@ import { ExportService } from '../../core/services/export.service';
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="paginatedGrns()" class="full-width">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="paginatedGrns()" class="full-width">
 
               <ng-container matColumnDef="grn_number">
                 <th mat-header-cell *matHeaderCellDef>GRN Number</th>
@@ -113,7 +114,8 @@ import { ExportService } from '../../core/services/export.service';
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
-            </table>
+              </table>
+            </div>
 
             <mat-paginator [length]="grns().length"
                            [pageSize]="pageSize()"
@@ -166,6 +168,23 @@ import { ExportService } from '../../core/services/export.service';
     .badge-pending   { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
     .badge-rejected  { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
     .badge-draft     { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 8px;
+    }
+    .table-responsive table {
+      min-width: 1000px;
+    }
+
+    /* Mobile header layout adjustments */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: 16px !important; }
+      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
+    }
   `],
 })
 export class GrnListComponent implements OnInit {

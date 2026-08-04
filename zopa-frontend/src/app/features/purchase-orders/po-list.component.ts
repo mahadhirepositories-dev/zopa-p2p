@@ -94,7 +94,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="paginatedOrders()" class="full-width">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="paginatedOrders()" class="full-width">
 
               <ng-container matColumnDef="po_number">
                 <th mat-header-cell *matHeaderCellDef>PO Number</th>
@@ -156,7 +157,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;"
                   class="clickable-row" (click)="view(row.id)"></tr>
-            </table>
+              </table>
+            </div>
 
             <mat-paginator [length]="filtered().length"
                            [pageSize]="pageSize()"
@@ -237,6 +239,25 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .clickable-row { cursor: pointer; transition: background 0.15s ease; }
     .clickable-row:hover { background: var(--surface-hover); }
     .row-arrow { color: var(--text-3); font-size: 20px; }
+
+    /* Table responsive wrapper */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 8px;
+    }
+    .table-responsive table {
+      min-width: 1000px;
+    }
+
+    /* Mobile header layout adjustments */
+    @media (max-width: 768px) {
+      .page-wrapper { padding: 16px !important; }
+      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
+      .toolbar-bar { flex-direction: column; align-items: stretch !important; }
+      .search-field { max-width: none !important; width: 100% !important; }
+    }
 
     .status-draft      { background: #f1f5f9; color: #475569; }
     .status-returned   { background: #fef2f2; color: #dc2626; }
