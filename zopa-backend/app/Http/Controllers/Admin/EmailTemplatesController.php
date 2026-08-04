@@ -138,6 +138,7 @@ class EmailTemplatesController extends Controller
                         'po_number'  => 'PO-2026-0042',
                         'vendor'     => (object) ['name' => 'Acme Industrial Supplies Pvt Ltd'],
                         'costCenter' => (object) ['name' => 'IT Infrastructure'],
+                        'tenant'     => (object) ['name' => 'Acme Corporation'],
                     ],
                     'deliveryStatus' => 'partially_delivered',
                     'notes'          => 'Partial shipment: 4 docking stations delivered via BlueDart.',
