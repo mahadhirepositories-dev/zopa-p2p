@@ -136,6 +136,8 @@ export class EmailTemplatesComponent {
       case 'po_issued':        return 'forward_to_inbox';
       case 'approval_request': return 'how_to_reg';
       case 'document_status':  return 'fact_check';
+      case 'pr_clarification': return 'live_help';
+      case 'grn_nudge':        return 'campaign';
       default:                 return 'mail';
     }
   }
