@@ -77,9 +77,10 @@ jobs:
             php artisan view:clear
             php artisan view:cache
             
-            # Ensure framework directories exist and have proper permissions for the web server
+            # Ensure framework directories exist and have proper group ownership/permissions for the web server (www-data)
             mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache
-            chmod 775 storage storage/framework storage/framework/cache storage/framework/sessions storage/framework/views bootstrap/cache || true
+            chgrp -R www-data storage bootstrap/cache || true
+            chmod -R 775 storage bootstrap/cache || true
 
             php artisan queue:restart
             php artisan storage:link || true
