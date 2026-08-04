@@ -35,6 +35,10 @@ class PurchaseOrderIssuedMail extends Mailable
     public ?array $shipTo;
     /** Buyer who raised the PO — CC'd on this vendor communication. @var array<int,string> */
     public array $ccList = [];
+    /** Contact person name shown in the vendor email footer */
+    public string $contactName;
+    /** Contact phone shown in the vendor email footer */
+    public string $contactPhone;
 
     public function __construct(public object $po, array $extraCc = [])
     {
@@ -56,6 +60,11 @@ class PurchaseOrderIssuedMail extends Mailable
         $this->vendorName = optional($po->vendor)->name ?? 'Vendor';
         $this->buyerOrg   = optional($po->tenant)->name ?? 'ZOPA Procurement';
         $gstin            = optional($po->tenant)->gstin;
+
+        // Contact person for vendor queries — show the PO creator's name + phone
+        $creator              = optional($po->creator);
+        $this->contactName    = $creator->name  ?? $this->buyerOrg;
+        $this->contactPhone   = $creator->phone ?? '';
 
         $this->headerRows = [
             'Issued By'   => $this->buyerOrg . ($gstin ? "  ·  GSTIN: {$gstin}" : ''),

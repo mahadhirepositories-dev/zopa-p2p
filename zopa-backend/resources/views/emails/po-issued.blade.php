@@ -117,7 +117,15 @@
       <strong>PO-{{ $docNumber }}.pdf</strong>. Kindly review and acknowledge receipt.
     </div>
 
-    <p>For any questions regarding this order, please contact {{ $buyerOrg }} directly.</p>
+    <p>For any questions regarding this order, please contact:</p>
+    <p style="margin:4px 0 0 0;">
+      <strong>{{ $contactName }}</strong>
+      @if($contactPhone)
+        &nbsp;·&nbsp;
+        <a href="tel:{{ $contactPhone }}" style="color:#0369a1;text-decoration:none;font-weight:600;">{{ $contactPhone }}</a>
+      @endif
+      <br><span style="font-size:12px;color:#64748b;">{{ $buyerOrg }}</span>
+    </p>
   </div>
   <div class="footer">ZOPA Procurement Platform &bull; This is an automated message. Please do not reply to this email.</div>
 </div>
