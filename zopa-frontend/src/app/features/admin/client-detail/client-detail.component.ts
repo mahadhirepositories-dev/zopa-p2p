@@ -605,8 +605,20 @@ import { gstinValidator } from '../../../core/validators';
       z-index:1000;
       display:flex; align-items:center; justify-content:center;
       backdrop-filter:blur(2px);
+      padding:16px;
     }
-    .modal-card { width:500px; max-width:92vw; }
+    .modal-card { 
+      width:520px; 
+      max-width:92vw; 
+      max-height:90vh; 
+      display:flex; 
+      flex-direction:column; 
+      box-sizing:border-box;
+    }
+    .modal-card mat-card-content { 
+      overflow-y:auto; 
+      max-height:calc(90vh - 130px);
+    }
     .modal-head { display:flex; align-items:center; gap:12px; }
     .modal-icon {
       width:40px; height:40px; border-radius:10px;
