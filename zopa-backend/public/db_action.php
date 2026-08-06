@@ -6,37 +6,42 @@ $app = require_once __DIR__ . '/../bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
-use Illuminate\Support\Facades\Validator;
+use App\Models\User;
+use App\Models\Tenant;
+use App\Models\UserTenantRole;
+use App\Models\RolePermission;
 
-$rules = [
-    'name'           => 'required|string|max:255',
-    'unit'           => 'required|string|max:30',
-    'net_rate'       => 'required|numeric|min:0',
-    'gst_rate'       => 'required|numeric|min:0|max:100',
-    'description'    => 'nullable|string',
-    'category_id'    => 'nullable|integer|exists:categories,id',
-    'subcategory_id' => 'nullable|integer|exists:categories,id',
-    'mrp'            => 'nullable|numeric|min:0',
-    'sale_price'     => 'nullable|numeric|min:0',
-];
+try {
+    $user = User::where('name', 'like', '%Dinesh%')->first();
+    if (!$user) {
+        echo "No user named Dinesh found.\n";
+        $user = User::first();
+    }
+    echo "User: {$user->name} | Email: {$user->email} | ID: {$user->id} | Is ZOPA Staff: " . ($user->is_zopa_staff ? 'YES' : 'NO') . "\n";
 
-$data = [
-    'name' => 'Bed Side Unit - Wired/6M Germ-inhibiting membrane keypad with Nurse',
-    'description' => 'Bed Side Unit - Wired/6M Germ-inhibiting membrane keypad with Nurse Call, Code Blue, Housekeeping, and Extra Support',
-    'category_id' => 85,
-    'subcategory_id' => 86,
-    'unit' => 'Nos',
-    'warranty_months' => 3,
-    'net_rate' => 0,
-    'gst_rate' => 18,
-    'hsn_code' => '9018',
-    'code' => 'ZOPA003',
-];
-
-$validator = Validator::make($data, $rules);
-if ($validator->fails()) {
-    echo "VALIDATION FAILED:\n";
-    print_r($validator->errors()->toArray());
-} else {
-    echo "VALIDATION PASSED!\n";
+    $tenant = Tenant::where('name', 'like', '%Vihara%')->first();
+    if ($tenant) {
+        echo "Tenant: {$tenant->name} | ID: {$tenant->id}\n";
+        // User tenant role
+        $role = UserTenantRole::where('user_id', $user->id)
+            ->where('tenant_id', $tenant->id)
+            ->first();
+        if ($role) {
+            echo "Role in Tenant: {$role->role} | Is Active: " . ($role->is_active ? 'YES' : 'NO') . "\n";
+            // Let's check permissions for this role in the tenant
+            $perms = RolePermission::where('tenant_id', $tenant->id)
+                ->where('role', $role->role)
+                ->get();
+            echo "Permissions count: " . $perms->count() . "\n";
+            foreach ($perms as $p) {
+                echo " - Module: {$p->module} | Actions: " . json_encode($p->permissions) . "\n";
+            }
+        } else {
+            echo "User has no role in this tenant.\n";
+        }
+    } else {
+        echo "Vihara tenant not found.\n";
+    }
+} catch (\Throwable $e) {
+    echo "ERROR: " . $e->getMessage() . "\n";
 }
