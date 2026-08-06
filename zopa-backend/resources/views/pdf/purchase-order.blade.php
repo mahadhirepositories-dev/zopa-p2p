@@ -292,8 +292,15 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
       @if($hasCode)<td style="font-size:8px;color:#6b7280;">{{ $itCode??'—' }}</td>@endif
       <td>
-        <div style="font-weight:bold;color:#1f2937;font-size:9.5px;white-space:pre-wrap;">{{ $item->description }}</div>
-        @if(!$hasCode&&$itCode&&$itCode!==$item->description)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">{{ $itCode }}</div>@endif
+        @if($itName)
+          <div style="font-weight:bold;color:#111827;font-size:9.5px;">{{ $itName }}</div>
+          @if($item->description && strtolower(trim($item->description)) !== strtolower(trim($itName)))
+            <div style="color:#4b5563;font-size:8.5px;margin-top:2px;white-space:pre-wrap;">{{ $item->description }}</div>
+          @endif
+        @else
+          <div style="font-weight:bold;color:#1f2937;font-size:9.5px;white-space:pre-wrap;">{{ $item->description }}</div>
+        @endif
+        @if(!$hasCode&&$itCode&&$itCode!==$item->description)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">Code: {{ $itCode }}</div>@endif
         @if(!$hasHSN&&$itHsn)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">HSN: {{ $itHsn }}</div>@endif
       </td>
       @if($hasHSN)<td class="c" style="font-size:8.5px;color:#475569;">{{ $itHsn??'—' }}</td>@endif

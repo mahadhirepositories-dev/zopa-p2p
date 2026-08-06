@@ -256,11 +256,20 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     <td mat-cell *matCellDef="let i">{{ i.sno }}</td>
                   </ng-container>
                   <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef>Description / Specification</th>
-                    <td mat-cell *matCellDef="let i">
-                      <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
+                    <th mat-header-cell *matHeaderCellDef style="min-width:260px;">Description / Specification</th>
+                    <td mat-cell *matCellDef="let i" style="min-width:260px;padding-top:10px;padding-bottom:10px;">
+                      @if (i.product_name || i.product?.name) {
+                        <div style="font-weight:700;font-size:13.5px;color:var(--text-1);margin-bottom:3px;">
+                          {{ i.product_name || i.product?.name }}
+                        </div>
+                      }
+                      @if (i.description && (i.description.trim() !== (i.product_name || i.product?.name || '').trim())) {
+                        <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;line-height:1.4;">{{ i.description }}</div>
+                      } @else if (!i.product_name && !i.product?.name) {
+                        <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
+                      }
                       @if (i.product_code || i.product?.code) {
-                        <div style="font-size:11px;color:var(--text-3);">
+                        <div style="font-size:11px;color:var(--text-3);margin-top:4px;font-family:monospace;">
                           Code: {{ i.product_code || i.product?.code }}
                         </div>
                       }
@@ -729,6 +738,16 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .diag-cfg { padding:4px 0; color:#475569; border-bottom:1px solid #f8f8f8; }
     .diag-type { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#e2e8f0; color:#475569; margin-right:4px; }
     .diag-type.diag-po { background:#c2410c; color:#fff; }
+    .mat-column-description { flex: 3.5 !important; min-width: 260px !important; }
+    .mat-column-sno { flex: 0.4 !important; min-width: 35px !important; }
+    .mat-column-hsn { flex: 0.8 !important; min-width: 70px !important; }
+    .mat-column-qty { flex: 0.6 !important; min-width: 50px !important; }
+    .mat-column-unit { flex: 0.6 !important; min-width: 50px !important; }
+    .mat-column-net_rate { flex: 1 !important; min-width: 80px !important; }
+    .mat-column-gst_rate { flex: 0.8 !important; min-width: 60px !important; }
+    .mat-column-warranty { flex: 0.8 !important; min-width: 70px !important; }
+    .mat-column-amount { flex: 1.1 !important; min-width: 90px !important; }
+    .mat-column-required_by { flex: 1 !important; min-width: 90px !important; }
   `],
 })
 export class PoDetailComponent implements OnInit {

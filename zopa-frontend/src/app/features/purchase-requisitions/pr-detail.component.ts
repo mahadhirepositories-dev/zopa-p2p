@@ -280,8 +280,15 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
                       <tr>
                         <td>{{ item.sno }}</td>
                         <td>
-                          <div style="font-weight:500;">{{ item.description }}</div>
-                          @if (item.remarks) { <div style="font-size:11px;color:var(--text-3);">{{ item.remarks }}</div> }
+                          @if (item.product?.name) {
+                            <div style="font-weight:700;font-size:13.5px;color:var(--text-1);margin-bottom:2px;">{{ item.product.name }}</div>
+                          }
+                          @if (item.description && item.description.trim() !== (item.product?.name || '').trim()) {
+                            <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;">{{ item.description }}</div>
+                          } @else if (!item.product?.name) {
+                            <div style="font-weight:500;">{{ item.description }}</div>
+                          }
+                          @if (item.remarks) { <div style="font-size:11px;color:var(--text-3);margin-top:2px;">{{ item.remarks }}</div> }
                         </td>
                         <td>{{ item.qty }}</td>
                         <td>{{ item.converted_qty ?? 0 }}</td>
