@@ -9,20 +9,23 @@ $kernel->bootstrap();
 use App\Models\PurchaseOrder;
 
 try {
-    $pos = PurchaseOrder::whereNotNull('payment_terms_json')->get();
-    echo "Inspecting POs with payment terms:\n";
-    $count = 0;
-    foreach ($pos as $po) {
-        $terms = $po->payment_terms_json;
-        if (is_array($terms)) {
-            foreach ($terms as $t) {
-                if (isset($t['stage']) && stripos($t['stage'], 'credit') !== false) {
-                    echo "PO: {$po->po_number} | Terms: " . json_encode($terms) . "\n";
-                    $count++;
-                    if ($count >= 5) break 2;
-                }
-            }
-        }
+    $poNum = 'AV/2026-27/14';
+    $po = PurchaseOrder::where('po_number', $poNum)->first();
+    if ($po) {
+        $old = $po->payment_terms_json;
+        $po->payment_terms_json = [
+            [
+                'stage' => 'Delivery',
+                'percentage' => 100,
+                'credit_days' => 30
+            ]
+        ];
+        $po->save();
+        echo "Successfully updated payment terms for $poNum!\n";
+        echo "Old terms: " . json_encode($old) . "\n";
+        echo "New terms: " . json_encode($po->payment_terms_json) . "\n";
+    } else {
+        echo "PO not found: $poNum\n";
     }
 } catch (\Throwable $e) {
     echo "ERROR: " . $e->getMessage() . "\n";
