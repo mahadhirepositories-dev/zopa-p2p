@@ -116,7 +116,10 @@ export class CategoryFormDialogComponent {
 
     req.subscribe({
       next: () => { this.notify.success('Category saved.'); this.dialogRef.close(true); },
-      error: () => { this.notify.error('Save failed.'); this.saving.set(false); },
+      error: (err: any) => {
+        this.notify.error(err.error?.message || err.error?.error || 'Save failed.');
+        this.saving.set(false);
+      },
     });
   }
 }
