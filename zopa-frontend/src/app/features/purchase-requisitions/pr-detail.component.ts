@@ -9,6 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { environment } from '../../../environments/environment';
 import { NotificationService } from '../../core/services/notification.service';
 import { ActivityTimelineComponent } from '../../shared/components/activity-timeline.component';
@@ -22,7 +23,7 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
   standalone: true,
   imports: [
     DatePipe, DecimalPipe, TitleCasePipe, RouterLink,
-    MatButtonModule, MatIconModule, MatChipsModule,
+    MatButtonModule, MatIconModule, MatChipsModule, MatMenuModule,
     MatProgressSpinnerModule, MatCardModule, MatDividerModule, MatDialogModule,
     ActivityTimelineComponent,
   ],
@@ -37,74 +38,103 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
 
         <!-- Header -->
         <div class="page-header">
-          <div>
-            <h2>{{ pr()!.pr_number ?? ('PR #' + pr()!.id) }}</h2>
-            <p>{{ pr()!.title }} · Created {{ pr()!.created_at | date:'dd MMM yyyy' }}</p>
+          <div class="header-left">
+            <button mat-icon-button routerLink="/purchase-requisitions" class="back-btn" matTooltip="Back to Requisitions"><mat-icon>arrow_back</mat-icon></button>
+            <div>
+              <div class="title-row">
+                <h2>{{ pr()!.pr_number ?? ('PR #' + pr()!.id) }}</h2>
+                <span class="status-pill" [class]="'status-pill--' + (pr()!.status || 'draft')">
+                  <mat-icon>{{ statusIcon(pr()!.status) }}</mat-icon>
+                  {{ formatStatus(pr()!) }}
+                </span>
+              </div>
+              <p class="subtitle">{{ pr()!.title }} · Created {{ pr()!.created_at | date:'dd MMM yyyy' }}</p>
+            </div>
           </div>
+
           <div class="header-actions">
-            @if (pr()!.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
-              <button mat-stroked-button color="primary" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']" [disabled]="acting()">
-                <mat-icon>edit</mat-icon> Edit PR
-              </button>
-              <button mat-stroked-button (click)="submit()" [disabled]="acting()">
-                <mat-icon>send</mat-icon> Submit for Procurement
-              </button>
-              <button mat-stroked-button color="warn" (click)="deletePr()" [disabled]="acting()" style="margin-left:4px;">
-                <mat-icon>delete</mat-icon> Delete Draft
-              </button>
-            }
-            @if (pr()!.status === 'submitted') {
-              @if (auth.canTransact()) {
-                <button mat-raised-button color="primary" (click)="rfqCreate()" [disabled]="acting()">
-                  <mat-icon>request_quote</mat-icon> Create RFQ
-                </button>
-                <button mat-raised-button color="primary" (click)="convertToPo()" style="margin-left:4px;">
-                  <mat-icon>receipt_long</mat-icon> Convert to PO
-                </button>
-              }
-              @if (auth.isAdmin()) {
-                <button mat-stroked-button (click)="reject()" style="color:#dc2626;border-color:#dc2626;margin-left:4px;">
-                  <mat-icon>close</mat-icon> Reject
-                </button>
-              }
-            }
-            @if (pr()!.status === 'rfq_created' && auth.canTransact()) {
-              <button mat-raised-button color="primary" (click)="rfqApprove()" [disabled]="acting()">
-                <mat-icon>verified</mat-icon> Approve RFQ
-              </button>
-              <button mat-raised-button color="accent" (click)="convertToPo()" style="margin-left:4px;">
-                <mat-icon>receipt_long</mat-icon> Convert to PO
-              </button>
-            }
-            @if (pr()!.status === 'rfq_approved' && auth.canTransact()) {
-              <button mat-raised-button color="primary" (click)="convertToPo()">
-                <mat-icon>receipt_long</mat-icon> Convert to PO
-              </button>
-            }
-            @if (pr()!.status === 'partially_converted' && auth.canTransact()) {
-              <button mat-raised-button color="accent" (click)="convertToPo()">
-                <mat-icon>add_shopping_cart</mat-icon> Create Additional PO
-              </button>
-            }            @if (!['draft', 'short_closed', 'rejected', 'needs_clarification'].includes(pr()!.status ?? '') && !pr()!.status?.startsWith('short_close_pending') && auth.canTransact()) {
-              <button mat-stroked-button color="accent" (click)="requestClarification()" [disabled]="acting()" style="margin-left:4px;">
-                <mat-icon>help_outline</mat-icon> Request Clarification
-              </button>
-              <button mat-stroked-button color="warn" (click)="shortClose()" [disabled]="acting()" style="margin-left:4px;">
-                <mat-icon>do_not_disturb_on</mat-icon> Short Close PR
-              </button>
-            }
-            @if (pr()!.status === 'needs_clarification') {
-              <button mat-raised-button color="primary" (click)="provideClarification()" style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
-                <mat-icon>mark_chat_read</mat-icon> Provide Clarification
-              </button>
-              <button mat-stroked-button color="primary" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']">
-                <mat-icon>edit</mat-icon> Edit PR
-              </button>
-            }
             @if (['converted', 'partially_converted'].includes(pr()!.status ?? '') || isPrConverted(pr()!)) {
-              <button mat-stroked-button [routerLink]="['/purchase-orders']" [queryParams]="{pr_id: pr()!.id}">
+              <button mat-stroked-button class="btn-compact" [routerLink]="['/purchase-orders']" [queryParams]="{pr_id: pr()!.id}">
                 <mat-icon>receipt_long</mat-icon> View POs
               </button>
+            }
+
+            @if (pr()!.status === 'draft' && auth.canTransact()) {
+              <button mat-stroked-button class="btn-compact" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']" [disabled]="acting()">
+                <mat-icon>edit</mat-icon> Edit PR
+              </button>
+              <button mat-raised-button color="primary" class="btn-compact" (click)="submit()" [disabled]="acting()">
+                <mat-icon>send</mat-icon> Submit for Procurement
+              </button>
+            }
+
+            @if (pr()!.status === 'submitted' && auth.canTransact()) {
+              <button mat-stroked-button class="btn-compact" (click)="rfqCreate()" [disabled]="acting()">
+                <mat-icon>request_quote</mat-icon> Create RFQ
+              </button>
+              <button mat-raised-button color="primary" class="btn-compact" (click)="convertToPo()">
+                <mat-icon>receipt_long</mat-icon> Convert to PO
+              </button>
+            }
+
+            @if (pr()!.status === 'rfq_created' && auth.canTransact()) {
+              <button mat-stroked-button class="btn-compact" (click)="rfqApprove()" [disabled]="acting()">
+                <mat-icon>verified</mat-icon> Approve RFQ
+              </button>
+              <button mat-raised-button color="primary" class="btn-compact" (click)="convertToPo()">
+                <mat-icon>receipt_long</mat-icon> Convert to PO
+              </button>
+            }
+
+            @if (pr()!.status === 'rfq_approved' && auth.canTransact()) {
+              <button mat-raised-button color="primary" class="btn-compact" (click)="convertToPo()">
+                <mat-icon>receipt_long</mat-icon> Convert to PO
+              </button>
+            }
+
+            @if (pr()!.status === 'partially_converted' && auth.canTransact()) {
+              <button mat-raised-button color="primary" class="btn-compact" (click)="convertToPo()">
+                <mat-icon>add_shopping_cart</mat-icon> Create Additional PO
+              </button>
+            }
+
+            @if (pr()!.status === 'needs_clarification') {
+              <button mat-raised-button color="primary" class="btn-compact" (click)="provideClarification()" style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
+                <mat-icon>mark_chat_read</mat-icon> Provide Clarification
+              </button>
+              <button mat-stroked-button class="btn-compact" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']">
+                <mat-icon>edit</mat-icon> Edit PR
+              </button>
+            }
+
+            @if (hasMoreActions()) {
+              <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="More Actions" class="more-btn">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #moreMenu="matMenu">
+                @if (!['draft', 'short_closed', 'rejected', 'needs_clarification'].includes(pr()!.status ?? '') && !pr()!.status?.startsWith('short_close_pending') && auth.canTransact()) {
+                  <button mat-menu-item (click)="requestClarification()" [disabled]="acting()">
+                    <mat-icon>help_outline</mat-icon>
+                    <span>Request Clarification</span>
+                  </button>
+                  <button mat-menu-item (click)="shortClose()" [disabled]="acting()">
+                    <mat-icon>do_not_disturb_on</mat-icon>
+                    <span>Short Close PR</span>
+                  </button>
+                }
+                @if (pr()!.status === 'submitted' && auth.isAdmin()) {
+                  <button mat-menu-item (click)="reject()">
+                    <mat-icon style="color:#dc2626;">close</mat-icon>
+                    <span style="color:#dc2626;">Reject PR</span>
+                  </button>
+                }
+                @if (pr()!.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+                  <button mat-menu-item (click)="deletePr()" [disabled]="acting()">
+                    <mat-icon style="color:#dc2626;">delete</mat-icon>
+                    <span style="color:#dc2626;">Delete Draft</span>
+                  </button>
+                }
+              </mat-menu>
             }
           </div>
         </div>
@@ -324,10 +354,20 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
   `,
   styles: [`
     .page-wrapper { padding:28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    .header-actions { display:flex;gap:8px;flex-wrap:wrap; }
+    .page-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border); }
+    .header-left { display:flex;align-items:center;gap:12px; }
+    .title-row { display:flex;align-items:center;gap:10px; }
+    .title-row h2 { margin:0;font-size:22px;font-weight:800;color:var(--text-1);letter-spacing:-0.02em; }
+    .subtitle { margin:3px 0 0;font-size:13px;color:var(--text-3); }
+    .status-pill { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:0.04em; }
+    .status-pill mat-icon { font-size:14px;width:14px;height:14px; }
+    .status-pill--converted { background:#dcfce7;color:#15803d; }
+    .status-pill--draft { background:#f1f5f9;color:#475569; }
+    .status-pill--submitted { background:#fff7ed;color:#c2410c; }
+    .status-pill--needs_clarification { background:#fef3c7;color:#b45309; }
+    .header-actions { display:flex;align-items:center;gap:8px; }
+    .btn-compact { height:36px!important;line-height:36px!important;padding:0 14px!important;font-size:12.5px!important;font-weight:600!important;border-radius:8px!important; }
+    .btn-compact mat-icon { font-size:18px;width:18px;height:18px;margin-right:4px; }
     .status-banner { display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;margin-bottom:20px;font-size:13px;font-weight:500; }
     .status-banner mat-icon { font-size:18px;width:18px;height:18px; }
     .status-banner--draft        { background:#f1f5f9;color:#64748b; }
@@ -375,6 +415,15 @@ export class PrDetailComponent implements OnInit {
   pr      = signal<any>(null);
   loading = signal(true);
   acting  = signal(false);
+
+  hasMoreActions(): boolean {
+    const pr = this.pr();
+    if (!pr) return false;
+    const canClarifyOrShortClose = !['draft', 'short_closed', 'rejected', 'needs_clarification'].includes(pr.status ?? '') && !pr.status?.startsWith('short_close_pending') && this.auth.canTransact();
+    const canReject = pr.status === 'submitted' && this.auth.isAdmin();
+    const canDelete = pr.status === 'draft' && (this.auth.canTransact() || this.auth.canDo('purchase_requisitions', 'delete'));
+    return canClarifyOrShortClose || canReject || canDelete;
+  }
 
   /** Merged de-duplicated list of all POs linked to this PR
    *  Laravel serialises relation names as snake_case in JSON:

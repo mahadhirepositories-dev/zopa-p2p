@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { environment } from '../../../environments/environment';
 import { PurchaseOrder } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
@@ -29,7 +30,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     DecimalPipe, DatePipe, UpperCasePipe, RouterLink, FormsModule,
     MatButtonModule, MatIconModule, MatCardModule, MatTableModule,
     MatChipsModule, MatDividerModule, MatProgressSpinnerModule, MatTooltipModule,
-    MatInputModule, MatFormFieldModule, MatDialogModule, ActivityTimelineComponent,
+    MatInputModule, MatFormFieldModule, MatDialogModule, MatMenuModule, ActivityTimelineComponent,
   ],
   template: `
     <div class="page-wrapper">
@@ -37,128 +38,120 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
         <div style="display:flex;justify-content:center;padding:80px;"><mat-spinner diameter="48" /></div>
       } @else if (po()) {
         <div class="page-header">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <button mat-icon-button routerLink="/purchase-orders"><mat-icon>arrow_back</mat-icon></button>
+          <div class="header-left">
+            <button mat-icon-button routerLink="/purchase-orders" class="back-btn" matTooltip="Back to POs"><mat-icon>arrow_back</mat-icon></button>
             <div>
-              <h2 style="margin:0;">{{ po()!.po_number ?? ('PO #' + po()!.id) }}</h2>
-              <div style="font-size:12px;color:#888;display:flex;align-items:center;gap:6px;">
+              <div class="title-row">
+                <h2>{{ po()!.po_number ?? ('PO #' + po()!.id) }}</h2>
+                @if (po()!.delivery_status === 'partially_delivered') {
+                  <span class="status-pill status-partially_delivered">Partially Delivered</span>
+                } @else {
+                  <span class="status-pill" [class]="'status-' + po()!.status">{{ po()!.status | uppercase }}</span>
+                }
+              </div>
+              <div class="subtitle">
                 Created {{ po()!.created_at | date:'dd MMM yyyy' }}
                 @if (po()!.status?.startsWith('pending')) {
-                  <span style="background:#fff7ed;color:#c2410c;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">
-                    Awaiting {{ pendingApproverName() }}
-                  </span>
+                  · <span class="awaiting-badge">Awaiting {{ pendingApproverName() }}</span>
                 }
               </div>
             </div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            @if (po()!.delivery_status === 'partially_delivered') {
-              <mat-chip class="status-partially_delivered" [highlighted]="true">PARTIALLY DELIVERED</mat-chip>
-            } @else {
-              <mat-chip [class]="'status-' + po()!.status" [highlighted]="true">{{ po()!.status | uppercase }}</mat-chip>
-            }
 
+          <div class="header-actions">
             @if ((po()!.status === 'draft' || po()!.status === 'returned') && auth.canTransact()) {
-              @if (po()!.status === 'returned') {
-                <div style="background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:#e65100;display:flex;align-items:center;gap:8px;">
-                  <mat-icon style="font-size:18px;width:18px;height:18px;">undo</mat-icon>
-                  <strong>Returned:</strong>&nbsp;{{ returnComment() }}
-                </div>
-              }
-              <button mat-stroked-button [routerLink]="['/purchase-orders', po()!.id, 'edit']">
+              <button mat-stroked-button class="btn-compact" [routerLink]="['/purchase-orders', po()!.id, 'edit']">
                 <mat-icon>edit</mat-icon> Edit
               </button>
-              <button mat-raised-button color="primary" [disabled]="acting()" (click)="submitPo()">
-                @if (acting() === 'submit') { <mat-spinner diameter="18" /> } @else { Submit for Approval }
+              <button mat-raised-button color="primary" class="btn-compact" [disabled]="acting()" (click)="submitPo()">
+                @if (acting() === 'submit') { <mat-spinner diameter="16" /> } @else { Submit for Approval }
               </button>
             }
 
             @if (myApproval() && po()!.status?.startsWith('pending')) {
-              <button mat-raised-button style="background:#22c55e;color:#fff;" [disabled]="acting()" (click)="openApprovalAction('approve')">
-                @if (acting() === 'approve') { <mat-spinner diameter="18" /> }
+              <button mat-raised-button class="btn-compact btn-approve" [disabled]="acting()" (click)="openApprovalAction('approve')">
+                @if (acting() === 'approve') { <mat-spinner diameter="16" /> }
                 @else { <ng-container><mat-icon>check_circle</mat-icon> Approve</ng-container> }
               </button>
-              <button mat-stroked-button color="warn" [disabled]="acting()" (click)="openApprovalAction('return')">
+              <button mat-stroked-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('return')">
                 <mat-icon>undo</mat-icon> Return
               </button>
-              <button mat-raised-button color="warn" [disabled]="acting()" (click)="openApprovalAction('reject')">
-                @if (acting() === 'reject') { <mat-spinner diameter="18" /> }
+              <button mat-raised-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('reject')">
+                @if (acting() === 'reject') { <mat-spinner diameter="16" /> }
                 @else { <ng-container><mat-icon>cancel</mat-icon> Reject</ng-container> }
               </button>
             }
 
             @if (po()!.status === 'approved' && auth.canTransact()) {
-              <button mat-raised-button color="primary" [disabled]="acting()" (click)="releasePo()">
-                @if (acting() === 'release') { <mat-spinner diameter="18" /> }
+              <button mat-raised-button color="primary" class="btn-compact" [disabled]="acting()" (click)="releasePo()">
+                @if (acting() === 'release') { <mat-spinner diameter="16" /> }
                 @else { <ng-container><mat-icon>send</mat-icon> Release PO</ng-container> }
               </button>
             }
 
             @if (isFullyDelivered) {
-              <span style="font-size:12px;font-weight:700;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;padding:6px 14px;border-radius:8px;display:inline-flex;align-items:center;gap:6px;">
-                <mat-icon style="font-size:18px;width:18px;height:18px;color:#15803d;">check_circle</mat-icon>
-                Delivered &amp; GRN Captured
+              <span class="delivered-badge">
+                <mat-icon style="font-size:16px;width:16px;height:16px;">check_circle</mat-icon> Delivered &amp; GRN Captured
               </span>
             } @else {
               @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && auth.canTransact()) {
-                <button mat-stroked-button color="accent" [disabled]="acting()" (click)="markDelivery('partially_delivered')">
-                  <mat-icon>local_shipping</mat-icon> Partially Delivered
-                </button>
-                <button mat-raised-button color="primary" [disabled]="acting()" (click)="markDelivery('delivered')"
-                  style="background:linear-gradient(135deg,#10b981,#059669);">
-                  @if (acting() === 'deliver') { <mat-spinner diameter="18" /> }
+                <button mat-raised-button class="btn-compact btn-deliver" [disabled]="acting()" (click)="markDelivery('delivered')">
+                  @if (acting() === 'deliver') { <mat-spinner diameter="16" /> }
                   @else { <ng-container><mat-icon>verified</mat-icon> Mark Delivered</ng-container> }
-                </button>
-              }
-
-              @if (auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
-                <button mat-raised-button [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }"
-                        style="background:linear-gradient(135deg, #0284c7, #0369a1);color:#ffffff;">
-                  <mat-icon>inventory_2</mat-icon> Mark GRN
                 </button>
               }
             }
 
             @if (isFullyDelivered && !['invoiced', 'payment_released'].includes(po()!.status ?? '') && auth.canTransact()) {
-              <button mat-raised-button routerLink="/invoices/create" [queryParams]="{ po_id: po()!.id }"
-                style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;">
+              <button mat-raised-button class="btn-compact btn-invoice" routerLink="/invoices/create" [queryParams]="{ po_id: po()!.id }">
                 <mat-icon>receipt</mat-icon> Raise Invoice
               </button>
             }
 
-
             @if (po()!.status === 'invoiced' && auth.isAdmin()) {
-              <button mat-raised-button color="primary" [disabled]="acting()" (click)="releasePaymentPo()"
-                style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
-                @if (acting() === 'payment') { <mat-spinner diameter="18" /> }
+              <button mat-raised-button color="primary" class="btn-compact" [disabled]="acting()" (click)="releasePaymentPo()">
+                @if (acting() === 'payment') { <mat-spinner diameter="16" /> }
                 @else { <ng-container><mat-icon>payments</mat-icon> Release Payment</ng-container> }
               </button>
             }
 
-            @if (['released','delivered','invoiced','payment_released'].includes(po()!.status) && auth.canTransact()) {
-              <button mat-stroked-button [disabled]="acting()" (click)="sendToVendor()"
-                      matTooltip="Email this PO (with the PDF) to the vendor">
-                @if (acting() === 'sendVendor') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>forward_to_inbox</mat-icon> }
-                Send to Vendor
-              </button>
-            }
-
-            @if (auth.isSuperAdmin() && po()!.status !== 'draft') {
-              <button mat-stroked-button color="warn" [disabled]="acting()" (click)="resetToDraft()"
-                      matTooltip="Revert this PO to draft — reverses the budget freeze and removes goods receipts, invoices & approvals so the approval flow can be re-run">
-                @if (acting() === 'reset') { <mat-spinner diameter="18" /> }
-                @else { <mat-icon>restart_alt</mat-icon> }
-                Reset to Draft
-              </button>
-            }
-
-            <button mat-stroked-button [disabled]="downloading()" (click)="downloadPdf()"
-                    matTooltip="Opens PDF in a new tab — use browser controls to save">
-              @if (downloading()) { <mat-spinner diameter="18" /> }
+            <button mat-stroked-button class="btn-compact" [disabled]="downloading()" (click)="downloadPdf()" matTooltip="View / Download PDF">
+              @if (downloading()) { <mat-spinner diameter="16" /> }
               @else { <mat-icon>picture_as_pdf</mat-icon> }
-              View / Download PDF
+              PDF
             </button>
+
+            @if (hasPoMoreActions()) {
+              <button mat-icon-button [matMenuTriggerFor]="poMoreMenu" matTooltip="More Actions" class="more-btn">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #poMoreMenu="matMenu">
+                @if (['released', 'partially_delivered'].includes(po()!.status ?? '') && !isFullyDelivered && auth.canTransact()) {
+                  <button mat-menu-item (click)="markDelivery('partially_delivered')" [disabled]="acting()">
+                    <mat-icon>local_shipping</mat-icon>
+                    <span>Partially Delivered</span>
+                  </button>
+                }
+                @if (auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
+                  <button mat-menu-item [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
+                    <mat-icon>inventory_2</mat-icon>
+                    <span>Mark GRN</span>
+                  </button>
+                }
+                @if (['released','delivered','invoiced','payment_released'].includes(po()!.status) && auth.canTransact()) {
+                  <button mat-menu-item (click)="sendToVendor()" [disabled]="acting()">
+                    <mat-icon>forward_to_inbox</mat-icon>
+                    <span>Send to Vendor (Email)</span>
+                  </button>
+                }
+                @if (auth.isSuperAdmin() && po()!.status !== 'draft') {
+                  <button mat-menu-item (click)="resetToDraft()" [disabled]="acting()">
+                    <mat-icon style="color:#dc2626;">restart_alt</mat-icon>
+                    <span style="color:#dc2626;">Reset to Draft</span>
+                  </button>
+                }
+              </mat-menu>
+            }
           </div>
         </div>
 
@@ -669,6 +662,21 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     }
   `,
   styles: [`
+    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border); }
+    .header-left { display:flex; align-items:center; gap:12px; }
+    .title-row { display:flex; align-items:center; gap:10px; }
+    .title-row h2 { margin:0; font-size:22px; font-weight:800; color:var(--text-1); letter-spacing:-0.02em; }
+    .subtitle { font-size:13px; color:var(--text-3); margin-top:3px; display:flex; align-items:center; gap:6px; }
+    .status-pill { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; text-transform:uppercase; letter-spacing:0.04em; }
+    .header-actions { display:flex; align-items:center; gap:8px; }
+    .btn-compact { height:36px !important; line-height:36px !important; padding:0 14px !important; font-size:12.5px !important; font-weight:600 !important; border-radius:8px !important; }
+    .btn-compact mat-icon { font-size:18px; width:18px; height:18px; margin-right:4px; }
+    .btn-approve { background:#16a34a !important; color:#fff !important; }
+    .btn-deliver { background:linear-gradient(135deg, #10b981, #059669) !important; color:#fff !important; }
+    .btn-invoice { background:linear-gradient(135deg, #f59e0b, #d97706) !important; color:#fff !important; }
+    .awaiting-badge { background:#fff7ed; color:#c2410c; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; }
+    .delivered-badge { font-size:12px; font-weight:700; color:#15803d; background:#dcfce7; border:1px solid #bbf7d0; padding:5px 12px; border-radius:99px; display:inline-flex; align-items:center; gap:6px; }
+
     /* Approval action modal */
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000; }
     .modal-card { min-width:320px; }
@@ -762,6 +770,16 @@ export class PoDetailComponent implements OnInit {
   loading = signal(true);
   acting = signal<string | false>(false);
   downloading = signal(false);
+
+  hasPoMoreActions(): boolean {
+    const po = this.po();
+    if (!po) return false;
+    const canPartialDeliv = ['released', 'partially_delivered'].includes(po.status ?? '') && !this.isFullyDelivered && this.auth.canTransact();
+    const canGrn = this.auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po.delivery_status ?? '');
+    const canSendVendor = ['released','delivered','invoiced','payment_released'].includes(po.status) && this.auth.canTransact();
+    const canReset = this.auth.isSuperAdmin() && po.status !== 'draft';
+    return canPartialDeliv || canGrn || canSendVendor || canReset;
+  }
   diag = signal<any>(null);   // super-admin approval-routing diagnostic
   myApproval = signal<any>(null);  // pending approval record for the current user
   approvalAction = signal<'approve'|'return'|'reject'|null>(null);
