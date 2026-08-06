@@ -451,8 +451,19 @@ export class PrFormComponent implements OnInit {
     const productName = event.option.value;
     const p = this.productsMaster().find(prod => prod.name === productName);
     if (p) {
+      let desc = p.name;
+      if (p.description && p.description.trim()) {
+        const pDesc = p.description.trim();
+        if (!pDesc.toLowerCase().startsWith(p.name.toLowerCase())) {
+          desc = `${p.name} - ${pDesc}`;
+        } else {
+          desc = pDesc;
+        }
+      }
+
       this.items.at(index).patchValue({
         product_id: p.id,
+        description: desc,
         unit: p.unit,
         estimated_price: p.net_rate,
         category_id: p.category_id,

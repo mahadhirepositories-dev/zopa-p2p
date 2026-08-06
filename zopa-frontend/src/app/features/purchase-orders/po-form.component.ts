@@ -1122,8 +1122,19 @@ export class PoFormComponent implements OnInit {
     if (!productId) return;
     const product = this.products().find(p => p.id === productId);
     if (!product) return;
+
+    let desc = product.name;
+    if (product.description && product.description.trim()) {
+      const pDesc = product.description.trim();
+      if (!pDesc.toLowerCase().startsWith(product.name.toLowerCase())) {
+        desc = `${product.name} - ${pDesc}`;
+      } else {
+        desc = pDesc;
+      }
+    }
+
     this.items.at(i).patchValue({
-      description:     product.name,
+      description:     desc,
       net_rate:        product.net_rate != null ? +product.net_rate : 0,
       gst_rate:        product.gst_rate != null ? +product.gst_rate : 0,
       category_id:     product.category_id ?? null,
