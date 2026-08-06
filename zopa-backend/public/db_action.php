@@ -9,17 +9,20 @@ $kernel->bootstrap();
 use App\Models\PurchaseOrder;
 
 try {
-    $poNum = 'AV/2026-27/14';
-    $po = PurchaseOrder::where('po_number', $poNum)->first();
-    if ($po) {
-        echo "Found PO ID: {$po->id}\n";
-        echo "PO Number: {$po->po_number}\n";
-        echo "Payment Terms: " . json_encode($po->payment_terms) . "\n";
-        echo "Status: {$po->status}\n";
-        echo "Full PO Attributes:\n";
-        print_r($po->toArray());
-    } else {
-        echo "PO not found: $poNum\n";
+    $pos = PurchaseOrder::whereNotNull('payment_terms_json')->get();
+    echo "Inspecting POs with payment terms:\n";
+    $count = 0;
+    foreach ($pos as $po) {
+        $terms = $po->payment_terms_json;
+        if (is_array($terms)) {
+            foreach ($terms as $t) {
+                if (isset($t['stage']) && stripos($t['stage'], 'credit') !== false) {
+                    echo "PO: {$po->po_number} | Terms: " . json_encode($terms) . "\n";
+                    $count++;
+                    if ($count >= 5) break 2;
+                }
+            }
+        }
     }
 } catch (\Throwable $e) {
     echo "ERROR: " . $e->getMessage() . "\n";
