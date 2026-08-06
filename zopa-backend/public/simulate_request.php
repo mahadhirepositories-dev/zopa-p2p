@@ -41,8 +41,9 @@ try {
     $request->headers->set('Accept', 'application/json');
     $request->headers->set('X-Tenant-ID', $tenant->id);
 
-    // Login user
-    auth()->login($user);
+    // Bind the request to the container and set user resolver
+    app()->instance('request', $request);
+    $request->setUserResolver(fn() => $user);
 
     // Run the request through the router/kernel
     $response = $kernel->handle($request);
