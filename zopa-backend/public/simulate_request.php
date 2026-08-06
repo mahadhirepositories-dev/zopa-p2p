@@ -9,7 +9,6 @@ $kernel->bootstrap();
 use App\Models\User;
 use App\Models\Tenant;
 use Illuminate\Http\Request;
-use Laravel\Sanctum\Sanctum;
 
 try {
     $user = User::where('name', 'like', '%Dinesh%')->first();
@@ -23,9 +22,6 @@ try {
         $tenant = Tenant::first();
     }
     echo "Tenant: {$tenant->name} (ID: {$tenant->id})\n";
-
-    // Authenticate via Sanctum actingAs
-    Sanctum::actingAs($user);
 
     // Create a mock POST request
     $request = Request::create('/api/products', 'POST', [
@@ -45,8 +41,13 @@ try {
     $request->headers->set('Accept', 'application/json');
     $request->headers->set('X-Tenant-ID', $tenant->id);
 
-    // Bind the request to the container
+    // Bind request to container
     app()->instance('request', $request);
+    $request->setUserResolver(fn() => $user);
+
+    // Authenticate on Sanctum guard
+    auth()->guard('sanctum')->setUser($user);
+    auth()->setUser($user);
 
     // Run the request through the router/kernel
     $response = $kernel->handle($request);
