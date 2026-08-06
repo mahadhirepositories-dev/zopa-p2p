@@ -21,13 +21,26 @@ class PrNumberService
                 ->lockForUpdate()
                 ->pluck('pr_number');
 
-            $maxSeq = $prNumbers->map(function ($pr) use ($prefix) {
-                return (int) substr($pr, strlen($prefix));
-            })->max();
+            $maxSeq = 0;
+            $padLen = 0;
+
+            foreach ($prNumbers as $pr) {
+                $numPart = substr($pr, strlen($prefix));
+                if (is_numeric($numPart)) {
+                    $val = (int) $numPart;
+                    if ($val > $maxSeq) {
+                        $maxSeq = $val;
+                        if (strlen($numPart) > 1 && str_starts_with($numPart, '0')) {
+                            $padLen = strlen($numPart);
+                        }
+                    }
+                }
+            }
 
             $seq = $maxSeq ? $maxSeq + 1 : $startSeries;
+            $seqStr = $padLen ? str_pad((string)$seq, $padLen, '0', STR_PAD_LEFT) : (string)$seq;
 
-            return $prefix . $seq;
+            return $prefix . $seqStr;
         });
     }
 }
