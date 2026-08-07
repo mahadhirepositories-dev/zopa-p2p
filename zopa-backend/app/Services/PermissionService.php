@@ -100,7 +100,7 @@ class PermissionService
         foreach ($roles as $role) {
             foreach ($modules as $module) {
                 $matrix[$role][$module] = [
-                    'can_view'   => false,
+                    'can_view'   => in_array($module, ['dashboard', 'executive_dashboard'], true),
                     'can_create' => false,
                     'can_edit'   => false,
                     'can_delete' => false,

@@ -37,6 +37,8 @@ interface RoleMeta {
 }
 
 const MODULE_META: ModuleMeta[] = [
+  { key: 'dashboard',             label: 'Operational Dashboard', icon: 'dashboard',              description: 'Main metrics, alerts and quick actions', group: 'procurement' },
+  { key: 'executive_dashboard',   label: 'Executive Dashboard',   icon: 'analytics',              description: 'High level executive KPI dashboards',    group: 'procurement' },
   { key: 'purchase_requisitions', label: 'Purchase Requisitions', icon: 'description',           description: 'Create and manage PR documents',       group: 'procurement' },
   { key: 'purchase_orders',       label: 'Purchase Orders',       icon: 'receipt_long',          description: 'Manage PO lifecycle and approval flow', group: 'procurement' },
   { key: 'grns',                  label: 'Goods Receipt (GRN)',    icon: 'inventory_2',           description: 'Record goods received against POs',     group: 'procurement' },

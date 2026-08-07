@@ -75,19 +75,25 @@ import { filter } from 'rxjs/operators';
           <!-- Navigation -->
           <nav class="sidebar-nav">
 
-            <div class="nav-section">
-              <span class="nav-section-label">Main</span>
-              <a class="nav-link" routerLink="/dashboard" routerLinkActive="nav-link--active"
-                 [routerLinkActiveOptions]="{exact:true}">
-                <mat-icon>dashboard</mat-icon><span>Dashboard</span>
-              </a>
-              <a class="nav-link" routerLink="/executive-dashboard" routerLinkActive="nav-link--active">
-                <mat-icon>analytics</mat-icon><span>Executive Dashboard</span>
-              </a>
-              <a class="nav-link" routerLink="/help" routerLinkActive="nav-link--active">
-                <mat-icon>help_outline</mat-icon><span>Help &amp; Manual</span>
-              </a>
-            </div>
+            @if (auth.canDo('dashboard','view') || auth.canDo('executive_dashboard','view')) {
+              <div class="nav-section">
+                <span class="nav-section-label">Main</span>
+                @if (auth.canDo('dashboard','view')) {
+                  <a class="nav-link" routerLink="/dashboard" routerLinkActive="nav-link--active"
+                     [routerLinkActiveOptions]="{exact:true}">
+                    <mat-icon>dashboard</mat-icon><span>Dashboard</span>
+                  </a>
+                }
+                @if (auth.canDo('executive_dashboard','view')) {
+                  <a class="nav-link" routerLink="/executive-dashboard" routerLinkActive="nav-link--active">
+                    <mat-icon>analytics</mat-icon><span>Executive Dashboard</span>
+                  </a>
+                }
+                <a class="nav-link" routerLink="/help" routerLinkActive="nav-link--active">
+                  <mat-icon>help_outline</mat-icon><span>Help &amp; Manual</span>
+                </a>
+              </div>
+            }
 
             @if (auth.canDo('purchase_requisitions','view') || auth.canDo('purchase_orders','view') ||
                  auth.canDo('approvals','view') || auth.canDo('grns','view') ||
@@ -253,6 +259,12 @@ import { filter } from 'rxjs/operators';
                 {{ auth.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client Organization' }}
               </span>
               <span class="ctx-note">Anything you add here belongs to this organization.</span>
+              <button mat-stroked-button class="switch-org-btn" (click)="openOrgSwitcher()"
+                      matTooltip="Switch organization (Ctrl/⌘ + K)"
+                      style="margin-left:auto;height:28px;line-height:26px;font-size:12px;padding:0 12px;border-radius:6px;background:white;color:var(--text-1);font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid #cbd5e1;cursor:pointer;">
+                <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--brand);">swap_horiz</mat-icon>
+                Switch Org
+              </button>
             </div>
           }
 

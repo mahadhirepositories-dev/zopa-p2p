@@ -42,6 +42,8 @@ class RolePermissionsController extends Controller
 
     /** Application modules whose permissions are configurable. */
     public const MODULES = [
+        'dashboard',
+        'executive_dashboard',
         'purchase_requisitions',
         'purchase_orders',
         'grns',
