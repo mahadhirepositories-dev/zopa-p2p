@@ -387,7 +387,10 @@ export class PrFormComponent implements OnInit {
     this.http.get<any>(`${environment.apiUrl}/cost-centers`).subscribe(r => this.costCenters.set(r.data ?? r));
     this.http.get<any>(`${environment.apiUrl}/projects`).subscribe(r => this.projects.set(r));
     this.http.get<any>(`${environment.apiUrl}/locations`).subscribe(r => this.locations.set(r));
-    this.http.get<any>(`${environment.apiUrl}/products`).subscribe(r => this.productsMaster.set(r.data ?? r));
+    this.http.get<any>(`${environment.apiUrl}/products`).subscribe(r => {
+      const all: Product[] = r.data ?? r;
+      this.productsMaster.set(all.filter((p: Product) => p.is_active));
+    });
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {

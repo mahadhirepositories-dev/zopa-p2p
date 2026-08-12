@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { environment } from '../../../environments/environment';
 import { Product, Category } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
@@ -18,7 +19,7 @@ interface FlatCat { id: number; name: string; parent_id: number | null; }
   standalone: true,
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule,
-    MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatSlideToggleModule,
   ],
   template: `
     <h2 mat-dialog-title>{{ data ? 'Edit Product' : 'New Product' }}</h2>
@@ -27,7 +28,7 @@ interface FlatCat { id: number; name: string; parent_id: number | null; }
         <div class="row-2">
           <mat-form-field appearance="outline">
             <mat-label>Product Code</mat-label>
-            <input matInput formControlName="code" />
+            <input matInput formControlName="code" placeholder="Leave blank for auto-code" />
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>HSN Code</mat-label>
@@ -129,6 +130,12 @@ interface FlatCat { id: number; name: string; parent_id: number | null; }
             <input matInput type="number" formControlName="sale_price" min="0" />
           </mat-form-field>
         </div>
+
+        <div style="padding: 4px 0 12px;">
+          <mat-slide-toggle formControlName="is_active" color="primary">
+            Active Product <span style="font-size:12px;color:var(--text-3);margin-left:4px;">(available for selection in Requisitions &amp; POs)</span>
+          </mat-slide-toggle>
+        </div>
       </form>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
@@ -173,6 +180,7 @@ export class ProductFormDialogComponent implements OnInit {
     mrp:             [this.data?.mrp ?? null, [Validators.min(0)]],
     sale_price:      [this.data?.sale_price ?? null, [Validators.min(0)]],
     warranty_months: [this.data?.warranty_months ?? 0],
+    is_active:       [this.data?.is_active ?? true],
   });
 
   ngOnInit() {
@@ -248,7 +256,8 @@ export class ProductFormDialogComponent implements OnInit {
     req.subscribe({
       next: () => { this.notify.success(`Product ${this.data ? 'updated' : 'created'}.`); this.dialogRef.close(true); },
       error: (err: any) => {
-        this.notify.error(err.error?.message || err.error?.error || 'Save failed.');
+        const errorMsg = err.error?.errors?.code?.[0] || err.error?.message || err.error?.error || 'Save failed.';
+        this.notify.error(errorMsg);
         this.saving.set(false);
       },
     });

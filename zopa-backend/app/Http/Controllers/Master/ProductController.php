@@ -62,12 +62,21 @@ class ProductController extends Controller
             'subcategory_id' => 'nullable|integer|exists:categories,id',
             'mrp'            => 'nullable|numeric|min:0',
             'sale_price'     => 'nullable|numeric|min:0',
+            'is_active'      => 'nullable|boolean',
         ]);
 
         $tenant = app('currentTenant');
 
-        $code = $request->code;
-        if (empty($code)) {
+        $code = trim((string) ($request->code ?? ''));
+        if ($code !== '') {
+            $exists = Product::where('tenant_id', $tenant->id)->where('code', $code)->exists();
+            if ($exists) {
+                return response()->json([
+                    'message' => 'The given data was invalid.',
+                    'errors'  => ['code' => ["Product Code '{$code}' already exists for this organization."]]
+                ], 422);
+            }
+        } else {
             // Use tenant's product_prefix if set, otherwise fallback to 'PRD-'
             $prefix = !empty($tenant->product_prefix) ? $tenant->product_prefix : 'PRD-';
             $series = $tenant->product_series ?? 1;
@@ -78,10 +87,10 @@ class ProductController extends Controller
             $tenant->increment('product_series', $series - ($tenant->product_series ?? 1));
         }
 
-
         $product = Product::create([
             ...$request->only('name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),
             'code'      => $code,
+            'is_active' => $request->boolean('is_active', true),
             'tenant_id' => $tenant->id,
         ]);
 
@@ -98,6 +107,7 @@ class ProductController extends Controller
     {
         $this->requirePermission('products', 'edit');
         $this->authorizeProduct($product);
+
         $request->validate([
             'name'           => 'sometimes|required|string|max:255',
             'unit'           => 'sometimes|required|string|max:30',
@@ -108,8 +118,34 @@ class ProductController extends Controller
             'subcategory_id' => 'nullable|integer|exists:categories,id',
             'mrp'            => 'nullable|numeric|min:0',
             'sale_price'     => 'nullable|numeric|min:0',
+            'is_active'      => 'nullable|boolean',
         ]);
+
+        if ($request->has('code')) {
+            $newCode = trim((string) $request->code);
+            if ($newCode !== '' && $newCode !== $product->code) {
+                $exists = Product::where('tenant_id', $product->tenant_id)
+                    ->where('code', $newCode)
+                    ->where('id', '!=', $product->id)
+                    ->exists();
+                if ($exists) {
+                    return response()->json([
+                        'message' => 'The given data was invalid.',
+                        'errors'  => ['code' => ["Product Code '{$newCode}' already exists for this organization."]]
+                    ], 422);
+                }
+            }
+        }
+
         $product->update($request->except('tenant_id'));
+        return response()->json($product);
+    }
+
+    public function toggleActive(Product $product): JsonResponse
+    {
+        $this->requirePermission('products', 'edit');
+        $this->authorizeProduct($product);
+        $product->update(['is_active' => !$product->is_active]);
         return response()->json($product);
     }
 

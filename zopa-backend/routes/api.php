@@ -231,6 +231,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('products/export', [ProductController::class, 'export']);
         Route::get('products/template', [ProductController::class, 'template']);
         Route::post('products/import', [ProductController::class, 'import']);
+        Route::patch('products/{product}/toggle-active', [ProductController::class, 'toggleActive']);
         Route::apiResource('products', ProductController::class);
 
         // Cost Centers & Budget

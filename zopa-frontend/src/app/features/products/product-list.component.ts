@@ -157,6 +157,11 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let p" style="text-align:right;">
                   @if (auth.canDo('products','edit')) {
+                    <button mat-icon-button [matTooltip]="p.is_active ? 'Mark Inactive' : 'Mark Active'" (click)="toggleActive(p)">
+                      <mat-icon [style.color]="p.is_active ? '#16a34a' : '#94a3b8'">
+                        {{ p.is_active ? 'toggle_on' : 'toggle_off' }}
+                      </mat-icon>
+                    </button>
                     <button mat-icon-button matTooltip="Edit" (click)="openForm(p)">
                       <mat-icon>edit</mat-icon>
                     </button>
@@ -273,6 +278,16 @@ export class ProductListComponent implements OnInit {
   openForm(product?: Product) {
     const ref = this.dialog.open(ProductFormDialogComponent, { width: '540px', data: product ?? null });
     ref.afterClosed().subscribe(saved => { if (saved) this.load(); });
+  }
+
+  toggleActive(product: Product) {
+    this.http.patch<Product>(`${environment.apiUrl}/products/${product.id}/toggle-active`, {}).subscribe({
+      next: res => {
+        this.notify.success(`Product '${res.name}' is now ${res.is_active ? 'Active' : 'Inactive'}.`);
+        this.load();
+      },
+      error: () => this.notify.error('Could not change product status.'),
+    });
   }
 
   downloadTemplate() {
