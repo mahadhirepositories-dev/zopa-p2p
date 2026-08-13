@@ -46,7 +46,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 @if (po()!.delivery_status === 'partially_delivered') {
                   <span class="status-pill status-partially_delivered">Partially Delivered</span>
                 } @else {
-                  <span class="status-pill" [class]="'status-' + po()!.status">{{ po()!.status | uppercase }}</span>
+                  <span class="status-pill" [class]="'status-' + po()!.status">{{ formatPoStatus(po()!.status) }}</span>
                 }
               </div>
               <div class="subtitle">
@@ -1057,6 +1057,27 @@ export class PoDetailComponent implements OnInit {
       converted: 'Converted', rejected: 'Rejected', short_closed: 'Short Closed',
     };
     return map[s] ?? s;
+  }
+
+  formatPoStatus(s?: string): string {
+    if (!s) return '—';
+    const map: Record<string, string> = {
+      draft: 'Draft',
+      pending_l1: 'Pending L1',
+      pending_l2: 'Pending L2',
+      pending_l3: 'Pending L3',
+      approved: 'Approved',
+      released: 'Released',
+      sent_to_vendor: 'Released',
+      partially_delivered: 'Partially Delivered',
+      delivered: 'Delivered',
+      fully_delivered: 'Delivered',
+      invoiced: 'Invoiced',
+      payment_released: 'Payment Released',
+      closed: 'Closed',
+      cancelled: 'Cancelled',
+    };
+    return map[s] ?? s.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   downloadPdf() {

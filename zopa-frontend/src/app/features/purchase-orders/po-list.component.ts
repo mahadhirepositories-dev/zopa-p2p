@@ -266,8 +266,10 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .status-pending_l3 { background: #fffbeb; color: #d97706; }
     .status-approved   { background: #f0fdf4; color: #16a34a; }
     .status-released   { background: #eff6ff; color: #2563eb; }
+    .status-sent_to_vendor { background: #eff6ff; color: #2563eb; }
     .status-partially_delivered { background: #fef3c7; color: #b45309; font-weight: 600; }
     .status-delivered  { background: #ecfeff; color: #0891b2; }
+    .status-fully_delivered { background: #ecfeff; color: #0891b2; }
     .status-invoiced   { background: #f5f3ff; color: #7c3aed; }
     .status-payment_released { background: #ecfdf5; color: #059669; }
     .status-closed     { background: #f8fafc; color: #64748b; }
@@ -347,14 +349,16 @@ export class PoListComponent implements OnInit {
       pending_l3: 'Pending L3',
       approved: 'Approved',
       released: 'Released',
+      sent_to_vendor: 'Released',
       partially_delivered: 'Partially Delivered',
       delivered: 'Delivered',
+      fully_delivered: 'Delivered',
       invoiced: 'Invoiced',
       payment_released: 'Payment Released',
       closed: 'Closed',
       cancelled: 'Cancelled',
     };
-    return map[s] ?? s;
+    return map[s] ?? (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
   exportData() {
