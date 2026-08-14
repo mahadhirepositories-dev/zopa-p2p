@@ -812,21 +812,42 @@ class PurchaseOrderController extends Controller
     public function upload(Request $request, PurchaseOrder $purchaseOrder): JsonResponse
     {
         $this->requireTransactRole();
-        $request->validate(['file' => 'required|file|max:10240']);
         $this->authorizePoAccess($purchaseOrder);
 
-        $path = $request->file('file')->store("po-attachments/{$purchaseOrder->id}", 'local');
+        $uploadedFiles = [];
+        if ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        } elseif ($request->hasFile('files')) {
+            $files = $request->file('files');
+            $uploadedFiles = is_array($files) ? $files : [$files];
+        }
 
-        $attachment = PoAttachment::create([
-            'po_id' => $purchaseOrder->id,
-            'name' => pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME),
-            'original_name' => $request->file('file')->getClientOriginalName(),
-            'file_path' => $path,
-            'size' => $request->file('file')->getSize(),
-            'uploaded_by' => auth()->id(),
-        ]);
+        if (empty($uploadedFiles)) {
+            return response()->json(['message' => 'No files were uploaded.'], 422);
+        }
 
-        return response()->json($attachment, 201);
+        $createdAttachments = [];
+        foreach ($uploadedFiles as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            if ($file->getSize() > 10240 * 1024) {
+                return response()->json(['message' => "File {$file->getClientOriginalName()} exceeds maximum size limit of 10MB."], 422);
+            }
+
+            $path = $file->store("po-attachments/{$purchaseOrder->id}", 'local');
+
+            $createdAttachments[] = PoAttachment::create([
+                'po_id'         => $purchaseOrder->id,
+                'name'          => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'original_name' => $file->getClientOriginalName(),
+                'file_path'     => $path,
+                'size'          => $file->getSize(),
+                'uploaded_by'   => auth()->id(),
+            ]);
+        }
+
+        return response()->json($createdAttachments, 201);
     }
 
     public function pdf(PurchaseOrder $purchaseOrder): Response

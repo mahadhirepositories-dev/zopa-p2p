@@ -306,24 +306,45 @@ class GrnController extends Controller
     public function upload(Request $request, Grn $grn): JsonResponse
     {
         $this->requirePermission('grns', 'create');
-        $request->validate(['file' => 'required|file|max:20480']);
         $tenant = $this->getTenant();
         if ($tenant) {
             abort_if($grn->tenant_id !== $tenant->id, 403);
         }
 
-        $path = $request->file('file')->store("grn-attachments/{$grn->id}", 'local');
+        $uploadedFiles = [];
+        if ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        } elseif ($request->hasFile('files')) {
+            $files = $request->file('files');
+            $uploadedFiles = is_array($files) ? $files : [$files];
+        }
 
-        $attachment = \App\Models\GrnAttachment::create([
-            'grn_id' => $grn->id,
-            'name' => pathinfo($request->file('file')->getClientOriginalName(), PATHINFO_FILENAME),
-            'original_name' => $request->file('file')->getClientOriginalName(),
-            'file_path' => $path,
-            'size' => $request->file('file')->getSize(),
-            'uploaded_by' => auth()->id(),
-        ]);
+        if (empty($uploadedFiles)) {
+            return response()->json(['message' => 'No files were uploaded.'], 422);
+        }
 
-        return response()->json($attachment, 201);
+        $createdAttachments = [];
+        foreach ($uploadedFiles as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            if ($file->getSize() > 20480 * 1024) {
+                return response()->json(['message' => "File {$file->getClientOriginalName()} exceeds maximum size limit of 20MB."], 422);
+            }
+
+            $path = $file->store("grn-attachments/{$grn->id}", 'local');
+
+            $createdAttachments[] = \App\Models\GrnAttachment::create([
+                'grn_id'        => $grn->id,
+                'name'          => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'original_name' => $file->getClientOriginalName(),
+                'file_path'     => $path,
+                'size'          => $file->getSize(),
+                'uploaded_by'   => auth()->id(),
+            ]);
+        }
+
+        return response()->json($createdAttachments, 201);
     }
 
 
