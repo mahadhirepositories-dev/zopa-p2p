@@ -225,8 +225,12 @@ class DashboardController extends Controller
             ];
         });
 
-        // ── Overall Average TAT Summary ───────────────────────────
+        // ── Overall Average TAT Summary (Gross Business Calendar Days) ──────
         $allTats = TatRecord::whereHas('po', fn($q) => $q->where('tenant_id', $tenantId))->get();
+
+        $avgPrToApprovalDays = round($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && $t->po_approved_at)
+            ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
+
         $avgApprovalDays = round($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
             ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
 
@@ -236,8 +240,8 @@ class DashboardController extends Controller
         $avgDeliveryDays = round($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
             ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24) ?? 0, 1);
 
-        $avgTotalDays = round($allTats->filter(fn($t) => $t->po_created_at && ($t->po_delivered_at ?? $t->po_released_at))
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_delivered_at ?? $t->po_released_at) / 24) ?? 0, 1);
+        $avgTotalDays = round($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && ($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at))
+            ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at) / 24) ?? 0, 1);
 
         return response()->json([
             'filter' => [
@@ -246,10 +250,11 @@ class DashboardController extends Controller
                 'to_date'   => $toDate,
             ],
             'tat_summary' => [
-                'avg_approval_days' => $avgApprovalDays,
-                'avg_release_days'  => $avgReleaseDays,
-                'avg_delivery_days' => $avgDeliveryDays,
-                'avg_total_days'    => $avgTotalDays,
+                'avg_pr_to_approval_days' => $avgPrToApprovalDays,
+                'avg_approval_days'       => $avgApprovalDays,
+                'avg_release_days'        => $avgReleaseDays,
+                'avg_delivery_days'       => $avgDeliveryDays,
+                'avg_total_days'          => $avgTotalDays,
             ],
             'po_counts'         => $posByStatus,
             'pending_approvals' => $pendingApprovals,
