@@ -35,24 +35,18 @@ return new class extends Migration
         $targetTenantId     = $pr7?->tenant_id;
 
         if ($targetCostCenterId) {
-            // Update PR 72 (PR8) directly by ID and by pr_number
             $updateData = ['cost_center_id' => $targetCostCenterId];
             if ($targetLocationId) {
                 $updateData['location_id'] = $targetLocationId;
             }
-            if ($targetTenantId) {
-                $updateData['tenant_id'] = $targetTenantId;
-            }
 
             DB::table('purchase_requisitions')
                 ->where('id', 72)
-                ->orWhere('pr_number', 'PR8')
                 ->update($updateData);
 
             // Also update any linked POs
             DB::table('purchase_orders')
                 ->where('pr_id', 72)
-                ->orWhere('pr_reference', 'PR8')
                 ->update([
                     'cost_center_id' => $targetCostCenterId,
                 ]);
