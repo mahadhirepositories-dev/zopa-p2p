@@ -312,6 +312,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-requisitions/{purchaseRequisition}/rfq-create', [PurchaseRequisitionController::class, 'rfqCreate']);
         Route::post('purchase-requisitions/{purchaseRequisition}/request-clarification', [PurchaseRequisitionController::class, 'requestClarification']);
         Route::post('purchase-requisitions/{purchaseRequisition}/provide-clarification', [PurchaseRequisitionController::class, 'provideClarification']);
+        Route::get('purchase-requisitions/{purchaseRequisition}/clarification-attachments/download', [PurchaseRequisitionController::class, 'downloadClarificationAttachment']);
         Route::get('purchase-requisitions/{purchaseRequisition}/activities', [PurchaseRequisitionController::class, 'activities']);
 
         Route::get('purchase-orders/{purchaseOrder}/activities', [PurchaseOrderController::class, 'activities']);

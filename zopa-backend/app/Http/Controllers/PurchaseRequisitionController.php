@@ -481,13 +481,16 @@ class PurchaseRequisitionController extends Controller
             'clarification_requested_by' => auth()->id(),
         ]);
 
+        $requestAttachments = $this->processClarificationFiles($request, $purchaseRequisition->id);
+
         $clarification = \App\Models\PrClarification::create([
-            'tenant_id'    => $purchaseRequisition->tenant_id,
-            'pr_id'        => $purchaseRequisition->id,
-            'requested_by' => auth()->id(),
-            'request_notes' => trim($request->notes),
-            'requested_at' => $now,
-            'status'       => 'pending',
+            'tenant_id'           => $purchaseRequisition->tenant_id,
+            'pr_id'               => $purchaseRequisition->id,
+            'requested_by'        => auth()->id(),
+            'request_notes'       => trim($request->notes),
+            'request_attachments' => count($requestAttachments) > 0 ? $requestAttachments : null,
+            'requested_at'        => $now,
+            'status'              => 'pending',
         ]);
 
         // Stamp TAT record
@@ -507,9 +510,10 @@ class PurchaseRequisitionController extends Controller
 
         // Activity log
         $this->actLog->log('PR', $purchaseRequisition->id, 'clarification_requested', [
-            'pr_number'     => $purchaseRequisition->pr_number,
-            'request_notes' => trim($request->notes),
-            'requested_by'  => auth()->user()->name ?? auth()->id(),
+            'pr_number'           => $purchaseRequisition->pr_number,
+            'request_notes'       => trim($request->notes),
+            'request_attachments' => $requestAttachments,
+            'requested_by'        => auth()->user()->name ?? auth()->id(),
         ]);
 
         return response()->json([
@@ -537,15 +541,18 @@ class PurchaseRequisitionController extends Controller
             ->latest()
             ->first();
 
+        $responseAttachments = $this->processClarificationFiles($request, $purchaseRequisition->id);
+
         $durationSec = 0;
         if ($activeClarification) {
             $durationSec = max(0, $now->diffInSeconds($activeClarification->requested_at));
             $activeClarification->update([
-                'provided_by'      => auth()->id(),
-                'response_notes'   => trim($request->response_notes),
-                'provided_at'      => $now,
-                'duration_seconds' => $durationSec,
-                'status'           => 'resolved',
+                'provided_by'           => auth()->id(),
+                'response_notes'        => trim($request->response_notes),
+                'response_attachments'  => count($responseAttachments) > 0 ? $responseAttachments : null,
+                'provided_at'           => $now,
+                'duration_seconds'      => $durationSec,
+                'status'                => 'resolved',
             ]);
         }
 
@@ -567,16 +574,60 @@ class PurchaseRequisitionController extends Controller
 
         // Activity log
         $this->actLog->log('PR', $purchaseRequisition->id, 'clarification_provided', [
-            'pr_number'        => $purchaseRequisition->pr_number,
-            'response_notes'   => trim($request->response_notes),
-            'duration_seconds' => $durationSec,
-            'provided_by'      => auth()->user()->name ?? auth()->id(),
+            'pr_number'            => $purchaseRequisition->pr_number,
+            'response_notes'       => trim($request->response_notes),
+            'response_attachments' => $responseAttachments,
+            'duration_seconds'     => $durationSec,
+            'provided_by'          => auth()->user()->name ?? auth()->id(),
         ]);
 
         return response()->json([
             'message' => 'Clarification response submitted successfully.',
             'pr'      => $purchaseRequisition->fresh(['clarifications.requester', 'clarifications.responder']),
         ]);
+    }
+
+    public function downloadClarificationAttachment(Request $request, PurchaseRequisition $purchaseRequisition)
+    {
+        $this->authorize($purchaseRequisition);
+        $path = $request->query('path');
+        if (!$path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($path)) {
+            abort(404, 'Attachment file not found');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->download($path);
+    }
+
+    private function processClarificationFiles(Request $request, int $prId): array
+    {
+        $uploadedFiles = [];
+        if ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        } elseif ($request->hasFile('files')) {
+            $files = $request->file('files');
+            $uploadedFiles = is_array($files) ? $files : [$files];
+        }
+
+        $attachments = [];
+        foreach ($uploadedFiles as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            if ($file->getSize() > 10240 * 1024) {
+                continue;
+            }
+
+            $path = $file->store("clarification-attachments/pr-{$prId}", 'local');
+            $attachments[] = [
+                'name'          => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'original_name' => $file->getClientOriginalName(),
+                'file_path'     => $path,
+                'size'          => $file->getSize(),
+                'uploaded_at'   => now()->toIso8601String(),
+            ];
+        }
+
+        return $attachments;
     }
 
     private function authorize(PurchaseRequisition $pr): void

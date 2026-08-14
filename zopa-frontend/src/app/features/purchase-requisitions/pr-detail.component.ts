@@ -227,6 +227,18 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
                         "{{ c.request_notes }}"
                       </div>
 
+                      @if (c.request_attachments?.length) {
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;margin-bottom:8px;">
+                          @for (att of c.request_attachments; track att.file_path) {
+                            <a (click)="downloadClarificationAttachment(att)" style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;font-size:11.5px;color:#c2410c;cursor:pointer;text-decoration:none;">
+                              <mat-icon style="font-size:14px;width:14px;height:14px;">attach_file</mat-icon>
+                              {{ att.original_name || att.name }}
+                              @if (att.size) { <span style="color:#94a3b8;font-size:10px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
+                            </a>
+                          }
+                        </div>
+                      }
+
                       @if (c.status === 'resolved' && c.response_notes) {
                         <div style="background:#ffffff;border-left:3px solid #0284c7;padding:8px 12px;border-radius:4px;margin-top:8px;">
                           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
@@ -240,6 +252,18 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
                           <div style="font-size:12.5px;color:#334155;white-space:pre-line;">
                             {{ c.response_notes }}
                           </div>
+
+                          @if (c.response_attachments?.length) {
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">
+                              @for (att of c.response_attachments; track att.file_path) {
+                                <a (click)="downloadClarificationAttachment(att)" style="display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:3px 8px;font-size:11.5px;color:#0369a1;cursor:pointer;text-decoration:none;">
+                                  <mat-icon style="font-size:14px;width:14px;height:14px;">attach_file</mat-icon>
+                                  {{ att.original_name || att.name }}
+                                  @if (att.size) { <span style="color:#94a3b8;font-size:10px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
+                                </a>
+                              }
+                            </div>
+                          }
                         </div>
                       } @else {
                         <span style="font-size:11px;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:4px;">
@@ -486,6 +510,12 @@ export class PrDetailComponent implements OnInit {
       next: r => { this.pr.set(r); this.acting.set(false); this.notify.success('PR rejected'); },
       error: e => { this.notify.error(e.error?.error ?? 'Action failed'); this.acting.set(false); },
     });
+  }
+
+  downloadClarificationAttachment(att: any) {
+    if (!att || !att.file_path) return;
+    const url = `${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/clarification-attachments/download?path=${encodeURIComponent(att.file_path)}`;
+    window.open(url, '_blank');
   }
 
   requestClarification() {
