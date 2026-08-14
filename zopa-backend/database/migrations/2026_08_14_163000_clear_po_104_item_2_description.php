@@ -17,7 +17,7 @@ return new class extends Migration
             DB::table('po_items')
                 ->where('po_id', $po->id)
                 ->where('sno', 2)
-                ->update(['description' => null]);
+                ->update(['description' => '']);
         }
     }
 
