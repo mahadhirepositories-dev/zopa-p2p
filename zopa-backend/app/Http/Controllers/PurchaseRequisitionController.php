@@ -205,6 +205,7 @@ class PurchaseRequisitionController extends Controller
                 'linkedPurchaseOrders.vendor:id,name',
                 'clarifications.requester:id,name',
                 'clarifications.responder:id,name',
+                'statusUpdates.sentBy:id,name,email',
             ])
         );
     }
@@ -618,6 +619,114 @@ class PurchaseRequisitionController extends Controller
             }
 
             $path = $file->store("clarification-attachments/pr-{$prId}", 'local');
+            $attachments[] = [
+                'name'          => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                'original_name' => $file->getClientOriginalName(),
+                'file_path'     => $path,
+                'size'          => $file->getSize(),
+                'uploaded_at'   => now()->toIso8601String(),
+            ];
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * Send PR Status Update to PR Raiser and CC stakeholders (Buyer action).
+     */
+    public function sendStatusUpdate(Request $request, PurchaseRequisition $purchaseRequisition): JsonResponse
+    {
+        $this->authorize($purchaseRequisition);
+        $this->requireTransactRole();
+
+        $request->validate([
+            'message'   => 'required|string|max:4000',
+            'cc_emails' => 'nullable',
+        ]);
+
+        // Parse CC emails (array or comma-separated string)
+        $rawCc = $request->input('cc_emails');
+        $ccEmails = [];
+        if (is_array($rawCc)) {
+            $ccEmails = array_filter(array_map('trim', $rawCc), fn($e) => filter_var($e, FILTER_VALIDATE_EMAIL));
+        } elseif (is_string($rawCc) && trim($rawCc) !== '') {
+            $parts = explode(',', $rawCc);
+            foreach ($parts as $p) {
+                $trimmed = trim($p);
+                if (filter_var($trimmed, FILTER_VALIDATE_EMAIL)) {
+                    $ccEmails[] = $trimmed;
+                }
+            }
+        }
+        $ccEmails = array_values(array_unique($ccEmails));
+
+        // Process attachments
+        $attachments = $this->processStatusUpdateFiles($request, $purchaseRequisition->id);
+
+        $update = \App\Models\PrStatusUpdate::create([
+            'tenant_id'   => $purchaseRequisition->tenant_id,
+            'pr_id'       => $purchaseRequisition->id,
+            'sent_by'     => auth()->id(),
+            'message'     => trim($request->message),
+            'cc_emails'   => count($ccEmails) > 0 ? $ccEmails : null,
+            'attachments' => count($attachments) > 0 ? $attachments : null,
+        ]);
+
+        // Send Email to PR Raiser and CC recipients
+        $prRaiserEmail = optional($purchaseRequisition->requestedBy)->email ?? optional(\App\Models\User::find($purchaseRequisition->requested_by))->email;
+        if ($prRaiserEmail) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($prRaiserEmail)->queue(
+                    new \App\Mail\PrStatusUpdateMail($purchaseRequisition, trim($request->message), auth()->user(), $ccEmails)
+                );
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::error('Failed to send PR status update email: ' . $e->getMessage());
+            }
+        }
+
+        // Log Activity
+        $this->actLog->log('PR', $purchaseRequisition->id, 'pr_status_update', [
+            'pr_number'   => $purchaseRequisition->pr_number,
+            'message'     => trim($request->message),
+            'cc_emails'   => $ccEmails,
+            'attachments' => $attachments,
+            'sent_by'     => auth()->user()->name ?? auth()->id(),
+        ]);
+
+        return response()->json([
+            'message'       => 'PR Status Update sent successfully.',
+            'status_update' => $update->load('sentBy:id,name,email'),
+            'pr'            => $purchaseRequisition->fresh(['statusUpdates.sentBy', 'clarifications.requester']),
+        ]);
+    }
+
+    public function downloadStatusUpdateAttachment(Request $request, PurchaseRequisition $purchaseRequisition)
+    {
+        $this->authorize($purchaseRequisition);
+        $path = $request->query('path');
+        if (!$path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($path)) {
+            abort(404, 'Attachment file not found');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('local')->download($path);
+    }
+
+    private function processStatusUpdateFiles(Request $request, int $prId): array
+    {
+        $uploadedFiles = [];
+        if ($request->hasFile('file')) {
+            $uploadedFiles[] = $request->file('file');
+        } elseif ($request->hasFile('files')) {
+            $files = $request->file('files');
+            $uploadedFiles = is_array($files) ? $files : [$files];
+        }
+
+        $attachments = [];
+        foreach ($uploadedFiles as $file) {
+            if (!$file->isValid()) continue;
+            if ($file->getSize() > 10240 * 1024) continue;
+
+            $path = $file->store("status-update-attachments/pr-{$prId}", 'local');
             $attachments[] = [
                 'name'          => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
                 'original_name' => $file->getClientOriginalName(),

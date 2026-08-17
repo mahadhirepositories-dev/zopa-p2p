@@ -314,6 +314,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('purchase-requisitions/{purchaseRequisition}/request-clarification', [PurchaseRequisitionController::class, 'requestClarification']);
         Route::post('purchase-requisitions/{purchaseRequisition}/provide-clarification', [PurchaseRequisitionController::class, 'provideClarification']);
         Route::get('purchase-requisitions/{purchaseRequisition}/clarification-attachments/download', [PurchaseRequisitionController::class, 'downloadClarificationAttachment']);
+        Route::post('purchase-requisitions/{purchaseRequisition}/send-update', [PurchaseRequisitionController::class, 'sendStatusUpdate']);
+        Route::get('purchase-requisitions/{purchaseRequisition}/status-update-attachments/download', [PurchaseRequisitionController::class, 'downloadStatusUpdateAttachment']);
         Route::get('purchase-requisitions/{purchaseRequisition}/activities', [PurchaseRequisitionController::class, 'activities']);
 
         Route::get('purchase-orders/{purchaseOrder}/activities', [PurchaseOrderController::class, 'activities']);

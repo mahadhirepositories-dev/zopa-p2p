@@ -94,5 +94,10 @@ class PurchaseRequisition extends Model
     {
         return $this->hasMany(PrClarification::class, 'pr_id')->orderByDesc('created_at');
     }
+
+    public function statusUpdates(): HasMany
+    {
+        return $this->hasMany(PrStatusUpdate::class, 'pr_id')->orderByDesc('created_at');
+    }
 }
 

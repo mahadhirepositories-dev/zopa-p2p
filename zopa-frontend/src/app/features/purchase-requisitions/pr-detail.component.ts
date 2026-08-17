@@ -17,6 +17,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { ShortClosePrDialogComponent } from './short-close-pr-dialog.component';
 import { RequestClarificationDialogComponent } from './request-clarification-dialog.component';
 import { ProvideClarificationDialogComponent } from './provide-clarification-dialog.component';
+import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
 
 @Component({
   selector: 'app-pr-detail',
@@ -25,7 +26,7 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
     DatePipe, DecimalPipe, TitleCasePipe, RouterLink,
     MatButtonModule, MatIconModule, MatChipsModule, MatMenuModule,
     MatProgressSpinnerModule, MatCardModule, MatDividerModule, MatDialogModule,
-    ActivityTimelineComponent,
+    ActivityTimelineComponent, SendPrUpdateDialogComponent,
   ],
 
   template: `
@@ -104,6 +105,12 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
               </button>
               <button mat-stroked-button class="btn-compact" [routerLink]="['/purchase-requisitions', pr()!.id, 'edit']">
                 <mat-icon>edit</mat-icon> Edit PR
+              </button>
+            }
+
+            @if (!['draft', 'short_closed', 'rejected'].includes(pr()!.status ?? '') && auth.canTransact()) {
+              <button mat-stroked-button color="primary" class="btn-compact" (click)="openSendPrUpdateDialog()">
+                <mat-icon>rate_review</mat-icon> Send PR Update
               </button>
             }
 
@@ -269,6 +276,61 @@ import { ProvideClarificationDialogComponent } from './provide-clarification-dia
                         <span style="font-size:11px;font-weight:700;color:#d97706;background:#fef3c7;padding:2px 8px;border-radius:4px;display:inline-block;margin-top:4px;">
                           ⏳ Awaiting Response
                         </span>
+                      }
+                    </div>
+                  }
+                </mat-card-content>
+              </mat-card>
+            }
+
+            <!-- PR Status Updates Log -->
+            @if (pr()!.statusUpdates?.length) {
+              <mat-card class="info-card">
+                <mat-card-header style="display:flex;align-items:center;justify-content:space-between;">
+                  <mat-card-title style="display:flex;align-items:center;gap:6px;color:#0284c7;">
+                    <mat-icon style="font-size:18px;width:18px;height:18px;">rate_review</mat-icon>
+                    PR Status Updates Log ({{ pr()!.statusUpdates!.length }})
+                  </mat-card-title>
+                  @if (auth.canTransact()) {
+                    <button mat-button color="primary" type="button" (click)="openSendPrUpdateDialog()" style="font-size:11px;height:28px;line-height:28px;">
+                      + Send Update
+                    </button>
+                  }
+                </mat-card-header>
+                <mat-card-content style="display:flex;flex-direction:column;gap:12px;padding-top:10px!important;">
+                  @for (upd of pr()!.statusUpdates; track upd.id) {
+                    <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px 14px;">
+                      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                        <span style="font-size:12px;font-weight:700;color:#0369a1;display:flex;align-items:center;gap:6px;">
+                          <mat-icon style="font-size:16px;width:16px;height:16px;">account_circle</mat-icon>
+                          {{ upd.sent_by?.name || 'Buyer' }}
+                        </span>
+                        <span style="font-size:11px;color:#64748b;">
+                          {{ upd.created_at | date:'dd MMM yyyy, hh:mm a' }}
+                        </span>
+                      </div>
+
+                      @if (upd.cc_emails?.length) {
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color:#475569;">
+                          <span style="font-weight:600;color:#0369a1;">CC Tagged:</span>
+                          @for (email of upd.cc_emails; track email) {
+                            <span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size:10.5px;">{{ email }}</span>
+                          }
+                        </div>
+                      }
+
+                      <div style="font-size:13px;color:#1e293b;white-space:pre-wrap;line-height:1.5;">{{ upd.message }}</div>
+
+                      @if (upd.attachments?.length) {
+                        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px dashed #bae6fd;">
+                          @for (att of upd.attachments; track att.file_path) {
+                            <span (click)="downloadStatusUpdateAttachment(att.file_path)"
+                                  style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #bae6fd;color:#0284c7;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">
+                              <mat-icon style="font-size:14px;width:14px;height:14px;">attach_file</mat-icon>
+                              {{ att.original_name || att.name }}
+                            </span>
+                          }
+                        </div>
                       }
                     </div>
                   }
@@ -554,6 +616,32 @@ export class PrDetailComponent implements OnInit {
         this.loadPr();
       }
     });
+  }
+
+  openSendPrUpdateDialog() {
+    const ref = this.dialog.open(SendPrUpdateDialogComponent, {
+      width: '560px',
+      data: {
+        prId: this.pr()!.id,
+        prNumber: this.pr()!.pr_number,
+        prTitle: this.pr()!.title,
+        requestedByName: this.pr()!.requestedBy?.name,
+        requestedByEmail: this.pr()!.requestedBy?.email,
+      },
+    });
+
+    ref.afterClosed().subscribe((res) => {
+      if (res?.id) {
+        this.pr.set(res);
+      } else if (res) {
+        this.loadPr();
+      }
+    });
+  }
+
+  downloadStatusUpdateAttachment(path: string) {
+    const url = `${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/status-update-attachments/download?path=${encodeURIComponent(path)}`;
+    window.open(url, '_blank');
   }
 
   private loadPr() {
