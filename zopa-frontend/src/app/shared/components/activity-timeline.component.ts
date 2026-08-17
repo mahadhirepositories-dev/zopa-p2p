@@ -46,7 +46,9 @@ interface ActivityEntry {
                   }
                   <span class="tl-time">{{ e.created_at | date:'dd MMM yyyy, HH:mm' }}</span>
                 </div>
-                @if (e.meta?.['remarks']) {
+                @if (e.meta?.['message']) {
+                  <div class="tl-comment">"{{ e.meta!['message'] }}"</div>
+                } @else if (e.meta?.['remarks']) {
                   <div class="tl-comment">{{ e.meta!['remarks'] }}</div>
                 } @else if (e.meta?.['notes']) {
                   <div class="tl-comment">{{ e.meta!['notes'] }}</div>
@@ -77,7 +79,7 @@ interface ActivityEntry {
     .dot-green  { background:#16a34a; }
     .dot-amber  { background:#d97706; }
     .dot-red    { background:#dc2626; }
-    .dot-blue   { background:#2563eb; }
+    .dot-blue   { background:#0284c7; }
     .dot-gray   { background:#94a3b8; }
     .dot-purple { background:#7c3aed; }
     .tl-body { flex:1;padding-bottom:16px; }
@@ -125,6 +127,7 @@ export class ActivityTimelineComponent implements OnChanges {
       delivered: 'local_shipping', delivery_status_updated: 'local_shipping',
       partially_delivered: 'local_shipping',
       invoiced: 'receipt_long', payment_released: 'payments', cancelled: 'block', deleted: 'delete',
+      pr_status_update: 'rate_review',
     };
     return map[action] ?? 'circle';
   }
@@ -142,6 +145,7 @@ export class ActivityTimelineComponent implements OnChanges {
       partially_delivered: 'Marked Partially Delivered',
       invoiced: 'Invoice Processed', payment_released: 'Payment Released',
       cancelled: 'Cancelled', deleted: 'Deleted',
+      pr_status_update: 'PR Status Update Sent',
     };
     return map[action] ?? action.replace(/_/g, ' ');
   }
@@ -153,7 +157,7 @@ export class ActivityTimelineComponent implements OnChanges {
     const green  = ['created', 'approved', 'rfq_approved', 'converted', 'delivered', 'payment_released'];
     const amber  = ['submitted', 'rfq_created', 'returned', 'updated', 'partially_delivered'];
     const red    = ['rejected', 'cancelled', 'deleted'];
-    const blue   = ['released', 'invoiced'];
+    const blue   = ['released', 'invoiced', 'pr_status_update'];
     const purple = ['payment_released'];
 
     if (purple.includes(action)) return 'tl-dot dot-purple';
