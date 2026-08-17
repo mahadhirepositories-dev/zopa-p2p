@@ -68,18 +68,26 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               </button>
             }
 
-            @if (myApproval() && po()!.status?.startsWith('pending')) {
-              <button mat-raised-button class="btn-compact btn-approve" [disabled]="acting()" (click)="openApprovalAction('approve')">
-                @if (acting() === 'approve') { <mat-spinner diameter="16" /> }
-                @else { <ng-container><mat-icon>check_circle</mat-icon> Approve</ng-container> }
-              </button>
-              <button mat-stroked-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('return')">
-                <mat-icon>undo</mat-icon> Return
-              </button>
-              <button mat-raised-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('reject')">
-                @if (acting() === 'reject') { <mat-spinner diameter="16" /> }
-                @else { <ng-container><mat-icon>cancel</mat-icon> Reject</ng-container> }
-              </button>
+            @if (po()!.status?.startsWith('pending')) {
+              @if (myApproval() || auth.isAdmin()) {
+                <button mat-raised-button class="btn-compact btn-approve" [disabled]="acting()" (click)="openApprovalAction('approve')">
+                  @if (acting() === 'approve') { <mat-spinner diameter="16" /> }
+                  @else { <ng-container><mat-icon>check_circle</mat-icon> Approve</ng-container> }
+                </button>
+                <button mat-stroked-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('return')">
+                  <mat-icon>undo</mat-icon> Return
+                </button>
+                <button mat-raised-button color="warn" class="btn-compact" [disabled]="acting()" (click)="openApprovalAction('reject')">
+                  @if (acting() === 'reject') { <mat-spinner diameter="16" /> }
+                  @else { <ng-container><mat-icon>cancel</mat-icon> Reject</ng-container> }
+                </button>
+              }
+              @if (auth.isAdmin()) {
+                <button mat-stroked-button color="primary" class="btn-compact" [disabled]="acting()" (click)="resendApprovalEmail()">
+                  @if (acting() === 'resend_email') { <mat-spinner diameter="16" /> }
+                  @else { <ng-container><mat-icon>mail</mat-icon> Resend Email</ng-container> }
+                </button>
+              }
             }
 
             @if (po()!.status === 'approved' && auth.canTransact()) {
@@ -682,6 +690,14 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .modal-card { min-width:320px; }
     .status-returned { background:#fff3e0 !important; color:#e65100 !important; }
     .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+
+    @media (max-width: 768px) {
+      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .header-actions { flex-wrap: wrap; width: 100%; gap: 8px; justify-content: flex-start; }
+      .header-actions button { flex: 1 1 auto; min-width: 110px; justify-content: center; }
+      .detail-layout { grid-template-columns: 1fr; }
+      .modal-card { width: 92vw; max-width: 440px; min-width: 0; margin: 16px; }
+    }
     .main-col { min-width: 0; }
     .side-col { min-width: 0; }
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -1002,6 +1018,25 @@ export class PoDetailComponent implements OnInit {
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/reset-to-draft`, {}).subscribe({
       next: po => { this.po.set(po); this.acting.set(false); this.notify.success('PO reset to draft. Configure approvers, then Submit for Approval.'); if (this.auth.isSuperAdmin()) this.loadDiagnostic(); },
       error: err => { this.notify.error(err.error?.error ?? 'Reset failed.'); this.acting.set(false); },
+    });
+  }
+
+  resendApprovalEmail() {
+    const pendingApproval = this.po()?.approvals?.find((a: any) => a.action === 'pending');
+    if (!pendingApproval) {
+      this.notify.error('No active pending approval found for this PO.');
+      return;
+    }
+    this.acting.set('resend_email');
+    this.http.post<any>(`${environment.apiUrl}/approvals/${pendingApproval.id}/resend-email`, {}).subscribe({
+      next: (res) => {
+        this.acting.set(false);
+        this.notify.success(res.message || 'Approval email resent successfully.');
+      },
+      error: (err) => {
+        this.acting.set(false);
+        this.notify.error(err.error?.error || 'Could not resend approval email.');
+      },
     });
   }
 

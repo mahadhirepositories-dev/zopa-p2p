@@ -23,7 +23,7 @@
       <h1>Approve this document?</h1>
       <div class="doc">{{ $docLabel }}</div>
 
-      <form method="POST" action="{{ url('/api/email/approval/' . $token . '/approve') }}">
+      <form method="POST" action="">
         <button type="submit" class="btn">Confirm Approval</button>
       </form>
 

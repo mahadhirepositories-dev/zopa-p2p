@@ -485,6 +485,36 @@ class ApprovalService
      * Email a single approver an action-required notice (line items + PDF +
      * one-click approve/reject links). Mail failures never break the flow.
      */
+    public function resendApprovalEmail(Approval $approval): bool
+    {
+        $approval->loadMissing(['assignedTo', 'purchaseOrder', 'purchaseRequisition', 'invoice']);
+        $user = $approval->assignedTo;
+        if (!$user?->email) {
+            return false;
+        }
+
+        $entity = match ($approval->entity_type) {
+            'PO' => $approval->purchaseOrder ?? PurchaseOrder::find($approval->entity_id),
+            'PR', 'PR_SHORT_CLOSE' => $approval->purchaseRequisition ?? PurchaseRequisition::find($approval->entity_id),
+            'Invoice', 'INVOICE' => $approval->invoice ?? Invoice::find($approval->entity_id),
+            default => null,
+        };
+
+        if (!$entity) {
+            return false;
+        }
+
+        $entityType = in_array($approval->entity_type, ['PR', 'PR_SHORT_CLOSE']) ? 'PR' : ($approval->entity_type === 'PO' ? 'PO' : 'Invoice');
+
+        try {
+            Mail::to($user->email)->send(new ApprovalRequestMail($approval, $entityType, $entity));
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
+    }
+
     private function notifyApprover(Approval $approval, string $entityType, object $entity): void
     {
         $user = $approval->assignedTo;

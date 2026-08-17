@@ -30,7 +30,7 @@
         <div class="err">{{ $error }}</div>
       @endif
 
-      <form method="POST" action="{{ url('/api/email/approval/' . $token . '/reject') }}">
+      <form method="POST" action="">
         <label for="remarks">Reason for rejection <span style="color:#dc2626;">*</span></label>
         <textarea id="remarks" name="remarks" required placeholder="Briefly explain why this is being rejected…"></textarea>
         <button type="submit" class="btn">Confirm Rejection</button>

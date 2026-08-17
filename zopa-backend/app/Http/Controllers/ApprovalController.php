@@ -267,6 +267,33 @@ class ApprovalController extends Controller
         return response()->json(['message' => 'Rejected']);
     }
 
+    /**
+     * Resend approval email to the assigned approver (Super Admin oversight action).
+     */
+    public function resendEmail(Request $request, Approval $approval): JsonResponse
+    {
+        $this->requireAdminRole();
+        abort_if($approval->action !== 'pending', 422, 'Can only resend notification for pending approvals.');
+
+        $sent = $this->approvals->resendApprovalEmail($approval);
+
+        if (!$sent) {
+            return response()->json(['error' => 'Assigned approver does not have a valid email address.'], 422);
+        }
+
+        $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
+        $this->actLog->log(
+            $logType,
+            $approval->entity_id,
+            'approval_email_resent',
+            ['level' => $approval->level, 'sent_to' => $approval->assignedTo?->email]
+        );
+
+        return response()->json([
+            'message' => "Approval email successfully resent to {$approval->assignedTo?->name} ({$approval->assignedTo?->email})."
+        ]);
+    }
+
     /** Find the current user's pending approval for a PO, or abort 403. */
     private function findMyPendingApproval(PurchaseOrder $purchaseOrder): Approval
     {

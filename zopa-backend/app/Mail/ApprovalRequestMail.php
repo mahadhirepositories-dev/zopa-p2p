@@ -42,8 +42,14 @@ class ApprovalRequestMail extends Mailable
         $tokens = app(TokenService::class);
 
         // Distinct single-use tokens per action; the URL path declares the action.
-        $this->approveUrl = url('/api/email/approval/' . $tokens->generate($approval, 'approve') . '/approve');
-        $this->rejectUrl  = url('/api/email/approval/' . $tokens->generate($approval, 'reject')  . '/reject');
+        $baseUrl = config('app.url');
+        if (str_starts_with($baseUrl, 'https://') || request()->secure()) {
+            $this->approveUrl = secure_url('/api/email/approval/' . $tokens->generate($approval, 'approve') . '/approve');
+            $this->rejectUrl  = secure_url('/api/email/approval/' . $tokens->generate($approval, 'reject')  . '/reject');
+        } else {
+            $this->approveUrl = url('/api/email/approval/' . $tokens->generate($approval, 'approve') . '/approve');
+            $this->rejectUrl  = url('/api/email/approval/' . $tokens->generate($approval, 'reject')  . '/reject');
+        }
 
         $this->approverName = $approval->assignedTo?->name ?? 'Approver';
 

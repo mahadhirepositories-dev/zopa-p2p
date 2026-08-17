@@ -157,12 +157,17 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
                       <div class="level-badge">L{{ a.level }}</div>
                     </div>
                   </div>
-                  <div class="awaiting-col">
-                    <div class="metric-label">Awaiting</div>
-                    <div class="awaiting-name">
-                      <span class="approver-chip">{{ a.assigned_to?.name?.[0] ?? '?' }}</span>
-                      {{ a.assigned_to?.name ?? '—' }}
+                  <div class="awaiting-col" style="display:flex;align-items:center;gap:12px;">
+                    <div>
+                      <div class="metric-label">Awaiting</div>
+                      <div class="awaiting-name">
+                        <span class="approver-chip">{{ a.assigned_to?.name?.[0] ?? '?' }}</span>
+                        {{ a.assigned_to?.name ?? '—' }}
+                      </div>
                     </div>
+                    <button mat-stroked-button color="primary" type="button" (click)="resendEmail(a, $event)" style="font-size:11px;height:30px;line-height:28px;padding:0 8px;margin-left:auto;">
+                      <mat-icon style="font-size:14px;width:14px;height:14px;margin-right:2px;">mail</mat-icon> Resend Email
+                    </button>
                   </div>
                 </div>
               }
@@ -442,6 +447,14 @@ export class ApprovalQueueComponent implements OnInit {
     if (a.entity_type === 'INVOICE') return '#16a34a';
     if (a.entity_type === 'PR') return '#2563eb';
     return 'var(--brand)';
+  }
+
+  resendEmail(a: any, event?: Event) {
+    if (event) event.stopPropagation();
+    this.http.post<any>(`${environment.apiUrl}/approvals/${a.id}/resend-email`, {}).subscribe({
+      next: (res) => this.notify.success(res.message || 'Approval email resent successfully.'),
+      error: (err) => this.notify.error(err.error?.error || 'Could not resend approval email.'),
+    });
   }
 
   viewPo(entityId: number) {
