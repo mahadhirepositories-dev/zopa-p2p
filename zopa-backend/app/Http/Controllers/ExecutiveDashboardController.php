@@ -432,6 +432,52 @@ class ExecutiveDashboardController extends Controller
         $localSpendValue = ($totalValueManaged > 0) ? round($totalValueManaged * 0.42, 2) : 0;
         $localPct = ($totalValueManaged > 0) ? 42.0 : 0;
 
+        // 19. Dedicated Tracking Data for Super Admin Oversight
+        // Pending PRs: Created to Submitted / Pending Conversion
+        $pendingPrs = PurchaseRequisition::whereIn('tenant_id', $clientTenantIds)
+            ->whereNotIn('status', ['converted', 'rejected', 'short_closed'])
+            ->with(['requestedBy:id,name', 'buyer:id,name', 'costCenter:id,name'])
+            ->latest()
+            ->limit(30)
+            ->get()
+            ->map(function ($pr) {
+                return [
+                    'id'             => $pr->id,
+                    'pr_number'      => $pr->pr_number ?? 'Draft',
+                    'title'          => $pr->title,
+                    'status'         => $pr->status,
+                    'pr_raiser_name' => $pr->requestedBy?->name ?? '—',
+                    'buyer_name'     => $pr->buyer?->name ?? '—',
+                    'cost_center'    => $pr->costCenter?->name ?? '—',
+                    'created_at'     => $pr->created_at,
+                    'tat_days'       => round($pr->created_at->diffInHours(now()) / 24, 1),
+                ];
+            });
+
+        // Released POs Awaiting Delivery: Release -> Delivery
+        $pendingDeliveryPos = PurchaseOrder::whereIn('tenant_id', $clientTenantIds)
+            ->whereIn('status', ['released', 'partially_delivered'])
+            ->with(['creator:id,name', 'vendor:id,name', 'costCenter:id,name'])
+            ->latest()
+            ->limit(30)
+            ->get()
+            ->map(function ($po) {
+                $relAt = $po->released_at ?? $po->created_at;
+                $days = round($relAt->diffInHours(now()) / 24, 1);
+                return [
+                    'id'                     => $po->id,
+                    'po_number'              => $po->po_number ?? 'Draft',
+                    'status'                 => $po->status,
+                    'buyer_name'             => $po->creator?->name ?? '—',
+                    'vendor_name'            => $po->vendor?->name ?? '—',
+                    'cost_center'            => $po->costCenter?->name ?? '—',
+                    'released_at'            => $relAt,
+                    'tat_days_since_release' => $days,
+                    'tat_badge'              => $days > 7 ? 'Delayed' : ($days > 3 ? 'Moderate' : 'On Track'),
+                    'badge_color'            => $days > 7 ? 'red' : ($days > 3 ? 'orange' : 'green'),
+                ];
+            });
+
         return [
             'period'                        => $period,
             'from_date'                     => $fromDate,
@@ -456,6 +502,8 @@ class ExecutiveDashboardController extends Controller
             'medicine_lab_outage_rate'      => $outageRate,
             'local_procurement_spend'       => $localSpendValue,
             'local_procurement_pct'         => $localPct,
+            'pending_pr_tracking'          => $pendingPrs,
+            'po_delivery_tracking'         => $pendingDeliveryPos,
         ];
     }
 }

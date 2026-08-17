@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -288,6 +288,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 export class PoListComponent implements OnInit {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   readonly auth = inject(AuthService);
   private exportService = inject(ExportService);
 
@@ -299,6 +300,14 @@ export class PoListComponent implements OnInit {
 
   pageIndex = signal(0);
   pageSize = signal(20);
+
+  ngOnInit() {
+    const s = this.route.snapshot.queryParamMap.get('status');
+    if (s) {
+      this.statusFilter.set(s);
+    }
+    this.fetchOrders();
+  }
 
   filtered = computed(() => {
     const q = this.search().toLowerCase();
@@ -332,7 +341,7 @@ export class PoListComponent implements OnInit {
     this.pageIndex.set(0);
   }
 
-  ngOnInit() {
+  fetchOrders() {
     this.http.get<any>(`${environment.apiUrl}/purchase-orders?per_page=500`).subscribe({
       next: res => { this.orders.set(res.data ?? res); this.loading.set(false); },
       error: () => this.loading.set(false),

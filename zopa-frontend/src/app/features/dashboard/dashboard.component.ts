@@ -36,6 +36,8 @@ interface DashboardStats {
   pr_counts: Record<string, number>;
   recent_prs: any[];
   pr_kpi: PrKpi[];
+  pending_pr_tracking?: any[];
+  po_delivery_tracking?: any[];
 }
 
 @Component({
@@ -105,7 +107,7 @@ interface DashboardStats {
         <!-- ── Stat cards ──────────────────────────────────── -->
         <div class="stat-grid">
 
-          <div class="stat-card anim-1">
+          <div class="stat-card anim-1 clickable" (click)="router.navigate(['/purchase-orders'])">
             <div class="stat-card-body">
               <div class="stat-label">Total POs</div>
               <div class="stat-value">{{ totalPos() }}</div>
@@ -142,7 +144,7 @@ interface DashboardStats {
             </div>
           </div>
 
-          <div class="stat-card anim-3">
+          <div class="stat-card anim-3 clickable" (click)="router.navigate(['/purchase-orders'], { queryParams: { status: 'approved' } })">
             <div class="stat-card-body">
               <div class="stat-label">Approved</div>
               <div class="stat-value" style="color:#16a34a;">{{ stats()!.po_counts['approved'] ?? 0 }}</div>
@@ -156,7 +158,7 @@ interface DashboardStats {
             </div>
           </div>
 
-          <div class="stat-card anim-4">
+          <div class="stat-card anim-4 clickable" (click)="router.navigate(['/purchase-orders'], { queryParams: { status: 'released' } })">
             <div class="stat-card-body">
               <div class="stat-label">Released</div>
               <div class="stat-value" style="color:#2563eb;">{{ stats()!.po_counts['released'] ?? 0 }}</div>
@@ -866,6 +868,144 @@ interface DashboardStats {
         </mat-card>
         }
 
+        <!-- ══════════════════════════════════════════════════════
+             SUPER ADMIN TRACKING 1: PR CREATED -> SUBMITTED (TAT)
+             ══════════════════════════════════════════════════════ -->
+        @if (stats()!.pending_pr_tracking?.length) {
+        <mat-card class="kpi-card" style="margin-top:20px;">
+          <mat-card-header style="padding:20px 20px 0;">
+            <mat-card-title>
+              <mat-icon style="vertical-align:middle;margin-right:6px;color:#0284c7;">pending_actions</mat-icon>
+              PR Processing Tracking — Created to Submitted (Pending Conversion)
+            </mat-card-title>
+            <div style="flex:1"></div>
+            <span style="font-size:12px;color:var(--text-3);cursor:pointer;" (click)="router.navigate(['/purchase-requisitions'])">
+              View All PRs &rarr;
+            </span>
+          </mat-card-header>
+          <mat-card-content style="padding:0 !important;">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="stats()!.pending_pr_tracking!" class="kpi-table full-width">
+                <ng-container matColumnDef="pr_number">
+                  <th mat-header-cell *matHeaderCellDef>PR Number</th>
+                  <td mat-cell *matCellDef="let pr">
+                    <a class="po-link" (click)="router.navigate(['/purchase-requisitions', pr.id]);$event.stopPropagation()">
+                      {{ pr.pr_number }}
+                    </a>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="title">
+                  <th mat-header-cell *matHeaderCellDef>Title</th>
+                  <td mat-cell *matCellDef="let pr" class="pr-title-cell">{{ pr.title }}</td>
+                </ng-container>
+                <ng-container matColumnDef="pr_raiser">
+                  <th mat-header-cell *matHeaderCellDef>PR Raiser</th>
+                  <td mat-cell *matCellDef="let pr"><strong>{{ pr.pr_raiser_name }}</strong></td>
+                </ng-container>
+                <ng-container matColumnDef="buyer">
+                  <th mat-header-cell *matHeaderCellDef>Buyer Name</th>
+                  <td mat-cell *matCellDef="let pr">{{ pr.buyer_name }}</td>
+                </ng-container>
+                <ng-container matColumnDef="cost_center">
+                  <th mat-header-cell *matHeaderCellDef>Cost Center</th>
+                  <td mat-cell *matCellDef="let pr" style="font-size:12px;color:var(--text-2);">{{ pr.cost_center }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let pr">
+                    <span [class]="'status-pill status-' + pr.status">{{ formatStatus(pr.status) }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="tat_days">
+                  <th mat-header-cell *matHeaderCellDef style="text-align:center;">TAT Days</th>
+                  <td mat-cell *matCellDef="let pr" style="text-align:center;">
+                    <span [class]="tatClass(pr.tat_days)" style="font-weight:700;">{{ pr.tat_days }} days</span>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="pendingPrCols"></tr>
+                <tr mat-row *matRowDef="let row; columns: pendingPrCols;" class="kpi-row"
+                    (click)="router.navigate(['/purchase-requisitions', row.id])"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        }
+
+        <!-- ══════════════════════════════════════════════════════
+             SUPER ADMIN TRACKING 2: PO RELEASED -> DELIVERY (TAT)
+             ══════════════════════════════════════════════════════ -->
+        @if (stats()!.po_delivery_tracking?.length) {
+        <mat-card class="kpi-card" style="margin-top:20px;">
+          <mat-card-header style="padding:20px 20px 0;">
+            <mat-card-title>
+              <mat-icon style="vertical-align:middle;margin-right:6px;color:#16a34a;">local_shipping</mat-icon>
+              PO Delivery Tracking — Release to Delivery
+            </mat-card-title>
+            <div style="flex:1"></div>
+            <span style="font-size:12px;color:var(--text-3);cursor:pointer;" (click)="router.navigate(['/purchase-orders'], { queryParams: { status: 'released' } })">
+              View Released POs &rarr;
+            </span>
+          </mat-card-header>
+          <mat-card-content style="padding:0 !important;">
+            <div class="table-responsive">
+              <table mat-table [dataSource]="stats()!.po_delivery_tracking!" class="kpi-table full-width">
+                <ng-container matColumnDef="po_number">
+                  <th mat-header-cell *matHeaderCellDef>PO Number</th>
+                  <td mat-cell *matCellDef="let po">
+                    <a class="po-link" (click)="router.navigate(['/purchase-orders', po.id]);$event.stopPropagation()">
+                      {{ po.po_number }}
+                    </a>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="buyer">
+                  <th mat-header-cell *matHeaderCellDef>Buyer Name</th>
+                  <td mat-cell *matCellDef="let po"><strong>{{ po.buyer_name }}</strong></td>
+                </ng-container>
+                <ng-container matColumnDef="vendor">
+                  <th mat-header-cell *matHeaderCellDef>Vendor Name</th>
+                  <td mat-cell *matCellDef="let po">{{ po.vendor_name }}</td>
+                </ng-container>
+                <ng-container matColumnDef="cost_center">
+                  <th mat-header-cell *matHeaderCellDef>Cost Center</th>
+                  <td mat-cell *matCellDef="let po" style="font-size:12px;color:var(--text-2);">{{ po.cost_center }}</td>
+                </ng-container>
+                <ng-container matColumnDef="released_at">
+                  <th mat-header-cell *matHeaderCellDef>Released Date</th>
+                  <td mat-cell *matCellDef="let po" style="font-size:12px;color:var(--text-3);">
+                    {{ po.released_at | date:'dd MMM yyyy' }}
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>Status</th>
+                  <td mat-cell *matCellDef="let po">
+                    <span [class]="'status-pill status-' + po.status">{{ formatStatus(po.status) }}</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="tat_days">
+                  <th mat-header-cell *matHeaderCellDef style="text-align:center;">Days Since Release</th>
+                  <td mat-cell *matCellDef="let po" style="text-align:center;">
+                    <span [class]="tatClass(po.tat_days_since_release)" style="font-weight:700;">{{ po.tat_days_since_release }} days</span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="tat_badge">
+                  <th mat-header-cell *matHeaderCellDef style="text-align:center;">TAT Status</th>
+                  <td mat-cell *matCellDef="let po" style="text-align:center;">
+                    <span [style.background]="po.badge_color === 'red' ? '#fee2e2' : (po.badge_color === 'orange' ? '#ffedd5' : '#dcfce7')"
+                          [style.color]="po.badge_color === 'red' ? '#b91c1c' : (po.badge_color === 'orange' ? '#c2410c' : '#15803d')"
+                          style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;">
+                      {{ po.tat_badge }}
+                    </span>
+                  </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="poDeliveryCols"></tr>
+                <tr mat-row *matRowDef="let row; columns: poDeliveryCols;" class="kpi-row"
+                    (click)="router.navigate(['/purchase-orders', row.id])"></tr>
+              </table>
+            </div>
+          </mat-card-content>
+        </mat-card>
+        }
+
       } @else {
         <div class="error-state">
           <mat-icon>error_outline</mat-icon>
@@ -1227,6 +1367,9 @@ export class DashboardComponent {
   recentPrCols = ['pr_number', 'pr_title', 'pr_cost_center', 'pr_amount', 'pr_date', 'pr_status'];
   prKpiCols    = ['pr_kpi_number', 'pr_kpi_title', 'pr_kpi_cc', 'pr_kpi_status', 'pr_kpi_amount',
                   'pr_kpi_date', 'pr_days_submit', 'pr_days_rfq', 'pr_days_approve', 'pr_total_cycle'];
+
+  pendingPrCols  = ['pr_number', 'title', 'pr_raiser', 'buyer', 'cost_center', 'status', 'tat_days'];
+  poDeliveryCols = ['po_number', 'buyer', 'vendor', 'cost_center', 'released_at', 'status', 'tat_days', 'tat_badge'];
 
   greeting = computed(() => {
     const h = new Date().getHours();

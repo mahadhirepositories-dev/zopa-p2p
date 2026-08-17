@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -348,7 +348,13 @@ export class PrListComponent implements OnInit {
     });
   }
 
+  private route = inject(ActivatedRoute);
+
   ngOnInit() {
+    const s = this.route.snapshot.queryParamMap.get('status');
+    if (s) {
+      this.statusFilter.set(s);
+    }
     this.loadPrs();
   }
 

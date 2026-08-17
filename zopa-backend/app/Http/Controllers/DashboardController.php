@@ -100,6 +100,7 @@ class DashboardController extends Controller
             ->with([
                 'vendor:id,name',
                 'costCenter:id,name',
+                'creator:id,name',
                 'items:id,po_id,sno,description,qty,net_rate,gst_rate,amount,required_by,warranty_months',
                 'items.product:id,code,unit',
             ])
@@ -107,7 +108,7 @@ class DashboardController extends Controller
             ->limit(30)
             ->get([
                 'id', 'po_number', 'status', 'grand_total', 'net_total', 'tax_amount',
-                'vendor_id', 'cost_center_id', 'created_at', 'approved_at', 'released_at', 'delivered_at'
+                'vendor_id', 'cost_center_id', 'created_by', 'created_at', 'approved_at', 'released_at', 'delivered_at'
             ]);
 
         $poIds     = $kpiPos->pluck('id');
@@ -121,16 +122,25 @@ class DashboardController extends Controller
             $releasedAt  = $po->released_at ?? $tat?->po_released_at;
             $deliveredAt = $po->delivered_at ?? $tat?->po_delivered_at ?? $tat?->grn_received_at;
 
-            $daysToApprove  = ($approvedAt && $created) ? round($created->diffInHours($approvedAt) / 24, 1) : null;
-            $daysToRelease  = ($approvedAt && $releasedAt) ? round($approvedAt->diffInHours($releasedAt) / 24, 1) : null;
-            $daysToDeliver  = ($releasedAt && $deliveredAt) ? round($releasedAt->diffInHours($deliveredAt) / 24, 1) : null;
-            $totalCycleDays = ($deliveredAt && $created) ? round($created->diffInHours($deliveredAt) / 24, 1) 
+            $daysToApprove       = ($approvedAt && $created) ? round($created->diffInHours($approvedAt) / 24, 1) : null;
+            $daysToRelease       = ($approvedAt && $releasedAt) ? round($approvedAt->diffInHours($releasedAt) / 24, 1) : null;
+            $daysToDeliver       = ($releasedAt && $deliveredAt) ? round($releasedAt->diffInHours($deliveredAt) / 24, 1) : null;
+            $daysSinceRelease    = ($releasedAt && !$deliveredAt) ? round($releasedAt->diffInHours(now()) / 24, 1) : null;
+            $totalCycleDays      = ($deliveredAt && $created) ? round($created->diffInHours($deliveredAt) / 24, 1) 
                             : (($releasedAt && $created) ? round($created->diffInHours($releasedAt) / 24, 1) : null);
 
             // Intuitiveness Status Badge
             $tatBadge = 'On Track';
             $badgeColor = 'green';
-            if ($totalCycleDays !== null) {
+            if ($daysSinceRelease !== null) {
+                if ($daysSinceRelease > 7) {
+                    $tatBadge = 'Delayed';
+                    $badgeColor = 'red';
+                } elseif ($daysSinceRelease > 3) {
+                    $tatBadge = 'Moderate';
+                    $badgeColor = 'orange';
+                }
+            } elseif ($totalCycleDays !== null) {
                 if ($totalCycleDays > 7) {
                     $tatBadge = 'Delayed';
                     $badgeColor = 'red';
@@ -141,26 +151,29 @@ class DashboardController extends Controller
             }
 
             return [
-                'id'               => $po->id,
-                'po_number'        => $po->po_number,
-                'status'           => $po->status,
-                'vendor'           => $po->vendor?->name,
-                'cost_center'      => $po->costCenter?->name,
-                'grand_total'      => $po->grand_total,
-                'net_total'        => $po->net_total,
-                'tax_amount'       => $po->tax_amount,
-                'items_count'      => $po->items->count(),
-                'created_at'       => $po->created_at,
-                'approved_at'      => $approvedAt,
-                'released_at'      => $releasedAt,
-                'delivered_at'     => $deliveredAt,
-                'days_to_approve'  => $daysToApprove,
-                'days_to_release'  => $daysToRelease,
-                'days_to_deliver'  => $daysToDeliver,
-                'total_cycle_days' => $totalCycleDays,
-                'tat_badge'        => $tatBadge,
-                'badge_color'      => $badgeColor,
-                'items'            => $po->items->map(fn ($item) => [
+                'id'                 => $po->id,
+                'po_number'          => $po->po_number,
+                'status'             => $po->status,
+                'buyer_name'         => $po->creator?->name ?? '—',
+                'vendor_name'        => $po->vendor?->name ?? '—',
+                'vendor'             => $po->vendor?->name,
+                'cost_center'        => $po->costCenter?->name,
+                'grand_total'        => $po->grand_total,
+                'net_total'          => $po->net_total,
+                'tax_amount'         => $po->tax_amount,
+                'items_count'        => $po->items->count(),
+                'created_at'         => $po->created_at,
+                'approved_at'        => $approvedAt,
+                'released_at'        => $releasedAt,
+                'delivered_at'       => $deliveredAt,
+                'days_to_approve'    => $daysToApprove,
+                'days_to_release'    => $daysToRelease,
+                'days_to_deliver'    => $daysToDeliver,
+                'days_since_release' => $daysSinceRelease,
+                'total_cycle_days'   => $totalCycleDays,
+                'tat_badge'          => $tatBadge,
+                'badge_color'        => $badgeColor,
+                'items'              => $po->items->map(fn ($item) => [
                     'sno'             => $item->sno,
                     'description'     => $item->description,
                     'code'            => $item->product?->code,
@@ -177,10 +190,10 @@ class DashboardController extends Controller
 
         // ── PR KPI / TAT table ─────────────────────────────────────
         $kpiPrs = (clone $prQuery)
-            ->with(['costCenter:id,name'])
+            ->with(['costCenter:id,name', 'requestedBy:id,name', 'buyer:id,name'])
             ->latest()
-            ->limit(20)
-            ->get(['id', 'pr_number', 'title', 'status', 'estimated_amount', 'cost_center_id', 'created_at']);
+            ->limit(30)
+            ->get(['id', 'pr_number', 'title', 'status', 'estimated_amount', 'cost_center_id', 'created_at', 'requested_by', 'buyer_id']);
 
         $prIds        = $kpiPrs->pluck('id');
         $prActivities = ActivityLog::where('entity_type', 'PR')
@@ -199,11 +212,11 @@ class DashboardController extends Controller
             $convertedAt   = $logs->firstWhere('action', 'converted')?->created_at;
             $created       = $pr->created_at;
 
-            $daysToSubmit   = $submittedAt ? round($created->diffInHours($submittedAt) / 24, 1) : null;
+            $daysToSubmit   = $submittedAt ? round($created->diffInHours($submittedAt) / 24, 1) : round($created->diffInHours(now()) / 24, 1);
             $daysRfqCreate  = ($submittedAt && $rfqCreatedAt) ? round($submittedAt->diffInHours($rfqCreatedAt) / 24, 1) : null;
             $daysRfqApprove = ($rfqCreatedAt && $rfqApprovedAt) ? round($rfqCreatedAt->diffInHours($rfqApprovedAt) / 24, 1) : null;
             $daysToConvert  = ($rfqApprovedAt && $convertedAt) ? round($rfqApprovedAt->diffInHours($convertedAt) / 24, 1) : null;
-            $totalCycleDays = $convertedAt ? round($created->diffInHours($convertedAt) / 24, 1) : null;
+            $totalCycleDays = $convertedAt ? round($created->diffInHours($convertedAt) / 24, 1) : round($created->diffInHours(now()) / 24, 1);
 
             return [
                 'id'               => $pr->id,
@@ -211,6 +224,8 @@ class DashboardController extends Controller
                 'title'            => $pr->title,
                 'status'           => $pr->status,
                 'cost_center'      => $pr->costCenter?->name,
+                'pr_raiser_name'   => $pr->requestedBy?->name ?? '—',
+                'buyer_name'       => $pr->buyer?->name ?? '—',
                 'estimated_amount' => $pr->estimated_amount,
                 'created_at'       => $created,
                 'submitted_at'     => $submittedAt,
@@ -224,6 +239,52 @@ class DashboardController extends Controller
                 'total_cycle_days' => $totalCycleDays,
             ];
         });
+
+        // ── Dedicated Tracking Data ─────────────────────────────
+        // 1. Pending PRs: Created to Submitted / Pending Conversion
+        $pendingPrs = PurchaseRequisition::where('tenant_id', $tenantId)
+            ->whereNotIn('status', ['converted', 'rejected', 'short_closed'])
+            ->with(['requestedBy:id,name', 'buyer:id,name', 'costCenter:id,name'])
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(function ($pr) {
+                return [
+                    'id'             => $pr->id,
+                    'pr_number'      => $pr->pr_number ?? 'Draft',
+                    'title'          => $pr->title,
+                    'status'         => $pr->status,
+                    'pr_raiser_name' => $pr->requestedBy?->name ?? '—',
+                    'buyer_name'     => $pr->buyer?->name ?? '—',
+                    'cost_center'    => $pr->costCenter?->name ?? '—',
+                    'created_at'     => $pr->created_at,
+                    'tat_days'       => round($pr->created_at->diffInHours(now()) / 24, 1),
+                ];
+            });
+
+        // 2. Released POs Awaiting Delivery: Release -> Delivery
+        $pendingDeliveryPos = PurchaseOrder::where('tenant_id', $tenantId)
+            ->whereIn('status', ['released', 'partially_delivered'])
+            ->with(['creator:id,name', 'vendor:id,name', 'costCenter:id,name'])
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(function ($po) {
+                $relAt = $po->released_at ?? $po->created_at;
+                $days = round($relAt->diffInHours(now()) / 24, 1);
+                return [
+                    'id'                     => $po->id,
+                    'po_number'              => $po->po_number ?? 'Draft',
+                    'status'                 => $po->status,
+                    'buyer_name'             => $po->creator?->name ?? '—',
+                    'vendor_name'            => $po->vendor?->name ?? '—',
+                    'cost_center'            => $po->costCenter?->name ?? '—',
+                    'released_at'            => $relAt,
+                    'tat_days_since_release' => $days,
+                    'tat_badge'              => $days > 7 ? 'Delayed' : ($days > 3 ? 'Moderate' : 'On Track'),
+                    'badge_color'            => $days > 7 ? 'red' : ($days > 3 ? 'orange' : 'green'),
+                ];
+            });
 
         // ── Overall Average TAT Summary (Gross Business Calendar Days) ──────
         $allTats = TatRecord::whereHas('po', fn($q) => $q->where('tenant_id', $tenantId))->get();
@@ -256,14 +317,16 @@ class DashboardController extends Controller
                 'avg_delivery_days'       => $avgDeliveryDays,
                 'avg_total_days'          => $avgTotalDays,
             ],
-            'po_counts'         => $posByStatus,
-            'pending_approvals' => $pendingApprovals,
-            'recent_pos'        => $recentPos,
-            'budget_summary'    => $budgetSummary,
-            'po_kpi'            => $poKpi,
-            'pr_counts'         => $prsByStatus,
-            'recent_prs'        => $recentPrs,
-            'pr_kpi'            => $prKpi,
+            'po_counts'             => $posByStatus,
+            'pending_approvals'     => $pendingApprovals,
+            'recent_pos'            => $recentPos,
+            'budget_summary'        => $budgetSummary,
+            'po_kpi'                => $poKpi,
+            'pr_counts'             => $prsByStatus,
+            'recent_prs'            => $recentPrs,
+            'pr_kpi'                => $prKpi,
+            'pending_pr_tracking'   => $pendingPrs,
+            'po_delivery_tracking'  => $pendingDeliveryPos,
         ]);
     }
 }
