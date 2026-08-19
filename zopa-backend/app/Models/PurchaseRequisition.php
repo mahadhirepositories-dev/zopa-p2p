@@ -115,6 +115,59 @@ class PurchaseRequisition extends Model
         return $cleaned;
     }
 
+    public static function matchScore(?string $poDesc, ?string $prDesc): int
+    {
+        if (!$poDesc || !$prDesc) return 0;
+        $cPo = strtolower(preg_replace('/[^a-zA-Z0-9]/', ' ', $poDesc));
+        $cPr = strtolower(preg_replace('/[^a-zA-Z0-9]/', ' ', $prDesc));
+
+        $poWords = array_filter(explode(' ', $cPo));
+        $prWords = array_filter(explode(' ', $cPr));
+
+        // Form types: tablet, susp, syrup, cap, capsule, inj, strip, card, tube, bottle, drop
+        $forms = ['tablet', 'tab', 'susp', 'suspension', 'syrup', 'syp', 'cap', 'capsule', 'inj', 'injection', 'strip', 'strips', 'card', 'cards', 'tube', 'tubes', 'bottle', 'bottles', 'gel', 'mask', 'glove', 'gloves', 'cream', 'ointment'];
+        $poForms = array_intersect($poWords, $forms);
+        $prForms = array_intersect($prWords, $forms);
+
+        // If both specify a form and forms conflict, score = 0 (e.g. tablet vs susp)
+        if (!empty($poForms) && !empty($prForms)) {
+            $formMatch = false;
+            foreach ($poForms as $pf) {
+                foreach ($prForms as $rf) {
+                    if ($pf === $rf || str_starts_with($pf, $rf) || str_starts_with($rf, $pf)) {
+                        $formMatch = true;
+                        break 2;
+                    }
+                }
+            }
+            if (!$formMatch) {
+                return 0; // Conflict! Tablet does not match Susp!
+            }
+        }
+
+        // Extract numbers (dosages, sizes): e.g. 400, 10, 500, 250, 20
+        preg_match_all('/\d+/', $poDesc, $mPo);
+        preg_match_all('/\d+/', $prDesc, $mPr);
+        $poNums = $mPo[0];
+        $prNums = $mPr[0];
+
+        $ignore = ['pack', 'of', 'nos', 'box', 'and', 'the', 'for', 'in', 'with', 'sd', 'biosensor', 'f200'];
+        $poKeyWords = array_diff($poWords, $ignore);
+        $prKeyWords = array_diff($prWords, $ignore);
+
+        $sharedWords = array_intersect($poKeyWords, $prKeyWords);
+        $score = count($sharedWords) * 10;
+
+        $sharedNums = array_intersect($poNums, $prNums);
+        $score += count($sharedNums) * 20;
+
+        if (!empty($poNums) && !empty($prNums) && empty($sharedNums)) {
+            $score -= 15;
+        }
+
+        return max(0, $score);
+    }
+
     public static function syncPrConversion(self $pr): void
     {
         $pr->loadMissing(['items', 'purchaseOrders.items', 'linkedPurchaseOrders.items']);
@@ -129,7 +182,7 @@ class PurchaseRequisition extends Model
         $prItems = $pr->items;
         $prItemIds = $prItems->pluck('id')->toArray();
 
-        // 1. Intelligently match & link PO items to PR items based on exact & cleaned description
+        // 1. Intelligently match & link PO items to PR items based on exact, clean description, and form/dosage score
         foreach ($poItems as $poItem) {
             $cPo = self::cleanItemDesc($poItem->description);
             $matchedPrItem = null;
@@ -154,19 +207,32 @@ class PurchaseRequisition extends Model
                 }
             }
 
-            // Strategy C: Cleaned description prefix / containment
-            if (!$matchedPrItem && !empty($cPo)) {
-                $subMatches = $prItems->filter(function ($prIt) use ($cPo) {
-                    $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
-                    if (empty($cPr)) return false;
-                    return str_starts_with($cPo, $cPr) || str_starts_with($cPr, $cPo) || str_contains($cPo, $cPr);
-                });
+            // Strategy C: Scored matching (respects dosage, form, keywords)
+            if (!$matchedPrItem) {
+                $candidates = [];
+                foreach ($prItems as $prIt) {
+                    $score = self::matchScore($poItem->description ?? '', $prIt->description ?? '');
+                    if ($score > 0) {
+                        $candidates[] = ['pr' => $prIt, 'score' => $score];
+                    }
+                }
 
-                if ($subMatches->count() > 0) {
-                    $matchedPrItem = $subMatches->first(function ($prIt) use ($poItems) {
-                        $currConverted = (float) $poItems->where('pr_item_id', $prIt->id)->sum('qty');
-                        return $currConverted < (float) $prIt->qty;
-                    }) ?? $subMatches->first();
+                if (!empty($candidates)) {
+                    usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
+                    $topScore = $candidates[0]['score'];
+                    $topCandidates = array_filter($candidates, fn($c) => $c['score'] === $topScore);
+
+                    // Pick unfulfilled candidate first
+                    foreach ($topCandidates as $c) {
+                        $currConverted = (float) $poItems->where('pr_item_id', $c['pr']->id)->sum('qty');
+                        if ($currConverted < (float) $c['pr']->qty) {
+                            $matchedPrItem = $c['pr'];
+                            break;
+                        }
+                    }
+                    if (!$matchedPrItem) {
+                        $matchedPrItem = $candidates[0]['pr'];
+                    }
                 }
             }
 
