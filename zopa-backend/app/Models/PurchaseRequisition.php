@@ -159,27 +159,37 @@ class PurchaseRequisition extends Model
             $prItem->update(['converted_qty' => $totalConverted]);
         }
 
-        // 3. Determine overall PR conversion status strictly from item conversion progress
+        // 3. Determine overall PR conversion status (fully converted or short-closed items count as resolved)
         $pr->load('items');
         $totalItems = $pr->items->count();
         if ($totalItems === 0) {
             return;
         }
 
-        $allConverted = $pr->items->every(fn($it) => (float)$it->converted_qty >= (float)$it->qty);
-        $anyConverted = $pr->items->some(fn($it) => (float)$it->converted_qty > 0);
+        $allResolved = $pr->items->every(function ($it) {
+            $isShortClosed = $it->is_short_closed || ($it->remarks === 'Short Close');
+            $convertedQty = (float)$it->converted_qty;
+            $shortClosedQty = (float)$it->short_closed_qty;
+            $reqQty = (float)$it->qty;
+            return $isShortClosed || $convertedQty >= $reqQty || ($convertedQty + $shortClosedQty >= $reqQty);
+        });
 
-        if ($allConverted) {
+        $anyProgress = $pr->items->some(function ($it) {
+            $isShortClosed = $it->is_short_closed || ($it->remarks === 'Short Close');
+            return (float)$it->converted_qty > 0 || $isShortClosed;
+        });
+
+        if ($allResolved) {
             $pr->update([
                 'status'       => 'converted',
                 'converted_at' => $pr->converted_at ?? now(),
             ]);
-        } elseif ($anyConverted) {
+        } elseif ($anyProgress) {
             $pr->update([
                 'status' => 'partially_converted',
             ]);
         } else {
-            // Revert status if zero items have been converted
+            // Revert status if zero items have been converted or short closed
             if (in_array($pr->status, ['converted', 'partially_converted'])) {
                 $pr->update([
                     'status' => 'submitted',

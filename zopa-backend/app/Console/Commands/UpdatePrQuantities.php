@@ -10,7 +10,7 @@ use Illuminate\Console\Command;
 class UpdatePrQuantities extends Command
 {
     protected $signature = 'pr:update-quantities';
-    protected $description = 'Update requested quantities for specified PR line items in Total Health organization';
+    protected $description = 'Update PR line items with Short Close status or updated quantities for Total Health organization';
 
     public function handle(): int
     {
@@ -26,91 +26,94 @@ class UpdatePrQuantities extends Command
             $this->info("Found Tenant: {$tenant->name} (ID: {$tenant->id})");
         }
 
+        // Structure:
+        // [sno => ['action' => 'update_qty', 'qty' => X]]
+        // OR [sno => ['action' => 'short_close', 'short_qty' => X, 'restore_qty' => Y (optional)]]
         $updates = [
             'PR3' => [
-                11 => 100,
-                16 => 100,
-                21 => 100,
+                11 => ['action' => 'short_close', 'short_qty' => 100, 'restore_qty' => 2500],
+                16 => ['action' => 'short_close', 'short_qty' => 100, 'restore_qty' => 300],
+                21 => ['action' => 'short_close', 'short_qty' => 100, 'restore_qty' => 100],
             ],
             'PR7' => [
-                18 => 600,
-                30 => 300,
-                66 => 30,
-                68 => 100,
+                18 => ['action' => 'short_close', 'short_qty' => 600],
+                30 => ['action' => 'short_close', 'short_qty' => 300],
+                66 => ['action' => 'short_close', 'short_qty' => 30],
+                68 => ['action' => 'short_close', 'short_qty' => 100],
             ],
             'PR8' => [
-                1 => 12000,
-                17 => 600,
+                1 => ['action' => 'update_qty', 'qty' => 12000],
+                17 => ['action' => 'short_close', 'short_qty' => 600],
             ],
             'PR9' => [
-                4 => 12,
-                5 => 6,
-                6 => 3,
-                7 => 3,
-                8 => 3,
+                4 => ['action' => 'short_close', 'short_qty' => 12],
+                5 => ['action' => 'short_close', 'short_qty' => 6],
+                6 => ['action' => 'short_close', 'short_qty' => 3],
+                7 => ['action' => 'short_close', 'short_qty' => 3],
+                8 => ['action' => 'short_close', 'short_qty' => 3],
             ],
             'PR10' => [
-                1 => 18,
-                3 => 4,
-                4 => 9,
-                6 => 9,
-                8 => 18,
-                9 => 36,
-                10 => 4,
-                11 => 27,
-                13 => 4,
-                14 => 4,
-                15 => 9,
-                16 => 9,
-                17 => 9,
+                1 => ['action' => 'update_qty', 'qty' => 18],
+                3 => ['action' => 'update_qty', 'qty' => 4],
+                4 => ['action' => 'update_qty', 'qty' => 9],
+                6 => ['action' => 'update_qty', 'qty' => 9],
+                8 => ['action' => 'update_qty', 'qty' => 18],
+                9 => ['action' => 'update_qty', 'qty' => 36],
+                10 => ['action' => 'update_qty', 'qty' => 4],
+                11 => ['action' => 'update_qty', 'qty' => 27],
+                13 => ['action' => 'update_qty', 'qty' => 4],
+                14 => ['action' => 'update_qty', 'qty' => 4],
+                15 => ['action' => 'update_qty', 'qty' => 9],
+                16 => ['action' => 'update_qty', 'qty' => 9],
+                17 => ['action' => 'update_qty', 'qty' => 9],
             ],
             'PR12' => [
-                1 => 300,
+                1 => ['action' => 'update_qty', 'qty' => 300],
             ],
             'PR18' => [
-                1 => 11,
-                2 => 5,
-                3 => 3,
-                4 => 20,
-                5 => 6,
-                6 => 6,
-                7 => 5,
-                14 => 8,
-                15 => 12,
+                1 => ['action' => 'update_qty', 'qty' => 11],
+                2 => ['action' => 'update_qty', 'qty' => 5],
+                3 => ['action' => 'update_qty', 'qty' => 3],
+                4 => ['action' => 'update_qty', 'qty' => 20],
+                5 => ['action' => 'update_qty', 'qty' => 6],
+                6 => ['action' => 'update_qty', 'qty' => 6],
+                7 => ['action' => 'update_qty', 'qty' => 5],
+                14 => ['action' => 'update_qty', 'qty' => 8],
+                15 => ['action' => 'update_qty', 'qty' => 12],
             ],
             'PR19' => [
-                1 => 5,
-                2 => 24,
-                3 => 45,
-                4 => 25,
-                5 => 27,
-                6 => 21,
-                7 => 8,
-                8 => 16,
-                9 => 45,
-                10 => 55,
-                11 => 2,
-                12 => 10,
+                1 => ['action' => 'update_qty', 'qty' => 5],
+                2 => ['action' => 'update_qty', 'qty' => 24],
+                3 => ['action' => 'update_qty', 'qty' => 45],
+                4 => ['action' => 'update_qty', 'qty' => 25],
+                5 => ['action' => 'update_qty', 'qty' => 27],
+                6 => ['action' => 'update_qty', 'qty' => 21],
+                7 => ['action' => 'update_qty', 'qty' => 8],
+                8 => ['action' => 'update_qty', 'qty' => 16],
+                9 => ['action' => 'update_qty', 'qty' => 45],
+                10 => ['action' => 'update_qty', 'qty' => 55],
+                11 => ['action' => 'update_qty', 'qty' => 2],
+                12 => ['action' => 'update_qty', 'qty' => 10],
             ],
             'PR20' => [
-                19 => 200,
+                19 => ['action' => 'short_close', 'short_qty' => 200],
             ],
             'PR22' => [
-                3 => 3,
-                7 => 1,
-                8 => 1,
+                3 => ['action' => 'short_close', 'short_qty' => 3, 'restore_qty' => 6],
+                7 => ['action' => 'short_close', 'short_qty' => 1],
+                8 => ['action' => 'short_close', 'short_qty' => 1],
             ],
             'PR32' => [
-                1 => 1,
-                2 => 1,
-                3 => 4,
-                4 => 1,
-                5 => 1,
-                6 => 1,
-                7 => 2,
-                8 => 3,
-                10 => 1,
-                12 => 1,
+                1 => ['action' => 'update_qty', 'qty' => 1],
+                2 => ['action' => 'update_qty', 'qty' => 1],
+                3 => ['action' => 'update_qty', 'qty' => 4],
+                4 => ['action' => 'update_qty', 'qty' => 1],
+                5 => ['action' => 'update_qty', 'qty' => 1],
+                6 => ['action' => 'update_qty', 'qty' => 1],
+                7 => ['action' => 'update_qty', 'qty' => 2],
+                8 => ['action' => 'update_qty', 'qty' => 3],
+                10 => ['action' => 'update_qty', 'qty' => 1],
+                12 => ['action' => 'update_qty', 'qty' => 1],
             ],
         ];
 
@@ -130,7 +133,6 @@ class UpdatePrQuantities extends Command
                 ->first();
 
             if (!$pr) {
-                // Search across all tenants if tenant_id didn't match
                 $pr = PurchaseRequisition::where('pr_number', $prNumber)
                     ->orWhere('pr_number', $altNumber)
                     ->orWhere('pr_ref', $prNumber)
@@ -147,12 +149,26 @@ class UpdatePrQuantities extends Command
             $this->info("Processing PR: {$pr->pr_number} (ID: {$pr->id})");
             $prModified = false;
 
-            foreach ($itemsToUpdate as $sno => $newQty) {
+            foreach ($itemsToUpdate as $sno => $cfg) {
                 $item = $pr->items->firstWhere('sno', $sno);
                 if ($item) {
-                    $oldQty = $item->qty;
-                    $item->update(['qty' => $newQty]);
-                    $this->line("  ✓ Item #{$sno} ({$item->description}): Qty updated from {$oldQty} to {$newQty}");
+                    if ($cfg['action'] === 'short_close') {
+                        $updateData = [
+                            'remarks'          => 'Short Close',
+                            'is_short_closed'  => true,
+                            'short_closed_qty' => $cfg['short_qty'],
+                        ];
+                        if (isset($cfg['restore_qty'])) {
+                            $updateData['qty'] = $cfg['restore_qty'];
+                        }
+                        $item->update($updateData);
+                        $this->line("  ✓ Item #{$sno} ({$item->description}): Marked Short Close (Short Qty: {$cfg['short_qty']})");
+                    } else {
+                        $item->update([
+                            'qty' => $cfg['qty'],
+                        ]);
+                        $this->line("  ✓ Item #{$sno} ({$item->description}): Qty updated to {$cfg['qty']}");
+                    }
                     $updatedItemCount++;
                     $prModified = true;
                 } else {
@@ -169,11 +185,11 @@ class UpdatePrQuantities extends Command
                 // Sync conversion status
                 PurchaseRequisition::syncPrConversion($pr);
                 $updatedPrCount++;
-                $this->info("  -> PR {$pr->pr_number} estimated_amount updated to ₹{$newEstimated}, status synced: {$pr->fresh()->status}");
+                $this->info("  -> PR {$pr->pr_number} estimated_amount: ₹{$newEstimated}, status: {$pr->fresh()->status}");
             }
         }
 
-        $this->info("\nCompleted! Updated {$updatedItemCount} item(s) across {$updatedPrCount} PR(s).");
+        $this->info("\nCompleted! Processed {$updatedItemCount} item(s) across {$updatedPrCount} PR(s).");
         return 0;
     }
 }

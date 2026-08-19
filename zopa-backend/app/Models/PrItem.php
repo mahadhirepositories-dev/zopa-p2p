@@ -9,12 +9,14 @@ class PrItem extends Model
 {
     protected $fillable = [
         'pr_id', 'sno', 'product_id', 'description', 'category_id',
-        'qty', 'converted_qty', 'unit', 'estimated_price', 'remarks',
+        'qty', 'converted_qty', 'is_short_closed', 'short_closed_qty', 'unit', 'estimated_price', 'remarks',
     ];
 
     protected $casts = [
         'qty' => 'decimal:3',
         'converted_qty' => 'decimal:3',
+        'short_closed_qty' => 'decimal:3',
+        'is_short_closed' => 'boolean',
         'estimated_price' => 'decimal:2',
     ];
 
