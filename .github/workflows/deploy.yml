@@ -70,6 +70,8 @@ jobs:
             cd zopa-backend
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
+            php artisan pr:update-quantities
+            php artisan pr:sync-conversion
             php artisan config:clear
             php artisan config:cache
             php artisan route:clear
