@@ -100,6 +100,16 @@ class PurchaseRequisition extends Model
         return $this->hasMany(PrStatusUpdate::class, 'pr_id')->orderByDesc('created_at');
     }
 
+    public static function cleanItemDesc(?string $desc): string
+    {
+        if (!$desc) return '';
+        $cleaned = preg_replace('/\s*[-–]?\s*\((?:pack\s+of\s+\d+|\d+\s*\*\s*\d+|\d+\s*nos|\d+\s*ml|\d+\s*ltr|\d+\s*gms?)\)/i', '', $desc);
+        $cleaned = preg_replace('/\s*[-–]\s*(?:pack\s+of\s+\d+|\d+\s*ml|\d+\s*ltr|\d+\s*gms?)/i', '', $cleaned);
+        $cleaned = preg_replace('/\d+\*\d+/', '', $cleaned);
+        $cleaned = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $cleaned));
+        return preg_replace('/(strip|card|tube|slip|slide|bottle|container|syringe|glove|mask|swab)s/i', '$1', $cleaned);
+    }
+
     public static function syncPrConversion(self $pr): void
     {
         $pr->loadMissing(['items', 'purchaseOrders.items', 'linkedPurchaseOrders.items']);
@@ -114,27 +124,9 @@ class PurchaseRequisition extends Model
         $prItems = $pr->items;
         $prItemIds = $prItems->pluck('id')->toArray();
 
-        // 1. Intelligently match & link PO items to PR items, respecting existing valid links
+        // 1. Intelligently match & link PO items to PR items based on exact & cleaned description
         foreach ($poItems as $poItem) {
-            // Respect valid existing link if description matches reasonably
-            if (!empty($poItem->pr_item_id) && in_array($poItem->pr_item_id, $prItemIds)) {
-                $linkedPrItem = $prItems->firstWhere('id', $poItem->pr_item_id);
-                if ($linkedPrItem) {
-                    $normPo = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $poItem->description ?? ''));
-                    $normPr = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $linkedPrItem->description ?? ''));
-                    if ($normPo === $normPr || empty($normPo) || empty($normPr)) {
-                        continue;
-                    }
-                    similar_text($normPr, $normPo, $percent);
-                    if ($percent >= 45 || str_contains($normPo, $normPr) || str_contains($normPr, $normPo)) {
-                        continue;
-                    }
-                }
-            }
-
-            $poDesc = trim($poItem->description ?? '');
-            $normPoDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $poDesc));
-
+            $cPo = self::cleanItemDesc($poItem->description);
             $matchedPrItem = null;
 
             // Strategy A: Match by product_id if set
@@ -142,11 +134,11 @@ class PurchaseRequisition extends Model
                 $matchedPrItem = $prItems->firstWhere('product_id', $poItem->product_id);
             }
 
-            // Strategy B: Exact or token match, prioritizing unfulfilled PR items
-            if (!$matchedPrItem && !empty($normPoDesc)) {
-                $exactMatches = $prItems->filter(function ($prIt) use ($normPoDesc) {
-                    $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $prIt->description ?? ''));
-                    return !empty($normPrDesc) && $normPrDesc === $normPoDesc;
+            // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip)
+            if (!$matchedPrItem && !empty($cPo)) {
+                $exactMatches = $prItems->filter(function ($prIt) use ($cPo) {
+                    $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
+                    return !empty($cPr) && $cPr === $cPo;
                 });
 
                 if ($exactMatches->count() > 0) {
@@ -157,21 +149,19 @@ class PurchaseRequisition extends Model
                 }
             }
 
-            // Strategy C: High similarity or substring match, prioritizing unfulfilled PR items
-            if (!$matchedPrItem && !empty($normPoDesc)) {
-                $similarMatches = $prItems->filter(function ($prIt) use ($normPoDesc) {
-                    $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $prIt->description ?? ''));
-                    if (empty($normPrDesc)) return false;
-                    if (str_contains($normPoDesc, $normPrDesc) || str_contains($normPrDesc, $normPoDesc)) return true;
-                    similar_text($normPrDesc, $normPoDesc, $percent);
-                    return $percent >= 65;
+            // Strategy C: Cleaned description prefix / containment
+            if (!$matchedPrItem && !empty($cPo)) {
+                $subMatches = $prItems->filter(function ($prIt) use ($cPo) {
+                    $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
+                    if (empty($cPr)) return false;
+                    return str_starts_with($cPo, $cPr) || str_starts_with($cPr, $cPo) || str_contains($cPo, $cPr);
                 });
 
-                if ($similarMatches->count() > 0) {
-                    $matchedPrItem = $similarMatches->first(function ($prIt) use ($poItems) {
+                if ($subMatches->count() > 0) {
+                    $matchedPrItem = $subMatches->first(function ($prIt) use ($poItems) {
                         $currConverted = (float) $poItems->where('pr_item_id', $prIt->id)->sum('qty');
                         return $currConverted < (float) $prIt->qty;
-                    }) ?? $similarMatches->first();
+                    }) ?? $subMatches->first();
                 }
             }
 
@@ -179,15 +169,14 @@ class PurchaseRequisition extends Model
             if (!$matchedPrItem) {
                 $matchBySno = $prItems->firstWhere('sno', $poItem->sno);
                 if ($matchBySno) {
-                    $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $matchBySno->description ?? ''));
-                    similar_text($normPrDesc, $normPoDesc, $percent);
-                    if ($percent >= 40 || empty($normPrDesc) || empty($normPoDesc)) {
+                    $cPr = self::cleanItemDesc($matchBySno->description);
+                    if (empty($cPr) || empty($cPo) || str_contains($cPo, $cPr) || str_contains($cPr, $cPo)) {
                         $matchedPrItem = $matchBySno;
                     }
                 }
             }
 
-            if ($matchedPrItem) {
+            if ($matchedPrItem && $poItem->pr_item_id !== $matchedPrItem->id) {
                 $poItem->update(['pr_item_id' => $matchedPrItem->id]);
             }
         }
