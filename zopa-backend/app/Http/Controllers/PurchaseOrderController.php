@@ -230,9 +230,6 @@ class PurchaseOrderController extends Controller
 
             $this->tat->stamp($po->id, 'po_created_at', now());
 
-            // Determine whether this PO has item-level PR tracking (pr_item_id on any item)
-            $hasItemTracking = collect($request->items)->contains(fn($i) => !empty($i['pr_item_id']));
-
             // Link all PRs and update their statuses
             foreach ($linkedPrIds as $prId) {
                 $pr = \App\Models\PurchaseRequisition::with('items')->find($prId);
@@ -241,25 +238,8 @@ class PurchaseOrderController extends Controller
                 // Attach to po_prs pivot
                 $po->prs()->syncWithoutDetaching([$prId]);
 
-                if ($hasItemTracking) {
-                    // Fine-grained: use converted_qty to determine partial vs full
-                    $pr->load('items');
-                    $allConverted = $pr->items->every(fn($it) => (float)$it->converted_qty >= (float)$it->qty);
-                    $anyConverted = $pr->items->some(fn($it)  => (float)$it->converted_qty > 0);
-
-                    if ($allConverted)      $newStatus = 'converted';
-                    elseif ($anyConverted)  $newStatus = 'partially_converted';
-                    else                   $newStatus = 'converted'; // pr_id linked but no item ids yet
-                } else {
-                    // No per-item tracking → treat entire PR as fully converted
-                    $newStatus = 'converted';
-                }
-
-                $pr->update([
-                    'status'       => $newStatus,
-                    'buyer_id'     => auth()->id(),
-                    'converted_at' => now(),
-                ]);
+                $pr->update(['buyer_id' => auth()->id()]);
+                \App\Models\PurchaseRequisition::syncPrConversion($pr);
 
                 \App\Models\TatRecord::where('po_id', $po->id)->update([
                     'pr_id'           => $prId,
@@ -402,20 +382,8 @@ class PurchaseOrderController extends Controller
                     if (!$pr) continue;
 
                     $purchaseOrder->prs()->syncWithoutDetaching([$prId]);
-
-                    $pr->load('items');
-                    $allConverted = $pr->items->every(fn($it) => (float)$it->converted_qty >= (float)$it->qty);
-                    $anyConverted = $pr->items->some(fn($it)  => (float)$it->converted_qty > 0);
-
-                    if ($allConverted)      $newStatus = 'converted';
-                    elseif ($anyConverted)  $newStatus = 'partially_converted';
-                    else                   $newStatus = 'submitted'; // reset to submitted if all items removed
-
-                    $pr->update([
-                        'status'       => $newStatus,
-                        'buyer_id'     => auth()->id(),
-                        'converted_at' => now(),
-                    ]);
+                    $pr->update(['buyer_id' => auth()->id()]);
+                    \App\Models\PurchaseRequisition::syncPrConversion($pr);
                 }
 
                 // If the PO was returned, log what the buyer changed before re-saving

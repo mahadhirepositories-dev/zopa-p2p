@@ -120,12 +120,12 @@ class PurchaseRequisition extends Model
                 if ($matchBySno) {
                     $poItem->update(['pr_item_id' => $matchBySno->id]);
                 } else {
-                    // Try matching by product_id or description
+                    // Try matching by product_id or exact description
                     $matchByProd = $pr->items->first(function ($prIt) use ($poItem) {
                         if ($poItem->product_id && $prIt->product_id === $poItem->product_id) return true;
                         $prDesc = strtolower(trim($prIt->description));
                         $poDesc = strtolower(trim($poItem->description));
-                        return !empty($prDesc) && !empty($poDesc) && (str_contains($poDesc, $prDesc) || str_contains($prDesc, $poDesc));
+                        return !empty($prDesc) && !empty($poDesc) && ($prDesc === $poDesc);
                     });
                     if ($matchByProd) {
                         $poItem->update(['pr_item_id' => $matchByProd->id]);
@@ -140,23 +140,20 @@ class PurchaseRequisition extends Model
         // 2. Recalculate converted_qty on each PR item
         foreach ($pr->items as $prItem) {
             $totalConverted = (float) $poItems->where('pr_item_id', $prItem->id)->sum('qty');
-            if ($totalConverted == 0) {
-                // Fallback: match by sno if not yet linked
-                $poItemBySno = $poItems->firstWhere('sno', $prItem->sno);
-                if ($poItemBySno) {
-                    $poItemBySno->update(['pr_item_id' => $prItem->id]);
-                    $totalConverted = (float) $poItemBySno->qty;
-                }
-            }
             $prItem->update(['converted_qty' => $totalConverted]);
         }
 
-        // 3. Determine overall PR conversion status
+        // 3. Determine overall PR conversion status strictly from item conversion progress
         $pr->load('items');
+        $totalItems = $pr->items->count();
+        if ($totalItems === 0) {
+            return;
+        }
+
         $allConverted = $pr->items->every(fn($it) => (float)$it->converted_qty >= (float)$it->qty);
         $anyConverted = $pr->items->some(fn($it) => (float)$it->converted_qty > 0);
 
-        if ($allConverted || ($allPos->count() > 0 && $poItems->count() >= $pr->items->count())) {
+        if ($allConverted) {
             $pr->update([
                 'status'       => 'converted',
                 'converted_at' => $pr->converted_at ?? now(),
@@ -166,10 +163,12 @@ class PurchaseRequisition extends Model
                 'status' => 'partially_converted',
             ]);
         } else {
-            $pr->update([
-                'status'       => 'converted',
-                'converted_at' => $pr->converted_at ?? now(),
-            ]);
+            // Revert status if zero items have been converted
+            if (in_array($pr->status, ['converted', 'partially_converted'])) {
+                $pr->update([
+                    'status' => 'submitted',
+                ]);
+            }
         }
     }
 }
