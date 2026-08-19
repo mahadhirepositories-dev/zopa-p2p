@@ -112,34 +112,62 @@ class PurchaseRequisition extends Model
         // Flatten all PO items across linked POs
         $poItems = $allPos->pluck('items')->flatten();
 
-        // 1. Auto-link unlinked PO items to PR items if pr_item_id is null
+        // 1. Intelligently match & re-link PO items to PR items based on Product ID & Description stems
         foreach ($poItems as $poItem) {
-            if (empty($poItem->pr_item_id)) {
-                $normPoDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $poItem->description ?? ''));
+            $poDesc = trim($poItem->description ?? '');
+            $normPoDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $poDesc));
 
-                // Strategy A: Match by sno
-                $match = $pr->items->firstWhere('sno', $poItem->sno);
+            $matchedPrItem = null;
 
-                // Strategy B: Match by product_id if set
-                if (!$match && $poItem->product_id) {
-                    $match = $pr->items->firstWhere('product_id', $poItem->product_id);
-                }
+            // Strategy 1: Match by product_id if set
+            if ($poItem->product_id) {
+                $matchedPrItem = $pr->items->firstWhere('product_id', $poItem->product_id);
+            }
 
-                // Strategy C: Match by fuzzy description similarity or substring
-                if (!$match && !empty($normPoDesc)) {
-                    $match = $pr->items->first(function ($prIt) use ($normPoDesc) {
+            // Strategy 2: Match by exact or token stem description
+            if (!$matchedPrItem && !empty($normPoDesc)) {
+                // Try exact normalized match
+                $matchedPrItem = $pr->items->first(function ($prIt) use ($normPoDesc) {
+                    $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $prIt->description ?? ''));
+                    return !empty($normPrDesc) && $normPrDesc === $normPoDesc;
+                });
+
+                // Try substring/stem matching (e.g. "malaria" in "malariacardspackof50", "hb" in "truehbstripbox")
+                if (!$matchedPrItem) {
+                    $matchedPrItem = $pr->items->first(function ($prIt) use ($normPoDesc) {
                         $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $prIt->description ?? ''));
                         if (empty($normPrDesc)) return false;
-                        if ($normPrDesc === $normPoDesc) return true;
+
                         if (str_contains($normPoDesc, $normPrDesc) || str_contains($normPrDesc, $normPoDesc)) return true;
+
+                        // Token stems (e.g. malaria, hb, rbs, typhoid, upt, dengue, lancet, cotton, spirit)
+                        $prStem = strtolower(trim(preg_replace('/(cards?|strips?|box|packs?|packof[0-9]+|tablets?|inj|solution|container)s?/i', '', $prIt->description ?? '')));
+                        $prStemNorm = preg_replace('/[^a-zA-Z0-9]/', '', $prStem);
+
+                        if (!empty($prStemNorm) && strlen($prStemNorm) >= 2 && str_contains($normPoDesc, $prStemNorm)) {
+                            return true;
+                        }
+
                         similar_text($normPrDesc, $normPoDesc, $percent);
-                        return $percent >= 70;
+                        return $percent >= 60;
                     });
                 }
+            }
 
-                if ($match) {
-                    $poItem->update(['pr_item_id' => $match->id]);
+            // Strategy 3: Match by sno ONLY if descriptions share stem or no other match
+            if (!$matchedPrItem) {
+                $matchBySno = $pr->items->firstWhere('sno', $poItem->sno);
+                if ($matchBySno) {
+                    $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $matchBySno->description ?? ''));
+                    similar_text($normPrDesc, $normPoDesc, $percent);
+                    if ($percent >= 35 || empty($normPrDesc) || empty($normPoDesc)) {
+                        $matchedPrItem = $matchBySno;
+                    }
                 }
+            }
+
+            if ($matchedPrItem && $poItem->pr_item_id !== $matchedPrItem->id) {
+                $poItem->update(['pr_item_id' => $matchedPrItem->id]);
             }
         }
 
@@ -149,13 +177,6 @@ class PurchaseRequisition extends Model
         // 2. Recalculate converted_qty on each PR item
         foreach ($pr->items as $prItem) {
             $totalConverted = (float) $poItems->where('pr_item_id', $prItem->id)->sum('qty');
-            if ($totalConverted == 0) {
-                $poItemBySno = $poItems->firstWhere('sno', $prItem->sno);
-                if ($poItemBySno) {
-                    $poItemBySno->update(['pr_item_id' => $prItem->id]);
-                    $totalConverted = (float) $poItemBySno->qty;
-                }
-            }
             $prItem->update(['converted_qty' => $totalConverted]);
         }
 
