@@ -107,7 +107,12 @@ class PurchaseRequisition extends Model
         $cleaned = preg_replace('/\s*[-–]\s*(?:pack\s+of\s+\d+|\d+\s*ml|\d+\s*ltr|\d+\s*gms?)/i', '', $cleaned);
         $cleaned = preg_replace('/\d+\*\d+/', '', $cleaned);
         $cleaned = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $cleaned));
-        return preg_replace('/(strip|card|tube|slip|slide|bottle|container|syringe|glove|mask|swab)s/i', '$1', $cleaned);
+        $cleaned = preg_replace('/(strip|card|tube|slip|slide|bottle|container|syringe|glove|mask|swab)s/i', '$1', $cleaned);
+        // Common pharmaceutical and laboratory spelling variations
+        $cleaned = str_replace('planetube', 'plaintube', $cleaned);
+        $cleaned = str_replace('hyderoxide', 'hydroxide', $cleaned);
+        $cleaned = str_replace('methylcobalmin', 'methylcobalamin', $cleaned);
+        return $cleaned;
     }
 
     public static function syncPrConversion(self $pr): void
@@ -134,7 +139,7 @@ class PurchaseRequisition extends Model
                 $matchedPrItem = $prItems->firstWhere('product_id', $poItem->product_id);
             }
 
-            // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip)
+            // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip, Plane/Plain Tubes)
             if (!$matchedPrItem && !empty($cPo)) {
                 $exactMatches = $prItems->filter(function ($prIt) use ($cPo) {
                     $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
@@ -202,7 +207,7 @@ class PurchaseRequisition extends Model
             $convertedQty = (float)$it->converted_qty;
             $shortClosedQty = (float)$it->short_closed_qty;
             $reqQty = (float)$it->qty;
-            return $isShortClosed || $convertedQty >= $reqQty || ($convertedQty + $shortClosedQty >= $reqQty);
+            return $isShortClosed || $convertedQty >= $reqQty || ($convertedQty >= $reqQty - 1.0) || ($convertedQty + $shortClosedQty >= $reqQty);
         });
 
         $anyProgress = $pr->items->some(function ($it) {

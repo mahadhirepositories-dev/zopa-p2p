@@ -419,7 +419,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                             <span class="conv-badge conv-short-closed" style="background:#fef2f2;color:#991b1b;border:1px solid #fecaca;font-weight:600;">Short Closed</span>
                           } @else if (+(item.converted_qty ?? 0) === 0) {
                             <span class="conv-badge conv-none">Not converted</span>
-                          } @else if (+(item.converted_qty ?? 0) >= +item.qty) {
+                          } @else if (+(item.converted_qty ?? 0) >= +item.qty || +(item.converted_qty ?? 0) >= +item.qty - 1.0) {
                             <span class="conv-badge conv-full">Fully converted</span>
                           } @else {
                             <span class="conv-badge conv-partial">Partial ({{ (+(item.converted_qty ?? 0) / +item.qty * 100) | number:'1.0-0' }}%)</span>
