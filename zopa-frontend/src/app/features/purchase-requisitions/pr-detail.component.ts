@@ -114,6 +114,12 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
               </button>
             }
 
+            @if (allLinkedPos().length > 0 && auth.canTransact()) {
+              <button mat-stroked-button class="btn-compact" (click)="recalculateConversion()" [disabled]="acting()">
+                <mat-icon>sync</mat-icon> Sync Conversion
+              </button>
+            }
+
             @if (hasMoreActions()) {
               <button mat-icon-button [matMenuTriggerFor]="moreMenu" matTooltip="More Actions" class="more-btn">
                 <mat-icon>more_vert</mat-icon>
@@ -642,6 +648,21 @@ export class PrDetailComponent implements OnInit {
   downloadStatusUpdateAttachment(path: string) {
     const url = `${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/status-update-attachments/download?path=${encodeURIComponent(path)}`;
     window.open(url, '_blank');
+  }
+
+  recalculateConversion() {
+    this.acting.set(true);
+    this.http.post<any>(`${environment.apiUrl}/purchase-requisitions/${this.pr()!.id}/recalculate-conversion`, {}).subscribe({
+      next: (res) => {
+        this.pr.set(res.pr);
+        this.acting.set(false);
+        this.notify.success(res.message || 'PR conversion status recalculated.');
+      },
+      error: (err) => {
+        this.acting.set(false);
+        this.notify.error(err.error?.error || 'Recalculation failed.');
+      },
+    });
   }
 
   private loadPr() {

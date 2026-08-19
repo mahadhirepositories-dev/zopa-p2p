@@ -185,13 +185,8 @@ class PurchaseRequisitionController extends Controller
     {
         $this->authorize($purchaseRequisition);
 
-        // Auto-heal status: if PR has linked POs but status is still rfq_approved/rfq_created,
-        // update it to 'converted' so the UI shows the correct state.
-        $linkedPoCount = $purchaseRequisition->purchaseOrders()->count()
-            + $purchaseRequisition->linkedPurchaseOrders()->count();
-        if ($linkedPoCount > 0 && in_array($purchaseRequisition->status, ['rfq_approved', 'rfq_created', 'submitted'])) {
-            $purchaseRequisition->update(['status' => 'converted', 'converted_at' => now()]);
-        }
+        // Auto-heal status & item-level converted_qty tracking
+        PurchaseRequisition::syncPrConversion($purchaseRequisition);
 
         return response()->json(
             $purchaseRequisition->fresh()->load([
@@ -737,6 +732,29 @@ class PurchaseRequisitionController extends Controller
         }
 
         return $attachments;
+    }
+
+    public function recalculateConversion(PurchaseRequisition $purchaseRequisition): JsonResponse
+    {
+        $this->authorize($purchaseRequisition);
+        PurchaseRequisition::syncPrConversion($purchaseRequisition);
+
+        return response()->json([
+            'message' => 'PR conversion status and item quantities synced successfully.',
+            'pr'      => $purchaseRequisition->fresh([
+                'items.product', 'items.category',
+                'requestedBy:id,name,email',
+                'buyer:id,name',
+                'costCenter:id,name',
+                'project:id,name',
+                'location:id,name',
+                'purchaseOrders.vendor:id,name',
+                'linkedPurchaseOrders.vendor:id,name',
+                'clarifications.requester:id,name',
+                'clarifications.responder:id,name',
+                'statusUpdates.sentBy:id,name,email',
+            ]),
+        ]);
     }
 
     private function authorize(PurchaseRequisition $pr): void
