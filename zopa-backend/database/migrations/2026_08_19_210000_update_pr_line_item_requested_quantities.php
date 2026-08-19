@@ -95,7 +95,7 @@ return new class extends Migration
                 19 => 200,
             ],
             'PR22' => [
-                3 => 6,
+                3 => 3,
                 7 => 1,
                 8 => 1,
             ],

@@ -115,21 +115,30 @@ class PurchaseRequisition extends Model
         // 1. Auto-link unlinked PO items to PR items if pr_item_id is null
         foreach ($poItems as $poItem) {
             if (empty($poItem->pr_item_id)) {
-                // Try matching by sno
-                $matchBySno = $pr->items->firstWhere('sno', $poItem->sno);
-                if ($matchBySno) {
-                    $poItem->update(['pr_item_id' => $matchBySno->id]);
-                } else {
-                    // Try matching by product_id or exact description
-                    $matchByProd = $pr->items->first(function ($prIt) use ($poItem) {
-                        if ($poItem->product_id && $prIt->product_id === $poItem->product_id) return true;
-                        $prDesc = strtolower(trim($prIt->description));
-                        $poDesc = strtolower(trim($poItem->description));
-                        return !empty($prDesc) && !empty($poDesc) && ($prDesc === $poDesc);
+                $normPoDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $poItem->description ?? ''));
+
+                // Strategy A: Match by sno
+                $match = $pr->items->firstWhere('sno', $poItem->sno);
+
+                // Strategy B: Match by product_id if set
+                if (!$match && $poItem->product_id) {
+                    $match = $pr->items->firstWhere('product_id', $poItem->product_id);
+                }
+
+                // Strategy C: Match by fuzzy description similarity or substring
+                if (!$match && !empty($normPoDesc)) {
+                    $match = $pr->items->first(function ($prIt) use ($normPoDesc) {
+                        $normPrDesc = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $prIt->description ?? ''));
+                        if (empty($normPrDesc)) return false;
+                        if ($normPrDesc === $normPoDesc) return true;
+                        if (str_contains($normPoDesc, $normPrDesc) || str_contains($normPrDesc, $normPoDesc)) return true;
+                        similar_text($normPrDesc, $normPoDesc, $percent);
+                        return $percent >= 70;
                     });
-                    if ($matchByProd) {
-                        $poItem->update(['pr_item_id' => $matchByProd->id]);
-                    }
+                }
+
+                if ($match) {
+                    $poItem->update(['pr_item_id' => $match->id]);
                 }
             }
         }
@@ -140,6 +149,13 @@ class PurchaseRequisition extends Model
         // 2. Recalculate converted_qty on each PR item
         foreach ($pr->items as $prItem) {
             $totalConverted = (float) $poItems->where('pr_item_id', $prItem->id)->sum('qty');
+            if ($totalConverted == 0) {
+                $poItemBySno = $poItems->firstWhere('sno', $prItem->sno);
+                if ($poItemBySno) {
+                    $poItemBySno->update(['pr_item_id' => $prItem->id]);
+                    $totalConverted = (float) $poItemBySno->qty;
+                }
+            }
             $prItem->update(['converted_qty' => $totalConverted]);
         }
 

@@ -96,7 +96,7 @@ class UpdatePrQuantities extends Command
                 19 => 200,
             ],
             'PR22' => [
-                3 => 6,
+                3 => 3,
                 7 => 1,
                 8 => 1,
             ],
