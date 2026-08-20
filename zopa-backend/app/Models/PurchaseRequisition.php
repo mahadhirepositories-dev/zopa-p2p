@@ -340,10 +340,12 @@ class PurchaseRequisition extends Model
             return (float)$it->converted_qty > 0 || $isShortClosed;
         });
 
+        $hasShortClosedItems = $pr->items->some(fn($it) => $it->is_short_closed || ($it->remarks === 'Short Close'));
+        $hasConvertedItems = $pr->items->some(fn($it) => (float)$it->converted_qty > 0);
         $isShortClosedPr = $pr->status === 'short_closed' || !empty($pr->short_closed_at) || !empty($pr->short_close_reason);
 
         if ($allResolved) {
-            if ($isShortClosedPr) {
+            if ($isShortClosedPr || ($hasShortClosedItems && $hasConvertedItems)) {
                 $pr->update(['status' => 'short_closed', 'converted_at' => $pr->converted_at ?? now()]);
             } elseif (!in_array($pr->status, ['short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
                 $pr->update([
