@@ -125,6 +125,8 @@ class PurchaseRequisition extends Model
         $cleaned = str_replace('planetube', 'plaintube', $cleaned);
         $cleaned = str_replace('hyderoxide', 'hydroxide', $cleaned);
         $cleaned = str_replace('methylcobalmin', 'methylcobalamin', $cleaned);
+        $cleaned = str_replace('contanier', 'container', $cleaned);
+        $cleaned = str_replace('oncal', 'oncall', $cleaned);
         return $cleaned;
     }
 
