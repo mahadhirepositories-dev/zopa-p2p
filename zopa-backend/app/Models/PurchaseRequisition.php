@@ -315,7 +315,9 @@ class PurchaseRequisition extends Model
         // 2. Recalculate converted_qty on each PR item
         foreach ($pr->items as $prItem) {
             $totalConverted = (float) $poItems->where('pr_item_id', $prItem->id)->sum('qty');
-            $prItem->update(['converted_qty' => $totalConverted]);
+            if ($totalConverted > 0) {
+                $prItem->update(['converted_qty' => max((float)$prItem->converted_qty, $totalConverted)]);
+            }
         }
 
         // 3. Determine overall PR conversion status (fully converted or short-closed items count as resolved)
@@ -338,22 +340,28 @@ class PurchaseRequisition extends Model
             return (float)$it->converted_qty > 0 || $isShortClosed;
         });
 
+        $isShortClosedPr = $pr->status === 'short_closed' || !empty($pr->short_closed_at) || !empty($pr->short_close_reason);
+
         if ($allResolved) {
-            if (!in_array($pr->status, ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
+            if ($isShortClosedPr) {
+                $pr->update(['status' => 'short_closed', 'converted_at' => $pr->converted_at ?? now()]);
+            } elseif (!in_array($pr->status, ['short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
                 $pr->update([
                     'status'       => 'converted',
                     'converted_at' => $pr->converted_at ?? now(),
                 ]);
             }
         } elseif ($anyProgress) {
-            if (!in_array($pr->status, ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
+            if ($isShortClosedPr) {
+                $pr->update(['status' => 'short_closed']);
+            } elseif (!in_array($pr->status, ['short_closed', 'converted', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
                 $pr->update([
                     'status' => 'partially_converted',
                 ]);
             }
         } else {
             // Revert status if zero items have been converted or short closed
-            if (in_array($pr->status, ['converted', 'partially_converted'])) {
+            if (in_array($pr->status, ['partially_converted'])) {
                 $pr->update([
                     'status' => 'submitted',
                 ]);
