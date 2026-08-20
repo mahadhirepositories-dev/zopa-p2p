@@ -100,6 +100,19 @@ class PurchaseRequisition extends Model
         return $this->hasMany(PrStatusUpdate::class, 'pr_id')->orderByDesc('created_at');
     }
 
+    public static function stemWord(string $word): string
+    {
+        $w = strtolower(trim($word));
+        if (str_ends_with($w, 'ies') && strlen($w) > 4) {
+            $w = substr($w, 0, -3) . 'y';
+        } elseif (str_ends_with($w, 'es') && strlen($w) > 4) {
+            $w = substr($w, 0, -2);
+        } elseif (str_ends_with($w, 's') && !str_ends_with($w, 'ss') && strlen($w) > 3) {
+            $w = substr($w, 0, -1);
+        }
+        return $w;
+    }
+
     public static function cleanItemDesc(?string $desc): string
     {
         if (!$desc) return '';
@@ -107,7 +120,7 @@ class PurchaseRequisition extends Model
         $cleaned = preg_replace('/\s*[-–]\s*(?:pack\s+of\s+\d+|\d+\s*ml|\d+\s*ltr|\d+\s*gms?)/i', '', $cleaned);
         $cleaned = preg_replace('/\d+\*\d+/', '', $cleaned);
         $cleaned = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $cleaned));
-        $cleaned = preg_replace('/(strip|card|tube|slip|slide|bottle|container|syringe|glove|mask|swab)s/i', '$1', $cleaned);
+        $cleaned = preg_replace('/(strip|card|tube|slip|slide|bottle|container|syringe|glove|mask|swab|chair|table|pillow|tray|dustbin)s/i', '$1', $cleaned);
         // Common pharmaceutical and laboratory spelling variations
         $cleaned = str_replace('planetube', 'plaintube', $cleaned);
         $cleaned = str_replace('hyderoxide', 'hydroxide', $cleaned);
@@ -121,11 +134,15 @@ class PurchaseRequisition extends Model
         $cPo = strtolower(preg_replace('/[^a-zA-Z0-9]/', ' ', $poDesc));
         $cPr = strtolower(preg_replace('/[^a-zA-Z0-9]/', ' ', $prDesc));
 
-        $poWords = array_filter(explode(' ', $cPo));
-        $prWords = array_filter(explode(' ', $cPr));
+        $poRawWords = array_filter(explode(' ', $cPo));
+        $prRawWords = array_filter(explode(' ', $cPr));
+
+        // Stem all words
+        $poWords = array_map([self::class, 'stemWord'], $poRawWords);
+        $prWords = array_map([self::class, 'stemWord'], $prRawWords);
 
         // Form types: tablet, susp, syrup, cap, capsule, inj, strip, card, tube, bottle, drop
-        $forms = ['tablet', 'tab', 'susp', 'suspension', 'syrup', 'syp', 'cap', 'capsule', 'inj', 'injection', 'strip', 'strips', 'card', 'cards', 'tube', 'tubes', 'bottle', 'bottles', 'gel', 'mask', 'glove', 'gloves', 'cream', 'ointment'];
+        $forms = ['tablet', 'tab', 'susp', 'suspension', 'syrup', 'syp', 'cap', 'capsule', 'inj', 'injection', 'strip', 'card', 'tube', 'bottle', 'gel', 'mask', 'glove', 'cream', 'ointment'];
         $poForms = array_intersect($poWords, $forms);
         $prForms = array_intersect($prWords, $forms);
 
