@@ -182,73 +182,84 @@ class PurchaseRequisition extends Model
         $prItems = $pr->items;
         $prItemIds = $prItems->pluck('id')->toArray();
 
-        // 1. Intelligently match & link PO items to PR items based on exact, clean description, and form/dosage score
-        foreach ($poItems as $poItem) {
-            $cPo = self::cleanItemDesc($poItem->description);
-            $matchedPrItem = null;
-
-            // Strategy A: Match by product_id if set
-            if ($poItem->product_id) {
-                $matchedPrItem = $prItems->firstWhere('product_id', $poItem->product_id);
-            }
-
-            // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip, Plane/Plain Tubes)
-            if (!$matchedPrItem && !empty($cPo)) {
-                $exactMatches = $prItems->filter(function ($prIt) use ($cPo) {
-                    $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
-                    return !empty($cPr) && $cPr === $cPo;
-                });
-
-                if ($exactMatches->count() > 0) {
-                    $matchedPrItem = $exactMatches->first(function ($prIt) use ($poItems) {
-                        $currConverted = (float) $poItems->where('pr_item_id', $prIt->id)->sum('qty');
-                        return $currConverted < (float) $prIt->qty;
-                    }) ?? $exactMatches->first();
+        // 1. If this PR has a single linked PO with matching item count (e.g. PR2 with 78 items & PO52 with 78 items), map 1-to-1 by sno
+        $singlePo = ($allPos->count() === 1) ? $allPos->first() : null;
+        if ($singlePo && $singlePo->items->count() === $prItems->count()) {
+            foreach ($singlePo->items as $poIt) {
+                $matchingPr = $prItems->firstWhere('sno', $poIt->sno);
+                if ($matchingPr && $poIt->pr_item_id !== $matchingPr->id) {
+                    $poIt->update(['pr_item_id' => $matchingPr->id]);
                 }
             }
+        } else {
+            // General multi-pass matching for multi-PO or split PRs
+            foreach ($poItems as $poItem) {
+                $cPo = self::cleanItemDesc($poItem->description);
+                $matchedPrItem = null;
 
-            // Strategy C: Scored matching (respects dosage, form, keywords)
-            if (!$matchedPrItem) {
-                $candidates = [];
-                foreach ($prItems as $prIt) {
-                    $score = self::matchScore($poItem->description ?? '', $prIt->description ?? '');
-                    if ($score > 0) {
-                        $candidates[] = ['pr' => $prIt, 'score' => $score];
+                // Strategy A: Match by product_id if set
+                if ($poItem->product_id) {
+                    $matchedPrItem = $prItems->firstWhere('product_id', $poItem->product_id);
+                }
+
+                // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip, Plane/Plain Tubes)
+                if (!$matchedPrItem && !empty($cPo)) {
+                    $exactMatches = $prItems->filter(function ($prIt) use ($cPo) {
+                        $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
+                        return !empty($cPr) && $cPr === $cPo;
+                    });
+
+                    if ($exactMatches->count() > 0) {
+                        $matchedPrItem = $exactMatches->first(function ($prIt) use ($poItems) {
+                            $currConverted = (float) $poItems->where('pr_item_id', $prIt->id)->sum('qty');
+                            return $currConverted < (float) $prIt->qty;
+                        }) ?? $exactMatches->first();
                     }
                 }
 
-                if (!empty($candidates)) {
-                    usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
-                    $topScore = $candidates[0]['score'];
-                    $topCandidates = array_filter($candidates, fn($c) => $c['score'] === $topScore);
-
-                    // Pick unfulfilled candidate first
-                    foreach ($topCandidates as $c) {
-                        $currConverted = (float) $poItems->where('pr_item_id', $c['pr']->id)->sum('qty');
-                        if ($currConverted < (float) $c['pr']->qty) {
-                            $matchedPrItem = $c['pr'];
-                            break;
+                // Strategy C: Scored matching (respects dosage, form, keywords)
+                if (!$matchedPrItem) {
+                    $candidates = [];
+                    foreach ($prItems as $prIt) {
+                        $score = self::matchScore($poItem->description ?? '', $prIt->description ?? '');
+                        if ($score > 0) {
+                            $candidates[] = ['pr' => $prIt, 'score' => $score];
                         }
                     }
-                    if (!$matchedPrItem) {
-                        $matchedPrItem = $candidates[0]['pr'];
+
+                    if (!empty($candidates)) {
+                        usort($candidates, fn($a, $b) => $b['score'] <=> $a['score']);
+                        $topScore = $candidates[0]['score'];
+                        $topCandidates = array_filter($candidates, fn($c) => $c['score'] === $topScore);
+
+                        // Pick unfulfilled candidate first
+                        foreach ($topCandidates as $c) {
+                            $currConverted = (float) $poItems->where('pr_item_id', $c['pr']->id)->sum('qty');
+                            if ($currConverted < (float) $c['pr']->qty) {
+                                $matchedPrItem = $c['pr'];
+                                break;
+                            }
+                        }
+                        if (!$matchedPrItem) {
+                            $matchedPrItem = $candidates[0]['pr'];
+                        }
                     }
                 }
-            }
 
-            // Strategy D: Match by sno ONLY if sno item description is compatible
-            if (!$matchedPrItem) {
-                $matchBySno = $prItems->firstWhere('sno', $poItem->sno);
-                if ($matchBySno) {
-                    $cPr = self::cleanItemDesc($matchBySno->description);
-                    if (empty($cPr) || empty($cPo) || str_contains($cPo, $cPr) || str_contains($cPr, $cPo)) {
-                        $matchedPrItem = $matchBySno;
+                // Strategy D: Match by sno ONLY if sno item description is compatible
+                if (!$matchedPrItem) {
+                    $matchBySno = $prItems->firstWhere('sno', $poItem->sno);
+                    if ($matchBySno) {
+                        $cPr = self::cleanItemDesc($matchBySno->description);
+                        if (empty($cPr) || empty($cPo) || str_contains($cPo, $cPr) || str_contains($cPr, $cPo)) {
+                            $matchedPrItem = $matchBySno;
+                        }
                     }
                 }
-            }
 
-            if ($matchedPrItem && $poItem->pr_item_id !== $matchedPrItem->id) {
-                $poItem->update(['pr_item_id' => $matchedPrItem->id]);
+                if ($matchedPrItem && $poItem->pr_item_id !== $matchedPrItem->id) {
+                    $poItem->update(['pr_item_id' => $matchedPrItem->id]);
+                }
             }
         }
 
