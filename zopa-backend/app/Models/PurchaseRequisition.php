@@ -339,14 +339,18 @@ class PurchaseRequisition extends Model
         });
 
         if ($allResolved) {
-            $pr->update([
-                'status'       => 'converted',
-                'converted_at' => $pr->converted_at ?? now(),
-            ]);
+            if (!in_array($pr->status, ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
+                $pr->update([
+                    'status'       => 'converted',
+                    'converted_at' => $pr->converted_at ?? now(),
+                ]);
+            }
         } elseif ($anyProgress) {
-            $pr->update([
-                'status' => 'partially_converted',
-            ]);
+            if (!in_array($pr->status, ['short_closed', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
+                $pr->update([
+                    'status' => 'partially_converted',
+                ]);
+            }
         } else {
             // Revert status if zero items have been converted or short closed
             if (in_array($pr->status, ['converted', 'partially_converted'])) {
