@@ -27,7 +27,14 @@ interface PrKpi {
 }
 interface DashboardStats {
   filter?: { period: string; from_date?: string; to_date?: string };
-  tat_summary?: { avg_approval_days: number; avg_release_days: number; avg_delivery_days: number; avg_total_days: number };
+  tat_summary?: {
+    avg_total_days: number;
+    avg_pr_tat_days: number;
+    avg_pr_tat_net_days: number;
+    avg_approval_days: number;
+    avg_release_days: number;
+    avg_delivery_days: number;
+  };
   po_counts: Record<string, number>;
   pending_approvals: number;
   recent_pos: any[];
@@ -104,8 +111,71 @@ interface DashboardStats {
 
       } @else if (stats()) {
 
-        <!-- ── Stat cards ──────────────────────────────────── -->
-        <div class="stat-grid">
+        <!-- ── Row 1: PR Stat cards ────────────────────────── -->
+        <div class="stat-grid" style="margin-bottom:20px;">
+
+          <div class="stat-card clickable" (click)="router.navigate(['/purchase-requisitions'])">
+            <div class="stat-card-body">
+              <div class="stat-label">Total PRs</div>
+              <div class="stat-value">{{ totalPrs() }}</div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#7c3aed;"></span>
+                All requisitions
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);">
+              <mat-icon>description</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card clickable" (click)="router.navigate(['/purchase-requisitions'])">
+            <div class="stat-card-body">
+              <div class="stat-label">Open PRs</div>
+              <div class="stat-value" [style.color]="openPrs() > 0 ? '#d97706' : 'var(--text-1)'">
+                {{ openPrs() }}
+              </div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#d97706;"></span>
+                Submitted + RFQ Processing
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
+              <mat-icon>send</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card clickable" (click)="router.navigate(['/purchase-requisitions'])">
+            <div class="stat-card-body">
+              <div class="stat-label">In RFQ Process</div>
+              <div class="stat-value" style="color:#2563eb;">{{ inRfqPrs() }}</div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#2563eb;"></span>
+                RFQ created / approved
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);">
+              <mat-icon>request_quote</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card clickable" (click)="router.navigate(['/purchase-requisitions'], { queryParams: { status: 'converted' } })">
+            <div class="stat-card-body">
+              <div class="stat-label">Converted to PO</div>
+              <div class="stat-value" style="color:#16a34a;">{{ convertedPrs() }}</div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#16a34a;"></span>
+                Successfully processed
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);">
+              <mat-icon>transform</mat-icon>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── Row 2: PO Stat cards ────────────────────────── -->
+        <div class="stat-grid" style="margin-bottom:20px;">
 
           <div class="stat-card anim-1 clickable" (click)="router.navigate(['/purchase-orders'])">
             <div class="stat-card-body">
@@ -174,59 +244,82 @@ interface DashboardStats {
 
         </div>
 
-        <!-- ── Intuitive TAT Summary Performance Pipeline ──────────────────────── -->
-        <mat-card class="tat-summary-card mb-6">
-          <mat-card-header>
-            <div class="tat-card-title">
-              <mat-icon color="primary">speed</mat-icon>
-              <span>Turnaround Time (TAT) Pipeline Performance</span>
-            </div>
-          </mat-card-header>
-          <mat-card-content>
-            <div class="tat-pipeline">
-              <div class="tat-step">
-                <div class="tat-step-num">1</div>
-                <div class="tat-step-info">
-                  <div class="tat-step-label">PO Approval TAT</div>
-                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_approval_days ?? 0 }} days</div>
-                  <div class="tat-step-sub">Created → Approved</div>
-                </div>
-              </div>
-              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
+        <!-- ── Row 3: TAT Metrics Row ──────────────────────── -->
+        <div class="stat-grid-5" style="margin-bottom:24px;">
 
-              <div class="tat-step">
-                <div class="tat-step-num">2</div>
-                <div class="tat-step-info">
-                  <div class="tat-step-label">Vendor Release TAT</div>
-                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_release_days ?? 0 }} days</div>
-                  <div class="tat-step-sub">Approved → Released</div>
-                </div>
-              </div>
-              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
-
-              <div class="tat-step">
-                <div class="tat-step-num">3</div>
-                <div class="tat-step-info">
-                  <div class="tat-step-label">GRN / Delivery TAT</div>
-                  <div class="tat-step-val">{{ stats()?.tat_summary?.avg_delivery_days ?? 0 }} days</div>
-                  <div class="tat-step-sub">Released → Delivered</div>
-                </div>
-              </div>
-              <div class="tat-arrow"><mat-icon>east</mat-icon></div>
-
-              <div class="tat-step tat-step--total">
-                <div class="tat-step-num"><mat-icon>flag</mat-icon></div>
-                <div class="tat-step-info">
-                  <div class="tat-step-label">Total Cycle TAT</div>
-                  <div class="tat-step-val text-primary">{{ stats()?.tat_summary?.avg_total_days ?? 0 }} days</div>
-                  <div class="tat-step-sub">End to End Cycle</div>
-                </div>
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-label" style="font-size:11px;line-height:1.3;">Total Fulfilment TAT</div>
+              <div class="stat-value" style="color:#7c3aed;font-size:26px;">{{ stats()?.tat_summary?.avg_total_days ?? 0 }}<span style="font-size:13px;font-weight:500;margin-left:4px;">days</span></div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#7c3aed;"></span>
+                Approved PR to Delivery date
               </div>
             </div>
-          </mat-card-content>
-        </mat-card>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);">
+              <mat-icon>flag</mat-icon>
+            </div>
+          </div>
 
-        <!-- ── Charts row ───────────────────────────────────── -->
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-label" style="font-size:11px;line-height:1.3;">Total PR TAT</div>
+              <div class="stat-value" style="color:#d97706;font-size:26px;">{{ stats()?.tat_summary?.avg_pr_tat_days ?? 0 }}<span style="font-size:13px;font-weight:500;margin-left:4px;">days</span></div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#d97706;"></span>
+                Approved PR to PO creation TAT
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
+              <mat-icon>timer</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-label" style="font-size:11px;line-height:1.3;">PR TAT</div>
+              <div class="stat-value" style="color:#2563eb;font-size:26px;">{{ stats()?.tat_summary?.avg_pr_tat_net_days ?? 0 }}<span style="font-size:13px;font-weight:500;margin-left:4px;">days</span></div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#2563eb;"></span>
+                Approved PR to PO (after clarification)
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);">
+              <mat-icon>hourglass_empty</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-label" style="font-size:11px;line-height:1.3;">PO Approval TAT</div>
+              <div class="stat-value" style="color:#0891b2;font-size:26px;">{{ stats()?.tat_summary?.avg_approval_days ?? 0 }}<span style="font-size:13px;font-weight:500;margin-left:4px;">days</span></div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#0891b2;"></span>
+                PO creation to Approval
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#0ea5e9 0%,#0891b2 100%);">
+              <mat-icon>approval</mat-icon>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-body">
+              <div class="stat-label" style="font-size:11px;line-height:1.3;">Delivery TAT</div>
+              <div class="stat-value" style="color:#16a34a;font-size:26px;">{{ stats()?.tat_summary?.avg_delivery_days ?? 0 }}<span style="font-size:13px;font-weight:500;margin-left:4px;">days</span></div>
+              <div class="stat-trend">
+                <span class="trend-dot" style="background:#16a34a;"></span>
+                Approved PO to Delivery date
+              </div>
+            </div>
+            <div class="stat-card-icon" style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);">
+              <mat-icon>local_shipping</mat-icon>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── Row 4: Charts row ───────────────────────────── -->
         <div class="charts-row">
 
           <!-- PO Status Donut -->
@@ -292,79 +385,7 @@ interface DashboardStats {
 
         </div>
 
-        <!-- ── PR Section header ──────────────────────────── -->
-        <div class="section-divider">
-          <mat-icon style="color:#7c3aed;">description</mat-icon>
-          <span>Purchase Requisitions</span>
-          <button mat-button color="primary" routerLink="/purchase-requisitions" class="view-all-btn">
-            View all <mat-icon style="font-size:14px;vertical-align:middle;">arrow_forward</mat-icon>
-          </button>
-        </div>
-
-        <!-- ── PR Stat cards ───────────────────────────────── -->
-        <div class="stat-grid" style="margin-bottom:24px;">
-
-          <div class="stat-card">
-            <div class="stat-card-body">
-              <div class="stat-label">Total PRs</div>
-              <div class="stat-value">{{ totalPrs() }}</div>
-              <div class="stat-trend">
-                <span class="trend-dot" style="background:#7c3aed;"></span>
-                All requisitions
-              </div>
-            </div>
-            <div class="stat-card-icon" style="background:linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%);">
-              <mat-icon>description</mat-icon>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card-body">
-              <div class="stat-label">Submitted</div>
-              <div class="stat-value" [style.color]="submittedPrs() > 0 ? '#d97706' : 'var(--text-1)'">
-                {{ submittedPrs() }}
-              </div>
-              <div class="stat-trend">
-                <span class="trend-dot" style="background:#d97706;"></span>
-                Awaiting procurement action
-              </div>
-            </div>
-            <div class="stat-card-icon" style="background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);">
-              <mat-icon>send</mat-icon>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card-body">
-              <div class="stat-label">In RFQ Process</div>
-              <div class="stat-value" style="color:#2563eb;">{{ inRfqPrs() }}</div>
-              <div class="stat-trend">
-                <span class="trend-dot" style="background:#2563eb;"></span>
-                RFQ created / approved
-              </div>
-            </div>
-            <div class="stat-card-icon" style="background:linear-gradient(135deg,#3b82f6 0%,#2563eb 100%);">
-              <mat-icon>request_quote</mat-icon>
-            </div>
-          </div>
-
-          <div class="stat-card">
-            <div class="stat-card-body">
-              <div class="stat-label">Converted to PO</div>
-              <div class="stat-value" style="color:#16a34a;">{{ convertedPrs() }}</div>
-              <div class="stat-trend">
-                <span class="trend-dot" style="background:#16a34a;"></span>
-                Successfully processed
-              </div>
-            </div>
-            <div class="stat-card-icon" style="background:linear-gradient(135deg,#22c55e 0%,#16a34a 100%);">
-              <mat-icon>transform</mat-icon>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ── Recent PRs table ────────────────────────────── -->
+        <!-- ── Row 5: Recent PRs table ────────────────────────────── -->
         <mat-card class="table-card recent-card" style="margin-bottom:24px;">
           <mat-card-header style="padding:20px 20px 0;">
             <mat-card-title>Recent Purchase Requisitions</mat-card-title>
@@ -1027,6 +1048,7 @@ interface DashboardStats {
 
     /* ── Stat grid — Purity UI style: value left, icon right ── */
     .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:24px; }
+    .stat-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:24px; }
     .stat-card {
       background:#ffffff;
       border:1px solid var(--border);
@@ -1304,6 +1326,9 @@ interface DashboardStats {
       .stat-grid {
         grid-template-columns: repeat(2, 1fr) !important;
       }
+      .stat-grid-5 {
+        grid-template-columns: repeat(2, 1fr) !important;
+      }
       .dashboard-grid {
         grid-template-columns: 1fr !important;
       }
@@ -1324,7 +1349,7 @@ interface DashboardStats {
     }
 
     @media (max-width: 576px) {
-      .stat-grid {
+      .stat-grid, .stat-grid-5 {
         grid-template-columns: 1fr !important;
       }
       .page-header {
@@ -1394,10 +1419,13 @@ export class DashboardComponent {
   );
 
   totalPrs    = computed(() => Object.values(this.stats()?.pr_counts ?? {}).reduce((a, b) => a + b, 0));
-  submittedPrs = computed(() => this.stats()?.pr_counts?.['submitted'] ?? 0);
   inRfqPrs    = computed(() =>
     (this.stats()?.pr_counts?.['rfq_created'] ?? 0) + (this.stats()?.pr_counts?.['rfq_approved'] ?? 0)
   );
+  openPrs     = computed(() =>
+    (this.stats()?.pr_counts?.['submitted'] ?? 0) + this.inRfqPrs() + (this.stats()?.pr_counts?.['approved'] ?? 0) + (this.stats()?.pr_counts?.['partially_converted'] ?? 0)
+  );
+  submittedPrs = computed(() => this.stats()?.pr_counts?.['submitted'] ?? 0);
   convertedPrs = computed(() => this.stats()?.pr_counts?.['converted'] ?? 0);
 
   poDonutSegments = computed(() => {

@@ -287,22 +287,61 @@ class DashboardController extends Controller
             });
 
         // ── Overall Average TAT Summary (Gross Business Calendar Days) ──────
+        // ── Overall Average TAT Summary ──────────────────────────────────────────
         $allTats = TatRecord::whereHas('po', fn($q) => $q->where('tenant_id', $tenantId))->get();
+        $allPosForTat = PurchaseOrder::where('tenant_id', $tenantId)->with('pr:id,created_at,submitted_at')->get();
 
-        $avgPrToApprovalDays = round($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && $t->po_approved_at)
-            ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
-
+        // 1. PO Approval TAT: PO creation to Approval
         $avgApprovalDays = round($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) 
+            ?? ($allPosForTat->filter(fn($p) => $p->created_at && $p->approved_at)->avg(fn($p) => $p->created_at->diffInHours($p->approved_at) / 24) ?? 0), 1);
 
+        // 2. Vendor Release TAT: Approved to Released
         $avgReleaseDays = round($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
-            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24) ?? 0, 1);
+            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24)
+            ?? ($allPosForTat->filter(fn($p) => $p->approved_at && $p->released_at)->avg(fn($p) => $p->approved_at->diffInHours($p->released_at) / 24) ?? 0), 1);
 
-        $avgDeliveryDays = round($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
-            ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24) ?? 0, 1);
+        // 3. Delivery TAT: Approved PO to Delivery date
+        $avgDeliveryDays = round($allTats->filter(fn($t) => ($t->po_approved_at ?? $t->po_released_at) && ($t->po_delivered_at ?? $t->grn_received_at))
+            ->avg(fn($t) => ($t->po_approved_at ?? $t->po_released_at)->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24)
+            ?? ($allPosForTat->filter(fn($p) => ($p->approved_at ?? $p->released_at) && $p->delivered_at)->avg(fn($p) => ($p->approved_at ?? $p->released_at)->diffInHours($p->delivered_at) / 24) ?? 0), 1);
 
-        $avgTotalDays = round($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && ($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at))
-            ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at) / 24) ?? 0, 1);
+        // 4. Total PR TAT: Approved PR to PO creation TAT (Gross)
+        $prApprovedTats = PurchaseRequisition::where('tenant_id', $tenantId)
+            ->where(function($q) {
+                $q->whereNotNull('converted_at')
+                  ->orWhere('status', 'converted');
+            })
+            ->get(['created_at', 'submitted_at', 'converted_at', 'updated_at', 'total_clarification_duration_seconds']);
+
+        $avgPrTatDays = round($prApprovedTats->avg(function($p) {
+            $start = $p->submitted_at ?? $p->created_at;
+            $end = $p->converted_at ?? $p->updated_at;
+            return ($start && $end) ? $start->diffInHours($end) / 24 : null;
+        }) ?? 0, 1);
+
+        // 5. PR TAT (Net): Approved PR to PO creation, after reducing clarification period
+        $avgPrTatNetDays = round($prApprovedTats->avg(function($p) {
+            $start = $p->submitted_at ?? $p->created_at;
+            $end = $p->converted_at ?? $p->updated_at;
+            if (!$start || !$end) return null;
+            $gross = $start->diffInHours($end) / 24;
+            $clarificationDays = ($p->total_clarification_duration_seconds ?? 0) / 86400;
+            return max(0, $gross - $clarificationDays);
+        }) ?? 0, 1);
+
+        // 6. Total Fulfilment TAT: Approved PR to Delivery date
+        $deliveredPosWithPr = $allPosForTat->filter(fn($p) => $p->delivered_at);
+        $avgTotalFulfilmentDays = round(
+            $deliveredPosWithPr->isNotEmpty()
+                ? $deliveredPosWithPr->avg(function($po) {
+                    $prStart = $po->pr?->submitted_at ?? $po->pr?->created_at ?? $po->created_at;
+                    return $prStart && $po->delivered_at ? $prStart->diffInHours($po->delivered_at) / 24 : null;
+                })
+                : ($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && ($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at))
+                    ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at) / 24) ?? 0),
+            1
+        );
 
         return response()->json([
             'filter' => [
@@ -311,11 +350,12 @@ class DashboardController extends Controller
                 'to_date'   => $toDate,
             ],
             'tat_summary' => [
-                'avg_pr_to_approval_days' => $avgPrToApprovalDays,
-                'avg_approval_days'       => $avgApprovalDays,
-                'avg_release_days'        => $avgReleaseDays,
-                'avg_delivery_days'       => $avgDeliveryDays,
-                'avg_total_days'          => $avgTotalDays,
+                'avg_total_days'           => $avgTotalFulfilmentDays,
+                'avg_pr_tat_days'          => $avgPrTatDays,
+                'avg_pr_tat_net_days'      => $avgPrTatNetDays,
+                'avg_approval_days'        => $avgApprovalDays,
+                'avg_release_days'         => $avgReleaseDays,
+                'avg_delivery_days'        => $avgDeliveryDays,
             ],
             'po_counts'             => $posByStatus,
             'pending_approvals'     => $pendingApprovals,

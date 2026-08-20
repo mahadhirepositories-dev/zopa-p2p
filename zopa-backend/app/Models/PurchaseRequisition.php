@@ -194,6 +194,11 @@ class PurchaseRequisition extends Model
         } else {
             // General multi-pass matching for multi-PO or split PRs
             foreach ($poItems as $poItem) {
+                // If this PO item is already linked to an item of THIS PR, preserve it!
+                if ($poItem->pr_item_id && in_array($poItem->pr_item_id, $prItemIds)) {
+                    continue;
+                }
+
                 $cPo = self::cleanItemDesc($poItem->description);
                 $matchedPrItem = null;
 
@@ -202,7 +207,7 @@ class PurchaseRequisition extends Model
                     $matchedPrItem = $prItems->firstWhere('product_id', $poItem->product_id);
                 }
 
-                // Strategy B: Exact cleaned description match (e.g. T3, T4, TSH, HbA1c, Glass Slides, Coverslip, Plane/Plain Tubes)
+                // Strategy B: Exact cleaned description match
                 if (!$matchedPrItem && !empty($cPo)) {
                     $exactMatches = $prItems->filter(function ($prIt) use ($cPo) {
                         $cPr = PurchaseRequisition::cleanItemDesc($prIt->description);
@@ -246,13 +251,35 @@ class PurchaseRequisition extends Model
                     }
                 }
 
-                // Strategy D: Match by sno ONLY if sno item description is compatible
+                // Strategy D: Match by sno if description compatible
                 if (!$matchedPrItem) {
                     $matchBySno = $prItems->firstWhere('sno', $poItem->sno);
                     if ($matchBySno) {
                         $cPr = self::cleanItemDesc($matchBySno->description);
                         if (empty($cPr) || empty($cPo) || str_contains($cPo, $cPr) || str_contains($cPr, $cPo)) {
                             $matchedPrItem = $matchBySno;
+                        }
+                    }
+                }
+
+                // Strategy E: Match by exact quantity among unfulfilled PR items
+                if (!$matchedPrItem && (float)$poItem->qty > 0) {
+                    $unfulfilledSameQty = $prItems->filter(function ($prIt) use ($poItem, $poItems) {
+                        $currConverted = (float) $poItems->where('pr_item_id', $prIt->id)->sum('qty');
+                        return $currConverted < (float) $prIt->qty && abs((float)$prIt->qty - (float)$poItem->qty) < 0.001;
+                    });
+                    if ($unfulfilledSameQty->count() === 1) {
+                        $matchedPrItem = $unfulfilledSameQty->first();
+                    }
+                }
+
+                // Strategy F: Unconditional SNO fallback for unfulfilled PR item
+                if (!$matchedPrItem) {
+                    $snoPr = $prItems->firstWhere('sno', $poItem->sno);
+                    if ($snoPr) {
+                        $currConverted = (float) $poItems->where('pr_item_id', $snoPr->id)->sum('qty');
+                        if ($currConverted < (float) $snoPr->qty) {
+                            $matchedPrItem = $snoPr;
                         }
                     }
                 }
