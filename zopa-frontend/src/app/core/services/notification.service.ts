@@ -13,6 +13,10 @@ export class NotificationService {
     this.snack.open(message, 'Close', { duration: 6000, panelClass: ['snack-error'] });
   }
 
+  warning(message: string) {
+    this.snack.open(message, 'Close', { duration: 7000, panelClass: ['snack-warning'] });
+  }
+
   info(message: string) {
     this.snack.open(message, 'Close', { duration: 3000 });
   }

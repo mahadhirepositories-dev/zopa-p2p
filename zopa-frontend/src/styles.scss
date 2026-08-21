@@ -369,6 +369,11 @@ mat-chip, .mat-mdc-chip {
   background: #dc2626 !important;
   border-radius: var(--r) !important;
 }
+.snack-warning .mdc-snackbar__surface {
+  background: #d97706 !important;
+  border-radius: var(--r) !important;
+  color: #fff !important;
+}
 
 /* ── Page layout helpers ────────────────────────────────────── */
 .page-wrapper {

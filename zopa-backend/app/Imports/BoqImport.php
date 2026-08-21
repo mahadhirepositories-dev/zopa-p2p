@@ -18,6 +18,8 @@ class BoqImport implements ToCollection, WithHeadingRow
     /** @var array<int,array<string,mixed>> */
     public array $items = [];
     /** @var array<int,string> */
+    public array $skippedZeroQty = [];
+    /** @var array<int,string> */
     public array $errors = [];
 
     public function __construct(private string $type) {}
@@ -35,6 +37,7 @@ class BoqImport implements ToCollection, WithHeadingRow
             $qty = $row['qty'] ?? null;
             // Skip rows with zero or empty quantity (standard for full catalog templates)
             if ($qty === null || $qty === '' || (is_numeric($qty) && (float) $qty <= 0)) {
+                $this->skippedZeroQty[] = $desc;
                 continue;
             }
 

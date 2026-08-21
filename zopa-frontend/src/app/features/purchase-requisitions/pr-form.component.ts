@@ -539,7 +539,7 @@ export class PrFormComponent implements OnInit {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('type', 'pr');
-    this.http.post<{ items: any[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
+    this.http.post<{ items: any[]; skipped_zero_qty?: string[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
       next: res => {
         this.boqUploading.set(false);
         // Drop the initial blank row if it's still empty, then append parsed rows.
@@ -561,9 +561,18 @@ export class PrFormComponent implements OnInit {
         });
         if (this.items.length === 0) this.items.push(this.newItem());
         const added = res.items?.length ?? 0;
-        this.notify.success(`${added} line item(s) added from BOQ.`
-          + (res.errors?.length ? ` ${res.errors.length} row(s) skipped.` : ''));
-        if (res.errors?.length) this.notify.error(res.errors.slice(0, 5).join(' | '));
+        this.notify.success(`${added} line item(s) added from BOQ.`);
+
+        if (res.skipped_zero_qty && res.skipped_zero_qty.length > 0) {
+          const count = res.skipped_zero_qty.length;
+          const preview = res.skipped_zero_qty.slice(0, 3).join(', ');
+          const more = count > 3 ? ` and ${count - 3} more` : '';
+          this.notify.warning(`Notice: ${count} item(s) (${preview}${more}) were skipped because quantity is 0.`);
+        }
+
+        if (res.errors?.length) {
+          this.notify.error(res.errors.slice(0, 5).join(' | '));
+        }
       },
       error: err => {
         this.boqUploading.set(false);

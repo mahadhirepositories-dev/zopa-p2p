@@ -1097,14 +1097,21 @@ export class PoFormComponent implements OnInit {
     const fd = new FormData();
     fd.append('file', file);
     fd.append('type', 'po');
-    this.http.post<{ items: any[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
+    this.http.post<{ items: any[]; skipped_zero_qty?: string[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
       next: res => {
         this.boqUploading.set(false);
         (res.items ?? []).forEach(it => this.items.push(this.buildItem(it)));
         this.recalc();
         const added = res.items?.length ?? 0;
-        this.notify.success(`${added} line item(s) added from BOQ.`
-          + (res.errors?.length ? ` ${res.errors.length} row(s) skipped.` : ''));
+        this.notify.success(`${added} line item(s) added from BOQ.`);
+
+        if (res.skipped_zero_qty && res.skipped_zero_qty.length > 0) {
+          const count = res.skipped_zero_qty.length;
+          const preview = res.skipped_zero_qty.slice(0, 3).join(', ');
+          const more = count > 3 ? ` and ${count - 3} more` : '';
+          this.notify.warning(`Notice: ${count} item(s) (${preview}${more}) were skipped because quantity is 0.`);
+        }
+
         if (res.errors?.length) {
           this.notify.error(res.errors.slice(0, 5).join(' | '));
         }

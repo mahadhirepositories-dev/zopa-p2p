@@ -40,8 +40,9 @@ class BoqController extends Controller
         Excel::import($import, $request->file('file'));
 
         return response()->json([
-            'items'  => $import->items,
-            'errors' => $import->errors,
+            'items'            => $import->items,
+            'skipped_zero_qty' => $import->skippedZeroQty,
+            'errors'           => $import->errors,
         ]);
     }
 }
