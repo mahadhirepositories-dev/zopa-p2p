@@ -33,7 +33,12 @@ class BoqImport implements ToCollection, WithHeadingRow
             }
 
             $qty = $row['qty'] ?? null;
-            if (!is_numeric($qty) || (float) $qty <= 0) {
+            // Skip rows with zero or empty quantity (standard for full catalog templates)
+            if ($qty === null || $qty === '' || (is_numeric($qty) && (float) $qty <= 0)) {
+                continue;
+            }
+
+            if (!is_numeric($qty)) {
                 $this->errors[] = "Row {$line}: Qty must be a positive number";
                 continue;
             }
