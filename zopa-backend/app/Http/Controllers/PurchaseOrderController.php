@@ -246,7 +246,7 @@ class PurchaseOrderController extends Controller
                     'pr_submitted_at' => $pr->submitted_at,
                 ]);
 
-                $this->actLog->log('PR', $prId, $newStatus, ['po_id' => $po->id]);
+                $this->actLog->log('PR', $prId, 'po_created', ['po_id' => $po->id, 'status' => $pr->fresh()->status]);
             }
 
             $this->actLog->log('PO', $po->id, 'created', ['status' => 'draft', 'amount' => (float) $po->grand_total]);
