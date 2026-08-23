@@ -105,6 +105,11 @@ import { filter } from 'rxjs/operators';
                     <mat-icon>description</mat-icon><span>Requisitions</span>
                   </a>
                 }
+                @if (auth.isZopaStaff()) {
+                  <a class="nav-link" routerLink="/sourcing" routerLinkActive="nav-link--active">
+                    <mat-icon>travel_explore</mat-icon><span>Sourcing</span>
+                  </a>
+                }
                 @if (auth.canDo('purchase_orders','view')) {
                   <a class="nav-link" routerLink="/purchase-orders" routerLinkActive="nav-link--active">
                     <mat-icon>receipt_long</mat-icon><span>Purchase Orders</span>

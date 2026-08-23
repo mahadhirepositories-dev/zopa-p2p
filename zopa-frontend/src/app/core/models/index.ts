@@ -332,3 +332,72 @@ export type Role =
   | 'zopa_grn'
   | 'client_pr'
   | 'client_grn';
+
+// ── Sourcing Module ─────────────────────────────────────────────────────────
+
+export interface SourcingVendorContact {
+  id: number;
+  sourcing_request_id: number;
+  vendor_id?: number | null;
+  vendor_name: string;
+  contact_person?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  quoted_price?: number | null;
+  gst_rate?: number | null;
+  lead_time_days?: number | null;
+  payment_terms?: string | null;
+  notes?: string | null;
+  created_by: number;
+  creator?: { id: number; name: string };
+  updated_by?: number | null;
+  updater?: { id: number; name: string };
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SourcingRemark {
+  id: number;
+  sourcing_request_id: number;
+  user_id: number;
+  user?: { id: number; name: string };
+  remark: string;
+  created_at?: string;
+}
+
+export interface SourcingRequest {
+  id: number;
+  sourcing_number: string;
+  source_type: 'pr' | 'direct';
+  pr_id?: number | null;
+  pr_item_id?: number | null;
+  pr_ref?: string | null;
+  rfq_ref?: string | null;
+  item_name: string;
+  product_id?: number | null;
+  product?: Product | null;
+  specification?: string | null;
+  category_id?: number | null;
+  category?: { id: number; name: string } | null;
+  category_name?: string | null;
+  qty: number;
+  unit: string;
+  target_price?: number | null;
+  tenant_id?: number | null;
+  tenant?: { id: number; name: string; code: string } | null;
+  client_name?: string | null;
+  location_id?: number | null;
+  location?: { id: number; name: string } | null;
+  delivery_location?: string | null;
+  status: 'open' | 'closed';
+  created_by: number;
+  creator?: { id: number; name: string; email?: string };
+  closed_at?: string | null;
+  closed_by?: number | null;
+  closed_by_user?: { id: number; name: string };
+  closure_notes?: string | null;
+  vendor_contacts?: SourcingVendorContact[];
+  remarks?: SourcingRemark[];
+  created_at?: string;
+  updated_at?: string;
+}

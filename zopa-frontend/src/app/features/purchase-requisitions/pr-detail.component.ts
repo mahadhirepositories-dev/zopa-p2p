@@ -395,6 +395,9 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                       <th>UOM</th>
                       <th>Est. Price</th>
                       <th>Amount</th>
+                      @if (auth.isZopaStaff()) {
+                        <th style="text-align:center;">Sourcing</th>
+                      }
                     </tr>
                   </thead>
                   <tbody>
@@ -428,12 +431,19 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                         <td>{{ item.unit }}</td>
                         <td>₹{{ item.estimated_price | number:'1.0-0' }}</td>
                         <td><strong>₹{{ item.qty * item.estimated_price | number:'1.0-0' }}</strong></td>
+                        @if (auth.isZopaStaff()) {
+                          <td style="text-align:center;">
+                            <button mat-stroked-button color="primary" class="btn-xs-source" (click)="sendItemToSourcing(item)" matTooltip="Send this item to ZOPA Sourcing Workbench">
+                              <mat-icon style="font-size:13px;width:13px;height:13px;margin-right:2px;">travel_explore</mat-icon> Source
+                            </button>
+                          </td>
+                        }
                       </tr>
                     }
                   </tbody>
                   <tfoot>
                     <tr class="total-row">
-                      <td colspan="7">Estimated Total</td>
+                      <td [attr.colspan]="auth.isZopaStaff() ? 8 : 7">Estimated Total</td>
                       <td><strong>₹{{ pr()!.estimated_amount | number:'1.0-0' }}</strong></td>
                     </tr>
                   </tfoot>
@@ -501,6 +511,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     .items-table td { padding:10px 16px;font-size:13px;color:var(--text-1);border-bottom:1px solid var(--border); }
     .items-table tbody tr:last-child td { border-bottom:none; }
     .total-row td { font-size:13px;font-weight:600;color:var(--text-1);background:#f8fafc;padding:10px 16px;border-top:2px solid var(--border); }
+    .btn-xs-source { height:26px!important; font-size:11px!important; padding:0 8px!important; line-height:26px!important; }
   `],
 })
 export class PrDetailComponent implements OnInit {
@@ -778,6 +789,32 @@ export class PrDetailComponent implements OnInit {
         this.notify.error(err.error?.error || 'Failed to delete PR.');
         this.acting.set(false);
       }
+    });
+  }
+
+  sendItemToSourcing(item: any) {
+    if (!this.pr()) return;
+    const prVal = this.pr()!;
+    const payload = {
+      items: [{
+        pr_id: prVal.id,
+        pr_item_id: item.id,
+        description: item.description,
+        qty: item.qty,
+        unit: item.unit ?? 'Nos',
+        category_id: item.category_id,
+        remarks: item.remarks ?? '',
+      }]
+    };
+
+    this.http.post<{ message: string; data: any[] }>(`${environment.apiUrl}/sourcing/from-pr`, payload).subscribe({
+      next: res => {
+        this.notify.success(res.message || 'Item sent to Sourcing.');
+        if (res.data?.[0]?.id) {
+          this.router.navigate(['/sourcing', res.data[0].id]);
+        }
+      },
+      error: err => this.notify.error(err.error?.message || 'Failed to send to Sourcing.')
     });
   }
 }

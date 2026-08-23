@@ -19,6 +19,7 @@ use App\Http\Controllers\AiController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseRequisitionController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SourcingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\ClientController;
@@ -134,6 +135,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Get all available roles (used by Access Control, ZOPA Staff, and Org Staff)
     Route::get('/roles', [RoleController::class, 'index']);
+
+    // Sourcing Module (ZOPA Internal Workbench - Cross-Tenant)
+    Route::get('sourcing/export', [SourcingController::class, 'export']);
+    Route::get('sourcing/pr-line-items', [SourcingController::class, 'prLineItems']);
+    Route::post('sourcing/from-pr', [SourcingController::class, 'fromPrItems']);
+    Route::post('sourcing/{id}/contacts', [SourcingController::class, 'addContact']);
+    Route::put('sourcing/{id}/contacts/{contactId}', [SourcingController::class, 'updateContact']);
+    Route::delete('sourcing/{id}/contacts/{contactId}', [SourcingController::class, 'deleteContact']);
+    Route::post('sourcing/{id}/remarks', [SourcingController::class, 'addRemark']);
+    Route::apiResource('sourcing', SourcingController::class);
 
     // Admin routes (Super Admin only)
     Route::prefix('admin')->middleware(['super_admin'])->group(function () {

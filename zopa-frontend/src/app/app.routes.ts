@@ -87,6 +87,11 @@ export const routes: Routes = [
     loadChildren: () => import('./features/purchase-requisitions/purchase-requisitions.routes').then(m => m.prRoutes),
   },
   {
+    path: 'sourcing',
+    canActivate: [authGuard],
+    loadChildren: () => import('./features/sourcing/sourcing.routes').then(m => m.sourcingRoutes),
+  },
+  {
     path: 'reports',
     canActivate: [authGuard, permissionGuard],
     data: { module: 'reports' },

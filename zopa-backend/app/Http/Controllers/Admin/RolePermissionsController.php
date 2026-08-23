@@ -55,6 +55,7 @@ class RolePermissionsController extends Controller
         'approvals',
         'reports',
         'org_staff',
+        'sourcing',
     ];
 
     public function __construct(private PermissionService $permissionService) {}
