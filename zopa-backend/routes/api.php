@@ -138,6 +138,11 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Sourcing Module (ZOPA Internal Workbench - Cross-Tenant)
     Route::get('sourcing/export', [SourcingController::class, 'export']);
+    Route::get('sourcing/pr-queue', [SourcingController::class, 'prQueue']);
+    Route::get('sourcing/match-suggestions', [SourcingController::class, 'matchSuggestions']);
+    Route::post('sourcing/map-pr-item', [SourcingController::class, 'mapPrItemToMaster']);
+    Route::post('sourcing/{id}/map-master', [SourcingController::class, 'mapToMaster']);
+    Route::post('sourcing/{id}/promote-master', [SourcingController::class, 'promoteToMaster']);
     Route::get('sourcing/pr-line-items', [SourcingController::class, 'prLineItems']);
     Route::post('sourcing/from-pr', [SourcingController::class, 'fromPrItems']);
     Route::post('sourcing/{id}/contacts', [SourcingController::class, 'addContact']);

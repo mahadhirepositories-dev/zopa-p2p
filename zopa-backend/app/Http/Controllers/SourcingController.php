@@ -33,7 +33,6 @@ class SourcingController extends Controller
             abort(401, 'Unauthenticated.');
         }
 
-        // Allow if user is marked as ZOPA staff, super admin, or has ZOPA buyer role
         $currentRole = app()->bound('currentRole') ? app('currentRole') : null;
         $isZopaRole = in_array($currentRole, [
             'zopa_super_admin', 'zopa_buyer', 'zopa_approver_l1', 'zopa_approver_l2', 'zopa_approver_l3', 'zopa_pr', 'zopa_grn'
@@ -42,6 +41,73 @@ class SourcingController extends Controller
         if (!$user->is_zopa_staff && !$isZopaRole) {
             abort(403, 'The Sourcing module is only accessible to ZOPA Internal Organization.');
         }
+    }
+
+    /**
+     * Fuzzy match an input name against the Product master.
+     * Returns top matches with similarity percentage and details.
+     */
+    public function findProductMatches(string $inputName, ?int $tenantId = null, int $limit = 5): array
+    {
+        $cleanInput = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', ' ', $inputName)));
+        if (strlen($cleanInput) < 2) {
+            return [];
+        }
+
+        $inputTokens = array_filter(explode(' ', $cleanInput), fn($t) => strlen($t) > 1);
+
+        $query = Product::with(['category:id,name', 'subcategory:id,name'])->where('is_active', true);
+        if ($tenantId) {
+            $query->where(function ($q) use ($tenantId) {
+                $q->where('tenant_id', $tenantId)->orWhereNull('tenant_id');
+            });
+        }
+        $products = $query->get();
+
+        $scored = [];
+        foreach ($products as $prod) {
+            $cleanProdName = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', ' ', $prod->name)));
+            $prodTokens = array_filter(explode(' ', $cleanProdName), fn($t) => strlen($t) > 1);
+
+            // 1. Exact or Substring match
+            if ($cleanInput === $cleanProdName) {
+                $similarity = 100;
+            } elseif (str_contains($cleanProdName, $cleanInput) || str_contains($cleanInput, $cleanProdName)) {
+                $similarity = 88;
+            } else {
+                // 2. Token overlap score
+                $commonTokens = array_intersect($inputTokens, $prodTokens);
+                $tokenScore = count($inputTokens) > 0 ? (count($commonTokens) / count($inputTokens)) * 70 : 0;
+
+                // 3. Similar text percentage
+                similar_text($cleanInput, $cleanProdName, $similarTextPercent);
+
+                // 4. Levenshtein distance score
+                $lev = levenshtein(substr($cleanInput, 0, 255), substr($cleanProdName, 0, 255));
+                $maxLen = max(strlen($cleanInput), strlen($cleanProdName));
+                $levScore = $maxLen > 0 ? max(0, (1 - ($lev / $maxLen)) * 100) : 0;
+
+                $similarity = round(max($similarTextPercent, ($tokenScore + ($levScore * 0.3))));
+            }
+
+            if ($similarity >= 35) {
+                $scored[] = [
+                    'product_id'   => $prod->id,
+                    'name'         => $prod->name,
+                    'code'         => $prod->code,
+                    'unit'         => $prod->unit,
+                    'net_rate'     => (float) $prod->net_rate,
+                    'gst_rate'     => (float) $prod->gst_rate,
+                    'category'     => $prod->category?->name,
+                    'category_id'  => $prod->category_id,
+                    'score'        => min(100, (int) $similarity),
+                ];
+            }
+        }
+
+        usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+        return array_slice($scored, 0, $limit);
     }
 
     /**
@@ -103,18 +169,239 @@ class SourcingController extends Controller
 
         // Calculate Stats
         $all = SourcingRequest::all();
+        
+        // Count uncatalogued items in active PRs
+        $prQueueCount = PrItem::whereNull('product_id')
+            ->whereHas('pr', fn($q) => $q->whereNotIn('status', ['draft', 'rejected', 'short_closed', 'converted']))
+            ->whereDoesntHave('sourcingRequests', fn($q) => $q->where('status', 'open'))
+            ->count();
+
         $stats = [
-            'total'   => $all->count(),
-            'open'    => $all->where('status', 'open')->count(),
-            'closed'  => $all->where('status', 'closed')->count(),
-            'from_pr' => $all->where('source_type', 'pr')->count(),
-            'direct'  => $all->where('source_type', 'direct')->count(),
+            'total'         => $all->count(),
+            'open'          => $all->where('status', 'open')->count(),
+            'closed'        => $all->where('status', 'closed')->count(),
+            'from_pr'       => $all->where('source_type', 'pr')->count(),
+            'direct'        => $all->where('source_type', 'direct')->count(),
+            'pr_queue_count'=> $prQueueCount,
         ];
 
         return response()->json([
             'data'  => $requests,
             'stats' => $stats,
         ]);
+    }
+
+    /**
+     * Uncatalogued PR Stream: Fetches all free-text PR line items across all client orgs with typo / master match suggestions.
+     */
+    public function prQueue(Request $request): JsonResponse
+    {
+        $this->requireZopaBuyerOrStaff();
+
+        $query = PrItem::with([
+            'pr.tenant:id,name,code',
+            'pr.location:id,name',
+            'pr.costCenter:id,name',
+            'category:id,name',
+            'sourcingRequests',
+        ])
+        ->whereNull('product_id')
+        ->whereHas('pr', function ($q) {
+            $q->whereNotIn('status', ['draft', 'rejected', 'short_closed']);
+        });
+
+        if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
+            $query->whereHas('pr', fn($q) => $q->where('tenant_id', $request->tenant_id));
+        }
+
+        if ($request->filled('search')) {
+            $s = trim($request->search);
+            $query->where(function ($q) use ($s) {
+                $q->where('description', 'LIKE', "%{$s}%")
+                  ->orWhereHas('pr', fn($pq) => $pq->where('pr_number', 'LIKE', "%{$s}%")->orWhere('pr_ref', 'LIKE', "%{$s}%"));
+            });
+        }
+
+        $items = $query->orderBy('id', 'desc')->get();
+
+        // Attach fuzzy match suggestions for each free-text item
+        $enriched = $items->map(function ($item) {
+            $suggestions = $this->findProductMatches($item->description, $item->pr?->tenant_id, 3);
+            $bestMatch = !empty($suggestions) ? $suggestions[0] : null;
+
+            return [
+                'id'                => $item->id,
+                'pr_id'             => $item->pr_id,
+                'pr_number'         => $item->pr?->pr_number ?: $item->pr?->pr_ref,
+                'client_name'       => $item->pr?->tenant?->name ?? 'Client',
+                'tenant_id'         => $item->pr?->tenant_id,
+                'delivery_location' => $item->pr?->location?->name,
+                'description'       => $item->description,
+                'qty'               => (float) $item->qty,
+                'unit'              => $item->unit ?: 'Nos',
+                'estimated_price'   => (float) $item->estimated_price,
+                'category_name'     => $item->category?->name,
+                'category_id'       => $item->category_id,
+                'remarks'           => $item->remarks,
+                'created_at'        => $item->created_at,
+                'has_sourcing'      => $item->sourcingRequests->isNotEmpty(),
+                'active_sourcing'   => $item->sourcingRequests->firstWhere('status', 'open'),
+                'best_match'        => $bestMatch,
+                'suggestions'       => $suggestions,
+            ];
+        });
+
+        return response()->json($enriched);
+    }
+
+    /**
+     * Map a PR Line Item to an Existing Master Product (Resolves Typo & Links Master Product).
+     */
+    public function mapPrItemToMaster(Request $request): JsonResponse
+    {
+        $this->requireZopaBuyerOrStaff();
+
+        $validated = $request->validate([
+            'pr_item_id' => 'required|exists:pr_items,id',
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $prItem = PrItem::with('pr')->findOrFail($validated['pr_item_id']);
+        $product = Product::findOrFail($validated['product_id']);
+
+        $prItem->product_id = $product->id;
+        $prItem->category_id = $product->category_id ?: $prItem->category_id;
+        $prItem->unit = $product->unit ?: $prItem->unit;
+        if ($product->net_rate > 0) {
+            $prItem->estimated_price = $product->net_rate;
+        }
+        $prItem->save();
+
+        // If any open sourcing request exists for this PR item, resolve and close it
+        SourcingRequest::where('pr_item_id', $prItem->id)
+            ->where('status', 'open')
+            ->update([
+                'product_id'    => $product->id,
+                'target_price'  => $product->net_rate,
+                'status'        => 'closed',
+                'closed_at'     => now(),
+                'closed_by'     => auth()->id(),
+                'closure_notes' => "Mapped to master product: {$product->name} (Code: {$product->code})",
+            ]);
+
+        return response()->json([
+            'message' => "Item mapped to master product '{$product->name}'. Typo resolved and linked to catalog.",
+            'data'    => $prItem->fresh(['product', 'category']),
+        ]);
+    }
+
+    /**
+     * Get fuzzy match suggestions for any product name.
+     */
+    public function matchSuggestions(Request $request): JsonResponse
+    {
+        $this->requireZopaBuyerOrStaff();
+
+        $name = trim($request->input('name', ''));
+        if (!$name) {
+            return response()->json([]);
+        }
+
+        $tenantId = $request->input('tenant_id') ? (int) $request->input('tenant_id') : null;
+        $matches = $this->findProductMatches($name, $tenantId, 5);
+
+        return response()->json($matches);
+    }
+
+    /**
+     * Map a Sourcing Request to a Master Product.
+     */
+    public function mapToMaster(Request $request, int $id): JsonResponse
+    {
+        $this->requireZopaBuyerOrStaff();
+
+        $sourcing = SourcingRequest::findOrFail($id);
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+        ]);
+
+        $product = Product::findOrFail($validated['product_id']);
+
+        $sourcing->product_id = $product->id;
+        $sourcing->category_id = $product->category_id ?: $sourcing->category_id;
+        $sourcing->unit = $product->unit ?: $sourcing->unit;
+        if ($product->net_rate > 0) {
+            $sourcing->target_price = $product->net_rate;
+        }
+        $sourcing->status = 'closed';
+        $sourcing->closed_at = now();
+        $sourcing->closed_by = auth()->id();
+        $sourcing->closure_notes = "Resolved & mapped to master product: {$product->name} (Code: {$product->code})";
+        $sourcing->save();
+
+        // Also update linked PR item if present
+        if ($sourcing->pr_item_id) {
+            PrItem::where('id', $sourcing->pr_item_id)->update([
+                'product_id'      => $product->id,
+                'category_id'     => $product->category_id,
+                'unit'            => $product->unit,
+                'estimated_price' => $product->net_rate > 0 ? $product->net_rate : DB::raw('estimated_price'),
+            ]);
+        }
+
+        return response()->json([
+            'message' => "Sourcing request mapped to master product '{$product->name}'.",
+            'data'    => $sourcing->fresh(['product', 'category', 'closedBy:id,name']),
+        ]);
+    }
+
+    /**
+     * Promote a finalized Sourced Item into the Product Master Catalog.
+     */
+    public function promoteToMaster(Request $request, int $id): JsonResponse
+    {
+        $this->requireZopaBuyerOrStaff();
+
+        $sourcing = SourcingRequest::with('vendorContacts')->findOrFail($id);
+
+        $validated = $request->validate([
+            'name'           => 'required|string|max:255',
+            'code'           => 'nullable|string|max:50',
+            'description'    => 'nullable|string',
+            'category_id'    => 'nullable|exists:categories,id',
+            'unit'           => 'required|string|max:30',
+            'net_rate'       => 'required|numeric|min:0',
+            'gst_rate'       => 'nullable|numeric|min:0|max:100',
+            'hsn_code'       => 'nullable|string|max:50',
+        ]);
+
+        $product = Product::create([
+            'tenant_id'   => $sourcing->tenant_id,
+            'name'        => $validated['name'],
+            'code'        => $validated['code'] ?: ('PRD-' . strtoupper(substr(uniqid(), -5))),
+            'description' => $validated['description'] ?? $sourcing->specification,
+            'category_id' => $validated['category_id'] ?? $sourcing->category_id,
+            'unit'        => $validated['unit'],
+            'net_rate'    => $validated['net_rate'],
+            'gst_rate'    => $validated['gst_rate'] ?? 18,
+            'hsn_code'    => $validated['hsn_code'] ?? null,
+            'is_active'   => true,
+        ]);
+
+        $sourcing->product_id = $product->id;
+        $sourcing->save();
+
+        if ($sourcing->pr_item_id) {
+            PrItem::where('id', $sourcing->pr_item_id)->update([
+                'product_id'      => $product->id,
+                'estimated_price' => $product->net_rate,
+            ]);
+        }
+
+        return response()->json([
+            'message' => "Item '{$product->name}' successfully added to Product Master catalog.",
+            'data'    => $product->load('category'),
+        ], 201);
     }
 
     /**
@@ -135,22 +422,18 @@ class SourcingController extends Controller
             $q->whereNotIn('status', ['draft', 'rejected', 'short_closed']);
         });
 
-        // Filter by specific client if requested
         if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
-            $query->whereHas('pr', function ($q) use ($request) {
-                $q->where('tenant_id', $request->tenant_id);
-            });
+            $query->whereHas('pr', fn($q) => $q->where('tenant_id', $request->tenant_id));
         }
 
-        // Filter by unpriced only
         if ($request->boolean('unpriced_only')) {
             $query->where(function ($q) {
                 $q->whereNull('estimated_price')
-                  ->orWhere('estimated_price', '<=', 0);
+                  ->orWhere('estimated_price', '<=', 0)
+                  ->orWhereNull('product_id');
             });
         }
 
-        // Search term
         if ($request->filled('search')) {
             $s = trim($request->search);
             $query->where(function ($q) use ($s) {
@@ -159,9 +442,7 @@ class SourcingController extends Controller
                       $prQ->where('pr_number', 'LIKE', "%{$s}%")
                           ->orWhere('pr_ref', 'LIKE', "%{$s}%")
                           ->orWhere('title', 'LIKE', "%{$s}%")
-                          ->orWhereHas('tenant', function ($tQ) use ($s) {
-                              $tQ->where('name', 'LIKE', "%{$s}%");
-                          });
+                          ->orWhereHas('tenant', fn($tQ) => $tQ->where('name', 'LIKE', "%{$s}%"));
                   });
             });
         }
@@ -195,7 +476,6 @@ class SourcingController extends Controller
             'pr_id'              => 'nullable|exists:purchase_requisitions,id',
             'pr_item_id'         => 'nullable|exists:pr_items,id',
             'pr_ref'             => 'nullable|string|max:100',
-            // Optional initial vendor contact
             'vendor_name'        => 'nullable|string|max:255',
             'contact_person'     => 'nullable|string|max:150',
             'phone'              => 'nullable|string|max:50',
@@ -203,35 +483,30 @@ class SourcingController extends Controller
             'quoted_price'       => 'nullable|numeric|min:0',
             'payment_terms'      => 'nullable|string|max:255',
             'vendor_notes'       => 'nullable|string',
-            // Optional initial working remark
             'initial_remark'     => 'nullable|string',
         ]);
 
         return DB::transaction(function () use ($validated) {
             $user = auth()->user();
 
-            // Resolve Category Name if category_id given
             $categoryName = $validated['category_name'] ?? null;
             if (!empty($validated['category_id']) && empty($categoryName)) {
                 $category = Category::find($validated['category_id']);
                 $categoryName = $category?->name;
             }
 
-            // Resolve Client Name if tenant_id given
             $clientName = $validated['client_name'] ?? null;
             if (!empty($validated['tenant_id']) && empty($clientName)) {
                 $tenant = Tenant::find($validated['tenant_id']);
                 $clientName = $tenant?->name;
             }
 
-            // Resolve Delivery Location if location_id given
             $deliveryLocation = $validated['delivery_location'] ?? null;
             if (!empty($validated['location_id']) && empty($deliveryLocation)) {
                 $loc = Location::find($validated['location_id']);
                 $deliveryLocation = $loc?->name;
             }
 
-            // Resolve PR info if pr_id given
             $prRef = $validated['pr_ref'] ?? null;
             if (!empty($validated['pr_id']) && empty($prRef)) {
                 $pr = PurchaseRequisition::find($validated['pr_id']);
@@ -266,7 +541,6 @@ class SourcingController extends Controller
                 'created_by'        => $user->id,
             ]);
 
-            // Add initial vendor contact if provided
             if (!empty($validated['vendor_name'])) {
                 SourcingVendorContact::create([
                     'sourcing_request_id' => $sourcing->id,
@@ -281,7 +555,6 @@ class SourcingController extends Controller
                 ]);
             }
 
-            // Add initial working remark if provided
             if (!empty($validated['initial_remark'])) {
                 SourcingRemark::create([
                     'sourcing_request_id' => $sourcing->id,
@@ -365,7 +638,7 @@ class SourcingController extends Controller
     }
 
     /**
-     * Show detailed Sourcing Request.
+     * Show detailed Sourcing Request with fuzzy master suggestions attached.
      */
     public function show(int $id): JsonResponse
     {
@@ -377,19 +650,27 @@ class SourcingController extends Controller
             'tenant:id,name,code',
             'category:id,name',
             'location:id,name',
+            'product:id,name,code,net_rate,unit',
             'pr:id,pr_number,title,status,tenant_id',
             'vendorContacts.creator:id,name',
             'vendorContacts.updater:id,name',
             'remarks.user:id,name',
         ])->findOrFail($id);
 
-        return response()->json($sourcing);
+        // If no product is linked, find top master product matches to help buyer resolve typos
+        $suggestions = [];
+        if (!$sourcing->product_id) {
+            $suggestions = $this->findProductMatches($sourcing->item_name, $sourcing->tenant_id, 4);
+        }
+
+        $res = $sourcing->toArray();
+        $res['master_suggestions'] = $suggestions;
+
+        return response()->json($res);
     }
 
     /**
      * Update Sourcing Request.
-     * Core item details: Creator or Super Admin only.
-     * Status change: Any buyer / creator / admin.
      */
     public function update(Request $request, int $id): JsonResponse
     {
@@ -416,7 +697,6 @@ class SourcingController extends Controller
             'closure_notes'      => 'nullable|string',
         ]);
 
-        // If core item fields are being modified, ensure user is creator or admin
         $coreFields = ['item_name', 'specification', 'category_id', 'qty', 'unit', 'target_price', 'tenant_id', 'client_name', 'location_id', 'delivery_location', 'rfq_ref'];
         $hasCoreChange = false;
         foreach ($coreFields as $field) {
@@ -432,7 +712,6 @@ class SourcingController extends Controller
             ], 403);
         }
 
-        // Status update logic
         if (isset($validated['status'])) {
             if ($validated['status'] === 'closed' && $sourcing->status !== 'closed') {
                 $sourcing->closed_at = now();
@@ -459,7 +738,7 @@ class SourcingController extends Controller
     }
 
     /**
-     * Delete Sourcing Request (Creator or Admin).
+     * Delete Sourcing Request.
      */
     public function destroy(int $id): JsonResponse
     {
@@ -478,7 +757,7 @@ class SourcingController extends Controller
     }
 
     /**
-     * Add a Vendor Contact / Quote (Collaborative: ANY ZOPA Buyer).
+     * Add a Vendor Contact / Quote.
      */
     public function addContact(Request $request, int $id): JsonResponse
     {
@@ -511,7 +790,7 @@ class SourcingController extends Controller
     }
 
     /**
-     * Update a Vendor Contact / Quote (Collaborative: ANY ZOPA Buyer).
+     * Update a Vendor Contact / Quote.
      */
     public function updateContact(Request $request, int $id, int $contactId): JsonResponse
     {
@@ -559,7 +838,7 @@ class SourcingController extends Controller
     }
 
     /**
-     * Add a Working Remark / Call Log (Collaborative: ANY ZOPA Buyer).
+     * Add a Working Remark / Call Log.
      */
     public function addRemark(Request $request, int $id): JsonResponse
     {
