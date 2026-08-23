@@ -180,8 +180,7 @@ class SourcingController extends Controller
             
             // Count uncatalogued items in active PRs
             $prQueueCount = PrItem::whereNull('product_id')
-                ->whereHas('pr', fn($q) => $q->whereNotIn('status', ['draft', 'rejected', 'short_closed', 'converted']))
-                ->whereDoesntHave('sourcingRequests', fn($q) => $q->where('status', 'open'))
+                ->whereHas('pr', fn($q) => $q->whereNotIn('status', ['draft', 'rejected', 'short_closed']))
                 ->count();
 
             $stats = [

@@ -529,7 +529,7 @@ export class SourcingListComponent implements OnInit {
 
   currentTabCount = computed(() => {
     if (this.activeTab() === 'pr_queue') {
-      return this.filteredPrQueue().length;
+      return this.prQueueItems().length > 0 ? this.filteredPrQueue().length : this.stats().pr_queue_count;
     }
     return this.filteredRequests().length;
   });
