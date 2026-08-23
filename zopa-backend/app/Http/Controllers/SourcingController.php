@@ -117,78 +117,86 @@ class SourcingController extends Controller
     {
         $this->requireZopaBuyerOrStaff();
 
-        $query = SourcingRequest::with([
-            'creator:id,name,email',
-            'closedBy:id,name',
-            'tenant:id,name,code',
-            'category:id,name',
-            'location:id,name',
-            'vendorContacts.creator:id,name',
-            'remarks.user:id,name',
-        ]);
+        try {
+            $query = SourcingRequest::with([
+                'creator:id,name,email',
+                'closedBy:id,name',
+                'tenant:id,name,code',
+                'category:id,name',
+                'location:id,name',
+                'vendorContacts.creator:id,name',
+                'remarks.user:id,name',
+            ]);
 
-        // Status Filter
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('status', $request->status);
+            // Status Filter
+            if ($request->filled('status') && $request->status !== 'all') {
+                $query->where('status', $request->status);
+            }
+
+            // Source Type Filter
+            if ($request->filled('source_type') && $request->source_type !== 'all') {
+                $query->where('source_type', $request->source_type);
+            }
+
+            // Client / Organization Filter
+            if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
+                $query->where('tenant_id', $request->tenant_id);
+            }
+
+            // Search Filter
+            if ($request->filled('search')) {
+                $s = trim($request->search);
+                $query->where(function ($q) use ($s) {
+                    $q->where('sourcing_number', 'LIKE', "%{$s}%")
+                      ->orWhere('item_name', 'LIKE', "%{$s}%")
+                      ->orWhere('specification', 'LIKE', "%{$s}%")
+                      ->orWhere('pr_ref', 'LIKE', "%{$s}%")
+                      ->orWhere('rfq_ref', 'LIKE', "%{$s}%")
+                      ->orWhere('client_name', 'LIKE', "%{$s}%")
+                      ->orWhere('delivery_location', 'LIKE', "%{$s}%")
+                      ->orWhereHas('vendorContacts', function ($vq) use ($s) {
+                          $vq->where('vendor_name', 'LIKE', "%{$s}%")
+                             ->orWhere('contact_person', 'LIKE', "%{$s}%")
+                             ->orWhere('phone', 'LIKE', "%{$s}%")
+                             ->orWhere('email', 'LIKE', "%{$s}%");
+                      })
+                      ->orWhereHas('remarks', function ($rq) use ($s) {
+                          $rq->where('remark', 'LIKE', "%{$s}%");
+                      });
+                });
+            }
+
+            $requests = $query->orderBy('created_at', 'desc')->get();
+
+            // Calculate Stats
+            $all = SourcingRequest::all();
+            
+            // Count uncatalogued items in active PRs
+            $prQueueCount = PrItem::whereNull('product_id')
+                ->whereHas('pr', fn($q) => $q->whereNotIn('status', ['draft', 'rejected', 'short_closed', 'converted']))
+                ->whereDoesntHave('sourcingRequests', fn($q) => $q->where('status', 'open'))
+                ->count();
+
+            $stats = [
+                'total'         => $all->count(),
+                'open'          => $all->where('status', 'open')->count(),
+                'closed'        => $all->where('status', 'closed')->count(),
+                'from_pr'       => $all->where('source_type', 'pr')->count(),
+                'direct'        => $all->where('source_type', 'direct')->count(),
+                'pr_queue_count'=> $prQueueCount,
+            ];
+
+            return response()->json([
+                'data'  => $requests,
+                'stats' => $stats,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Sourcing index error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        // Source Type Filter
-        if ($request->filled('source_type') && $request->source_type !== 'all') {
-            $query->where('source_type', $request->source_type);
-        }
-
-        // Client / Organization Filter
-        if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
-            $query->where('tenant_id', $request->tenant_id);
-        }
-
-        // Search Filter
-        if ($request->filled('search')) {
-            $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
-                $q->where('sourcing_number', 'LIKE', "%{$s}%")
-                  ->orWhere('item_name', 'LIKE', "%{$s}%")
-                  ->orWhere('specification', 'LIKE', "%{$s}%")
-                  ->orWhere('pr_ref', 'LIKE', "%{$s}%")
-                  ->orWhere('rfq_ref', 'LIKE', "%{$s}%")
-                  ->orWhere('client_name', 'LIKE', "%{$s}%")
-                  ->orWhere('delivery_location', 'LIKE', "%{$s}%")
-                  ->orWhereHas('vendorContacts', function ($vq) use ($s) {
-                      $vq->where('vendor_name', 'LIKE', "%{$s}%")
-                         ->orWhere('contact_person', 'LIKE', "%{$s}%")
-                         ->orWhere('phone', 'LIKE', "%{$s}%")
-                         ->orWhere('email', 'LIKE', "%{$s}%");
-                  })
-                  ->orWhereHas('remarks', function ($rq) use ($s) {
-                      $rq->where('remark', 'LIKE', "%{$s}%");
-                  });
-            });
-        }
-
-        $requests = $query->orderBy('created_at', 'desc')->get();
-
-        // Calculate Stats
-        $all = SourcingRequest::all();
-        
-        // Count uncatalogued items in active PRs
-        $prQueueCount = PrItem::whereNull('product_id')
-            ->whereHas('pr', fn($q) => $q->whereNotIn('status', ['draft', 'rejected', 'short_closed', 'converted']))
-            ->whereDoesntHave('sourcingRequests', fn($q) => $q->where('status', 'open'))
-            ->count();
-
-        $stats = [
-            'total'         => $all->count(),
-            'open'          => $all->where('status', 'open')->count(),
-            'closed'        => $all->where('status', 'closed')->count(),
-            'from_pr'       => $all->where('source_type', 'pr')->count(),
-            'direct'        => $all->where('source_type', 'direct')->count(),
-            'pr_queue_count'=> $prQueueCount,
-        ];
-
-        return response()->json([
-            'data'  => $requests,
-            'stats' => $stats,
-        ]);
     }
 
     /**
@@ -198,60 +206,68 @@ class SourcingController extends Controller
     {
         $this->requireZopaBuyerOrStaff();
 
-        $query = PrItem::with([
-            'pr.tenant:id,name,code',
-            'pr.location:id,name',
-            'pr.costCenter:id,name',
-            'category:id,name',
-            'sourcingRequests',
-        ])
-        ->whereNull('product_id')
-        ->whereHas('pr', function ($q) {
-            $q->whereNotIn('status', ['draft', 'rejected', 'short_closed']);
-        });
-
-        if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
-            $query->whereHas('pr', fn($q) => $q->where('tenant_id', $request->tenant_id));
-        }
-
-        if ($request->filled('search')) {
-            $s = trim($request->search);
-            $query->where(function ($q) use ($s) {
-                $q->where('description', 'LIKE', "%{$s}%")
-                  ->orWhereHas('pr', fn($pq) => $pq->where('pr_number', 'LIKE', "%{$s}%")->orWhere('pr_ref', 'LIKE', "%{$s}%"));
+        try {
+            $query = PrItem::with([
+                'pr.tenant:id,name,code',
+                'pr.location:id,name',
+                'pr.costCenter:id,name',
+                'category:id,name',
+                'sourcingRequests',
+            ])
+            ->whereNull('product_id')
+            ->whereHas('pr', function ($q) {
+                $q->whereNotIn('status', ['draft', 'rejected', 'short_closed']);
             });
+
+            if ($request->filled('tenant_id') && $request->tenant_id !== 'all') {
+                $query->whereHas('pr', fn($q) => $q->where('tenant_id', $request->tenant_id));
+            }
+
+            if ($request->filled('search')) {
+                $s = trim($request->search);
+                $query->where(function ($q) use ($s) {
+                    $q->where('description', 'LIKE', "%{$s}%")
+                      ->orWhereHas('pr', fn($pq) => $pq->where('pr_number', 'LIKE', "%{$s}%")->orWhere('pr_ref', 'LIKE', "%{$s}%"));
+                });
+            }
+
+            $items = $query->orderBy('id', 'desc')->get();
+
+            // Attach fuzzy match suggestions for each free-text item
+            $enriched = $items->map(function ($item) {
+                $suggestions = $this->findProductMatches($item->description, $item->pr?->tenant_id, 3);
+                $bestMatch = !empty($suggestions) ? $suggestions[0] : null;
+
+                return [
+                    'id'                => $item->id,
+                    'pr_id'             => $item->pr_id,
+                    'pr_number'         => $item->pr?->pr_number ?: $item->pr?->pr_ref,
+                    'client_name'       => $item->pr?->tenant?->name ?? 'Client',
+                    'tenant_id'         => $item->pr?->tenant_id,
+                    'delivery_location' => $item->pr?->location?->name,
+                    'description'       => $item->description,
+                    'qty'               => (float) $item->qty,
+                    'unit'              => $item->unit ?: 'Nos',
+                    'estimated_price'   => (float) $item->estimated_price,
+                    'category_name'     => $item->category?->name,
+                    'category_id'       => $item->category_id,
+                    'remarks'           => $item->remarks,
+                    'created_at'        => $item->created_at,
+                    'has_sourcing'      => $item->sourcingRequests->isNotEmpty(),
+                    'active_sourcing'   => $item->sourcingRequests->firstWhere('status', 'open'),
+                    'best_match'        => $bestMatch,
+                    'suggestions'       => $suggestions,
+                ];
+            });
+
+            return response()->json($enriched);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Sourcing prQueue error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        $items = $query->orderBy('id', 'desc')->get();
-
-        // Attach fuzzy match suggestions for each free-text item
-        $enriched = $items->map(function ($item) {
-            $suggestions = $this->findProductMatches($item->description, $item->pr?->tenant_id, 3);
-            $bestMatch = !empty($suggestions) ? $suggestions[0] : null;
-
-            return [
-                'id'                => $item->id,
-                'pr_id'             => $item->pr_id,
-                'pr_number'         => $item->pr?->pr_number ?: $item->pr?->pr_ref,
-                'client_name'       => $item->pr?->tenant?->name ?? 'Client',
-                'tenant_id'         => $item->pr?->tenant_id,
-                'delivery_location' => $item->pr?->location?->name,
-                'description'       => $item->description,
-                'qty'               => (float) $item->qty,
-                'unit'              => $item->unit ?: 'Nos',
-                'estimated_price'   => (float) $item->estimated_price,
-                'category_name'     => $item->category?->name,
-                'category_id'       => $item->category_id,
-                'remarks'           => $item->remarks,
-                'created_at'        => $item->created_at,
-                'has_sourcing'      => $item->sourcingRequests->isNotEmpty(),
-                'active_sourcing'   => $item->sourcingRequests->firstWhere('status', 'open'),
-                'best_match'        => $bestMatch,
-                'suggestions'       => $suggestions,
-            ];
-        });
-
-        return response()->json($enriched);
     }
 
     /**

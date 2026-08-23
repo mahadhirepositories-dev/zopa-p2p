@@ -100,6 +100,11 @@ class PurchaseRequisition extends Model
         return $this->hasMany(PrStatusUpdate::class, 'pr_id')->orderByDesc('created_at');
     }
 
+    public function sourcingRequests(): HasMany
+    {
+        return $this->hasMany(SourcingRequest::class, 'pr_id');
+    }
+
     public static function stemWord(string $word): string
     {
         $w = strtolower(trim($word));
