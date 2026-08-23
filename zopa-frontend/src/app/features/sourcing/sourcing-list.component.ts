@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { DatePipe, DecimalPipe, TitleCasePipe } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,9 +9,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -27,25 +24,24 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
   selector: 'app-sourcing-list',
   standalone: true,
   imports: [
-    DatePipe, DecimalPipe, TitleCasePipe, FormsModule, RouterLink,
+    DatePipe, DecimalPipe, FormsModule, RouterLink,
     MatTableModule, MatButtonModule, MatChipsModule, MatIconModule,
-    MatProgressSpinnerModule, MatCardModule, MatFormFieldModule, MatInputModule,
-    MatSelectModule, MatPaginatorModule, MatTooltipModule, MatDialogModule,
-    SearchFieldComponent,
+    MatProgressSpinnerModule, MatCardModule, MatPaginatorModule, MatTooltipModule,
+    MatDialogModule, SearchFieldComponent,
   ],
   template: `
     <div class="page-wrapper">
       
-      <!-- Page Header matching PO / PR list -->
+      <!-- ── Standard Page Header ──────────────────────────────────────── -->
       <div class="page-header">
         <div>
           <h2>Sourcing &amp; Price Discovery</h2>
-          <p>{{ currentTabCount() }} item{{ currentTabCount() !== 1 ? 's' : '' }} found · ZOPA Internal Workbench</p>
+          <p>{{ currentTabCount() }} item{{ currentTabCount() !== 1 ? 's' : '' }} found</p>
         </div>
 
-        <div style="display: flex; gap: 12px; align-items: center;">
+        <div style="display: flex; gap: 10px; align-items: center;">
           <button mat-stroked-button (click)="exportExcel()" [disabled]="exporting()">
-            @if (exporting()) { <mat-spinner diameter="16" style="display:inline-block;margin-right:6px;" /> }
+            @if (exporting()) { <mat-spinner diameter="18" /> }
             @else { <mat-icon>download</mat-icon> }
             Export
           </button>
@@ -56,40 +52,28 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
         </div>
       </div>
 
-      <!-- Toolbar Bar matching PO / PR list -->
+      <!-- ── Search & Filter Toolbar ────────────────────────────────────── -->
       <div class="toolbar-bar">
         <app-search-field class="search-field" [value]="search()" (valueChange)="setSearch($event)"
-                          placeholder="Search items, specifications, PR ref, vendors…" />
+                          placeholder="Search by item name, specification, PR ref, vendor…" />
 
         <div class="filter-chips">
           <button class="filter-chip" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
-            All ({{ stats().total }})
+            All
           </button>
-          <button class="filter-chip open" [class.active]="activeTab() === 'open'" (click)="setTab('open')">
-            Open ({{ stats().open }})
+          <button class="filter-chip" [class.active]="activeTab() === 'open'" (click)="setTab('open')">
+            Open
           </button>
-          <button class="filter-chip pr-stream" [class.active]="activeTab() === 'pr_queue'" (click)="setTab('pr_queue')">
-            <mat-icon style="font-size:14px;width:14px;height:14px;vertical-align:middle;margin-right:2px;">auto_awesome</mat-icon>
+          <button class="filter-chip uncatalogued" [class.active]="activeTab() === 'pr_queue'" (click)="setTab('pr_queue')">
             Uncatalogued PR Items ({{ prQueueItems().length }})
           </button>
-          <button class="filter-chip closed" [class.active]="activeTab() === 'closed'" (click)="setTab('closed')">
-            Closed ({{ stats().closed }})
+          <button class="filter-chip" [class.active]="activeTab() === 'closed'" (click)="setTab('closed')">
+            Closed
           </button>
         </div>
-
-        <!-- Organization / Client Selector -->
-        <mat-form-field appearance="outline" style="width: 220px; margin-left: auto;">
-          <mat-label>All Organizations</mat-label>
-          <mat-select [(ngModel)]="selectedTenant" (selectionChange)="onTenantChange()">
-            <mat-option value="all">All Organizations</mat-option>
-            @for (c of auth.clients(); track c.tenant_id) {
-              <mat-option [value]="c.tenant_id">{{ c.tenant_name }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
       </div>
 
-      <!-- Main Content Card -->
+      <!-- ── Main Table Card ───────────────────────────────────────────── -->
       <mat-card class="table-card" style="overflow:hidden;">
         <mat-card-content style="padding:0!important;">
 
@@ -99,98 +83,113 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
             </div>
           } @else if (activeTab() === 'pr_queue') {
             
-            <!-- ── UNCATALOGUED PR STREAM (Auto-Detected from Client PRs) ── -->
+            <!-- ── Uncatalogued PR Stream View ────────────────────────────── -->
             @if (filteredPrQueue().length === 0) {
               <div class="empty-state">
                 <mat-icon>auto_awesome</mat-icon>
-                <h3>No uncatalogued PR items pending</h3>
-                <p>All items in active PRs are linked to the master catalog or already in sourcing.</p>
+                <h3>No uncatalogued PR items found</h3>
+                <p>{{ search() ? 'Try adjusting your search query.' : 'All items in active PRs are linked to the master catalog or already in sourcing.' }}</p>
               </div>
             } @else {
               <div class="table-responsive">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>PR &amp; Client</th>
-                      <th>Custom Item Name in PR</th>
-                      <th>Smart Master Match / Typo Check</th>
-                      <th>Qty &amp; UOM</th>
-                      <th>Target Price</th>
-                      <th style="text-align:right;">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (item of paginatedPrQueue(); track item.id) {
-                      <tr class="table-row">
-                        <td>
-                          <div style="font-weight:700;font-size:13px;color:var(--text-1);">{{ item.client_name }}</div>
-                          <a [routerLink]="['/purchase-requisitions', item.pr_id]" target="_blank" class="link-sub" (click)="$event.stopPropagation()">
-                            {{ item.pr_number }}
-                          </a>
-                        </td>
-
-                        <td>
-                          <div style="font-weight:600;font-size:13.5px;color:var(--text-1);">{{ item.description }}</div>
-                          @if (item.category_name) {
-                            <div style="font-size:11px;color:var(--text-3);">Cat: {{ item.category_name }}</div>
-                          }
-                          @if (item.remarks) {
-                            <div style="font-size:11px;color:var(--text-2);font-style:italic;">"{{ item.remarks }}"</div>
-                          }
-                        </td>
-
-                        <td>
-                          @if (item.best_match) {
-                            <div class="match-card" [class.high-match]="item.best_match.score >= 70">
-                              <div class="match-header">
-                                <span class="match-score-badge">{{ item.best_match.score }}% Match</span>
-                                <span class="match-code">{{ item.best_match.code || 'Master Item' }}</span>
-                              </div>
-                              <div class="match-title">{{ item.best_match.name }}</div>
-                              <div class="match-details">
-                                Standard Rate: <strong>₹{{ item.best_match.net_rate | number:'1.2-2' }}</strong> / {{ item.best_match.unit }}
-                              </div>
-                              <button mat-flat-button color="accent" class="btn-xs-map" (click)="mapPrItemToMaster(item, item.best_match)" [disabled]="mapping()">
-                                <mat-icon style="font-size:12px;width:12px;height:12px;margin-right:2px;">link</mat-icon> Map &amp; Resolve Typo
-                              </button>
-                            </div>
-                          } @else {
-                            <span class="no-match-badge">New / Uncatalogued Item</span>
-                          }
-                        </td>
-
-                        <td>
-                          <strong>{{ item.qty }}</strong> <span style="font-size:12px;color:var(--text-3);">{{ item.unit }}</span>
-                        </td>
-
-                        <td>
-                          @if (item.estimated_price > 0) {
-                            <span class="price-val">₹{{ item.estimated_price | number:'1.2-2' }}</span>
-                          } @else {
-                            <span style="color:#94a3b8;font-size:12px;">Unpriced</span>
-                          }
-                        </td>
-
-                        <td style="text-align:right;">
-                          <div style="display:inline-flex;gap:6px;">
-                            @if (item.has_sourcing) {
-                              <a mat-stroked-button color="primary" class="btn-xs" [routerLink]="['/sourcing', item.active_sourcing?.id || '']">
-                                <mat-icon style="font-size:13px;width:13px;height:13px;margin-right:2px;">visibility</mat-icon> In Sourcing
-                              </a>
-                            } @else {
-                              <button mat-raised-button color="primary" class="btn-xs" (click)="sourcePrItem(item)">
-                                <mat-icon style="font-size:13px;width:13px;height:13px;margin-right:2px;">travel_explore</mat-icon> Source Item
-                              </button>
-                            }
+                <table mat-table [dataSource]="paginatedPrQueue()" class="full-width">
+                  
+                  <!-- Organization & PR -->
+                  <ng-container matColumnDef="pr_info">
+                    <th mat-header-cell *matHeaderCellDef style="width: 220px;">Organization &amp; PR</th>
+                    <td mat-cell *matCellDef="let item">
+                      <div class="po-number-cell">
+                        <div class="po-icon" style="background:#eff6ff;color:#2563eb;">
+                          <mat-icon>description</mat-icon>
+                        </div>
+                        <div>
+                          <strong class="po-num">{{ item.client_name }}</strong>
+                          <div>
+                            <a [routerLink]="['/purchase-requisitions', item.pr_id]" target="_blank" class="pr-link" (click)="$event.stopPropagation()">
+                              {{ item.pr_number }}
+                            </a>
                           </div>
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
+                        </div>
+                      </div>
+                    </td>
+                  </ng-container>
+
+                  <!-- Custom Item Description -->
+                  <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef>Item Description in PR</th>
+                    <td mat-cell *matCellDef="let item">
+                      <div class="cell-main">{{ item.description }}</div>
+                      @if (item.category_name) {
+                        <div class="cell-sub">Category: {{ item.category_name }}</div>
+                      }
+                      @if (item.remarks) {
+                        <div class="cell-sub" style="font-style:italic;">"{{ item.remarks }}"</div>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <!-- Smart Master Match / Typo Detection -->
+                  <ng-container matColumnDef="smart_match">
+                    <th mat-header-cell *matHeaderCellDef style="min-width: 260px;">Catalog Match / Typo Check</th>
+                    <td mat-cell *matCellDef="let item">
+                      @if (item.best_match && item.best_match.score >= 50) {
+                        <div class="inline-match-box">
+                          <div class="match-meta">
+                            <span class="match-score">{{ item.best_match.score }}% Match</span>
+                            <span class="match-title">{{ item.best_match.name }}</span>
+                            <span class="match-rate">₹{{ item.best_match.net_rate | number:'1.0-0' }}</span>
+                          </div>
+                          <button mat-button class="btn-map-action" (click)="mapPrItemToMaster(item, item.best_match)" [disabled]="mapping()">
+                            <mat-icon>link</mat-icon> Map Typo
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="uncatalogued-badge">Uncatalogued</span>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <!-- Quantity & Unit -->
+                  <ng-container matColumnDef="qty">
+                    <th mat-header-cell *matHeaderCellDef>Qty</th>
+                    <td mat-cell *matCellDef="let item">
+                      <strong>{{ item.qty | number:'1.0-2' }}</strong> <span style="font-size:12px;color:var(--text-3);">{{ item.unit }}</span>
+                    </td>
+                  </ng-container>
+
+                  <!-- Target Price -->
+                  <ng-container matColumnDef="target_price">
+                    <th mat-header-cell *matHeaderCellDef>Est. Price</th>
+                    <td mat-cell *matCellDef="let item">
+                      @if (item.estimated_price > 0) {
+                        <strong class="amount">₹{{ item.estimated_price | number:'1.0-0' }}</strong>
+                      } @else {
+                        <span style="color:var(--text-3);">—</span>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <!-- Actions -->
+                  <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef style="text-align:right;">Action</th>
+                    <td mat-cell *matCellDef="let item" style="text-align:right;">
+                      @if (item.has_sourcing) {
+                        <button mat-stroked-button class="btn-table-action" [routerLink]="['/sourcing', item.active_sourcing?.id || '']">
+                          <mat-icon>visibility</mat-icon> In Sourcing
+                        </button>
+                      } @else {
+                        <button mat-raised-button color="primary" class="btn-table-action" (click)="sourcePrItem(item)">
+                          <mat-icon>travel_explore</mat-icon> Source Item
+                        </button>
+                      }
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="prQueueColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: prQueueColumns;" class="table-row"></tr>
                 </table>
               </div>
 
-              <!-- Paginator for PR Queue -->
               <mat-paginator [length]="filteredPrQueue().length"
                              [pageSize]="pageSize()"
                              [pageIndex]="pageIndex()"
@@ -201,139 +200,137 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
 
           } @else {
 
-            <!-- ── SOURCING REQUESTS LIST (All / Open / Closed) ── -->
+            <!-- ── Standard Sourcing Requests List View ─────────────────────── -->
             @if (filteredRequests().length === 0) {
               <div class="empty-state">
                 <mat-icon>travel_explore</mat-icon>
                 <h3>No sourcing requests found</h3>
-                <p>{{ search() ? 'Try adjusting your search filters.' : 'Create a sourcing request or review the Uncatalogued PR Items stream.' }}</p>
+                <p>{{ search() ? 'Try adjusting your search filters.' : 'Create your first sourcing request or review the Uncatalogued PR Items tab.' }}</p>
                 @if (!search()) {
                   <button mat-raised-button color="primary" (click)="openCreateDialog()">
-                    <mat-icon>add</mat-icon> Create Sourcing Request
+                    <mat-icon>add</mat-icon> New Sourcing Request
                   </button>
                 }
               </div>
             } @else {
               <div class="table-responsive">
-                <table class="data-table">
-                  <thead>
-                    <tr>
-                      <th>Sourcing #</th>
-                      <th>Organization &amp; Source</th>
-                      <th>Item Description &amp; Specification</th>
-                      <th>Category</th>
-                      <th>Qty &amp; UOM</th>
-                      <th>Target Price</th>
-                      <th>Vendors &amp; Quotes</th>
-                      <th>Status</th>
-                      <th style="text-align:right;">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (req of paginatedRequests(); track req.id) {
-                      <tr class="table-row clickable-row" (click)="view(req.id)">
-                        
-                        <!-- Sourcing Number & Date -->
-                        <td>
-                          <div class="po-number-cell">
-                            <div class="sourcing-icon">
-                              <mat-icon>travel_explore</mat-icon>
-                            </div>
-                            <div>
-                              <div class="sourcing-num">{{ req.sourcing_number }}</div>
-                              <div class="sourcing-date">{{ req.created_at | date:'dd MMM yyyy' }}</div>
-                            </div>
-                          </div>
-                        </td>
+                <table mat-table [dataSource]="paginatedRequests()" class="full-width">
 
-                        <!-- Organization & Source -->
-                        <td>
-                          <div class="client-title">
-                            {{ req.client_name || req.tenant?.name || 'All Organizations' }}
-                          </div>
-                          @if (req.source_type === 'pr') {
-                            <span class="source-pill pr" (click)="$event.stopPropagation()">
-                              PR: {{ req.pr_ref || ('#' + req.pr_id) }}
-                            </span>
-                          } @else {
-                            <span class="source-pill direct">Direct</span>
-                          }
-                        </td>
+                  <!-- Sourcing Number -->
+                  <ng-container matColumnDef="sourcing_number">
+                    <th mat-header-cell *matHeaderCellDef style="width: 200px;">Sourcing #</th>
+                    <td mat-cell *matCellDef="let req">
+                      <div class="po-number-cell">
+                        <div class="po-icon">
+                          <mat-icon>travel_explore</mat-icon>
+                        </div>
+                        <div>
+                          <strong class="po-num">{{ req.sourcing_number }}</strong>
+                          <div class="po-date">{{ req.created_at | date:'dd MMM yyyy' }}</div>
+                        </div>
+                      </div>
+                    </td>
+                  </ng-container>
 
-                        <!-- Item Description & Specification -->
-                        <td>
-                          <div class="item-title">{{ req.item_name }}</div>
-                          @if (req.specification) {
-                            <div class="spec-preview">{{ req.specification }}</div>
-                          }
-                          @if (req.delivery_location) {
-                            <div class="loc-preview">
-                              <mat-icon>location_on</mat-icon> {{ req.delivery_location }}
-                            </div>
-                          }
-                        </td>
+                  <!-- Organization & Source -->
+                  <ng-container matColumnDef="client">
+                    <th mat-header-cell *matHeaderCellDef>Organization &amp; Source</th>
+                    <td mat-cell *matCellDef="let req">
+                      <div class="cell-main">{{ req.client_name || req.tenant?.name || '—' }}</div>
+                      @if (req.source_type === 'pr') {
+                        <div class="cell-sub pr-link">PR: {{ req.pr_ref || ('#' + req.pr_id) }}</div>
+                      } @else {
+                        <div class="cell-sub">Direct Entry</div>
+                      }
+                    </td>
+                  </ng-container>
 
-                        <!-- Category -->
-                        <td>
-                          <span class="category-tag">{{ req.category?.name || req.category_name || '—' }}</span>
-                        </td>
+                  <!-- Item Description & Specification -->
+                  <ng-container matColumnDef="item_name">
+                    <th mat-header-cell *matHeaderCellDef>Item Description</th>
+                    <td mat-cell *matCellDef="let req">
+                      <div class="cell-main">{{ req.item_name }}</div>
+                      @if (req.specification) {
+                        <div class="cell-sub text-truncate">{{ req.specification }}</div>
+                      }
+                      @if (req.delivery_location) {
+                        <div class="cell-sub" style="display:flex;align-items:center;gap:2px;">
+                          <mat-icon style="font-size:12px;width:12px;height:12px;">location_on</mat-icon>
+                          {{ req.delivery_location }}
+                        </div>
+                      }
+                    </td>
+                  </ng-container>
 
-                        <!-- Qty -->
-                        <td>
-                          <strong>{{ req.qty }}</strong> <span style="font-size:12px;color:var(--text-3);">{{ req.unit }}</span>
-                        </td>
+                  <!-- Category -->
+                  <ng-container matColumnDef="category">
+                    <th mat-header-cell *matHeaderCellDef>Category</th>
+                    <td mat-cell *matCellDef="let req" style="color:var(--text-2);">
+                      {{ req.category?.name || req.category_name || '—' }}
+                    </td>
+                  </ng-container>
 
-                        <!-- Target Price -->
-                        <td>
-                          @if (req.target_price && req.target_price > 0) {
-                            <span class="price-val">₹{{ req.target_price | number:'1.2-2' }}</span>
-                          } @else {
-                            <span style="color:#94a3b8;font-size:12px;">—</span>
-                          }
-                        </td>
+                  <!-- Quantity -->
+                  <ng-container matColumnDef="qty">
+                    <th mat-header-cell *matHeaderCellDef>Qty</th>
+                    <td mat-cell *matCellDef="let req">
+                      <strong>{{ req.qty | number:'1.0-2' }}</strong> <span style="font-size:12px;color:var(--text-3);">{{ req.unit }}</span>
+                    </td>
+                  </ng-container>
 
-                        <!-- Vendor Quotes -->
-                        <td>
-                          @if (req.vendor_contacts?.length) {
-                            <div class="vendor-summary">
-                              <span class="vendor-count">
-                                <mat-icon>store</mat-icon> {{ req.vendor_contacts!.length }} Quote{{ req.vendor_contacts!.length > 1 ? 's' : '' }}
-                              </span>
-                              @if (bestQuote(req)) {
-                                <div class="best-price">Best: ₹{{ bestQuote(req) | number:'1.2-2' }}</div>
-                              }
-                            </div>
-                          } @else {
-                            <span class="add-quote-link" (click)="$event.stopPropagation(); openContactDialog(req)">+ Add Quote</span>
-                          }
-                        </td>
+                  <!-- Target Price -->
+                  <ng-container matColumnDef="target_price">
+                    <th mat-header-cell *matHeaderCellDef>Target Price</th>
+                    <td mat-cell *matCellDef="let req">
+                      @if (req.target_price && req.target_price > 0) {
+                        <strong class="amount">₹{{ req.target_price | number:'1.0-0' }}</strong>
+                      } @else {
+                        <span style="color:var(--text-3);">—</span>
+                      }
+                    </td>
+                  </ng-container>
 
-                        <!-- Status Badge -->
-                        <td>
-                          <span class="status-badge" [class.status-approved]="req.status === 'closed'" [class.status-submitted]="req.status === 'open'">
-                            {{ req.status === 'open' ? 'Open' : 'Closed' }}
-                          </span>
-                        </td>
+                  <!-- Quotes -->
+                  <ng-container matColumnDef="quotes">
+                    <th mat-header-cell *matHeaderCellDef>Quotes</th>
+                    <td mat-cell *matCellDef="let req">
+                      @if (req.vendor_contacts?.length) {
+                        <div class="cell-main" style="color:#16a34a;font-weight:600;">
+                          {{ req.vendor_contacts!.length }} Quote{{ req.vendor_contacts!.length > 1 ? 's' : '' }}
+                        </div>
+                        @if (bestQuote(req)) {
+                          <div class="cell-sub" style="color:#15803d;font-weight:600;">Best: ₹{{ bestQuote(req) | number:'1.0-0' }}</div>
+                        }
+                      } @else {
+                        <span style="color:var(--text-3);">—</span>
+                      }
+                    </td>
+                  </ng-container>
 
-                        <!-- Actions -->
-                        <td style="text-align:right;" (click)="$event.stopPropagation()">
-                          <div style="display:inline-flex;gap:4px;">
-                            <button mat-icon-button color="primary" [routerLink]="['/sourcing', req.id]" matTooltip="View Workspace">
-                              <mat-icon>visibility</mat-icon>
-                            </button>
-                            <button mat-icon-button (click)="openContactDialog(req)" matTooltip="Add Vendor Quote">
-                              <mat-icon style="color:#10b981;">person_add</mat-icon>
-                            </button>
-                          </div>
-                        </td>
+                  <!-- Status -->
+                  <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let req">
+                      <mat-chip [class]="'status-' + (req.status === 'closed' ? 'approved' : 'submitted')" [highlighted]="true">
+                        {{ req.status === 'open' ? 'Open' : 'Closed' }}
+                      </mat-chip>
+                    </td>
+                  </ng-container>
 
-                      </tr>
-                    }
-                  </tbody>
+                  <!-- Arrow Column -->
+                  <ng-container matColumnDef="arrow">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let req">
+                      <mat-icon class="row-arrow">chevron_right</mat-icon>
+                    </td>
+                  </ng-container>
+
+                  <tr mat-header-row *matHeaderRowDef="sourcingColumns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: sourcingColumns;"
+                      class="clickable-row" (click)="view(row.id)"></tr>
                 </table>
               </div>
 
-              <!-- Paginator for Sourcing Requests -->
               <mat-paginator [length]="filteredRequests().length"
                              [pageSize]="pageSize()"
                              [pageIndex]="pageIndex()"
@@ -351,6 +348,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
   `,
   styles: [`
     .page-wrapper { padding: 28px; }
+    
     .page-header {
       display: flex;
       justify-content: space-between;
@@ -380,80 +378,69 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
       font-weight: 500;
       cursor: pointer;
       transition: all 0.15s ease;
-      display: inline-flex;
-      align-items: center;
     }
     .filter-chip:hover { border-color: var(--text-3); color: var(--text-1); }
     .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .filter-chip.open.active { background: #2563eb; border-color: #2563eb; }
-    .filter-chip.pr-stream.active { background: #7c3aed; border-color: #7c3aed; }
-    .filter-chip.closed.active { background: #16a34a; border-color: #16a34a; }
+    .filter-chip.uncatalogued.active { background: #7c3aed; border-color: #7c3aed; }
 
     .table-card { border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    
-    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .data-table th { background: #f8fafc; color: var(--text-3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; padding: 10px 16px; border-bottom: 1px solid var(--border); text-align: left; }
-    .data-table td { padding: 12px 16px; font-size: 13px; color: var(--text-1); border-bottom: 1px solid var(--border); vertical-align: middle; }
-    .table-row:hover { background: var(--surface-hover); }
-    .clickable-row { cursor: pointer; }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin-bottom: 8px;
+    }
+    .full-width { width: 100%; }
 
     .po-number-cell { display: flex; align-items: center; gap: 12px; }
-    .sourcing-icon {
+    .po-icon {
       width: 36px; height: 36px;
       background: #eff6ff;
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       color: #2563eb;
     }
-    .sourcing-num { font-size: 14px; font-weight: 600; color: var(--text-1); }
-    .sourcing-date { font-size: 12px; color: var(--text-3); }
+    .po-num { font-size: 14px; font-weight: 600; color: var(--text-1); }
+    .po-date { font-size: 12px; color: var(--text-3); }
 
-    .client-title { font-weight: 600; color: var(--text-1); }
-    .source-pill { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 1px 6px; border-radius: 4px; margin-top: 2px; }
-    .source-pill.pr { background: #eff6ff; color: #2563eb; }
-    .source-pill.direct { background: #fdf4ff; color: #a855f7; }
+    .cell-main { font-size: 13.5px; font-weight: 600; color: var(--text-1); }
+    .cell-sub  { font-size: 12px; color: var(--text-3); margin-top: 1px; }
+    .pr-link   { color: #2563eb; font-weight: 600; text-decoration: none; }
+    .pr-link:hover { text-decoration: underline; }
+    .text-truncate { max-width: 280px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .item-title { font-weight: 600; color: var(--text-1); }
-    .spec-preview { font-size: 11.5px; color: var(--text-2); max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-    .loc-preview { font-size: 11px; color: #64748b; display: flex; align-items: center; gap: 2px; margin-top: 2px; }
-    .loc-preview mat-icon { font-size: 12px; width: 12px; height: 12px; }
+    .amount { font-size: 14px; color: var(--text-1); }
+    .clickable-row { cursor: pointer; transition: background 0.15s ease; }
+    .clickable-row:hover { background: var(--surface-hover); }
+    .row-arrow { color: var(--text-3); font-size: 20px; }
 
-    .category-tag { background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
-    .price-val { font-weight: 600; color: var(--text-1); }
-
-    .vendor-summary { display: flex; flex-direction: column; gap: 1px; }
-    .vendor-count { display: inline-flex; align-items: center; gap: 3px; font-size: 11.5px; font-weight: 600; color: #059669; }
-    .vendor-count mat-icon { font-size: 13px; width: 13px; height: 13px; }
-    .best-price { font-size: 11px; font-weight: 700; color: #15803d; }
-    .add-quote-link { font-size: 11.5px; color: var(--primary); font-weight: 600; cursor: pointer; }
-    .add-quote-link:hover { text-decoration: underline; }
-
-    /* Match Suggestion Card */
-    .match-card { background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 8px 10px; max-width: 280px; }
-    .match-card.high-match { background: #eff6ff; border-color: #93c5fd; }
-    .match-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
-    .match-score-badge { font-size: 10px; font-weight: 700; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px; }
-    .match-code { font-size: 10.5px; color: var(--text-3); font-weight: 600; }
-    .match-title { font-size: 12px; font-weight: 700; color: var(--text-1); margin: 2px 0; }
-    .match-details { font-size: 11px; color: var(--text-2); margin-bottom: 6px; }
-    .btn-xs-map { height: 24px!important; font-size: 10.5px!important; padding: 0 8px!important; line-height: 24px!important; }
-    .no-match-badge { font-size: 11px; color: #94a3b8; font-style: italic; }
-
-    .link-sub { font-size: 11.5px; color: #2563eb; text-decoration: none; font-weight: 600; }
-    .link-sub:hover { text-decoration: underline; }
-    .btn-xs { height: 28px!important; font-size: 11px!important; padding: 0 10px!important; line-height: 28px!important; }
-
-    .status-badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: capitalize;
+    /* Compact Inline Typo Matcher */
+    .inline-match-box {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 4px 8px;
     }
-    .status-submitted { background: #eff6ff; color: #2563eb; }
-    .status-approved  { background: #f0fdf4; color: #16a34a; }
+    .match-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+    .match-score { font-size: 10.5px; font-weight: 700; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px; }
+    .match-title { font-weight: 600; color: var(--text-1); }
+    .match-rate { font-size: 11.5px; color: #16a34a; font-weight: 600; }
+    .btn-map-action {
+      height: 24px!important;
+      font-size: 11px!important;
+      padding: 0 8px!important;
+      line-height: 24px!important;
+      color: #7c3aed!important;
+      font-weight: 700!important;
+    }
+    .btn-map-action mat-icon { font-size: 13px; width: 13px; height: 13px; margin-right: 2px; }
+    .uncatalogued-badge { font-size: 11.5px; color: var(--text-3); font-style: italic; }
+
+    .btn-table-action { height: 32px!important; font-size: 11.5px!important; padding: 0 12px!important; line-height: 32px!important; }
+    .btn-table-action mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 3px; }
 
     .empty-state {
       display: flex;
@@ -486,10 +473,12 @@ export class SourcingListComponent implements OnInit {
 
   search = signal('');
   activeTab = signal<'all' | 'open' | 'pr_queue' | 'closed'>('all');
-  selectedTenant: any = 'all';
 
   pageIndex = signal(0);
   pageSize = signal(25);
+
+  sourcingColumns = ['sourcing_number', 'client', 'item_name', 'category', 'qty', 'target_price', 'quotes', 'status', 'arrow'];
+  prQueueColumns = ['pr_info', 'description', 'smart_match', 'qty', 'target_price', 'actions'];
 
   filteredRequests = computed(() => {
     let list = this.requests();
@@ -559,12 +548,6 @@ export class SourcingListComponent implements OnInit {
     this.pageIndex.set(0);
   }
 
-  onTenantChange() {
-    this.pageIndex.set(0);
-    this.loadData();
-    this.loadPrQueue();
-  }
-
   onPageChange(event: any) {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
@@ -572,12 +555,8 @@ export class SourcingListComponent implements OnInit {
 
   loadData() {
     this.loading.set(true);
-    let params: any = {};
-    if (this.selectedTenant !== 'all') params.tenant_id = this.selectedTenant;
-
     this.http.get<{ data: SourcingRequest[]; stats: any }>(
-      `${environment.apiUrl}/sourcing`,
-      { params }
+      `${environment.apiUrl}/sourcing`
     ).subscribe({
       next: res => {
         this.loading.set(false);
@@ -592,10 +571,7 @@ export class SourcingListComponent implements OnInit {
   }
 
   loadPrQueue() {
-    let params: any = {};
-    if (this.selectedTenant !== 'all') params.tenant_id = this.selectedTenant;
-
-    this.http.get<any[]>(`${environment.apiUrl}/sourcing/pr-queue`, { params }).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/sourcing/pr-queue`).subscribe({
       next: res => this.prQueueItems.set(res),
       error: () => {}
     });
@@ -699,7 +675,6 @@ export class SourcingListComponent implements OnInit {
     if (this.search().trim()) params.search = this.search().trim();
     if (this.activeTab() === 'open') params.status = 'open';
     if (this.activeTab() === 'closed') params.status = 'closed';
-    if (this.selectedTenant !== 'all') params.tenant_id = this.selectedTenant;
 
     this.http.get(`${environment.apiUrl}/sourcing/export`, {
       params,
