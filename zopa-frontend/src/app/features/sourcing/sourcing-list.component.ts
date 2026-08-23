@@ -59,16 +59,16 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
 
         <div class="filter-chips">
           <button class="filter-chip" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
-            All
+            All ({{ stats().total }})
           </button>
           <button class="filter-chip" [class.active]="activeTab() === 'open'" (click)="setTab('open')">
-            Open
+            Open ({{ stats().open }})
           </button>
           <button class="filter-chip uncatalogued" [class.active]="activeTab() === 'pr_queue'" (click)="setTab('pr_queue')">
-            Uncatalogued PR Items ({{ prQueueItems().length }})
+            Uncatalogued PR Items ({{ stats().pr_queue_count || prQueueItems().length }})
           </button>
           <button class="filter-chip" [class.active]="activeTab() === 'closed'" (click)="setTab('closed')">
-            Closed
+            Closed ({{ stats().closed }})
           </button>
         </div>
       </div>
@@ -77,7 +77,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
       <mat-card class="table-card" style="overflow:hidden;">
         <mat-card-content style="padding:0!important;">
 
-          @if (loading()) {
+          @if (loading() || (activeTab() === 'pr_queue' && loadingPrQueue())) {
             <div style="display:flex;justify-content:center;padding:60px;">
               <mat-spinner diameter="36" />
             </div>
@@ -464,6 +464,7 @@ export class SourcingListComponent implements OnInit {
   auth = inject(AuthService);
 
   loading = signal(true);
+  loadingPrQueue = signal(false);
   exporting = signal(false);
   mapping = signal(false);
 
@@ -571,9 +572,15 @@ export class SourcingListComponent implements OnInit {
   }
 
   loadPrQueue() {
+    this.loadingPrQueue.set(true);
     this.http.get<any[]>(`${environment.apiUrl}/sourcing/pr-queue`).subscribe({
-      next: res => this.prQueueItems.set(res),
-      error: () => {}
+      next: res => {
+        this.loadingPrQueue.set(false);
+        this.prQueueItems.set(res);
+      },
+      error: () => {
+        this.loadingPrQueue.set(false);
+      }
     });
   }
 

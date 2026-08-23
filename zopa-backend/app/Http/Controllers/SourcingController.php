@@ -47,7 +47,7 @@ class SourcingController extends Controller
      * Fuzzy match an input name against the Product master.
      * Returns top matches with similarity percentage and details.
      */
-    public function findProductMatches(string $inputName, ?int $tenantId = null, int $limit = 5): array
+    public function findProductMatches(string $inputName, ?int $tenantId = null, int $limit = 5, $cachedProducts = null): array
     {
         $cleanInput = strtolower(trim(preg_replace('/[^a-zA-Z0-9\s]/', ' ', $inputName)));
         if (strlen($cleanInput) < 2) {
@@ -56,13 +56,20 @@ class SourcingController extends Controller
 
         $inputTokens = array_filter(explode(' ', $cleanInput), fn($t) => strlen($t) > 1);
 
-        $query = Product::with(['category:id,name', 'subcategory:id,name'])->where('is_active', true);
-        if ($tenantId) {
-            $query->where(function ($q) use ($tenantId) {
-                $q->where('tenant_id', $tenantId)->orWhereNull('tenant_id');
-            });
+        if ($cachedProducts !== null) {
+            $products = $cachedProducts;
+            if ($tenantId) {
+                $products = $products->filter(fn($p) => empty($p->tenant_id) || $p->tenant_id == $tenantId);
+            }
+        } else {
+            $query = Product::with(['category:id,name', 'subcategory:id,name'])->where('is_active', true);
+            if ($tenantId) {
+                $query->where(function ($q) use ($tenantId) {
+                    $q->where('tenant_id', $tenantId)->orWhereNull('tenant_id');
+                });
+            }
+            $products = $query->get();
         }
-        $products = $query->get();
 
         $scored = [];
         foreach ($products as $prod) {
@@ -233,9 +240,14 @@ class SourcingController extends Controller
 
             $items = $query->orderBy('id', 'desc')->get();
 
+            // Preload active products once to prevent 380+ separate SQL queries
+            $cachedProducts = Product::with(['category:id,name', 'subcategory:id,name'])
+                ->where('is_active', true)
+                ->get();
+
             // Attach fuzzy match suggestions for each free-text item
-            $enriched = $items->map(function ($item) {
-                $suggestions = $this->findProductMatches($item->description, $item->pr?->tenant_id, 3);
+            $enriched = $items->map(function ($item) use ($cachedProducts) {
+                $suggestions = $this->findProductMatches($item->description, $item->pr?->tenant_id, 3, $cachedProducts);
                 $bestMatch = !empty($suggestions) ? $suggestions[0] : null;
 
                 return [
