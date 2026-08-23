@@ -50,6 +50,7 @@ const MODULE_META: ModuleMeta[] = [
   { key: 'org_masters',           label: 'Org Masters',           icon: 'corporate_fare',         description: 'Departments, projects, locations',      group: 'master'      },
   { key: 'reports',               label: 'Reports',               icon: 'bar_chart',              description: 'Analytics and TAT reports',             group: 'admin'       },
   { key: 'org_staff',             label: 'Staff Management',      icon: 'group',                  description: 'Add/remove users and assign roles',     group: 'admin'       },
+  { key: 'sourcing',              label: 'Sourcing & Price Discovery', icon: 'travel_explore',     description: 'Vendor quotes, PR price discovery & master mapping', group: 'procurement' },
 ];
 
 

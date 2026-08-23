@@ -54,6 +54,7 @@ export const MODULE_LABELS: Record<string, { label: string; icon: string }> = {
   org_masters:           { label: 'Org Masters',     icon: 'corporate_fare' },
   reports:               { label: 'Reports',         icon: 'bar_chart' },
   org_staff:             { label: 'Staff',           icon: 'group' },
+  sourcing:              { label: 'Sourcing',        icon: 'travel_explore' },
 };
 
 export const HELP_ARTICLES: HelpArticle[] = [
@@ -268,6 +269,45 @@ export const HELP_ARTICLES: HelpArticle[] = [
         <li><strong>Submit</strong> — it routes through the Invoice approval chain.</li>
       </ol>
       <p>On approval the PO moves to <strong>Invoiced</strong>, and payment release follows.</p>`,
+  },
+  {
+    id: 'sourcing-overview',
+    title: 'Sourcing & Price Discovery Workbench (ZOPA Buyers)',
+    category: 'Procurement',
+    icon: 'travel_explore',
+    summary: 'Discover vendors, record quotations, and resolve uncatalogued PR items across all client organizations.',
+    keywords: ['sourcing', 'price discovery', 'vendor quote', 'typo', 'master match', 'rfq', 'uncatalogued', 'call log', 'buyer', 'promote'],
+    modules: ['sourcing'],
+    body: `<p>The <strong>Sourcing &amp; Price Discovery Workbench</strong> is a specialized tool designed exclusively for ZOPA internal buyers to discover vendors, record multi-supplier quotations, and manage price negotiations across all client organizations.</p>
+      <p><strong>Key Features &amp; Workflows:</strong></p>
+      <ul>
+        <li><strong>Automatic Uncatalogued PR Stream:</strong> Any PR line item submitted without an existing master catalog product (<code>product_id = null</code>) automatically streams into the <em>Uncatalogued PR Items</em> tab. Buyers no longer need to manually search and push PR items one by one.</li>
+        <li><strong>Smart Typo &amp; Fuzzy Master Matching:</strong> When requesters make spelling errors or write variations in free-text fields (e.g. <code>Mous</code> instead of <code>Mouse</code>, <code>Paracetmol 500</code> instead of <code>Paracetamol 500mg</code>), the system automatically performs fuzzy string matching against the <strong>Product Master</strong>.
+          <ul>
+            <li>Displays match confidence (e.g. <code>91% Match: Optical Mouse USB</code>).</li>
+            <li>Click <strong>Map &amp; Resolve Typo</strong> to link the PR item directly to the master product with 1-click, updating standard rates and removing it from Sourcing.</li>
+          </ul>
+        </li>
+        <li><strong>Direct Sourcing Entry:</strong> Create standalone sourcing requests with item specifications, required quantities, target budget price, and RFQ references.</li>
+        <li><strong>Multiple Vendor Contacts &amp; Quotations:</strong> Any ZOPA buyer can add multiple vendor quotes per item (Company name, contact person, phone, email, quoted price, GST %, lead time in days, payment terms, and notes). The best quoted price is automatically highlighted.</li>
+        <li><strong>Working Remarks &amp; Call Logs:</strong> Real-time chronological timeline where any buyer can log vendor phone calls, negotiation notes, and pricing updates.</li>
+        <li><strong>Promote to Product Master:</strong> Once a genuine new item is sourced and quotes are finalized, buyers can click <strong>Promote to Product Master</strong> with 1-click to permanently add the item and rate to the master catalog for future requisitions.</li>
+      </ul>`,
+  },
+  {
+    id: 'pr-vs-sourcing',
+    title: 'Requisitions (PR) vs Sourcing — Catalogued vs Custom Items',
+    category: 'Procurement',
+    icon: 'hub',
+    summary: 'How catalogued items use pre-approved vendor pricing while uncatalogued items route to Sourcing.',
+    keywords: ['pr', 'sourcing', 'catalog', 'master', 'custom item', 'free text', 'pricing'],
+    modules: ['purchase_requisitions', 'sourcing'],
+    body: `<p>Understanding how item selection in Requisitions connects to Sourcing:</p>
+      <ol>
+        <li><strong>Catalogued Master Items:</strong> When a requester selects an item from the Product Master dropdown, it already has an approved rate, HSN code, and established vendors. These items proceed directly to standard RFQ/PO generation and <em>do not require sourcing</em>.</li>
+        <li><strong>Uncatalogued / Custom Free-Text Items:</strong> When an item is not in the catalog, the requester types into the description field. These items are uncatalogued and automatically flow to the <strong>Sourcing Workbench</strong> for ZOPA buyers to discover suppliers and negotiate prices.</li>
+        <li><strong>Catalog Deduplication:</strong> If a custom item was typed due to a typo or spelling difference, ZOPA buyers can resolve it with 1-click via <strong>Map &amp; Resolve Typo</strong>, keeping the catalog clean and avoiding redundant negotiations.</li>
+      </ol>`,
   },
 
   // ── Approvals ─────────────────────────────────────────────────────────────
