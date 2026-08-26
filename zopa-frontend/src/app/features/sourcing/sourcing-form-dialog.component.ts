@@ -385,12 +385,21 @@ export class SourcingFormDialogComponent implements OnInit {
   }
 
   saveDirect() {
-    if (this.directForm.invalid) return;
+    if (this.directForm.invalid) {
+      this.directForm.markAllAsTouched();
+      this.notify.error('Please fill all required fields.');
+      return;
+    }
     this.saving.set(true);
+
+    const val = { ...this.directForm.value };
+    if (!val.category_id) val.category_id = null;
+    if (!val.target_price) val.target_price = null;
+    if (!val.quoted_price) val.quoted_price = null;
 
     this.http.post<{ message: string; data: SourcingRequest }>(
       `${environment.apiUrl}/sourcing`,
-      this.directForm.value
+      val
     ).subscribe({
       next: res => {
         this.saving.set(false);
@@ -399,7 +408,8 @@ export class SourcingFormDialogComponent implements OnInit {
       },
       error: err => {
         this.saving.set(false);
-        this.notify.error(err.error?.message || 'Failed to create sourcing request.');
+        const msg = err.error?.message || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Failed to create sourcing request.');
+        this.notify.error(msg);
       }
     });
   }

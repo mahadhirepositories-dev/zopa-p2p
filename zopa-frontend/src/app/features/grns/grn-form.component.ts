@@ -724,18 +724,23 @@ export class GrnFormComponent implements OnInit {
       (item: any) => Number(item.received_qty ?? 0) > 0
     );
 
+    const formatDate = (val: any): string | null => {
+      if (!val) return null;
+      const d = new Date(val);
+      return !isNaN(d.getTime())
+        ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        : null;
+    };
+
     const payload = {
       po_id: this.poControl.value,
       grn_number: this.grnNumberControl.value?.trim() || undefined,
-      received_date: this.dateControl.value instanceof Date
-        ? this.dateControl.value.toISOString().split('T')[0]
-        : this.dateControl.value,
-      dc_number: this.dcNumberControl.value,
-
-      dc_date: this.dcDateControl.value instanceof Date ? this.dcDateControl.value.toISOString().split('T')[0] : this.dcDateControl.value,
-      invoice_number: this.invoiceNumberControl.value,
-      invoice_date: this.invoiceDateControl.value instanceof Date ? this.invoiceDateControl.value.toISOString().split('T')[0] : this.invoiceDateControl.value,
-      remarks: this.remarksControl.value,
+      received_date: formatDate(this.dateControl.value),
+      dc_number: this.dcNumberControl.value?.trim() || null,
+      dc_date: formatDate(this.dcDateControl.value),
+      invoice_number: this.invoiceNumberControl.value?.trim() || null,
+      invoice_date: formatDate(this.invoiceDateControl.value),
+      remarks: this.remarksControl.value?.trim() || null,
       items: receivableItems,
     };
     
@@ -763,7 +768,11 @@ export class GrnFormComponent implements OnInit {
           this.router.navigate(['/grns', grn.id]);
         }
       },
-      error: err => { this.notify.error(err.error?.message ?? 'Save failed.'); this.saving.set(false); },
+      error: err => {
+        const msg = err.error?.message || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Save failed.');
+        this.notify.error(msg);
+        this.saving.set(false);
+      },
     });
   }
 }

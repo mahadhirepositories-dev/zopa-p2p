@@ -141,17 +141,17 @@ class GrnController extends Controller
             }
 
             $grn = Grn::create([
-                'tenant_id' => $tenant->id,
-                'po_id' => $request->po_id,
-                'grn_number' => $grnNumber,
-                'received_date' => $request->received_date,
-                'dc_number' => $request->dc_number,
-                'dc_date' => $request->dc_date,
-                'invoice_number' => $request->invoice_number,
-                'invoice_date' => $request->invoice_date,
-                'received_by' => auth()->id(),
-                'status' => 'confirmed',
-                'remarks' => $request->remarks,
+                'tenant_id'      => $tenant->id,
+                'po_id'          => $request->po_id,
+                'grn_number'     => $grnNumber,
+                'received_date'  => $request->received_date,
+                'dc_number'      => !empty($request->dc_number) ? trim($request->dc_number) : null,
+                'dc_date'        => !empty($request->dc_date) ? $request->dc_date : null,
+                'invoice_number' => !empty($request->invoice_number) ? trim($request->invoice_number) : null,
+                'invoice_date'   => !empty($request->invoice_date) ? $request->invoice_date : null,
+                'received_by'    => auth()->id(),
+                'status'         => 'confirmed',
+                'remarks'        => !empty($request->remarks) ? trim($request->remarks) : null,
             ]);
 
             foreach ($request->items as $item) {

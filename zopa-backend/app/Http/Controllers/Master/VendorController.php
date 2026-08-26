@@ -89,11 +89,11 @@ class VendorController extends Controller
             } while (Vendor::where('tenant_id', $tenant->id)->where('global_vendor_code', $code)->exists());
         }
 
-        $vendor = Vendor::create([
-            ...$request->only($this->VENDOR_FIELDS),
-            'global_vendor_code' => $code,
-            'tenant_id' => $tenant->id,
-        ]);
+        $sanitized = $this->sanitizeVendorData($request);
+        $sanitized['global_vendor_code'] = $code;
+        $sanitized['tenant_id'] = $tenant->id;
+
+        $vendor = Vendor::create($sanitized);
 
         $this->syncCategories($vendor, $request->input('vendor_categories', []));
 
@@ -151,7 +151,8 @@ class VendorController extends Controller
         $this->authorizeVendor($vendor);
         $this->validateVendor($request, partial: true, ignoreId: $vendor->id);
 
-        $vendor->fill($request->only($this->VENDOR_FIELDS));
+        $sanitized = $this->sanitizeVendorData($request);
+        $vendor->fill($sanitized);
         $dirty = [];
         foreach ($this->VENDOR_FIELDS as $field) {
             if ($vendor->isDirty($field)) {
@@ -327,12 +328,43 @@ class VendorController extends Controller
         return response()->json(null, 204);
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    private function sanitizeVendorData(Request $request): array
+    {
+        $data = $request->only($this->VENDOR_FIELDS);
+        $nullableStrings = [
+            'pan', 'gstin', 'special_status_start_date', 'special_status_end_date',
+            'category_id', 'subcategory_id', 'email', 'phone', 'account_no',
+            'bank_name', 'ifsc_code', 'branch_name', 'msme_reg_no', 'special_status_reg_no',
+            'global_vendor_code', 'entity_code', 'vendor_type', 'entity_type',
+            'gst_status', 'currency', 'special_status'
+        ];
+        foreach ($nullableStrings as $field) {
+            if (array_key_exists($field, $data)) {
+                $data[$field] = !empty($data[$field]) ? trim((string) $data[$field]) : null;
+            }
+        }
+        if (!empty($data['pan'])) {
+            $data['pan'] = strtoupper($data['pan']);
+        }
+        if (!empty($data['gstin'])) {
+            $data['gstin'] = strtoupper($data['gstin']);
+        }
+        return $data;
+    }
 
     private function validateVendor(Request $request, bool $partial = false, ?int $ignoreId = null): void
     {
         $required = $partial ? 'nullable' : 'required';
         $tenantId = app('currentTenant')->id;
+
+        $request->merge([
+            'pan'                       => $request->filled('pan') ? strtoupper(trim($request->pan)) : null,
+            'gstin'                     => $request->filled('gstin') ? strtoupper(trim($request->gstin)) : null,
+            'special_status_start_date' => $request->filled('special_status_start_date') ? $request->special_status_start_date : null,
+            'special_status_end_date'   => $request->filled('special_status_end_date') ? $request->special_status_end_date : null,
+            'category_id'               => $request->filled('category_id') ? (int) $request->category_id : null,
+            'subcategory_id'            => $request->filled('subcategory_id') ? (int) $request->subcategory_id : null,
+        ]);
 
         $request->validate([
             'name'           => [
@@ -359,14 +391,18 @@ class VendorController extends Controller
                     ->where('tenant_id', $tenantId)
                     ->ignore($ignoreId)
             ],
-            'email'          => 'nullable|email|max:100',
-            'phone'          => ['nullable', 'string'],
-            'gst_status'     => 'nullable|in:registered,unregistered,overseas',
-            'vendor_type'    => 'nullable|in:manufacturer,distributor,service_provider,consultant',
-            'entity_type'    => 'nullable|in:public,pvt_ltd,llp,partnership,individual,overseas_company,others',
-            'currency'       => 'nullable|string|max:10',
-            'special_status' => 'nullable|in:msme,non_msme,sez,others',
-            'vendor_categories' => 'nullable|array',
+            'email'                     => 'nullable|email|max:100',
+            'phone'                     => ['nullable', 'string'],
+            'gst_status'                => 'nullable|in:registered,unregistered,overseas',
+            'vendor_type'               => 'nullable|in:manufacturer,distributor,service_provider,consultant',
+            'entity_type'               => 'nullable|in:public,pvt_ltd,llp,partnership,individual,overseas_company,others',
+            'currency'                  => 'nullable|string|max:10',
+            'special_status'            => 'nullable|in:msme,non_msme,sez,others',
+            'special_status_start_date' => 'nullable|date',
+            'special_status_end_date'   => 'nullable|date|after_or_equal:special_status_start_date',
+            'category_id'               => 'nullable|integer|exists:categories,id',
+            'subcategory_id'            => 'nullable|integer|exists:categories,id',
+            'vendor_categories'         => 'nullable|array',
             'vendor_categories.*.category_id'    => 'nullable|integer|exists:categories,id',
             'vendor_categories.*.subcategory_id' => 'nullable|integer|exists:categories,id',
         ]);

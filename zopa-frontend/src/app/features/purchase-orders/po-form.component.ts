@@ -1287,20 +1287,22 @@ export class PoFormComponent implements OnInit {
     }
     this.saving.set(action);
 
+    const formatDate = (val: any): string | null => {
+      if (!val) return null;
+      const d = new Date(val);
+      return !isNaN(d.getTime())
+        ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        : null;
+    };
+
     const payload: any = {
       ...this.headerForm.value,
       // Include pr_id if this PO was created from a PR
       ...(this.prSource() ? { pr_id: this.prSource() } : {}),
-      po_valid_till: this.headerForm.value.po_valid_till
-        ? (this.headerForm.value.po_valid_till as Date).toISOString().split('T')[0]
-        : null,
+      po_valid_till: formatDate(this.headerForm.value.po_valid_till),
       items: this.items.value.map((item: any) => ({
         ...item,
-        required_by: item.required_by
-          ? (item.required_by instanceof Date
-              ? item.required_by
-              : new Date(item.required_by)).toISOString().split('T')[0]
-          : null,
+        required_by: formatDate(item.required_by),
       })),
       payment_terms_json: this.paymentTerms.value,
       terms_conditions:   this.tcControl.value,
@@ -1323,7 +1325,8 @@ export class PoFormComponent implements OnInit {
               this.router.navigate(['/purchase-orders', po.id]);
             },
             error: err => {
-              this.notify.error(err.error?.error ?? 'Submit failed.');
+              const msg = err.error?.message || err.error?.error || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Submit failed.');
+              this.notify.error(msg);
               this.saving.set(false);
               this.router.navigate(['/purchase-orders', po.id]);
             },
@@ -1335,7 +1338,8 @@ export class PoFormComponent implements OnInit {
         }
       },
       error: err => {
-        this.notify.error(err.error?.error ?? err.error?.message ?? 'Save failed.');
+        const msg = err.error?.message || err.error?.error || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Save failed.');
+        this.notify.error(msg);
         this.saving.set(false);
       },
     });

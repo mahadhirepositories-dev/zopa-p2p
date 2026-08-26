@@ -98,11 +98,17 @@ class InvoiceController extends Controller
 
         $invoice = DB::transaction(function () use ($request, $tenant) {
             $inv = Invoice::create([
-                'tenant_id'    => $tenant->id,
-                'invoice_type' => $request->invoice_type ?? 'regular',
-                ...$request->only('po_id', 'grn_id', 'invoice_number', 'invoice_date',
-                                  'vendor_invoice_ref', 'amount', 'freight', 'notes'),
-                'status' => 'pending',
+                'tenant_id'          => $tenant->id,
+                'po_id'              => $request->po_id,
+                'grn_id'             => !empty($request->grn_id) ? $request->grn_id : null,
+                'invoice_number'     => trim($request->invoice_number),
+                'invoice_date'       => $request->invoice_date,
+                'vendor_invoice_ref' => !empty($request->vendor_invoice_ref) ? trim($request->vendor_invoice_ref) : null,
+                'invoice_type'       => $request->invoice_type ?? 'regular',
+                'amount'             => (float) $request->amount,
+                'freight'            => !empty($request->freight) ? (float) $request->freight : 0,
+                'notes'              => !empty($request->notes) ? trim($request->notes) : null,
+                'status'             => 'pending',
             ]);
 
             // Route through invoice approval matrix (auto-approves if no config set)

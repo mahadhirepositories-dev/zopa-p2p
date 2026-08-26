@@ -229,15 +229,32 @@ export class InvoiceFormComponent implements OnInit {
     if (this.form.invalid) return;
     this.saving.set(true);
     const val = this.form.value;
+
+    const formatDate = (dateVal: any): string | null => {
+      if (!dateVal) return null;
+      const d = new Date(dateVal);
+      return !isNaN(d.getTime())
+        ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        : null;
+    };
+
     const payload = {
       ...val,
-      invoice_date: val.invoice_date instanceof Date
-        ? val.invoice_date.toISOString().split('T')[0]
-        : val.invoice_date,
+      grn_id: val.grn_id || null,
+      invoice_date: formatDate(val.invoice_date),
+      vendor_invoice_ref: val.vendor_invoice_ref?.trim() || null,
+      notes: val.notes?.trim() || null,
     };
     this.http.post<any>(`${environment.apiUrl}/invoices`, payload).subscribe({
-      next: inv => { this.notify.success('Invoice saved.'); this.router.navigate(['/invoices', inv.id]); },
-      error: err => { this.notify.error(err.error?.error ?? err.error?.message ?? 'Save failed.'); this.saving.set(false); },
+      next: inv => {
+        this.notify.success('Invoice saved.');
+        this.router.navigate(['/invoices', inv.id]);
+      },
+      error: err => {
+        const msg = err.error?.message || err.error?.error || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Save failed.');
+        this.notify.error(msg);
+        this.saving.set(false);
+      },
     });
   }
 }

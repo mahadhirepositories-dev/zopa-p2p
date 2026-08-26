@@ -649,12 +649,21 @@ export class VendorFormComponent implements OnInit {
     this.saving.set(true);
 
     const val = this.form.getRawValue();
+
+    const formatDate = (dateVal: any): string | null => {
+      if (!dateVal) return null;
+      const d = new Date(dateVal);
+      return !isNaN(d.getTime())
+        ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        : null;
+    };
+
     const payload: any = {
       ...val,
-      special_status_start_date: val.special_status_start_date instanceof Date
-        ? (val.special_status_start_date as Date).toISOString().split('T')[0] : val.special_status_start_date,
-      special_status_end_date: val.special_status_end_date instanceof Date
-        ? (val.special_status_end_date as Date).toISOString().split('T')[0] : val.special_status_end_date,
+      pan: val.pan ? val.pan.toUpperCase().trim() : null,
+      gstin: val.gstin ? val.gstin.toUpperCase().trim() : null,
+      special_status_start_date: formatDate(val.special_status_start_date),
+      special_status_end_date: formatDate(val.special_status_end_date),
       vendor_categories: this.categoryRows.value,
     };
 
@@ -670,7 +679,8 @@ export class VendorFormComponent implements OnInit {
         this.router.navigate(['/vendors', vendor.id]);
       },
       error: err => {
-        this.notify.error(err.error?.message ?? 'Save failed.');
+        const msg = err.error?.message || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Save failed.');
+        this.notify.error(msg);
         this.saving.set(false);
       },
     });

@@ -586,8 +586,18 @@ export class PrFormComponent implements OnInit {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.saving.set(true);
 
+    const formVals = this.form.value;
+    let reqDate: string | null = null;
+    if (formVals.required_by_date) {
+      const d = new Date(formVals.required_by_date);
+      if (!isNaN(d.getTime())) {
+        reqDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      }
+    }
+
     const body = {
-      ...this.form.value,
+      ...formVals,
+      required_by_date: reqDate,
       items: this.items.value,
     };
 
@@ -603,14 +613,22 @@ export class PrFormComponent implements OnInit {
               this.notify.success('PR submitted successfully');
               this.router.navigate(['/purchase-requisitions', pr.id]);
             },
-            error: e => { this.notify.error(e.error?.error ?? 'Submit failed'); this.saving.set(false); },
+            error: e => {
+              const msg = e.error?.message || e.error?.error || (e.error?.errors ? Object.values(e.error.errors).flat().join(', ') : 'Submit failed');
+              this.notify.error(msg);
+              this.saving.set(false);
+            },
           });
         } else {
           this.notify.success(`PR ${this.isEditMode() ? 'updated' : 'saved as draft'}`);
           this.router.navigate(['/purchase-requisitions', pr.id]);
         }
       },
-      error: e => { this.notify.error(e.error?.error ?? 'Save failed'); this.saving.set(false); },
+      error: e => {
+        const msg = e.error?.message || e.error?.error || (e.error?.errors ? Object.values(e.error.errors).flat().join(', ') : 'Save failed');
+        this.notify.error(msg);
+        this.saving.set(false);
+      },
     });
   }
 

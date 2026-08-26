@@ -87,12 +87,14 @@ class ProductController extends Controller
             $tenant->increment('product_series', $series - ($tenant->product_series ?? 1));
         }
 
-        $product = Product::create([
-            ...$request->only('name', 'description', 'category_id', 'subcategory_id', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price'),
-            'code'      => $code,
-            'is_active' => $request->boolean('is_active', true),
-            'tenant_id' => $tenant->id,
-        ]);
+        $data = $request->only('name', 'description', 'unit', 'net_rate', 'gst_rate', 'hsn_code', 'warranty_months', 'mrp', 'sale_price');
+        $data['category_id']    = $request->filled('category_id') ? (int) $request->category_id : null;
+        $data['subcategory_id'] = $request->filled('subcategory_id') ? (int) $request->subcategory_id : null;
+        $data['code']           = $code;
+        $data['is_active']      = $request->boolean('is_active', true);
+        $data['tenant_id']      = $tenant->id;
+
+        $product = Product::create($data);
 
         return response()->json($product, 201);
     }
@@ -121,6 +123,7 @@ class ProductController extends Controller
             'is_active'      => 'nullable|boolean',
         ]);
 
+        $newCode = null;
         if ($request->has('code')) {
             $newCode = trim((string) $request->code);
             if ($newCode !== '' && $newCode !== $product->code) {
@@ -137,7 +140,18 @@ class ProductController extends Controller
             }
         }
 
-        $product->update($request->except('tenant_id'));
+        $data = $request->except(['tenant_id', 'code']);
+        if ($request->has('category_id')) {
+            $data['category_id'] = $request->filled('category_id') ? (int) $request->category_id : null;
+        }
+        if ($request->has('subcategory_id')) {
+            $data['subcategory_id'] = $request->filled('subcategory_id') ? (int) $request->subcategory_id : null;
+        }
+        if (!empty($newCode)) {
+            $data['code'] = $newCode;
+        }
+
+        $product->update($data);
         return response()->json($product);
     }
 
