@@ -170,18 +170,39 @@ export class CostCenterFormDialogComponent implements OnInit {
     }
     this.saving.set(true);
     const formVals: any = this.form.value;
+
+    const formatDate = (val: any) => {
+      if (!val) return null;
+      const d = new Date(val);
+      return !isNaN(d.getTime())
+        ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+        : null;
+    };
+
     const payload = {
       ...formVals,
+      department_id: formVals.department_id || null,
+      project_id: formVals.project_id || null,
       location_id: formVals.location_ids?.[0] ?? null,
+      budget_from: formatDate(formVals.budget_from),
+      budget_to: formatDate(formVals.budget_to),
       current_fiscal_year: this.derivedFiscalYear()
     };
+
     const req = this.data
       ? this.http.put(`${environment.apiUrl}/cost-centers/${this.data.id}`, payload)
       : this.http.post(`${environment.apiUrl}/cost-centers`, payload);
 
     req.subscribe({
-      next: () => { this.notify.success('Cost center saved.'); this.dialogRef.close(true); },
-      error: () => { this.notify.error('Save failed.'); this.saving.set(false); },
+      next: () => {
+        this.notify.success('Cost center saved.');
+        this.dialogRef.close(true);
+      },
+      error: (err) => {
+        const msg = err.error?.message || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : 'Save failed.');
+        this.notify.error(msg);
+        this.saving.set(false);
+      },
     });
   }
 }

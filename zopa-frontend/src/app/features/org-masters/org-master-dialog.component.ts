@@ -237,7 +237,19 @@ export class OrgMasterDialogComponent implements OnInit {
 
     if (val.end_date) {
       const d = new Date(val.end_date);
-      val.end_date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      if (!isNaN(d.getTime())) {
+        val.end_date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      } else {
+        val.end_date = null;
+      }
+    } else {
+      val.end_date = null;
+    }
+
+    if (val.gstin) {
+      val.gstin = val.gstin.toUpperCase().trim();
+    } else {
+      val.gstin = null;
     }
 
     if (this.data.type === 'department') {
@@ -253,8 +265,9 @@ export class OrgMasterDialogComponent implements OnInit {
         this.notify.success(`${this.getTitle()} saved successfully.`);
         this.dialogRef.close(true);
       },
-      error: () => {
-        this.notify.error(`Failed to save ${this.getTitle()}.`);
+      error: (err) => {
+        const msg = err.error?.message || (err.error?.errors ? Object.values(err.error.errors).flat().join(', ') : `Failed to save ${this.getTitle()}.`);
+        this.notify.error(msg);
         this.saving.set(false);
       }
     });

@@ -28,27 +28,41 @@ class CostCenterController extends Controller
     {
         $this->requirePermission('cost_centers', 'create');
 
-        $request->validate([
+        $validated = $request->validate([
             'name'                => 'required|string|max:255',
             'annual_budget'       => 'required|numeric|min:0',
-            'current_fiscal_year' => 'required|integer|min:2020',
+            'current_fiscal_year' => 'nullable|integer|min:2020',
             'budget_from'         => 'nullable|date',
             'budget_to'           => 'nullable|date|after_or_equal:budget_from',
+            'department_id'       => 'nullable|integer|exists:departments,id',
+            'project_id'          => 'nullable|integer|exists:projects,id',
+            'location_id'         => 'nullable|integer|exists:locations,id',
+            'user_ids'            => 'nullable|array',
+            'user_ids.*'          => 'integer|exists:users,id',
+            'location_ids'        => 'nullable|array',
+            'location_ids.*'      => 'integer|exists:locations,id',
         ]);
 
         $tenant = app('currentTenant');
         $cc = CostCenter::create([
-            ...$request->only('name', 'department_id', 'project_id', 'location_id',
-                              'annual_budget', 'budget_from', 'budget_to', 'current_fiscal_year'),
-            'tenant_id' => $tenant->id,
+            'tenant_id'           => $tenant->id,
+            'name'                => $validated['name'],
+            'department_id'       => !empty($validated['department_id']) ? $validated['department_id'] : null,
+            'project_id'          => !empty($validated['project_id']) ? $validated['project_id'] : null,
+            'location_id'         => !empty($validated['location_id']) ? $validated['location_id'] : null,
+            'annual_budget'       => $validated['annual_budget'] ?? 0,
+            'budget_from'         => !empty($validated['budget_from']) ? $validated['budget_from'] : null,
+            'budget_to'           => !empty($validated['budget_to']) ? $validated['budget_to'] : null,
+            'current_fiscal_year' => !empty($validated['current_fiscal_year']) ? $validated['current_fiscal_year'] : date('Y'),
+            'is_active'           => true,
         ]);
 
         if ($request->has('user_ids')) {
-            $cc->users()->sync($request->user_ids);
+            $cc->users()->sync($request->user_ids ?: []);
         }
 
         if ($request->has('location_ids')) {
-            $cc->locations()->sync($request->location_ids);
+            $cc->locations()->sync($request->location_ids ?: []);
         }
 
         return response()->json($cc->load('department', 'project', 'location', 'users:id,name,email', 'locations'), 201);
@@ -64,12 +78,47 @@ class CostCenterController extends Controller
     {
         $this->requirePermission('cost_centers', 'edit');
         $this->authorizeCostCenter($costCenter);
-        $costCenter->update($request->except('tenant_id'));
+
+        $validated = $request->validate([
+            'name'                => 'sometimes|required|string|max:255',
+            'annual_budget'       => 'sometimes|required|numeric|min:0',
+            'current_fiscal_year' => 'nullable|integer|min:2020',
+            'budget_from'         => 'nullable|date',
+            'budget_to'           => 'nullable|date|after_or_equal:budget_from',
+            'department_id'       => 'nullable|integer|exists:departments,id',
+            'project_id'          => 'nullable|integer|exists:projects,id',
+            'location_id'         => 'nullable|integer|exists:locations,id',
+            'is_active'           => 'nullable|boolean',
+            'user_ids'            => 'nullable|array',
+            'user_ids.*'          => 'integer|exists:users,id',
+            'location_ids'        => 'nullable|array',
+            'location_ids.*'      => 'integer|exists:locations,id',
+        ]);
+
+        $data = $request->only('name', 'annual_budget', 'is_active', 'current_fiscal_year');
+        if ($request->has('department_id')) {
+            $data['department_id'] = !empty($request->department_id) ? $request->department_id : null;
+        }
+        if ($request->has('project_id')) {
+            $data['project_id'] = !empty($request->project_id) ? $request->project_id : null;
+        }
+        if ($request->has('location_id')) {
+            $data['location_id'] = !empty($request->location_id) ? $request->location_id : null;
+        }
+        if ($request->has('budget_from')) {
+            $data['budget_from'] = !empty($request->budget_from) ? $request->budget_from : null;
+        }
+        if ($request->has('budget_to')) {
+            $data['budget_to'] = !empty($request->budget_to) ? $request->budget_to : null;
+        }
+
+        $costCenter->update($data);
+
         if ($request->has('user_ids')) {
-            $costCenter->users()->sync($request->user_ids);
+            $costCenter->users()->sync($request->user_ids ?: []);
         }
         if ($request->has('location_ids')) {
-            $costCenter->locations()->sync($request->location_ids);
+            $costCenter->locations()->sync($request->location_ids ?: []);
         }
         return response()->json($costCenter->load('department', 'project', 'location', 'users:id,name,email', 'locations'));
     }

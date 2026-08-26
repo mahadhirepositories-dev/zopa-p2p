@@ -28,15 +28,17 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'create');
 
-        $request->validate([
-            'name' => 'required|string|max:255',
+        $validated = $request->validate([
+            'name'         => 'required|string|max:255',
             'head_user_id' => 'nullable|integer|exists:users,id',
+            'is_active'    => 'nullable|boolean',
         ]);
+
         $dept = Department::create([
-            'tenant_id' => app('currentTenant')->id,
-            'name' => $request->name,
-            'head_user_id' => $request->head_user_id,
-            'is_active' => true,
+            'tenant_id'    => app('currentTenant')->id,
+            'name'         => $validated['name'],
+            'head_user_id' => !empty($validated['head_user_id']) ? $validated['head_user_id'] : null,
+            'is_active'    => $request->has('is_active') ? (bool) $request->is_active : true,
         ]);
         return response()->json($dept->load('head:id,name,email'), 201);
     }
@@ -45,11 +47,19 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($department->tenant_id !== app('currentTenant')->id, 403);
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
+
+        $validated = $request->validate([
+            'name'         => 'sometimes|required|string|max:255',
             'head_user_id' => 'nullable|integer|exists:users,id',
+            'is_active'    => 'nullable|boolean',
         ]);
-        $department->update($request->only('name', 'is_active', 'head_user_id'));
+
+        $data = $request->only('name', 'is_active');
+        if ($request->has('head_user_id')) {
+            $data['head_user_id'] = !empty($request->head_user_id) ? $request->head_user_id : null;
+        }
+
+        $department->update($data);
         return response()->json($department->load('head:id,name,email'));
     }
 
@@ -82,15 +92,19 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'create');
 
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'end_date' => 'nullable|date',
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'end_date'      => 'nullable|date',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'is_active'     => 'nullable|boolean',
         ]);
+
         $proj = Project::create([
-            'tenant_id' => app('currentTenant')->id,
-            'name' => $request->name,
-            'end_date' => $request->end_date,
-            'is_active' => true,
+            'tenant_id'     => app('currentTenant')->id,
+            'name'          => $validated['name'],
+            'department_id' => !empty($validated['department_id']) ? $validated['department_id'] : null,
+            'end_date'      => !empty($validated['end_date']) ? $validated['end_date'] : null,
+            'is_active'     => $request->has('is_active') ? (bool) $request->is_active : true,
         ]);
         return response()->json($proj, 201);
     }
@@ -99,11 +113,23 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($project->tenant_id !== app('currentTenant')->id, 403);
-        $request->validate([
-            'name'     => 'sometimes|required|string|max:255',
-            'end_date' => 'nullable|date',
+
+        $validated = $request->validate([
+            'name'          => 'sometimes|required|string|max:255',
+            'end_date'      => 'nullable|date',
+            'department_id' => 'nullable|integer|exists:departments,id',
+            'is_active'     => 'nullable|boolean',
         ]);
-        $project->update($request->only('name', 'is_active', 'end_date'));
+
+        $data = $request->only('name', 'is_active');
+        if ($request->has('end_date')) {
+            $data['end_date'] = !empty($request->end_date) ? $request->end_date : null;
+        }
+        if ($request->has('department_id')) {
+            $data['department_id'] = !empty($request->department_id) ? $request->department_id : null;
+        }
+
+        $project->update($data);
         return response()->json($project);
     }
 
@@ -129,22 +155,33 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'create');
 
-        $request->validate([
+        $validated = $request->validate([
             'name'           => 'required|string|max:255',
             'address'        => 'nullable|string|max:500',
             'city'           => 'nullable|string|max:100',
             'state'          => 'nullable|string|max:100',
-            'state_code'     => 'nullable|string|max:2',
-            'pincode'        => 'nullable|string|max:12',
+            'state_code'     => 'nullable|string|max:10',
+            'pincode'        => 'nullable|string|max:20',
             'country'        => 'nullable|string|max:100',
+            'gstin'          => 'nullable|string|max:20',
             'receiver_name'  => 'nullable|string|max:255',
             'receiver_phone' => 'nullable|string|max:50',
+            'is_active'      => 'nullable|boolean',
         ]);
+
         $loc = Location::create([
-            'tenant_id' => app('currentTenant')->id,
-            ...$request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'receiver_name', 'receiver_phone'),
-            'country'   => $request->input('country') ?: 'India',
-            'is_active' => true,
+            'tenant_id'      => app('currentTenant')->id,
+            'name'           => $validated['name'],
+            'address'        => !empty($validated['address']) ? $validated['address'] : null,
+            'city'           => !empty($validated['city']) ? $validated['city'] : null,
+            'state'          => !empty($validated['state']) ? $validated['state'] : null,
+            'state_code'     => !empty($validated['state_code']) ? $validated['state_code'] : null,
+            'pincode'        => !empty($validated['pincode']) ? $validated['pincode'] : null,
+            'country'        => !empty($validated['country']) ? $validated['country'] : 'India',
+            'gstin'          => !empty($validated['gstin']) ? strtoupper(trim($validated['gstin'])) : null,
+            'receiver_name'  => !empty($validated['receiver_name']) ? $validated['receiver_name'] : null,
+            'receiver_phone' => !empty($validated['receiver_phone']) ? $validated['receiver_phone'] : null,
+            'is_active'      => $request->has('is_active') ? (bool) $request->is_active : true,
         ]);
         return response()->json($loc, 201);
     }
@@ -153,11 +190,27 @@ class OrgController extends Controller
     {
         $this->requirePermission('org_masters', 'edit');
         abort_if($location->tenant_id !== app('currentTenant')->id, 403);
-        $request->validate([
+
+        $validated = $request->validate([
+            'name'           => 'sometimes|required|string|max:255',
+            'address'        => 'nullable|string|max:500',
+            'city'           => 'nullable|string|max:100',
+            'state'          => 'nullable|string|max:100',
+            'state_code'     => 'nullable|string|max:10',
+            'pincode'        => 'nullable|string|max:20',
+            'country'        => 'nullable|string|max:100',
+            'gstin'          => 'nullable|string|max:20',
             'receiver_name'  => 'nullable|string|max:255',
             'receiver_phone' => 'nullable|string|max:50',
+            'is_active'      => 'nullable|boolean',
         ]);
-        $location->update($request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'gstin', 'is_active', 'receiver_name', 'receiver_phone'));
+
+        $data = $request->only('name', 'address', 'city', 'state', 'state_code', 'pincode', 'country', 'is_active', 'receiver_name', 'receiver_phone');
+        if ($request->has('gstin')) {
+            $data['gstin'] = !empty($request->gstin) ? strtoupper(trim($request->gstin)) : null;
+        }
+
+        $location->update($data);
         return response()->json($location);
     }
 
