@@ -13,7 +13,7 @@ import { gstinValidator } from '../../core/validators';
 import { HttpClient } from '@angular/common/http';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { environment } from '../../../environments/environment';
 
 export interface OrgMasterDialogData {
@@ -24,6 +24,7 @@ export interface OrgMasterDialogData {
 @Component({
   selector: 'app-org-master-dialog',
   standalone: true,
+  providers: [provideNativeDateAdapter()],
   imports: [
     CommonModule, ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatCheckboxModule, MatProgressSpinnerModule,

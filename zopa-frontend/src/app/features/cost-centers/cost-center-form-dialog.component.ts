@@ -8,7 +8,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
-import { MatNativeDateModule } from '@angular/material/core';
+import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../environments/environment';
 import { CostCenter } from '../../core/models';
@@ -17,6 +17,7 @@ import { NotificationService } from '../../core/services/notification.service';
 @Component({
   selector: 'app-cost-center-form-dialog',
   standalone: true,
+  providers: [provideNativeDateAdapter()],
   imports: [
     ReactiveFormsModule, MatDialogModule, MatButtonModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule,
