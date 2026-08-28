@@ -81,8 +81,8 @@ jobs:
             
             # Ensure framework directories exist and have proper group ownership/permissions for the web server (www-data)
             mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache
-            chgrp -R www-data storage bootstrap/cache || true
-            chmod -R 775 storage bootstrap/cache || true
+            sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
+            sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || chmod -R 775 storage bootstrap/cache 2>/dev/null || true
 
             php artisan queue:restart
             php artisan storage:link || true

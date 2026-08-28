@@ -115,6 +115,11 @@ class UpdatePrQuantities extends Command
                 10 => ['action' => 'update_qty', 'qty' => 1],
                 12 => ['action' => 'update_qty', 'qty' => 1],
             ],
+            'PR36' => [
+                56 => ['action' => 'update_qty', 'qty' => 1],
+                69 => ['action' => 'update_qty', 'qty' => 50],
+                75 => ['action' => 'update_qty', 'qty' => 10],
+            ],
         ];
 
         $updatedPrCount = 0;
