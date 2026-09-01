@@ -165,7 +165,7 @@ class PurchaseOrderController extends Controller
         // Saving as draft is always allowed even if over budget;
         // only submission is blocked when budget is insufficient.
 
-        $po = DB::transaction(function () use ($request, $tenant, $user, $totals) {
+        $po = DB::transaction(function () use ($request, $tenant, $user, $totals, $costCenter) {
             $po = PurchaseOrder::create([
                 ...$request->only([
                     'pr_id', 'pr_reference', 'vendor_id', 'vendor_address_id', 'cost_center_id',
@@ -173,7 +173,7 @@ class PurchaseOrderController extends Controller
                     'po_valid_till', 'payment_terms_json', 'warranty_months',
                     'terms_conditions',
                 ]),
-                'tenant_id' => $tenant->id,
+                'tenant_id' => $costCenter?->tenant_id ?? $tenant->id,
                 'freight' => $request->freight ?? 0,
                 'freight_gst_rate' => $request->freight_gst_rate ?? 0,
                 'created_by' => $user->id,

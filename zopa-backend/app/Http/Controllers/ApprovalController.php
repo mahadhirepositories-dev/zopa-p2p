@@ -37,11 +37,20 @@ class ApprovalController extends Controller
             ])
             ->where('assigned_to_user_id', auth()->id())
             ->where('action', 'pending')
-            // Tenant isolation: only show approvals belonging to the current tenant
+            // Tenant isolation: strictly scope entity_type with its corresponding relationship
             ->where(function ($q) use ($tenantId) {
-                $q->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                $q->where(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'PO')
+                        ->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->whereIn('entity_type', ['PR', 'PR_SHORT_CLOSE'])
+                        ->whereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'INVOICE')
+                        ->whereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                });
             })
             ->latest()
             ->paginate($perPage);
@@ -61,9 +70,18 @@ class ApprovalController extends Controller
             ->where('assigned_to_user_id', auth()->id())
             ->where('action', 'pending')
             ->where(function ($q) use ($tenantId) {
-                $q->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                $q->where(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'PO')
+                        ->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->whereIn('entity_type', ['PR', 'PR_SHORT_CLOSE'])
+                        ->whereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'INVOICE')
+                        ->whereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                });
             });
 
         $data = $query->latest()->get()->map(function($a) {
@@ -121,9 +139,18 @@ class ApprovalController extends Controller
             ])
             ->where('action', 'pending')
             ->where(function ($q) use ($tenantId) {
-                $q->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId))
-                  ->orWhereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                $q->where(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'PO')
+                        ->whereHas('purchaseOrder', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->whereIn('entity_type', ['PR', 'PR_SHORT_CLOSE'])
+                        ->whereHas('purchaseRequisition', fn($q2) => $q2->where('tenant_id', $tenantId));
+                })
+                ->orWhere(function ($sub) use ($tenantId) {
+                    $sub->where('entity_type', 'INVOICE')
+                        ->whereHas('invoice', fn($q2) => $q2->where('tenant_id', $tenantId));
+                });
             })
             ->orderBy('level')
             ->latest()
@@ -319,13 +346,13 @@ class ApprovalController extends Controller
         // Cross-tenant isolation guard
         $tenantId = app('currentTenant')->id;
         $allowed  = match($approval->entity_type) {
-            'PO'      => PurchaseOrder::where('id', $approval->entity_id)
-                             ->where('tenant_id', $tenantId)->exists(),
-            'PR'      => PurchaseRequisition::where('id', $approval->entity_id)
-                             ->where('tenant_id', $tenantId)->exists(),
-            'INVOICE' => Invoice::where('id', $approval->entity_id)
-                             ->where('tenant_id', $tenantId)->exists(),
-            default   => false,
+            'PO'                     => PurchaseOrder::where('id', $approval->entity_id)
+                                            ->where('tenant_id', $tenantId)->exists(),
+            'PR', 'PR_SHORT_CLOSE'   => PurchaseRequisition::where('id', $approval->entity_id)
+                                            ->where('tenant_id', $tenantId)->exists(),
+            'INVOICE'                => Invoice::where('id', $approval->entity_id)
+                                            ->where('tenant_id', $tenantId)->exists(),
+            default                  => false,
         };
         abort_if(!$allowed, 403, 'Cross-tenant approval access denied.');
     }

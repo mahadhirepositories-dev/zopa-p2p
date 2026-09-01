@@ -134,14 +134,15 @@ class PurchaseRequisitionController extends Controller
 
         $tenant = app('currentTenant');
         $user   = auth()->user();
+        $costCenter = !empty($request->cost_center_id) ? \App\Models\CostCenter::find($request->cost_center_id) : null;
 
-        $pr = DB::transaction(function () use ($request, $tenant, $user) {
+        $pr = DB::transaction(function () use ($request, $tenant, $user, $costCenter) {
             $estimated = collect($request->items)->sum(
                 fn($i) => ($i['qty'] ?? 1) * ($i['estimated_price'] ?? 0)
             );
 
             $pr = PurchaseRequisition::create([
-                'tenant_id'          => $tenant->id,
+                'tenant_id'          => $costCenter?->tenant_id ?? $tenant->id,
                 'pr_ref'             => 'PR-' . uniqid(),
                 'title'              => $request->title,
                 'description'        => $request->description,

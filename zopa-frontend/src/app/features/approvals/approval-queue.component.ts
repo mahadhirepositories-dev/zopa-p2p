@@ -401,7 +401,7 @@ export class ApprovalQueueComponent implements OnInit {
   viewEntity(a: any) {
     if (a.entity_type === 'INVOICE') {
       this.router.navigate(['/invoices', a.entity_id]);
-    } else if (a.entity_type === 'PR') {
+    } else if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') {
       this.router.navigate(['/purchase-requisitions', a.entity_id]);
     } else {
       this.router.navigate(['/purchase-orders', a.entity_id]);
@@ -410,7 +410,7 @@ export class ApprovalQueueComponent implements OnInit {
 
   entityRef(a: any): string {
     if (a.entity_type === 'INVOICE') return a.invoice?.invoice_number ?? ('Invoice #' + a.entity_id);
-    if (a.entity_type === 'PR') return a.purchaseRequisition?.pr_number ?? a.purchase_requisition?.pr_number ?? ('PR #' + a.entity_id);
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') return a.purchaseRequisition?.pr_number ?? a.purchase_requisition?.pr_number ?? ('PR #' + a.entity_id);
     return a.purchase_order?.po_number ?? ('PO #' + a.entity_id);
   }
 
@@ -419,7 +419,7 @@ export class ApprovalQueueComponent implements OnInit {
       const po = a.invoice?.purchase_order;
       return [po?.po_number, po?.vendor?.name].filter(Boolean).join(' · ') || '—';
     }
-    if (a.entity_type === 'PR') {
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') {
       return a.purchaseRequisition?.title ?? a.purchase_requisition?.title ?? '—';
     }
     return [a.purchase_order?.vendor?.name, a.purchase_order?.cost_center?.name].filter(Boolean).join(' · ') || '—';
@@ -427,25 +427,25 @@ export class ApprovalQueueComponent implements OnInit {
 
   entityAmount(a: any): number {
     if (a.entity_type === 'INVOICE') return a.invoice?.amount ?? 0;
-    if (a.entity_type === 'PR') return a.purchaseRequisition?.estimated_amount ?? a.purchase_requisition?.estimated_amount ?? 0;
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') return a.purchaseRequisition?.estimated_amount ?? a.purchase_requisition?.estimated_amount ?? 0;
     return a.purchase_order?.grand_total ?? 0;
   }
 
   entityIcon(a: any): string {
     if (a.entity_type === 'INVOICE') return 'request_quote';
-    if (a.entity_type === 'PR') return 'description';
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') return 'description';
     return 'receipt_long';
   }
 
   entityBg(a: any): string {
     if (a.entity_type === 'INVOICE') return '#f0fdf4';
-    if (a.entity_type === 'PR') return '#eff6ff';
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') return '#eff6ff';
     return 'var(--brand-light)';
   }
 
   entityColor(a: any): string {
     if (a.entity_type === 'INVOICE') return '#16a34a';
-    if (a.entity_type === 'PR') return '#2563eb';
+    if (a.entity_type === 'PR' || a.entity_type === 'PR_SHORT_CLOSE') return '#2563eb';
     return 'var(--brand)';
   }
 
