@@ -152,6 +152,7 @@ class VendorOnboardingController extends Controller
             'vendor:id,name,global_vendor_code',
             'approvedBy:id,name',
             'rejectedBy:id,name',
+            'attachments',
         ])->withCount('attachments');
 
         if ($tenantId) {
@@ -397,19 +398,26 @@ class VendorOnboardingController extends Controller
     }
 
     /**
-     * Download response attachment securely.
+     * Download or view response attachment securely.
      */
-    public function downloadAttachment(int $id, int $attachmentId): BinaryFileResponse
+    public function downloadAttachment(Request $request, int $id, int $attachmentId)
     {
         $response = VendorOnboardingResponse::findOrFail($id);
         $attachment = $response->attachments()->findOrFail($attachmentId);
 
         abort_if(!Storage::disk('public')->exists($attachment->file_path), 404, 'File not found on server.');
 
-        return response()->download(
-            Storage::disk('public')->path($attachment->file_path),
-            $attachment->original_name
-        );
+        $fullPath = Storage::disk('public')->path($attachment->file_path);
+
+        if ($request->boolean('inline', true)) {
+            $mime = $attachment->mime_type ?: (file_exists($fullPath) ? mime_content_type($fullPath) : 'application/octet-stream');
+            return response()->file($fullPath, [
+                'Content-Type'        => $mime,
+                'Content-Disposition' => 'inline; filename="' . $attachment->original_name . '"',
+            ]);
+        }
+
+        return response()->download($fullPath, $attachment->original_name);
     }
 
     private function resolveTenantId(Request $request): ?int

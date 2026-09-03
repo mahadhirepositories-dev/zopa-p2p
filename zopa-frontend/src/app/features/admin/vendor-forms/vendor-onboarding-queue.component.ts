@@ -388,9 +388,41 @@ export interface OnboardingInvite {
                       <span class="detail-label">{{ field.label }}</span>
                       <span class="detail-val">
                         @if (field.type === 'file') {
-                          <span class="attached-file-indicator">
-                            <mat-icon>attach_file</mat-icon> {{ currentReview?.form_data?.[field.field_key] || 'Not attached' }}
-                          </span>
+                          @if (getAttachmentForField(field.field_key); as att) {
+                            <div class="field-file-badge">
+                              <span class="file-name-part" [title]="att.original_name">
+                                <mat-icon class="file-lead-icon">description</mat-icon>
+                                <span class="file-text">{{ att.original_name }}</span>
+                              </span>
+                              <div class="file-btn-group">
+                                <button type="button" class="file-action-pill" (click)="viewAttachment(att)" matTooltip="View / Open File in browser">
+                                  <mat-icon>visibility</mat-icon> View
+                                </button>
+                                <button type="button" class="file-action-pill file-action-pill--dl" (click)="downloadAttachment(att)" matTooltip="Download File">
+                                  <mat-icon>download</mat-icon>
+                                </button>
+                              </div>
+                            </div>
+                          } @else if (currentReview?.form_data?.[field.field_key]) {
+                            <div class="field-file-badge">
+                              <span class="file-name-part" [title]="currentReview?.form_data?.[field.field_key]">
+                                <mat-icon class="file-lead-icon">description</mat-icon>
+                                <span class="file-text">{{ currentReview?.form_data?.[field.field_key] }}</span>
+                              </span>
+                              @if (findAttachmentByName(currentReview?.form_data?.[field.field_key]); as attByName) {
+                                <div class="file-btn-group">
+                                  <button type="button" class="file-action-pill" (click)="viewAttachment(attByName)" matTooltip="View / Open File in browser">
+                                    <mat-icon>visibility</mat-icon> View
+                                  </button>
+                                  <button type="button" class="file-action-pill file-action-pill--dl" (click)="downloadAttachment(attByName)" matTooltip="Download File">
+                                    <mat-icon>download</mat-icon>
+                                  </button>
+                                </div>
+                              }
+                            </div>
+                          } @else {
+                            <span class="muted-dash">Not attached</span>
+                          }
                         } @else if (isArrayVal(currentReview?.form_data?.[field.field_key])) {
                           <div class="val-chips-wrap">
                             @for (item of asArray(currentReview?.form_data?.[field.field_key]); track item) {
@@ -419,12 +451,17 @@ export interface OnboardingInvite {
                           <mat-icon>description</mat-icon>
                         </div>
                         <div class="att-meta">
-                          <span class="att-name">{{ att.original_name }}</span>
+                          <span class="att-name" [title]="att.original_name">{{ att.original_name }}</span>
                           <span class="att-type">{{ att.document_type | uppercase }} &bull; {{ formatSize(att.size) }}</span>
                         </div>
-                        <a class="att-dl-btn" [href]="getDownloadUrl(att.id)" target="_blank" matTooltip="Download document">
-                          <mat-icon>download</mat-icon>
-                        </a>
+                        <div class="att-actions">
+                          <button type="button" class="file-action-pill" (click)="viewAttachment(att)" matTooltip="View / Open File in browser">
+                            <mat-icon>visibility</mat-icon> View
+                          </button>
+                          <button type="button" class="file-action-pill file-action-pill--dl" (click)="downloadAttachment(att)" matTooltip="Download document">
+                            <mat-icon>download</mat-icon>
+                          </button>
+                        </div>
                       </div>
                     }
                   </div>
@@ -940,6 +977,79 @@ export interface OnboardingInvite {
       display: flex;
       flex-direction: column;
     }
+    .field-file-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 10px;
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .file-name-part {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+    .file-lead-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #ea580c;
+      flex-shrink: 0;
+    }
+    .file-text {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-btn-group, .att-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .file-action-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .file-action-pill:hover {
+      background: #0369a1;
+    }
+    .file-action-pill mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+    .file-action-pill--dl {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 4px 8px;
+    }
+    .file-action-pill--dl:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
     .att-name {
       font-size: 12px;
       font-weight: 700;
@@ -951,9 +1061,6 @@ export interface OnboardingInvite {
     .att-type {
       font-size: 10.5px;
       color: #64748b;
-    }
-    .att-dl-btn {
-      color: #2563eb;
     }
 
     .approved-banner {
@@ -1313,5 +1420,55 @@ export class VendorOnboardingQueueComponent implements OnInit {
       try { return JSON.parse(val); } catch { return [val]; }
     }
     return [val];
+  }
+
+  getAttachmentForField(fieldKey: string): any {
+    if (!this.currentReview?.attachments?.length) return null;
+    return this.currentReview.attachments.find((a: any) => a.field_key === fieldKey)
+        || this.findAttachmentByName(this.currentReview.form_data?.[fieldKey]);
+  }
+
+  findAttachmentByName(fileName?: string): any {
+    if (!fileName || !this.currentReview?.attachments?.length) return null;
+    return this.currentReview.attachments.find((a: any) => a.original_name === fileName || a.file_name === fileName);
+  }
+
+  viewAttachment(att: any) {
+    if (!this.currentReview?.id || !att?.id) {
+      this.notify.warning('Attachment ID not found.');
+      return;
+    }
+    this.http.get(`${environment.apiUrl}/admin/vendor-onboarding/responses/${this.currentReview.id}/attachments/${att.id}?inline=1`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          const type = blob.type || (att.original_name?.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+          const fileBlob = new Blob([blob], { type });
+          const url = window.URL.createObjectURL(fileBlob);
+          window.open(url, '_blank');
+          setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+        },
+        error: () => this.notify.error('Failed to open document. Please verify the file on server.')
+      });
+  }
+
+  downloadAttachment(att: any) {
+    if (!this.currentReview?.id || !att?.id) {
+      this.notify.warning('Attachment ID not found.');
+      return;
+    }
+    this.http.get(`${environment.apiUrl}/admin/vendor-onboarding/responses/${this.currentReview.id}/attachments/${att.id}?inline=0`, { responseType: 'blob' })
+      .subscribe({
+        next: (blob) => {
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = att.original_name || 'document';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+        },
+        error: () => this.notify.error('Failed to download document.')
+      });
   }
 }
