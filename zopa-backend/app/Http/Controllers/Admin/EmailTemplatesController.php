@@ -144,6 +144,37 @@ class EmailTemplatesController extends Controller
                     'notes'          => 'Partial shipment: 4 docking stations delivered via BlueDart.',
                 ])->render(),
             ],
+            [
+                'key'         => 'vendor_onboarding_invite',
+                'name'        => 'Vendor Onboarding Invitation',
+                'recipient'   => 'Prospective Vendor (Contact Email)',
+                'trigger'     => 'Sent when an administrator invites a new vendor with a secure single-use registration link.',
+                'subject'     => 'Invitation to Register as an Approved Vendor — Acme Corporation',
+                'html'        => View::make('emails.vendor-onboarding-invite', [
+                    'vendorName'    => 'Apex Technologies India Pvt Ltd',
+                    'tenantName'    => 'Acme Corporation',
+                    'templateName'  => 'Standard Goods & Materials Vendor Form',
+                    'description'   => 'Please provide your business registration, PAN, GST, and banking credentials for vendor approval.',
+                    'onboardingUrl' => rtrim((string) config('app.frontend_url'), '/') . '/vendor-onboarding/SAMPLE-TOKEN-9f8e7d6c5b',
+                    'expiresAt'     => now()->addDays(7)->format('d M Y, h:i A'),
+                ])->render(),
+            ],
+            [
+                'key'         => 'vendor_onboarding_submitted',
+                'name'        => 'Vendor Onboarding Form Submitted',
+                'recipient'   => 'Administrators & Procurement Team',
+                'trigger'     => 'Sent to administrators when a vendor completes and submits their onboarding form for review.',
+                'subject'     => 'New Vendor Onboarding Submission: Apex Technologies India Pvt Ltd — Acme Corporation',
+                'html'        => View::make('emails.vendor-onboarding-submitted', [
+                    'vendorName'   => 'Apex Technologies India Pvt Ltd',
+                    'vendorEmail'  => 'onboarding@apextech.in',
+                    'vendorPhone'  => '+91 98450 12345',
+                    'templateName' => 'Standard Goods & Materials Vendor Form',
+                    'tenantName'   => 'Acme Corporation',
+                    'submittedAt'  => now()->format('d M Y, h:i A'),
+                    'reviewUrl'    => rtrim((string) config('app.frontend_url'), '/') . '/admin/vendor-onboarding?id=1',
+                ])->render(),
+            ],
         ];
 
         return response()->json($templates);

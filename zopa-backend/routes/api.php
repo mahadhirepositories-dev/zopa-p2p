@@ -29,6 +29,9 @@ use App\Http\Controllers\Admin\PlatformSettingsController;
 use App\Http\Controllers\Admin\RolePermissionsController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\EmailTemplatesController;
+use App\Http\Controllers\Admin\VendorFormController;
+use App\Http\Controllers\Admin\VendorOnboardingController;
+use App\Http\Controllers\PublicVendorOnboardingController;
 use App\Http\Middleware\TenantScopeMiddleware;
 use Illuminate\Support\Facades\Route;
 
@@ -74,6 +77,10 @@ Route::get('/debug-pdf-engine', function () {
 // reset-password completes it with the emailed token.
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
 Route::post('/auth/reset-password',  [AuthController::class, 'resetPassword'])->middleware('throttle:6,1');
+
+// Public single-use vendor onboarding routes
+Route::get('/vendor-onboarding/{token}', [PublicVendorOnboardingController::class, 'getForm']);
+Route::post('/vendor-onboarding/{token}/submit', [PublicVendorOnboardingController::class, 'submit'])->middleware('throttle:15,1');
 
 // Unauthenticated one-time-token PDF download (token issued by authenticated pdfUrl endpoint)
 // Uses a plain integer {id} — NO route-model binding — so no middleware or global scope can fire.
@@ -185,6 +192,26 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Email templates — read-only preview catalogue
         Route::get('email-templates', [EmailTemplatesController::class, 'index']);
+
+        // Vendor Form Builder Templates
+        Route::get('vendor-forms', [VendorFormController::class, 'index']);
+        Route::post('vendor-forms', [VendorFormController::class, 'store']);
+        Route::get('vendor-forms/{form}', [VendorFormController::class, 'show']);
+        Route::put('vendor-forms/{form}', [VendorFormController::class, 'update']);
+        Route::delete('vendor-forms/{form}', [VendorFormController::class, 'destroy']);
+        Route::post('vendor-forms/{form}/duplicate', [VendorFormController::class, 'duplicate']);
+
+        // Vendor Onboarding Invites
+        Route::get('vendor-onboarding/invites', [VendorOnboardingController::class, 'listInvites']);
+        Route::post('vendor-onboarding/invites', [VendorOnboardingController::class, 'sendInvite']);
+        Route::post('vendor-onboarding/invites/{id}/resend', [VendorOnboardingController::class, 'resendInvite']);
+
+        // Vendor Onboarding Responses / Staging Queue
+        Route::get('vendor-onboarding/responses', [VendorOnboardingController::class, 'listResponses']);
+        Route::get('vendor-onboarding/responses/{id}', [VendorOnboardingController::class, 'showResponse']);
+        Route::post('vendor-onboarding/responses/{id}/approve', [VendorOnboardingController::class, 'approveAndPromote']);
+        Route::post('vendor-onboarding/responses/{id}/reject', [VendorOnboardingController::class, 'rejectResponse']);
+        Route::get('vendor-onboarding/responses/{id}/attachments/{attachmentId}', [VendorOnboardingController::class, 'downloadAttachment']);
 
         Route::get('clients/{tenant}/users', [ClientUserController::class, 'index']);
         Route::post('clients/{tenant}/users', [ClientUserController::class, 'store']);

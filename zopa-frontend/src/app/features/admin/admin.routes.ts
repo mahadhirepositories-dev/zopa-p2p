@@ -50,5 +50,17 @@ export const adminRoutes: Routes = [
     data: { roles: ['zopa_super_admin'] },
     loadComponent: () => import('./email-templates/email-templates.component').then(m => m.EmailTemplatesComponent),
   },
+  {
+    path: 'vendor-forms',
+    canActivate: [roleGuard],
+    data: { roles: ['zopa_super_admin'] },
+    loadComponent: () => import('./vendor-forms/vendor-form-builder.component').then(m => m.VendorFormBuilderComponent),
+  },
+  {
+    path: 'vendor-onboarding',
+    canActivate: [roleGuard],
+    data: { roles: ['zopa_super_admin'] },
+    loadComponent: () => import('./vendor-forms/vendor-onboarding-queue.component').then(m => m.VendorOnboardingQueueComponent),
+  },
   { path: '', redirectTo: 'clients', pathMatch: 'full' }
 ];

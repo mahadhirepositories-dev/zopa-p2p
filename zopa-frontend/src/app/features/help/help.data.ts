@@ -645,4 +645,44 @@ export const HELP_ARTICLES: HelpArticle[] = [
         <li><strong>User Assignments</strong> — Restrict cost center access to specified users. Only assigned users can raise transactions or view details for that cost center.</li>
       </ul>`,
   },
+  {
+    id: 'vendor-form-builder-onboarding',
+    title: 'Vendor Form Builder & Single-Use Onboarding Workflow',
+    category: 'Administration',
+    icon: 'dynamic_form',
+    summary: 'Design custom registration forms, send single-use invite links, inspect compliance attachments, and approve prospective vendors into P2P.',
+    keywords: ['vendor', 'onboarding', 'form builder', 'template', 'duplicate', 'invite', 'single use', 'token', 'p2p promotion', 'documents', 'attachments', 'gst', 'pan'],
+    adminOnly: true,
+    superAdminOnly: true,
+    body: `<p>The <strong>Vendor Form Builder &amp; Onboarding Module</strong> simplifies prospective vendor registration by providing customized dynamic forms, secure one-time links, and a dedicated review staging queue:</p>
+      <h4>1. Custom Form Builder &amp; Templates</h4>
+      <ul>
+        <li><strong>Pre-Configured Templates</strong> — ZOPA includes pre-built templates for <em>Standard Goods Suppliers</em>, <em>Service Providers &amp; Contractors</em>, and <em>Healthcare &amp; Medical Distributors</em>.</li>
+        <li><strong>Field Customization</strong> — Support for text, textarea, numeric, phone, email, dropdown selections, radio groups, checkboxes, and <strong>file attachments</strong> (PAN, GST Certificate, Cancelled Cheque, MSME certificate).</li>
+        <li><strong>Duplicating Templates</strong> — Click <strong>Duplicate</strong> on any existing template to instantly create an exact clone (e.g. <em>Copy of Standard Materials</em>), customize fields, and save without rebuilding from scratch.</li>
+        <li><strong>Target P2P Column Mapping</strong> — Each field can map directly to standard P2P vendor properties (Legal Name, PAN, GSTIN, Bank details, Address) for effortless auto-population upon approval.</li>
+      </ul>
+
+      <h4>2. Inviting Vendors with Single-Use Secure Links</h4>
+      <ul>
+        <li><strong>Sending Invitations</strong> — From the <strong>Vendor Onboarding</strong> queue, click <strong>Invite Vendor</strong>, choose the target organization, pick a form template, enter the vendor's email, and set an expiration period (default: 7 days).</li>
+        <li><strong>Single-Use Security</strong> — Each invitation issues a unique 64-character tokenized URL. Once the vendor fills and submits the form, the token is <strong>atomically locked and permanently expired</strong>. The form cannot be filled or submitted more than once.</li>
+        <li><strong>Real-Time Notifications</strong> — An invitation email is sent to the vendor with clear instructions, and administrators receive an instant email notification once the vendor submits their application.</li>
+      </ul>
+
+      <h4>3. Staging Queue &amp; Approval into P2P</h4>
+      <ul>
+        <li><strong>Isolated Staging Area</strong> — Submitted vendor responses are isolated in a separate onboarding staging table and do not enter active purchasing catalogs until officially verified and approved.</li>
+        <li><strong>Document Inspection</strong> — Reviewers can inspect all submitted answers and download compliance attachments (PAN, GST, Cheque) directly from the review drawer.</li>
+        <li><strong>Promote to Live P2P</strong> — On clicking <strong>Approve &amp; Add to Vendor Pool</strong>, the system automatically:
+          <ul>
+            <li>Generates a sequential vendor code matching standard ZOPA conventions (e.g. <code>ZP-YYMM-XX</code>).</li>
+            <li>Validates uniqueness to prevent duplicate PAN or GSTIN registration.</li>
+            <li>Creates the <code>Vendor</code> record and default <code>VendorAddress</code>.</li>
+            <li>Transfers uploaded files into the vendor profile's official <code>vendor_documents</code> repository.</li>
+            <li>Logs a full audit entry in the activity trail.</li>
+          </ul>
+        </li>
+      </ul>`,
+  },
 ];

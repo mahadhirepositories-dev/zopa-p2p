@@ -17,6 +17,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/auth/reset-password.component').then(m => m.ResetPasswordComponent),
   },
   {
+    path: 'vendor-onboarding/:token',
+    loadComponent: () => import('./features/vendor-onboarding/public-vendor-form.component').then(m => m.PublicVendorFormComponent),
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),

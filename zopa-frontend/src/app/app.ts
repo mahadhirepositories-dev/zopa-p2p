@@ -27,7 +27,7 @@ import { filter } from 'rxjs/operators';
     ])
   ],
   template: `
-    @if (auth.isLoggedIn()) {
+    @if (auth.isLoggedIn() && !isPublicRoute()) {
       <div class="app-layout">
 
         <!-- Backdrop for mobile sidebar -->
@@ -203,6 +203,12 @@ import { filter } from 'rxjs/operators';
                 </a>
                 <a class="nav-link" routerLink="/admin/email-templates" routerLinkActive="nav-link--active">
                   <mat-icon>mail</mat-icon><span>Email Templates</span>
+                </a>
+                <a class="nav-link" routerLink="/admin/vendor-forms" routerLinkActive="nav-link--active">
+                  <mat-icon>dynamic_form</mat-icon><span>Vendor Forms</span>
+                </a>
+                <a class="nav-link" routerLink="/admin/vendor-onboarding" routerLinkActive="nav-link--active">
+                  <mat-icon>how_to_reg</mat-icon><span>Vendor Onboarding</span>
                 </a>
               </div>
             }
@@ -677,5 +683,9 @@ export class App {
       .replace(/_/g, ' ')
       .replace(/\bl(\d)\b/i, 'L$1')
       .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  isPublicRoute(): boolean {
+    return this.router.url.includes('/vendor-onboarding/');
   }
 }
