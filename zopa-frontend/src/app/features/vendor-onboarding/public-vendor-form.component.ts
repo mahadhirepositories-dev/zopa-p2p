@@ -179,6 +179,23 @@ interface PublicFormData {
                       </select>
                     }
 
+                    <!-- Multi-Select Choices -->
+                    @else if (field.type === 'multiselect') {
+                      <div class="multiselect-chips-container">
+                        @for (opt of field.options; track opt) {
+                          <button
+                            type="button"
+                            class="multiselect-chip"
+                            [class.multiselect-chip--selected]="isOptionSelected(field.field_key, opt)"
+                            (click)="toggleOption(field.field_key, opt)"
+                          >
+                            <mat-icon>{{ isOptionSelected(field.field_key, opt) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                            <span>{{ opt }}</span>
+                          </button>
+                        }
+                      </div>
+                    }
+
                     <!-- Radio Group -->
                     @else if (field.type === 'radio') {
                       <div class="radio-options-row">
@@ -565,6 +582,42 @@ interface PublicFormData {
       margin-top: 4px;
     }
 
+    .multiselect-chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 6px 0;
+    }
+    .multiselect-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .multiselect-chip:hover {
+      border-color: #ea580c;
+      background: #fff7ed;
+    }
+    .multiselect-chip--selected {
+      background: #ea580c !important;
+      color: #ffffff !important;
+      border-color: #ea580c !important;
+      font-weight: 600;
+    }
+    .multiselect-chip mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
     .radio-options-row {
       display: flex;
       flex-wrap: wrap;
@@ -807,6 +860,23 @@ export class PublicVendorFormComponent implements OnInit {
     delete this.fileValues[fieldKey];
   }
 
+  isOptionSelected(key: string, opt: string): boolean {
+    const list = this.formValues[key];
+    return Array.isArray(list) ? list.includes(opt) : false;
+  }
+
+  toggleOption(key: string, opt: string) {
+    if (!Array.isArray(this.formValues[key])) {
+      this.formValues[key] = [];
+    }
+    const idx = this.formValues[key].indexOf(opt);
+    if (idx > -1) {
+      this.formValues[key].splice(idx, 1);
+    } else {
+      this.formValues[key].push(opt);
+    }
+  }
+
   submitForm() {
     if (!this.formData) return;
     this.submitError.set(null);
@@ -819,7 +889,13 @@ export class PublicVendorFormComponent implements OnInit {
           this.submitError.set(`Please upload the required document: ${f.label}`);
           return;
         }
-        if (f.type !== 'file' && !this.formValues[f.field_key]) {
+        if (f.type === 'multiselect') {
+          const list = this.formValues[f.field_key];
+          if (!Array.isArray(list) || list.length === 0) {
+            this.submitError.set(`Please select at least one option for: ${f.label}`);
+            return;
+          }
+        } else if (f.type !== 'file' && !this.formValues[f.field_key]) {
           this.submitError.set(`Please fill in the required field: ${f.label}`);
           return;
         }
@@ -832,7 +908,11 @@ export class PublicVendorFormComponent implements OnInit {
     // Append standard form fields
     for (const [key, val] of Object.entries(this.formValues)) {
       if (val !== undefined && val !== null) {
-        fd.append(key, String(val));
+        if (Array.isArray(val)) {
+          fd.append(key, JSON.stringify(val));
+        } else {
+          fd.append(key, String(val));
+        }
       }
     }
 

@@ -19,7 +19,7 @@ export interface FormFieldDefinition {
   id: string;
   field_key: string;
   label: string;
-  type: 'text' | 'textarea' | 'number' | 'email' | 'phone' | 'select' | 'radio' | 'checkbox' | 'date' | 'file';
+  type: 'text' | 'textarea' | 'number' | 'email' | 'phone' | 'select' | 'multiselect' | 'radio' | 'checkbox' | 'date' | 'file';
   required: boolean;
   placeholder?: string;
   help_text?: string;
@@ -300,7 +300,8 @@ export interface FormTemplate {
                     <option value="number">Number</option>
                     <option value="email">Email</option>
                     <option value="phone">Phone / Mobile</option>
-                    <option value="select">Dropdown (Select)</option>
+                    <option value="select">Dropdown (Single Select)</option>
+                    <option value="multiselect">Multi-Select (Multiple Choices)</option>
                     <option value="radio">Radio Group</option>
                     <option value="checkbox">Checkbox</option>
                     <option value="date">Date</option>
@@ -309,8 +310,8 @@ export interface FormTemplate {
                 </div>
               </div>
 
-              <!-- Options (if select/radio/checkbox) -->
-              @if (['select', 'radio', 'checkbox'].includes(currentField.type)) {
+              <!-- Options (if select/multiselect/radio/checkbox) -->
+              @if (['select', 'multiselect', 'radio', 'checkbox'].includes(currentField.type)) {
                 <div class="form-group">
                   <label>Choices / Options (comma-separated) <span class="req">*</span></label>
                   <input type="text" class="custom-input" [(ngModel)]="fieldOptionsRaw" placeholder="e.g. Manufacturer, Authorized Dealer, Stockist" />
@@ -417,6 +418,14 @@ export interface FormTemplate {
                             <option>{{ opt }}</option>
                           }
                         </select>
+                      } @else if (f.type === 'multiselect') {
+                        <div class="preview-multiselect-wrap">
+                          @for (opt of f.options; track opt) {
+                            <span class="preview-opt-pill">
+                              <mat-icon>check_box_outline_blank</mat-icon> {{ opt }}
+                            </span>
+                          }
+                        </div>
                       } @else if (f.type === 'file') {
                         <div class="preview-file-dropzone">
                           <mat-icon>cloud_upload</mat-icon>
@@ -1006,6 +1015,30 @@ export interface FormTemplate {
       color: #94a3b8;
     }
 
+    .preview-multiselect-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 0;
+    }
+    .preview-opt-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      color: #334155;
+    }
+    .preview-opt-pill mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      color: #94a3b8;
+    }
+
     .preview-help {
       display: block;
       font-size: 11px;
@@ -1196,7 +1229,7 @@ export class VendorFormBuilderComponent implements OnInit {
       return;
     }
 
-    if (['select', 'radio', 'checkbox'].includes(this.currentField.type)) {
+    if (['select', 'multiselect', 'radio', 'checkbox'].includes(this.currentField.type)) {
       this.currentField.options = this.fieldOptionsRaw
         .split(',')
         .map(o => o.trim())

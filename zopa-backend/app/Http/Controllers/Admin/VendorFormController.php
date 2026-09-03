@@ -42,7 +42,7 @@ class VendorFormController extends Controller
             'schema_definition' => 'required|array|min:1',
             'schema_definition.*.field_key' => 'required|string|max:100',
             'schema_definition.*.label'     => 'required|string|max:255',
-            'schema_definition.*.type'      => 'required|string|in:text,textarea,number,email,phone,select,radio,checkbox,date,file',
+            'schema_definition.*.type'      => 'required|string|in:text,textarea,number,email,phone,select,multiselect,radio,checkbox,date,file',
             'schema_definition.*.required'  => 'boolean',
         ]);
 
@@ -81,7 +81,7 @@ class VendorFormController extends Controller
             'schema_definition' => 'required|array|min:1',
             'schema_definition.*.field_key' => 'required|string|max:100',
             'schema_definition.*.label'     => 'required|string|max:255',
-            'schema_definition.*.type'      => 'required|string|in:text,textarea,number,email,phone,select,radio,checkbox,date,file',
+            'schema_definition.*.type'      => 'required|string|in:text,textarea,number,email,phone,select,multiselect,radio,checkbox,date,file',
             'schema_definition.*.required'  => 'boolean',
         ]);
 

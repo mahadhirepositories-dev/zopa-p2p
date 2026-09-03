@@ -391,6 +391,12 @@ export interface OnboardingInvite {
                           <span class="attached-file-indicator">
                             <mat-icon>attach_file</mat-icon> {{ currentReview?.form_data?.[field.field_key] || 'Not attached' }}
                           </span>
+                        } @else if (isArrayVal(currentReview?.form_data?.[field.field_key])) {
+                          <div class="val-chips-wrap">
+                            @for (item of asArray(currentReview?.form_data?.[field.field_key]); track item) {
+                              <span class="val-chip">{{ item }}</span>
+                            }
+                          </div>
                         } @else {
                           {{ currentReview?.form_data?.[field.field_key] || '—' }}
                         }
@@ -891,6 +897,22 @@ export interface OnboardingInvite {
       color: #0f172a;
     }
 
+    .val-chips-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .val-chip {
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid #dbeafe;
+    }
+
     .attachments-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1279,5 +1301,17 @@ export class VendorOnboardingQueueComponent implements OnInit {
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  isArrayVal(val: any): boolean {
+    return Array.isArray(val) || (typeof val === 'string' && val.startsWith('['));
+  }
+
+  asArray(val: any): any[] {
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string' && val.startsWith('[')) {
+      try { return JSON.parse(val); } catch { return [val]; }
+    }
+    return [val];
   }
 }

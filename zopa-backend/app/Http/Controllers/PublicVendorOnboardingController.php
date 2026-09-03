@@ -132,7 +132,17 @@ class PublicVendorOnboardingController extends Controller
                     }
                 } else {
                     $val = $request->input($key);
-                    if ($required && (is_null($val) || $val === '')) {
+                    if ($type === 'multiselect') {
+                        if (is_string($val)) {
+                            $decoded = json_decode($val, true);
+                            if (is_array($decoded)) {
+                                $val = $decoded;
+                            } elseif (str_contains($val, ',')) {
+                                $val = array_map('trim', explode(',', $val));
+                            }
+                        }
+                    }
+                    if ($required && (is_null($val) || $val === '' || (is_array($val) && empty($val)))) {
                         return [
                             'status' => 422,
                             'data'   => ['error' => 'validation', 'message' => "The field '{$field['label']}' is required."]
