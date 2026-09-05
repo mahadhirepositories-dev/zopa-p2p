@@ -220,25 +220,57 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 </table>
 
 {{-- ═══════════ BILL TO / SHIP TO ═══════════ --}}
+@php
+  $tenantLoc = $po->tenant?->locations?->first();
+@endphp
 <table class="sec nobrk">
   <tr>
     <td class="cell" style="width:50%;">
       <div class="sl">Bill To</div>
-      @if($po->costCenter&&!$po->billToLocation)
-        <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->costCenter->name }}</div>
-        @if($po->costCenter->department)<div style="font-size:8.5px;color:#6b7280;">Dept: {{ $po->costCenter->department->name }}</div>@endif
-        @if($po->costCenter->project)<div style="font-size:8.5px;color:#6b7280;">Project: {{ $po->costCenter->project->name }}</div>@endif
-        @if($po->costCenter->location)<div style="font-size:8.5px;color:#6b7280;">Location: {{ $po->costCenter->location->name }}</div>@endif
-      @endif
       @if($po->billToLocation)
         <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
         <div style="font-size:9px;color:#374151;line-height:1.55;">
           @include('pdf.partials.location-address',['loc'=>$po->billToLocation])
           @if($po->tenant?->gstin&&empty($po->billToLocation->gstin))<br>GSTIN: {{ $po->tenant->gstin }}@endif
         </div>
-      @endif
-      @if(!$po->costCenter&&!$po->billToLocation)
-        <div style="font-size:9.5px;color:#1f2937;">{{ $po->tenant?->name }}</div>
+      @elseif($po->costCenter)
+        <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->costCenter->name }}</div>
+        @if($po->costCenter->department)<div style="font-size:8.5px;color:#6b7280;">Dept: {{ $po->costCenter->department->name }}</div>@endif
+        @if($po->costCenter->project)<div style="font-size:8.5px;color:#6b7280;">Project: {{ $po->costCenter->project->name }}</div>@endif
+        @if($po->costCenter->location)
+          <div style="font-size:8.5px;color:#6b7280;">Location: {{ $po->costCenter->location->name }}</div>
+          <div style="font-size:9px;color:#374151;line-height:1.55;">
+            @include('pdf.partials.location-address',['loc'=>$po->costCenter->location])
+          </div>
+        @elseif($tenantLoc)
+          <div style="font-size:9px;color:#374151;line-height:1.55;">
+            @include('pdf.partials.location-address',['loc'=>$tenantLoc])
+          </div>
+        @endif
+      @else
+        <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->tenant?->name }}</div>
+        @if($tenantLoc)
+          <div style="font-size:9px;color:#374151;line-height:1.55;">
+            @include('pdf.partials.location-address',['loc'=>$tenantLoc])
+          </div>
+        @elseif(!empty($po->tenant?->address_json))
+          <div style="font-size:9px;color:#374151;line-height:1.55;">
+            @if(is_array($po->tenant->address_json))
+              @if(!empty($po->tenant->address_json['address']))<div>{{ $po->tenant->address_json['address'] }}</div>@endif
+              @php
+                $tCS = collect([$po->tenant->address_json['city'] ?? null, $po->tenant->address_json['state'] ?? null])->filter()->implode(', ');
+                if (!empty($po->tenant->address_json['pincode'])) {
+                    $tCS = $tCS !== '' ? $tCS . ' - ' . $po->tenant->address_json['pincode'] : (string)$po->tenant->address_json['pincode'];
+                }
+              @endphp
+              @if($tCS !== '')<div>{{ $tCS }}</div>@endif
+              @if(!empty($po->tenant->address_json['country']))<div>{{ $po->tenant->address_json['country'] }}</div>@endif
+            @elseif(is_string($po->tenant->address_json))
+              <div>{{ $po->tenant->address_json }}</div>
+            @endif
+          </div>
+        @endif
+        @if($po->tenant?->gstin)<div style="font-size:9px;color:#374151;">GSTIN: {{ $po->tenant->gstin }}</div>@endif
       @endif
     </td>
     <td style="width:8px;border:none;"></td>
@@ -254,8 +286,59 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
             </div>
           @endif
         </div>
-      @elseif($po->billToLocation)
-        <div style="font-size:9px;color:#6b7280;font-style:italic;">Same as Bill To</div>
+      @else
+        {{-- Same address as in Bill To --}}
+        @if($po->billToLocation)
+          <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->billToLocation->name }}</div>
+          <div style="font-size:9px;color:#374151;line-height:1.55;">
+            @include('pdf.partials.location-address',['loc'=>$po->billToLocation])
+            @if($po->billToLocation->receiver_name||$po->billToLocation->receiver_phone)
+              <div style="margin-top:4px;font-weight:bold;color:#475569;">
+                Receiver: {{ $po->billToLocation->receiver_name }} {{ $po->billToLocation->receiver_phone?'('.$po->billToLocation->receiver_phone.')':'' }}
+              </div>
+            @endif
+          </div>
+          <div style="font-size:8px;color:#6b7280;font-style:italic;margin-top:3px;">Same as Bill To</div>
+        @elseif($po->costCenter)
+          <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->costCenter->name }}</div>
+          @if($po->costCenter->department)<div style="font-size:8.5px;color:#6b7280;">Dept: {{ $po->costCenter->department->name }}</div>@endif
+          @if($po->costCenter->project)<div style="font-size:8.5px;color:#6b7280;">Project: {{ $po->costCenter->project->name }}</div>@endif
+          @if($po->costCenter->location)
+            <div style="font-size:8.5px;color:#6b7280;">Location: {{ $po->costCenter->location->name }}</div>
+            <div style="font-size:9px;color:#374151;line-height:1.55;">
+              @include('pdf.partials.location-address',['loc'=>$po->costCenter->location])
+            </div>
+          @elseif($tenantLoc)
+            <div style="font-size:9px;color:#374151;line-height:1.55;">
+              @include('pdf.partials.location-address',['loc'=>$tenantLoc])
+            </div>
+          @endif
+          <div style="font-size:8px;color:#6b7280;font-style:italic;margin-top:3px;">Same as Bill To</div>
+        @else
+          <div style="font-size:10.5px;font-weight:bold;color:#1f2937;margin-bottom:2px;">{{ $po->tenant?->name }}</div>
+          @if($tenantLoc)
+            <div style="font-size:9px;color:#374151;line-height:1.55;">
+              @include('pdf.partials.location-address',['loc'=>$tenantLoc])
+            </div>
+          @elseif(!empty($po->tenant?->address_json))
+            <div style="font-size:9px;color:#374151;line-height:1.55;">
+              @if(is_array($po->tenant->address_json))
+                @if(!empty($po->tenant->address_json['address']))<div>{{ $po->tenant->address_json['address'] }}</div>@endif
+                @php
+                  $tCS = collect([$po->tenant->address_json['city'] ?? null, $po->tenant->address_json['state'] ?? null])->filter()->implode(', ');
+                  if (!empty($po->tenant->address_json['pincode'])) {
+                      $tCS = $tCS !== '' ? $tCS . ' - ' . $po->tenant->address_json['pincode'] : (string)$po->tenant->address_json['pincode'];
+                  }
+                @endphp
+                @if($tCS !== '')<div>{{ $tCS }}</div>@endif
+                @if(!empty($po->tenant->address_json['country']))<div>{{ $po->tenant->address_json['country'] }}</div>@endif
+              @elseif(is_string($po->tenant->address_json))
+                <div>{{ $po->tenant->address_json }}</div>
+              @endif
+            </div>
+          @endif
+          <div style="font-size:8px;color:#6b7280;font-style:italic;margin-top:3px;">Same as Bill To</div>
+        @endif
       @endif
     </td>
   </tr>

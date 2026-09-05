@@ -18,7 +18,7 @@ class PdfService
             'items.product', 'vendor', 'vendorAddress',
             'costCenter.department', 'costCenter.project', 'costCenter.location',
             'approvals.assignedTo', 'billToLocation', 'shipToLocation',
-            'tenant', 'creator', 'approver',
+            'tenant.locations', 'creator', 'approver',
         ]);
 
         // PO PDFs use DomPDF directly — the server's wkhtmltopdf is the

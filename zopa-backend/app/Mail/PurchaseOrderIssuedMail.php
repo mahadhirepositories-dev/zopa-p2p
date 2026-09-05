@@ -77,7 +77,7 @@ class PurchaseOrderIssuedMail extends Mailable
         ];
 
         $this->billTo = $this->addressBlock($po->billToLocation);
-        $this->shipTo = $this->addressBlock($po->shipToLocation);
+        $this->shipTo = $this->addressBlock($po->shipToLocation) ?: $this->billTo;
     }
 
     public function envelope(): Envelope

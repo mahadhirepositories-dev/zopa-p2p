@@ -169,10 +169,11 @@ class PurchaseOrderController extends Controller
             $po = PurchaseOrder::create([
                 ...$request->only([
                     'pr_id', 'pr_reference', 'vendor_id', 'vendor_address_id', 'cost_center_id',
-                    'bill_to_location_id', 'ship_to_location_id',
+                    'bill_to_location_id',
                     'po_valid_till', 'payment_terms_json', 'warranty_months',
                     'terms_conditions',
                 ]),
+                'ship_to_location_id' => $request->ship_to_location_id ?: $request->bill_to_location_id,
                 'tenant_id' => $costCenter?->tenant_id ?? $tenant->id,
                 'freight' => $request->freight ?? 0,
                 'freight_gst_rate' => $request->freight_gst_rate ?? 0,
@@ -420,9 +421,10 @@ class PurchaseOrderController extends Controller
                 $purchaseOrder->update([
                     ...$request->only([
                         'pr_reference', 'vendor_id', 'vendor_address_id', 'cost_center_id',
-                        'bill_to_location_id', 'ship_to_location_id', 'po_valid_till',
+                        'bill_to_location_id', 'po_valid_till',
                         'payment_terms_json', 'warranty_months', 'terms_conditions',
                     ]),
+                    'ship_to_location_id' => $request->ship_to_location_id ?: ($request->bill_to_location_id ?: $purchaseOrder->ship_to_location_id),
                     'freight' => $request->freight ?? 0,
                     'freight_gst_rate' => $request->freight_gst_rate ?? 0,
                     'status'  => 'draft',   // returned → draft after buyer edits

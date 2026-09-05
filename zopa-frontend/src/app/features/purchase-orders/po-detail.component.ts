@@ -223,6 +223,12 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                           </div>
                         }
                       </div>
+                    } @else if (po()!.bill_to_location) {
+                      <div class="field">
+                        <span class="label">Ship To</span>
+                        <strong>{{ po()!.bill_to_location?.name }}</strong>
+                        <div style="font-size:11px;color:#6b7280;font-style:italic;">Same as Bill To</div>
+                      </div>
                     }
                   </div>
                 }
