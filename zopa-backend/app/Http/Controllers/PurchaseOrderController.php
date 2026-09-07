@@ -137,6 +137,7 @@ class PurchaseOrderController extends Controller
             'items.*.required_by' => 'nullable|date',
             'freight' => 'nullable|numeric|min:0',
             'freight_gst_rate' => 'nullable|numeric|min:0|max:100',
+            'discount' => 'nullable|numeric|min:0',
         ]);
 
         $tenant = app('currentTenant');
@@ -153,7 +154,8 @@ class PurchaseOrderController extends Controller
             (float) ($request->freight ?? 0),
             $vendorStateCode,
             $companyStateCode,
-            (float) ($request->freight_gst_rate ?? 0)
+            (float) ($request->freight_gst_rate ?? 0),
+            (float) ($request->discount ?? 0)
         );
 
         $costCenter = \App\Models\CostCenter::with('tenant')->find($request->cost_center_id);
@@ -300,6 +302,7 @@ class PurchaseOrderController extends Controller
             'items.*.required_by' => 'nullable|date',
             'freight' => 'nullable|numeric|min:0',
             'freight_gst_rate' => 'nullable|numeric|min:0|max:100',
+            'discount' => 'nullable|numeric|min:0',
         ]);
 
         try {
@@ -314,6 +317,7 @@ class PurchaseOrderController extends Controller
                     $vendorAddress?->state_code ?? '',
                     $billToLocation?->state_code ?? '',
                     (float) ($request->freight_gst_rate ?? 0),
+                    (float) ($request->discount ?? 0),
                 );
 
                 $productMap = \App\Models\Product::whereIn(

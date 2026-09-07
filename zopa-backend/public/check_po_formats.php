@@ -6,6 +6,15 @@ $kernel->handle(Illuminate\Http\Request::capture());
 
 use Illuminate\Support\Facades\DB;
 
+if (isset($_GET['po_id'])) {
+    $poId = (int) $_GET['po_id'];
+    $po = DB::table('purchase_orders')->where('id', $poId)->first();
+    $items = DB::table('po_items')->where('po_id', $poId)->orderBy('sno')->get();
+    header('Content-Type: application/json');
+    echo json_encode(['po' => $po, 'items' => $items], JSON_PRETTY_PRINT);
+    exit;
+}
+
 $tenants = DB::table('tenants')->get(['id', 'name', 'code', 'po_prefix', 'po_starting_series', 'pr_prefix', 'pr_starting_series']);
 echo "TENANTS:\n";
 foreach ($tenants as $t) {

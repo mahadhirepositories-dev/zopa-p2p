@@ -72,9 +72,14 @@ class PurchaseOrderIssuedMail extends Mailable
             'Needed By'   => $this->neededBy($po) ?? '—',
             'Valid Till'  => $this->fmtDate($po->po_valid_till),
             'Net Total'   => 'Rs ' . number_format((float) $po->net_total, 2),
-            'Tax'         => 'Rs ' . number_format((float) $po->tax_amount, 2),
-            'Grand Total' => 'Rs ' . number_format((float) $po->grand_total, 2),
         ];
+
+        if (!empty($po->discount) && (float) $po->discount > 0) {
+            $this->headerRows['Discount'] = '-Rs ' . number_format((float) $po->discount, 2);
+        }
+
+        $this->headerRows['Tax'] = 'Rs ' . number_format((float) $po->tax_amount, 2);
+        $this->headerRows['Grand Total'] = 'Rs ' . number_format((float) $po->grand_total, 2);
 
         $this->billTo = $this->addressBlock($po->billToLocation);
         $this->shipTo = $this->addressBlock($po->shipToLocation) ?: $this->billTo;

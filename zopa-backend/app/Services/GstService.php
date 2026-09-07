@@ -34,28 +34,31 @@ class GstService
         return $freight * ($freightGstRate / 100);
     }
 
-    public function calculatePoTotals(array $items, float $freight, string $vendorStateCode, string $companyStateCode, float $freightGstRate = 0): array
+    public function calculatePoTotals(array $items, float $freight, string $vendorStateCode, string $companyStateCode, float $freightGstRate = 0, float $discount = 0): array
     {
         $netTotal = 0;
         $taxTotal = 0;
 
         foreach ($items as $item) {
-            $netAmt = $item['net_rate'] * $item['qty'];
+            $netAmt = (float) $item['net_rate'] * (float) $item['qty'];
             $netTotal += $netAmt;
-            $tax = $this->calculateTax($netAmt, $item['gst_rate'], $vendorStateCode, $companyStateCode);
+            $tax = $this->calculateTax($netAmt, (float) $item['gst_rate'], $vendorStateCode, $companyStateCode);
             $taxTotal += $tax['total'];
         }
 
         $taxTotal += $this->freightTax($freight, $freightGstRate);
 
-        $grandTotal = $netTotal + $freight + $taxTotal;
-        $roundOff = round($grandTotal) - $grandTotal;
+        $discount = max(0, $discount);
+        $rawGrandTotal = $netTotal + $freight + $taxTotal - $discount;
+        $grandTotal = round($rawGrandTotal);
+        $roundOff = $grandTotal - $rawGrandTotal;
 
         return [
             'net_total' => round($netTotal, 2),
+            'discount' => round($discount, 2),
             'freight' => round($freight, 2),
             'tax_amount' => round($taxTotal, 2),
-            'grand_total' => round($grandTotal),
+            'grand_total' => (float) $grandTotal,
             'round_off' => round($roundOff, 2),
         ];
     }

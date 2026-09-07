@@ -262,6 +262,7 @@ export interface PurchaseOrder {
   terms_conditions?: string;
   freight?: number;
   freight_gst_rate?: number;
+  discount?: number;
   net_total?: number;
   tax_amount?: number;
   grand_total?: number;

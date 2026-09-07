@@ -280,6 +280,14 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                 </mat-select>
                 <mat-hint>GST applied on freight</mat-hint>
               </mat-form-field>
+
+              <mat-form-field appearance="outline" class="field-sm">
+                <mat-label>Discount (₹)</mat-label>
+                <span matPrefix>₹&nbsp;</span>
+                <input matInput type="number" formControlName="discount" min="0"
+                       (input)="recalc()" />
+                <mat-hint>Overall order discount</mat-hint>
+              </mat-form-field>
             </div>
           </form>
         </mat-card-content>
@@ -501,6 +509,12 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                 <span>GST (IGST / CGST+SGST)</span>
                 <span>₹{{ taxAmount() | number:'1.2-2' }}</span>
               </div>
+              @if (discount() > 0) {
+                <div class="totals-row" style="color:#dc2626;">
+                  <span>Less: Discount</span>
+                  <span>-₹{{ discount() | number:'1.2-2' }}</span>
+                </div>
+              }
               <div class="totals-row grand">
                 <span>Grand Total</span>
                 <span>₹{{ grandTotal() | number:'1.2-2' }}</span>
@@ -791,6 +805,7 @@ export class PoFormComponent implements OnInit {
     po_valid_till:       [null as Date | null, Validators.required],
     freight:             [0],
     freight_gst_rate:    [0],
+    discount:            [0],
   });
 
   items: FormArray<FormGroup> = this.fb.array<FormGroup>([]);
@@ -802,6 +817,7 @@ export class PoFormComponent implements OnInit {
   taxAmount = signal(0);
   grandTotal = signal(0);
   freight = signal(0);   // Updated by recalc() so template shows live value
+  discount = signal(0);
 
   get paymentTotal(): number {
     return this.paymentTerms.controls.reduce(
@@ -872,6 +888,7 @@ export class PoFormComponent implements OnInit {
       po_valid_till:       po.po_valid_till ? new Date(po.po_valid_till) : null,
       freight:             po.freight,
       freight_gst_rate:    po.freight_gst_rate != null ? +po.freight_gst_rate : 0,
+      discount:            po.discount != null ? +po.discount : 0,
     });
     this.tcControl.setValue(po.terms_conditions ?? '');
     this.attachments.set(po.attachments ?? []);
@@ -1190,10 +1207,12 @@ export class PoFormComponent implements OnInit {
     // same way line-item net_rate + gst_rate work — and matches the backend.
     const frGst = fr * (+(this.headerForm.value.freight_gst_rate || 0)) / 100;
     tax += frGst;
+    const disc = Math.max(0, +(this.headerForm.value.discount || 0));
     this.freight.set(fr);       // ← signal updated so template reflects freight immediately
+    this.discount.set(disc);
     this.netTotal.set(net);
     this.taxAmount.set(tax);
-    this.grandTotal.set(net + fr + tax);
+    this.grandTotal.set(Math.max(0, net + fr + tax - disc));
   }
 
   asGroup(ctrl: AbstractControl) { return ctrl as FormGroup; }

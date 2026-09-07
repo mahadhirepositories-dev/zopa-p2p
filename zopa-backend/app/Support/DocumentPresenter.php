@@ -32,9 +32,14 @@ class DocumentPresenter
             'PO Date'     => $po->po_date ? \Illuminate\Support\Carbon::parse($po->po_date)->format('d M Y') : '—',
             'Valid Till'  => $po->po_valid_till ? \Illuminate\Support\Carbon::parse($po->po_valid_till)->format('d M Y') : '—',
             'Net Total'   => 'Rs ' . number_format((float) $po->net_total, 2),
-            'Tax'         => 'Rs ' . number_format((float) $po->tax_amount, 2),
-            'Grand Total' => 'Rs ' . number_format((float) $po->grand_total, 2),
         ];
+
+        if (!empty($po->discount) && (float) $po->discount > 0) {
+            $headerRows['Discount'] = '-Rs ' . number_format((float) $po->discount, 2);
+        }
+
+        $headerRows['Tax'] = 'Rs ' . number_format((float) $po->tax_amount, 2);
+        $headerRows['Grand Total'] = 'Rs ' . number_format((float) $po->grand_total, 2);
 
         $items = [];
         foreach ($po->items as $i => $it) {

@@ -426,6 +426,9 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
     <td style="width:46%;padding:0;vertical-align:top;">
       <table class="tot">
         <tr><td class="lbl">Net Total (before tax)</td><td class="val">&#8377;{{ number_format($po->net_total,2) }}</td></tr>
+        @if(($po->discount ?? 0) > 0)
+        <tr><td class="lbl">Less: Discount</td><td class="val" style="color:#b91c1c;">-&#8377;{{ number_format($po->discount,2) }}</td></tr>
+        @endif
         @if($po->freight>0)
         <tr><td class="lbl">Freight{{ ($po->freight_gst_rate??0)>0?' (+'.number_format($po->freight_gst_rate,0).'% GST)':'' }}</td><td class="val">&#8377;{{ number_format($po->freight,2) }}</td></tr>
         @endif

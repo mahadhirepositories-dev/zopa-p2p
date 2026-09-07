@@ -444,6 +444,12 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     </div>
                   }
                   <div class="total-row"><span>Tax Amount</span><span>₹{{ po()!.tax_amount | number:'1.2-2' }}</span></div>
+                  @if (po()!.discount && po()!.discount! > 0) {
+                    <div class="total-row" style="color:#dc2626;">
+                      <span>Less: Discount</span>
+                      <span>-₹{{ po()!.discount | number:'1.2-2' }}</span>
+                    </div>
+                  }
                   @if (po()!.round_off && po()!.round_off !== 0) {
                     <div class="total-row"><span>Round Off</span><span>{{ po()!.round_off! > 0 ? '+' : '' }}₹{{ po()!.round_off | number:'1.2-2' }}</span></div>
                   }
