@@ -349,6 +349,12 @@ class VendorController extends Controller
         if (!empty($data['gstin'])) {
             $data['gstin'] = strtoupper($data['gstin']);
         }
+        if (!empty($data['email'])) {
+            $data['email'] = strtolower(str_replace(' ', '', trim($data['email'])));
+        }
+        if (!empty($data['global_vendor_code'])) {
+            $data['global_vendor_code'] = trim($data['global_vendor_code']);
+        }
         return $data;
     }
 
@@ -358,6 +364,8 @@ class VendorController extends Controller
         $tenantId = app('currentTenant')->id;
 
         $request->merge([
+            'email'                     => $request->filled('email') ? strtolower(str_replace(' ', '', trim($request->email))) : null,
+            'global_vendor_code'        => $request->filled('global_vendor_code') ? trim($request->global_vendor_code) : null,
             'pan'                       => $request->filled('pan') ? strtoupper(trim($request->pan)) : null,
             'gstin'                     => $request->filled('gstin') ? strtoupper(trim($request->gstin)) : null,
             'special_status_start_date' => $request->filled('special_status_start_date') ? $request->special_status_start_date : null,

@@ -124,7 +124,10 @@ const CURRENCIES = [
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Contact Email</mat-label>
-                <input matInput formControlName="email" type="email" />
+                <input matInput formControlName="email" type="email" (blur)="sanitizeEmail()" (input)="sanitizeEmail()" />
+                @if (form.get('email')?.errors?.['email'] && form.get('email')?.touched) {
+                  <mat-error>Invalid email format (check for spaces)</mat-error>
+                }
               </mat-form-field>
               <mat-form-field appearance="outline">
                 <mat-label>Contact Phone</mat-label>
@@ -640,10 +643,41 @@ export class VendorFormComponent implements OnInit {
     });
   }
 
+  sanitizeEmail() {
+    const emailCtrl = this.form.get('email');
+    if (emailCtrl && typeof emailCtrl.value === 'string') {
+      const trimmed = emailCtrl.value.trim();
+      // Remove internal spaces from email (e.g. "Arunkevin6777@gmail .com" -> "Arunkevin6777@gmail.com")
+      const cleaned = trimmed.replace(/\s+/g, '');
+      if (cleaned !== emailCtrl.value) {
+        emailCtrl.setValue(cleaned, { emitEvent: true });
+        emailCtrl.updateValueAndValidity();
+      }
+    }
+  }
+
   async save() {
+    this.sanitizeEmail();
+
+    const gvc = this.form.get('global_vendor_code')?.value;
+    if (typeof gvc === 'string') {
+      this.form.patchValue({ global_vendor_code: gvc.trim() });
+    }
+
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.notify.error('Please fill all required fields.');
+      const invalidFields: string[] = [];
+      if (this.form.get('name')?.invalid) invalidFields.push('Vendor Name');
+      if (this.form.get('email')?.invalid) invalidFields.push('Contact Email');
+      if (this.form.get('phone')?.invalid) invalidFields.push('Contact Phone');
+      if (this.form.get('special_status_reg_no')?.invalid) invalidFields.push('Special Status Reg. No');
+      if (this.form.get('special_status_start_date')?.invalid) invalidFields.push('Valid From Date');
+      if (this.form.get('special_status_end_date')?.invalid) invalidFields.push('Valid Till Date');
+
+      const msg = invalidFields.length > 0
+        ? `Please check: ${invalidFields.join(', ')}`
+        : 'Please fill all required fields correctly.';
+      this.notify.error(msg);
       return;
     }
     this.saving.set(true);
