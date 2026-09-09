@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
+import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -26,7 +27,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
   standalone: true,
   imports: [
     DecimalPipe, FormsModule,
-    MatTableModule, MatButtonModule, MatIconModule,
+    MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule,
     MatChipsModule, MatProgressSpinnerModule, MatTooltipModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatCardModule, SearchFieldComponent,
   ],
@@ -40,7 +41,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
           <p>{{ filtered().length }} of {{ products().length }} product{{ products().length !== 1 ? 's' : '' }}</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
-          <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
+          <app-search-field class="search-field" [value]="search()" (valueChange)="setSearch($event)"
                             placeholder="Search products…" />
           <button mat-stroked-button (click)="exportData()">
             <mat-icon>download</mat-icon> Export
@@ -75,9 +76,9 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 
       <!-- Status filter chips -->
       <div class="filter-row">
-        <button class="filter-chip" [class.active]="statusFilter() === ''" (click)="statusFilter.set('')">All</button>
-        <button class="filter-chip" [class.active]="statusFilter() === 'active'" (click)="statusFilter.set('active')">Active</button>
-        <button class="filter-chip" [class.active]="statusFilter() === 'inactive'" (click)="statusFilter.set('inactive')">Inactive</button>
+        <button class="filter-chip" [class.active]="statusFilter() === ''" (click)="setStatusFilter('')">All</button>
+        <button class="filter-chip" [class.active]="statusFilter() === 'active'" (click)="setStatusFilter('active')">Active</button>
+        <button class="filter-chip" [class.active]="statusFilter() === 'inactive'" (click)="setStatusFilter('inactive')">Inactive</button>
       </div>
 
       <!-- Table card -->
@@ -99,7 +100,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               }
             </div>
           } @else {
-            <table mat-table [dataSource]="filtered()" class="full-width">
+            <table mat-table [dataSource]="paginatedProducts()" class="full-width">
 
               <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Product</th>
@@ -172,6 +173,14 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
               <tr mat-header-row *matHeaderRowDef="columns"></tr>
               <tr mat-row *matRowDef="let row; columns: columns;" class="hover-row"></tr>
             </table>
+
+            <mat-paginator [length]="filtered().length"
+                           [pageSize]="pageSize()"
+                           [pageIndex]="pageIndex()"
+                           [pageSizeOptions]="[10, 25, 50, 100, 250]"
+                           (page)="pageIndex.set($event.pageIndex); pageSize.set($event.pageSize)"
+                           showFirstLastButtons>
+            </mat-paginator>
           }
         </mat-card-content>
       </mat-card>
@@ -254,6 +263,8 @@ export class ProductListComponent implements OnInit {
   statusFilter = signal('');
   uploading = signal(false);
   importErrors = signal<string[]>([]);
+  pageIndex = signal(0);
+  pageSize = signal(25);
 
   filtered = computed(() => {
     const q = this.search().toLowerCase();
@@ -264,6 +275,21 @@ export class ProductListComponent implements OnInit {
       return matchSearch && matchStatus;
     });
   });
+
+  paginatedProducts = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filtered().slice(start, start + this.pageSize());
+  });
+
+  setSearch(val: string) {
+    this.search.set(val);
+    this.pageIndex.set(0);
+  }
+
+  setStatusFilter(sf: string) {
+    this.statusFilter.set(sf);
+    this.pageIndex.set(0);
+  }
 
   ngOnInit() { this.load(); }
 
