@@ -319,128 +319,215 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
               <mat-icon>add_shopping_cart</mat-icon>
               <p>No items yet. Click "Add Item" to begin.</p>
             </div>
-          }
-
-          @for (item of items.controls; track i; let i = $index) {
-            <div [formGroup]="asGroup(item)" class="line-item">
-
-              <!-- Row 1: Num + Product + Description + Category -->
-              <div class="item-row1">
-                <div class="item-num">{{ i + 1 }}</div>
-
-                <mat-form-field appearance="outline" class="field-product">
-                  <mat-label>Product</mat-label>
-                  <mat-select formControlName="product_id"
-                              (selectionChange)="onProductSelect(i)"
-                              (openedChange)="onProductSelectOpened($event)">
-                    <div style="padding: 8px 16px; position: sticky; top: 0; background: white; z-index: 1;">
-                      <input type="text" placeholder="Search by name, code or category..." 
-                             [value]="productSearch()"
-                             (input)="productSearch.set($any($event.target).value)" 
-                             (keydown)="$event.stopPropagation()"
-                             style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; outline: none; font-size: 14px;" />
-                    </div>
-                    <mat-option [value]="null">— Custom Item —</mat-option>
-                    @for (p of filteredProducts(); track p.id) {
-                      <mat-option [value]="p.id">
-                        {{ p.name }}
-                        @if (p.code) { ({{ p.code }}) }
-                      </mat-option>
-                    }
-                  </mat-select>
-                  @if (getProductCode(i)) {
-                    <mat-hint>Code: {{ getProductCode(i) }}
-                      @if (getProductHsn(i)) { · HSN: {{ getProductHsn(i) }} }
-                    </mat-hint>
-                  }
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" style="flex:2;min-width:180px;">
-                  <mat-label>Item Description / Specification *</mat-label>
-                  <textarea matInput formControlName="description" rows="2"
-                            placeholder="e.g. i9 12th gen 16gb 512 SSD, or full item spec"
-                            style="resize:vertical;"></textarea>
-                  <mat-hint>This text appears on the PO document and PDF</mat-hint>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" style="flex:1;min-width:140px;">
-                  <mat-label>Category</mat-label>
-                  <mat-select formControlName="category_id">
-                    <mat-option [value]="null">— None —</mat-option>
-                    @for (cat of flatCategories(); track cat.id) {
-                      <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
+          } @else {
+            <!-- Top Pagination & Filter Toolbar -->
+            <div class="line-items-toolbar">
+              <div class="items-search-box">
+                <mat-icon>search</mat-icon>
+                <input type="text" placeholder="Search line items by name, code..." 
+                       [value]="itemSearch()" 
+                       (input)="itemSearch.set($any($event.target).value); currentPage.set(1)" />
+                @if (itemSearch()) {
+                  <button mat-icon-button type="button" (click)="itemSearch.set(''); currentPage.set(1)" style="width:24px;height:24px;line-height:24px;">
+                    <mat-icon style="font-size:16px;">close</mat-icon>
+                  </button>
+                }
               </div>
 
-              <!-- Row 2: Qty + Net Rate + GST + Gross Rate + Amount + Warranty + Required By + Delete -->
-              <div class="item-row2">
-                <div style="width:24px;flex-shrink:0;"></div>
-
-                <mat-form-field appearance="outline" class="field-xs">
-                  <mat-label>Qty *</mat-label>
-                  <input matInput type="number" formControlName="qty"
-                         min="0.001" (input)="recalcItem(i)" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="field-xs">
-                  <mat-label>UOM</mat-label>
-                  <input matInput formControlName="unit" placeholder="Nos" maxlength="20" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="field-rate">
-                  <mat-label>Net Rate *</mat-label>
-                  <span matPrefix>₹&nbsp;</span>
-                  <input matInput type="number" formControlName="net_rate"
-                         min="0" (input)="recalcItem(i)" />
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="field-xs">
-                  <mat-label>GST %</mat-label>
-                  <mat-select formControlName="gst_rate"
-                              (selectionChange)="recalcItem(i)">
-                    @for (r of gstRates; track r) {
-                      <mat-option [value]="r">{{ r }}%</mat-option>
-                    }
-                  </mat-select>
-                </mat-form-field>
-
-                <div class="item-calc">
-                  <span class="calc-label">Gross Rate</span>
-                  <span class="calc-val">₹{{ grossRate(i) | number:'1.2-2' }}</span>
-                </div>
-
-                <div class="item-calc amount-col">
-                  <span class="calc-label">Amount</span>
-                  <span class="calc-val amount-val">₹{{ itemAmount(i) | number:'1.2-2' }}</span>
-                </div>
-
-                <mat-form-field appearance="outline" style="width:130px;min-width:120px;">
-                  <mat-label>Warranty</mat-label>
-                  <mat-select formControlName="warranty_months">
-                    <mat-option [value]="0">N/A</mat-option>
-                    <mat-option [value]="3">3 months</mat-option>
-                    <mat-option [value]="6">6 months</mat-option>
-                    <mat-option [value]="12">12 months</mat-option>
-                    <mat-option [value]="24">24 months</mat-option>
-                    <mat-option [value]="36">36 months</mat-option>
-                  </mat-select>
-                </mat-form-field>
-
-                <mat-form-field appearance="outline" class="field-date">
-                  <mat-label>Required By</mat-label>
-                  <input matInput [matDatepicker]="dp" formControlName="required_by" />
-                  <mat-datepicker-toggle matSuffix [for]="dp" />
-                  <mat-datepicker #dp />
-                </mat-form-field>
-
-                <button mat-icon-button color="warn" matTooltip="Remove item"
-                        (click)="removeItem(i)">
-                  <mat-icon>delete_outline</mat-icon>
-                </button>
+              <div class="pagination-info">
+                Showing {{ paginationStart() }}–{{ paginationEnd() }} of {{ indexedControls().length }} items
+                @if (indexedControls().length !== items.length) {
+                  <span style="color:var(--brand);font-weight:600;">(filtered from {{ items.length }})</span>
+                }
               </div>
+
+              <div class="page-size-picker">
+                <span>Per page:</span>
+                <button mat-button type="button" [class.active-size]="pageSize() === 25" (click)="setPageSize(25)">25</button>
+                <button mat-button type="button" [class.active-size]="pageSize() === 50" (click)="setPageSize(50)">50</button>
+                <button mat-button type="button" [class.active-size]="pageSize() === 100" (click)="setPageSize(100)">100</button>
+                <button mat-button type="button" [class.active-size]="pageSize() === -1" (click)="setPageSize(-1)">All</button>
+              </div>
+
+              @if (totalPages() > 1) {
+                <div class="page-nav">
+                  <button mat-icon-button type="button" [disabled]="currentPage() <= 1" (click)="setPage(currentPage() - 1)">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <span class="page-indicator">Page {{ currentPage() }} of {{ totalPages() }}</span>
+                  <button mat-icon-button type="button" [disabled]="currentPage() >= totalPages()" (click)="setPage(currentPage() + 1)">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </div>
+              }
             </div>
+
+            @for (itemObj of visibleItems(); track itemObj.control) {
+              <div [formGroup]="asGroup(itemObj.control)" class="line-item">
+
+                <!-- Row 1: Num + Product + Description + Category -->
+                <div class="item-row1">
+                  <div class="item-num">{{ itemObj.index + 1 }}</div>
+
+                  <mat-form-field appearance="outline" class="field-product">
+                    <mat-label>Product</mat-label>
+                    <mat-select formControlName="product_id"
+                                (selectionChange)="onProductSelect(itemObj.index)"
+                                (openedChange)="onProductSelectOpened($event, itemObj.index)">
+                      <mat-select-trigger>
+                        {{ getProductTriggerText(itemObj.index) }}
+                      </mat-select-trigger>
+                      @if (openedProductIndex() === itemObj.index) {
+                        <div style="padding: 8px 16px; position: sticky; top: 0; background: white; z-index: 1;">
+                          <input type="text" placeholder="Search by name, code or category..." 
+                                 [value]="productSearch()"
+                                 (input)="productSearch.set($any($event.target).value)" 
+                                 (keydown)="$event.stopPropagation()"
+                                 style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 4px; box-sizing: border-box; outline: none; font-size: 14px;" />
+                        </div>
+                        <mat-option [value]="null">— Custom Item —</mat-option>
+                        @for (p of activeFilteredProducts(itemObj.index); track p.id) {
+                          <mat-option [value]="p.id">
+                            {{ p.name }}
+                            @if (p.code) { ({{ p.code }}) }
+                          </mat-option>
+                        }
+                      } @else {
+                        @if (getSelectedProduct(itemObj.index); as sp) {
+                          <mat-option [value]="sp.id">
+                            {{ sp.name }}
+                            @if (sp.code) { ({{ sp.code }}) }
+                          </mat-option>
+                        } @else {
+                          <mat-option [value]="null">— Custom Item —</mat-option>
+                        }
+                      }
+                    </mat-select>
+                    @if (getProductCode(itemObj.index)) {
+                      <mat-hint>Code: {{ getProductCode(itemObj.index) }}
+                        @if (getProductHsn(itemObj.index)) { · HSN: {{ getProductHsn(itemObj.index) }} }
+                      </mat-hint>
+                    }
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" style="flex:2;min-width:180px;">
+                    <mat-label>Item Description / Specification *</mat-label>
+                    <textarea matInput formControlName="description" rows="2"
+                              placeholder="e.g. i9 12th gen 16gb 512 SSD, or full item spec"
+                              style="resize:vertical;"></textarea>
+                    <mat-hint>This text appears on the PO document and PDF</mat-hint>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" style="flex:1;min-width:140px;">
+                    <mat-label>Category</mat-label>
+                    <mat-select formControlName="category_id"
+                                (openedChange)="openedCategoryIndex.set($event ? itemObj.index : null)">
+                      <mat-select-trigger>
+                        {{ getCategoryTriggerText(itemObj.index) }}
+                      </mat-select-trigger>
+                      @if (openedCategoryIndex() === itemObj.index) {
+                        <mat-option [value]="null">— None —</mat-option>
+                        @for (cat of flatCategories(); track cat.id) {
+                          <mat-option [value]="cat.id">{{ cat.name }}</mat-option>
+                        }
+                      } @else {
+                        @if (getSelectedCategory(itemObj.index); as sc) {
+                          <mat-option [value]="sc.id">{{ sc.name }}</mat-option>
+                        } @else {
+                          <mat-option [value]="null">— None —</mat-option>
+                        }
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <!-- Row 2: Qty + Net Rate + GST + Gross Rate + Amount + Warranty + Required By + Delete -->
+                <div class="item-row2">
+                  <div style="width:24px;flex-shrink:0;"></div>
+
+                  <mat-form-field appearance="outline" class="field-xs">
+                    <mat-label>Qty *</mat-label>
+                    <input matInput type="number" formControlName="qty"
+                           min="0.001" (input)="recalcItem(itemObj.index)" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="field-xs">
+                    <mat-label>UOM</mat-label>
+                    <input matInput formControlName="unit" placeholder="Nos" maxlength="20" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="field-rate">
+                    <mat-label>Net Rate *</mat-label>
+                    <span matPrefix>₹&nbsp;</span>
+                    <input matInput type="number" formControlName="net_rate"
+                           min="0" (input)="recalcItem(itemObj.index)" />
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="field-xs">
+                    <mat-label>GST %</mat-label>
+                    <mat-select formControlName="gst_rate"
+                                (selectionChange)="recalcItem(itemObj.index)">
+                      @for (r of gstRates; track r) {
+                        <mat-option [value]="r">{{ r }}%</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+
+                  <div class="item-calc">
+                    <span class="calc-label">Gross Rate</span>
+                    <span class="calc-val">₹{{ grossRate(itemObj.index) | number:'1.2-2' }}</span>
+                  </div>
+
+                  <div class="item-calc amount-col">
+                    <span class="calc-label">Amount</span>
+                    <span class="calc-val amount-val">₹{{ itemAmount(itemObj.index) | number:'1.2-2' }}</span>
+                  </div>
+
+                  <mat-form-field appearance="outline" style="width:130px;min-width:120px;">
+                    <mat-label>Warranty</mat-label>
+                    <mat-select formControlName="warranty_months">
+                      <mat-option [value]="0">N/A</mat-option>
+                      <mat-option [value]="3">3 months</mat-option>
+                      <mat-option [value]="6">6 months</mat-option>
+                      <mat-option [value]="12">12 months</mat-option>
+                      <mat-option [value]="24">24 months</mat-option>
+                      <mat-option [value]="36">36 months</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="field-date">
+                    <mat-label>Required By</mat-label>
+                    <input matInput [matDatepicker]="dp" formControlName="required_by" />
+                    <mat-datepicker-toggle matSuffix [for]="dp" />
+                    <mat-datepicker #dp />
+                  </mat-form-field>
+
+                  <button mat-icon-button color="warn" matTooltip="Remove item"
+                          (click)="removeItem(itemObj.index)">
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+
+            <!-- Bottom Pagination Controls for convenience on large lists -->
+            @if (totalPages() > 1) {
+              <div class="line-items-toolbar" style="margin-top: 12px; margin-bottom: 0;">
+                <div class="pagination-info">
+                  Showing {{ paginationStart() }}–{{ paginationEnd() }} of {{ indexedControls().length }} items
+                </div>
+                <div style="flex: 1;"></div>
+                <div class="page-nav">
+                  <button mat-icon-button type="button" [disabled]="currentPage() <= 1" (click)="setPage(currentPage() - 1)">
+                    <mat-icon>chevron_left</mat-icon>
+                  </button>
+                  <span class="page-indicator">Page {{ currentPage() }} of {{ totalPages() }}</span>
+                  <button mat-icon-button type="button" [disabled]="currentPage() >= totalPages()" (click)="setPage(currentPage() + 1)">
+                    <mat-icon>chevron_right</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
           }
         </mat-card-content>
       </mat-card>
@@ -706,6 +793,32 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     .attachment-row mat-icon { color: var(--text-3); font-size: 18px; }
     .attachment-row.pending { opacity: 0.7; }
     .attachment-row.pending mat-icon { color: #f59e0b; }
+
+    .line-items-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding: 8px 12px;
+      background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+    }
+    .items-search-box {
+      display: flex; align-items: center; gap: 6px; background: white;
+      border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;
+      min-width: 220px; flex: 1; max-width: 320px;
+    }
+    .items-search-box mat-icon { color: var(--text-3); font-size: 18px; width: 18px; height: 18px; }
+    .items-search-box input {
+      border: none; outline: none; font-size: 13px; width: 100%; color: var(--text-1);
+    }
+    .pagination-info { font-size: 13px; color: var(--text-2); font-weight: 500; }
+    .page-size-picker { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-3); }
+    .page-size-picker button {
+      min-width: 32px; padding: 0 8px; height: 28px; line-height: 28px;
+      font-size: 12px; border-radius: 4px;
+    }
+    .page-size-picker button.active-size {
+      background: var(--brand); color: white; font-weight: 700;
+    }
+    .page-nav { display: flex; align-items: center; gap: 4px; }
+    .page-indicator { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 4px; }
   `],
 })
 export class PoFormComponent implements OnInit {
@@ -728,6 +841,82 @@ export class PoFormComponent implements OnInit {
   attachments = signal<any[]>([]);
   pendingFiles = signal<File[]>([]);
 
+  // Master data lookup maps for O(1) instant rendering
+  productMap = computed(() => new Map(this.products().map(p => [p.id, p])));
+  categoryMap = computed(() => new Map(this.flatCategories().map(c => [c.id, c])));
+
+  // Line items pagination, search, and lazy dropdown states
+  itemsVersion = signal(0);
+  pageSize = signal<number>(50);
+  currentPage = signal<number>(1);
+  itemSearch = signal<string>('');
+  openedProductIndex = signal<number | null>(null);
+  openedCategoryIndex = signal<number | null>(null);
+
+  indexedControls = computed(() => {
+    this.itemsVersion();
+    const q = this.itemSearch().toLowerCase().trim();
+    const controls = this.items.controls;
+    const res: { control: AbstractControl; index: number }[] = [];
+    const pMap = this.productMap();
+    for (let i = 0; i < controls.length; i++) {
+      const ctrl = controls[i];
+      if (q) {
+        const val = ctrl.value;
+        const desc = (val.description || '').toLowerCase();
+        const pCode = val.product_id ? (pMap.get(val.product_id)?.code || '').toLowerCase() : '';
+        const pName = val.product_id ? (pMap.get(val.product_id)?.name || '').toLowerCase() : '';
+        if (!desc.includes(q) && !pCode.includes(q) && !pName.includes(q)) {
+          continue;
+        }
+      }
+      res.push({ control: ctrl, index: i });
+    }
+    return res;
+  });
+
+  totalPages = computed(() => {
+    const size = this.pageSize();
+    if (size === -1) return 1;
+    return Math.max(1, Math.ceil(this.indexedControls().length / size));
+  });
+
+  visibleItems = computed(() => {
+    const all = this.indexedControls();
+    const size = this.pageSize();
+    if (size === -1) return all;
+    const maxPage = this.totalPages();
+    const page = Math.max(1, Math.min(this.currentPage(), maxPage));
+    const start = (page - 1) * size;
+    return all.slice(start, start + size);
+  });
+
+  paginationStart = computed(() => {
+    if (this.indexedControls().length === 0) return 0;
+    const size = this.pageSize();
+    if (size === -1) return 1;
+    return (this.currentPage() - 1) * size + 1;
+  });
+
+  paginationEnd = computed(() => {
+    const count = this.indexedControls().length;
+    if (count === 0) return 0;
+    const size = this.pageSize();
+    if (size === -1) return count;
+    return Math.min(this.currentPage() * size, count);
+  });
+
+  setPage(p: number) {
+    if (p >= 1 && p <= this.totalPages()) {
+      this.currentPage.set(p);
+    }
+  }
+
+  setPageSize(size: number) {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
   // Product Search
   productSearch = signal<string>('');
   filteredProducts = computed(() => {
@@ -741,10 +930,68 @@ export class PoFormComponent implements OnInit {
     );
   });
 
-  onProductSelectOpened(opened: boolean) {
+  onProductSelectOpened(opened: boolean, index: number) {
     if (opened) {
       this.productSearch.set('');
+      this.openedProductIndex.set(index);
+    } else {
+      if (this.openedProductIndex() === index) {
+        this.openedProductIndex.set(null);
+      }
     }
+  }
+
+  getProductTriggerText(i: number): string {
+    const pid = (this.items.at(i)?.value as any)?.product_id;
+    if (!pid) return '— Custom Item —';
+    const p = this.productMap().get(pid);
+    if (!p) return '— Custom Item —';
+    return p.code ? `${p.name} (${p.code})` : p.name;
+  }
+
+  getSelectedProduct(i: number): Product | null {
+    const pid = (this.items.at(i)?.value as any)?.product_id;
+    if (!pid) return null;
+    return this.productMap().get(pid) ?? null;
+  }
+
+  getCategoryTriggerText(i: number): string {
+    const cid = (this.items.at(i)?.value as any)?.category_id;
+    if (!cid) return '— None —';
+    return this.categoryMap().get(cid)?.name ?? '— None —';
+  }
+
+  getSelectedCategory(i: number): Category | null {
+    const cid = (this.items.at(i)?.value as any)?.category_id;
+    if (!cid) return null;
+    return this.categoryMap().get(cid) ?? null;
+  }
+
+  activeFilteredProducts(i: number): Product[] {
+    const q = this.productSearch().toLowerCase().trim();
+    const all = this.products();
+    const selectedId = (this.items.at(i)?.value as any)?.product_id;
+    const selectedProd = selectedId ? this.productMap().get(selectedId) : null;
+
+    let list: Product[];
+    if (!q) {
+      list = all.slice(0, 100);
+      if (selectedProd && !list.some(p => p.id === selectedId)) {
+        list = [selectedProd, ...list];
+      }
+      return list;
+    }
+
+    list = all.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      (p.code && p.code.toLowerCase().includes(q)) ||
+      (p.category?.name && p.category.name.toLowerCase().includes(q))
+    ).slice(0, 100);
+
+    if (selectedProd && !list.some(p => p.id === selectedId)) {
+      list = [selectedProd, ...list];
+    }
+    return list;
   }
 
   // Selection context signals
@@ -907,8 +1154,11 @@ export class PoFormComponent implements OnInit {
     }
 
     // Clear existing item arrays to prevent duplicates on patch
-    while (this.items.length > 0) this.items.removeAt(0);
-    po.items?.forEach((item: any) => this.items.push(this.buildItem(item)));
+    this.items.clear({ emitEvent: false });
+    (po.items ?? []).forEach((item: any) => this.items.push(this.buildItem(item), { emitEvent: false }));
+    this.items.updateValueAndValidity({ emitEvent: false });
+    this.itemsVersion.update(v => v + 1);
+    this.currentPage.set(1);
 
     while (this.paymentTerms.length > 0) this.paymentTerms.removeAt(0);
     if (po.payment_terms_json?.length) {
@@ -936,22 +1186,36 @@ export class PoFormComponent implements OnInit {
     if (pr.location_id) {
       this.headerForm.patchValue({ ship_to_location_id: pr.location_id });
     }
-    // Pre-fill line items from PR items (description + qty only; buyer sets rates)
+    // Pre-fill line items from PR items (rates, unit, gst, category, qty)
     if (pr.items?.length) {
-      while (this.items.length > 0) this.items.removeAt(0);
+      this.items.clear({ emitEvent: false });
       pr.items.forEach((item: any) => {
+        const prod = item.product_id ? this.productMap().get(item.product_id) : (item.product ?? null);
+        const prPrice = item.estimated_price != null ? +item.estimated_price : 0;
+        const prodPrice = prod?.net_rate != null ? +prod.net_rate : 0;
+        const netRate = prPrice > 0 ? prPrice : prodPrice;
+        const gstRate = prod?.gst_rate != null ? +prod.gst_rate : 18;
+        const unit = item.unit || prod?.unit || null;
+        const categoryId = item.category_id || prod?.category_id || null;
+        const warrantyMonths = prod?.warranty_months != null ? +prod.warranty_months : 0;
+
         this.items.push(this.buildItem({
-          description: item.description,
-          qty: item.qty,
-          net_rate: 0,
-          gst_rate: 18,
-          product_id: item.product_id,
-          category_id: item.category_id,
-          required_by: pr.required_by_date,
-          pr_item_id: item.id,
-          pr_id: pr.id,
-        }));
+          description:     item.description,
+          qty:             item.qty != null ? +item.qty : 1,
+          unit:            unit,
+          net_rate:        netRate,
+          gst_rate:        gstRate,
+          product_id:      item.product_id ?? null,
+          category_id:     categoryId,
+          warranty_months: warrantyMonths,
+          required_by:     pr.required_by_date,
+          pr_item_id:      item.id,
+          pr_id:           pr.id,
+        }), { emitEvent: false });
       });
+      this.items.updateValueAndValidity({ emitEvent: false });
+      this.itemsVersion.update(v => v + 1);
+      this.currentPage.set(1);
       this.recalc();
     }
     // Also store pr_id for backend to link TAT
@@ -983,24 +1247,38 @@ export class PoFormComponent implements OnInit {
         }
 
         // Merge line items from all PRs
-        while (this.items.length > 0) this.items.removeAt(0);
+        this.items.clear({ emitEvent: false });
         prs.forEach(pr => {
           if (pr.items?.length) {
             pr.items.forEach((item: any) => {
+              const prod = item.product_id ? this.productMap().get(item.product_id) : (item.product ?? null);
+              const prPrice = item.estimated_price != null ? +item.estimated_price : 0;
+              const prodPrice = prod?.net_rate != null ? +prod.net_rate : 0;
+              const netRate = prPrice > 0 ? prPrice : prodPrice;
+              const gstRate = prod?.gst_rate != null ? +prod.gst_rate : 18;
+              const unit = item.unit || prod?.unit || null;
+              const categoryId = item.category_id || prod?.category_id || null;
+              const warrantyMonths = prod?.warranty_months != null ? +prod.warranty_months : 0;
+
               this.items.push(this.buildItem({
-                description: item.description,
-                qty: item.qty,
-                net_rate: 0,
-                gst_rate: 18,
-                product_id: item.product_id,
-                category_id: item.category_id,
-                required_by: pr.required_by_date,
-                pr_item_id: item.id,
-                pr_id: pr.id,
-              }));
+                description:     item.description,
+                qty:             item.qty != null ? +item.qty : 1,
+                unit:            unit,
+                net_rate:        netRate,
+                gst_rate:        gstRate,
+                product_id:      item.product_id ?? null,
+                category_id:     categoryId,
+                warranty_months: warrantyMonths,
+                required_by:     pr.required_by_date,
+                pr_item_id:      item.id,
+                pr_id:           pr.id,
+              }), { emitEvent: false });
             });
           }
         });
+        this.items.updateValueAndValidity({ emitEvent: false });
+        this.itemsVersion.update(v => v + 1);
+        this.currentPage.set(1);
         this.recalc();
       },
       error: () => this.notify.error('Could not load purchase requisitions.')
@@ -1076,7 +1354,14 @@ export class PoFormComponent implements OnInit {
   }
 
   // ─── Line items ────────────────────────────────────────────────────────
-  addItem() { this.items.push(this.buildItem()); }
+  addItem() {
+    this.items.push(this.buildItem());
+    this.itemsVersion.update(v => v + 1);
+    if (this.pageSize() !== -1) {
+      this.currentPage.set(this.totalPages());
+    }
+    this.recalc();
+  }
 
   private buildItem(data?: any) {
     return this.fb.group({
@@ -1097,7 +1382,14 @@ export class PoFormComponent implements OnInit {
     });
   }
 
-  removeItem(i: number) { this.items.removeAt(i); this.recalc(); }
+  removeItem(i: number) {
+    this.items.removeAt(i);
+    this.itemsVersion.update(v => v + 1);
+    if (this.currentPage() > this.totalPages()) {
+      this.currentPage.set(this.totalPages());
+    }
+    this.recalc();
+  }
 
   downloadBoqTemplate() {
     this.bulk.downloadTemplate('boq/template?type=po', 'po-boq-template.xlsx').subscribe({
@@ -1117,7 +1409,9 @@ export class PoFormComponent implements OnInit {
     this.http.post<{ items: any[]; skipped_zero_qty?: string[]; errors: string[] }>(`${environment.apiUrl}/boq/parse`, fd).subscribe({
       next: res => {
         this.boqUploading.set(false);
-        (res.items ?? []).forEach(it => this.items.push(this.buildItem(it)));
+        (res.items ?? []).forEach(it => this.items.push(this.buildItem(it), { emitEvent: false }));
+        this.items.updateValueAndValidity({ emitEvent: false });
+        this.itemsVersion.update(v => v + 1);
         this.recalc();
         const added = res.items?.length ?? 0;
         this.notify.success(`${added} line item(s) added from BOQ.`);
@@ -1142,9 +1436,14 @@ export class PoFormComponent implements OnInit {
   }
 
   onProductSelect(i: number) {
-    const productId = (this.items.at(i).value as any).product_id;
-    if (!productId) return;
-    const product = this.products().find(p => p.id === productId);
+    const ctrl = this.items.at(i);
+    if (!ctrl) return;
+    const productId = (ctrl.value as any).product_id;
+    if (!productId) {
+      this.recalcItem(i);
+      return;
+    }
+    const product = this.productMap().get(productId);
     if (!product) return;
 
     let desc = product.name;
@@ -1157,7 +1456,7 @@ export class PoFormComponent implements OnInit {
       }
     }
 
-    this.items.at(i).patchValue({
+    ctrl.patchValue({
       description:     desc,
       net_rate:        product.net_rate != null ? +product.net_rate : 0,
       gst_rate:        product.gst_rate != null ? +product.gst_rate : 0,
@@ -1169,25 +1468,29 @@ export class PoFormComponent implements OnInit {
   }
 
   getProductCode(i: number): string {
-    const pid = (this.items.at(i).value as any).product_id;
+    const pid = (this.items.at(i)?.value as any)?.product_id;
     if (!pid) return '';
-    return this.products().find(p => p.id === pid)?.code ?? '';
+    return this.productMap().get(pid)?.code ?? '';
   }
 
   getProductHsn(i: number): string {
-    const pid = (this.items.at(i).value as any).product_id;
+    const pid = (this.items.at(i)?.value as any)?.product_id;
     if (!pid) return '';
-    return this.products().find(p => p.id === pid)?.hsn_code ?? '';
+    return this.productMap().get(pid)?.hsn_code ?? '';
   }
 
   grossRate(i: number): number {
-    const { net_rate, gst_rate } = this.items.at(i).value as any;
+    const ctrl = this.items.at(i);
+    if (!ctrl) return 0;
+    const { net_rate, gst_rate } = ctrl.value as any;
     if (!net_rate) return 0;
     return net_rate * (1 + (gst_rate || 0) / 100);
   }
 
   itemAmount(i: number): number {
-    const { qty } = this.items.at(i).value as any;
+    const ctrl = this.items.at(i);
+    if (!ctrl) return 0;
+    const { qty } = ctrl.value as any;
     return this.grossRate(i) * (qty || 0);
   }
 
