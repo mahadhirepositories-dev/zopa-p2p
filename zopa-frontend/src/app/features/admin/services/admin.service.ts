@@ -9,6 +9,49 @@ export interface PlatformSettings {
   logo_url?:  string | null;
 }
 
+export interface DatabaseDumpLog {
+  id: number;
+  user_id?: number | null;
+  user_name: string;
+  user_email: string;
+  file_name: string;
+  file_size_bytes: number;
+  formatted_size: string;
+  format: string;
+  ip_address?: string | null;
+  status: 'completed' | 'failed';
+  error_message?: string | null;
+  duration_ms?: number | null;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface DatabaseDumpResponse {
+  logs: {
+    data: DatabaseDumpLog[];
+    total: number;
+    current_page: number;
+    last_page: number;
+    per_page: number;
+  };
+  last_download: {
+    id: number;
+    user_name: string;
+    user_email: string;
+    file_name: string;
+    file_size_bytes: number;
+    formatted_size: string;
+    format: string;
+    created_at: string;
+    relative_time: string;
+  } | null;
+  total_downloads: number;
+  database_info: {
+    driver: string;
+    database: string;
+  };
+}
+
 export interface Tenant {
   id: number;
   name: string;
@@ -147,5 +190,20 @@ export class AdminService {
       `${this.apiUrl}/role-permissions/${encodeURIComponent(role)}`,
       { modules }
     );
+  }
+
+  // ── Database Dumps (Super Admin) ─────────────────────────────────────────────
+
+  getDatabaseDumpLogs(page: number = 1, perPage: number = 25): Observable<DatabaseDumpResponse> {
+    return this.http.get<DatabaseDumpResponse>(`${this.apiUrl}/database-dumps`, {
+      params: { page, per_page: perPage }
+    });
+  }
+
+  downloadDatabaseDump(format: 'sql' | 'gz' = 'gz'): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/database-dumps/download`, {
+      params: { format },
+      responseType: 'blob',
+    });
   }
 }

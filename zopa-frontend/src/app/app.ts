@@ -210,6 +210,9 @@ import { filter } from 'rxjs/operators';
                 <a class="nav-link" routerLink="/admin/vendor-onboarding" routerLinkActive="nav-link--active">
                   <mat-icon>how_to_reg</mat-icon><span>Vendor Onboarding</span>
                 </a>
+                <a class="nav-link" routerLink="/admin/database-dump" routerLinkActive="nav-link--active">
+                  <mat-icon>storage</mat-icon><span>Database Dump</span>
+                </a>
               </div>
             }
 

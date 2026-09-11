@@ -62,5 +62,11 @@ export const adminRoutes: Routes = [
     data: { roles: ['zopa_super_admin'] },
     loadComponent: () => import('./vendor-forms/vendor-onboarding-queue.component').then(m => m.VendorOnboardingQueueComponent),
   },
+  {
+    path: 'database-dump',
+    canActivate: [roleGuard],
+    data: { roles: ['zopa_super_admin'] },
+    loadComponent: () => import('./database-dump/database-dump.component').then(m => m.DatabaseDumpComponent),
+  },
   { path: '', redirectTo: 'clients', pathMatch: 'full' }
 ];

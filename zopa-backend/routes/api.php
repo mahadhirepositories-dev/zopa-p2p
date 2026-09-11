@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\EmailTemplatesController;
 use App\Http\Controllers\Admin\VendorFormController;
 use App\Http\Controllers\Admin\VendorOnboardingController;
+use App\Http\Controllers\Admin\DatabaseDumpController;
 use App\Http\Controllers\PublicVendorOnboardingController;
 use App\Http\Middleware\TenantScopeMiddleware;
 use Illuminate\Support\Facades\Route;
@@ -218,6 +219,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('clients/{tenant}/assign-staff', [ClientUserController::class, 'assignStaff']);
         Route::put('clients/{tenant}/users/{user}/role', [ClientUserController::class, 'updateRole']);
         Route::delete('clients/{tenant}/users/{user}', [ClientUserController::class, 'destroy']);
+
+        // Database Dumps (Super Admin only)
+        Route::get('database-dumps', [DatabaseDumpController::class, 'index']);
+        Route::get('database-dumps/download', [DatabaseDumpController::class, 'download']);
     });
 
     // Tenant-scoped routes
