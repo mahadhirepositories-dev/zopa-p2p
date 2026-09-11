@@ -99,10 +99,19 @@ table.tot .grand td { background:#1f2937; color:#fff; font-weight:bold; border-c
 
 @php
 $tenantLp = $po->tenant?->logo_path ? storage_path('app/public/'.$po->tenant->logo_path) : null;
-$tenantLd = ($tenantLp && file_exists($tenantLp))
-  ? 'data:'.mime_content_type($tenantLp).';base64,'.base64_encode(file_get_contents($tenantLp))
-  : null;
-$statusLabel = strtoupper(str_replace('_',' ',$po->status));
+$tenantLd = null;
+if ($tenantLp && @file_exists($tenantLp)) {
+  try {
+    $mime = @mime_content_type($tenantLp) ?: 'image/png';
+    $raw = @file_get_contents($tenantLp);
+    if ($raw !== false) {
+      $tenantLd = 'data:' . $mime . ';base64,' . base64_encode($raw);
+    }
+  } catch (\Throwable $e) {
+    $tenantLd = null;
+  }
+}
+$statusLabel = strtoupper(str_replace('_',' ',(string)$po->status));
 $tz          = 'Asia/Kolkata';
 $createdAt   = $po->created_at  ? \Carbon\Carbon::parse($po->created_at)->timezone($tz)->format('d M Y, H:i')  : null;
 $approvedAt  = $po->approved_at ? \Carbon\Carbon::parse($po->approved_at)->timezone($tz)->format('d M Y, H:i') : null;
@@ -112,7 +121,7 @@ $approverRole= $po->approved_by_role ? ucwords(str_replace('_',' ',$po->approved
 $generatedAt = now()->timezone($tz)->format('d M Y, H:i').' IST';
 if (!function_exists('_poNumWords')) {
   function _poNumWords(int $n): string {
-    if ($n===0) return 'Zero';
+    if ($n<=0) return 'Zero';
     $ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten',
            'Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
     $tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
@@ -121,11 +130,11 @@ if (!function_exists('_poNumWords')) {
       if($n>=$d){$w.=_poNumWords((int)($n/$d)).' '.$name.' ';$n%=$d;}
     }
     if($n>=20){$w.=$tens[(int)($n/10)].' ';$n%=10;}
-    if($n>0) $w.=$ones[$n].' ';
+    if($n>0 && $n<20) $w.=$ones[$n].' ';
     return trim($w);
   }
 }
-$amtWords = _poNumWords((int) round($po->grand_total)).' Rupees Only';
+$amtWords = _poNumWords((int) round((float)($po->grand_total ?? 0))).' Rupees Only';
 if (!function_exists('_poTermsLines')) {
   function _poTermsLines(?string $raw): array {
     if(!$raw||trim($raw)==='') return [];
@@ -364,12 +373,15 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
   <tbody>
     @foreach($po->items as $item)
     @php
-      $baseAmount=($item->net_rate??0)*($item->qty??1);
-      $lineGst=$baseAmount*($item->gst_rate??0)/100;
-      $lineTotal=$baseAmount+$lineGst;
-      $itCode=$item->product_code??$item->product?->code;
-      $itName=$item->product_name??$item->product?->name;
-      $itHsn=$item->hsn_code??$item->product?->hsn_code;
+      $itQty = (float)($item->qty ?? 1);
+      $itRate = (float)($item->net_rate ?? 0);
+      $itGstRate = (float)($item->gst_rate ?? 0);
+      $baseAmount = $itRate * $itQty;
+      $lineGst = $baseAmount * $itGstRate / 100;
+      $lineTotal = $baseAmount + $lineGst;
+      $itCode = $item->product_code ?? $item->product?->code;
+      $itName = $item->product_name ?? $item->product?->name;
+      $itHsn = $item->hsn_code ?? $item->product?->hsn_code;
     @endphp
     <tr>
       <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
@@ -377,7 +389,7 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       <td>
         @if($itName)
           <div style="font-weight:bold;color:#111827;font-size:9.5px;">{{ $itName }}</div>
-          @if($item->description && strtolower(trim($item->description)) !== strtolower(trim($itName)))
+          @if($item->description && strtolower(trim((string)$item->description)) !== strtolower(trim((string)$itName)))
             <div style="color:#4b5563;font-size:8.5px;margin-top:2px;white-space:pre-wrap;">{{ $item->description }}</div>
           @endif
         @else
@@ -388,18 +400,21 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       </td>
       @if($hasHSN)<td class="c" style="font-size:8.5px;color:#475569;">{{ $itHsn??'—' }}</td>@endif
       @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->unit??$item->product?->unit??'—' }}</td>@endif
-      <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($item->qty,3),'0'),'.') }}</td>
-      <td class="r" style="font-size:9px;">&#8377;{{ number_format($item->net_rate,2) }}</td>
+      <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($itQty,3),'0'),'.') }}</td>
+      <td class="r" style="font-size:9px;">&#8377;{{ number_format($itRate,2) }}</td>
       <td class="r" style="font-size:9px;color:#475569;">
-        {{ number_format($item->gst_rate,0) }}%
+        {{ number_format($itGstRate,0) }}%
         @if($lineGst>0)<br><span style="font-size:7.5px;">(&#8377;{{ number_format($lineGst,2) }})</span>@endif
       </td>
       <td class="r b" style="font-size:9.5px;color:#1f2937;">&#8377;{{ number_format($lineTotal,2) }}</td>
-      @if($hasWar)<td class="c" style="font-size:9px;color:#475569;">{{ ($item->warranty_months??0)>0?$item->warranty_months.' mo':'—' }}</td>@endif
+      @if($hasWar)<td class="c" style="font-size:9px;color:#475569;">{{ ((int)($item->warranty_months??0))>0?$item->warranty_months.' mo':'—' }}</td>@endif
       @if($hasRB)<td style="font-size:8.5px;color:#475569;">{{ $item->required_by?\Carbon\Carbon::parse($item->required_by)->format('d M Y'):'—' }}</td>@endif
     </tr>
     @endforeach
-    @if($po->round_off!=0)
+    @php
+      $poRoundOff = (float)($po->round_off ?? 0);
+    @endphp
+    @if($poRoundOff != 0.0)
     <tr>
       <td class="c fnt" style="font-size:8px;">—</td>
       @if($hasCode)<td></td>@endif
@@ -407,7 +422,7 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       @if($hasHSN)<td></td>@endif
       @if($hasUOM)<td></td>@endif
       <td></td><td></td><td></td>
-      <td class="r" style="font-size:9.5px;color:#475569;">{{ $po->round_off>0?'+':'' }}&#8377;{{ number_format($po->round_off,2) }}</td>
+      <td class="r" style="font-size:9.5px;color:#475569;">{{ $poRoundOff>0?'+':'' }}&#8377;{{ number_format($poRoundOff,2) }}</td>
       @if($hasWar)<td></td>@endif
       @if($hasRB)<td></td>@endif
     </tr>
@@ -425,17 +440,17 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
     <td style="width:8px;border:none;"></td>
     <td style="width:46%;padding:0;vertical-align:top;">
       <table class="tot">
-        <tr><td class="lbl">Net Total (before tax)</td><td class="val">&#8377;{{ number_format($po->net_total,2) }}</td></tr>
-        @if(($po->discount ?? 0) > 0)
-        <tr><td class="lbl">Less: Discount</td><td class="val" style="color:#b91c1c;">-&#8377;{{ number_format($po->discount,2) }}</td></tr>
+        <tr><td class="lbl">Net Total (before tax)</td><td class="val">&#8377;{{ number_format((float)($po->net_total ?? 0),2) }}</td></tr>
+        @if(((float)($po->discount ?? 0)) > 0)
+        <tr><td class="lbl">Less: Discount</td><td class="val" style="color:#b91c1c;">-&#8377;{{ number_format((float)$po->discount,2) }}</td></tr>
         @endif
-        @if($po->freight>0)
-        <tr><td class="lbl">Freight{{ ($po->freight_gst_rate??0)>0?' (+'.number_format($po->freight_gst_rate,0).'% GST)':'' }}</td><td class="val">&#8377;{{ number_format($po->freight,2) }}</td></tr>
+        @if(((float)($po->freight ?? 0)) > 0)
+        <tr><td class="lbl">Freight{{ ((float)($po->freight_gst_rate??0))>0?' (+'.number_format((float)$po->freight_gst_rate,0).'% GST)':'' }}</td><td class="val">&#8377;{{ number_format((float)$po->freight,2) }}</td></tr>
         @endif
-        <tr><td class="lbl">GST / Tax Amount</td><td class="val">&#8377;{{ number_format($po->tax_amount,2) }}</td></tr>
+        <tr><td class="lbl">GST / Tax Amount</td><td class="val">&#8377;{{ number_format((float)($po->tax_amount ?? 0),2) }}</td></tr>
         <tr class="grand">
           <td style="text-transform:uppercase;letter-spacing:0.5px;font-size:8.5px;">Grand Total</td>
-          <td style="text-align:right;font-size:12.5px;">&#8377;{{ number_format(round($po->grand_total),2) }}</td>
+          <td style="text-align:right;font-size:12.5px;">&#8377;{{ number_format(round((float)($po->grand_total ?? 0)),2) }}</td>
         </tr>
       </table>
     </td>
@@ -446,9 +461,21 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 <div class="sec-h">Terms &amp; Conditions</div>
 <table class="terms-tbl">
   <tr><td class="sub">Payment Schedule</td></tr>
-  @if($po->payment_terms_json && count($po->payment_terms_json))
-    @foreach($po->payment_terms_json as $idx=>$pt)
-      <tr><td>{{ $idx+1 }}.&nbsp;{{ $pt['stage'] }} — {{ $pt['percentage'] }}%@if(!empty($pt['credit_days'])&&$pt['credit_days']>0)&nbsp;({{ $pt['credit_days'] }} days credit)@endif</td></tr>
+  @php
+    $pts = $po->payment_terms_json;
+    if (is_string($pts)) {
+      $pts = json_decode($pts, true);
+    }
+  @endphp
+  @if(is_iterable($pts) && count($pts))
+    @foreach($pts as $idx=>$pt)
+      @php
+        $ptArr = (array) $pt;
+        $stage = $ptArr['stage'] ?? ($ptArr['description'] ?? '');
+        $pct = $ptArr['percentage'] ?? ($ptArr['percent'] ?? '');
+        $cDays = $ptArr['credit_days'] ?? null;
+      @endphp
+      <tr><td>{{ $idx+1 }}.&nbsp;{{ $stage }} — {{ $pct }}%@if(!empty($cDays) && (int)$cDays > 0)&nbsp;({{ $cDays }} days credit)@endif</td></tr>
     @endforeach
   @else
     <tr><td>1.&nbsp;Advance — 80%</td></tr>

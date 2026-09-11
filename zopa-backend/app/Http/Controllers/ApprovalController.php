@@ -302,23 +302,31 @@ class ApprovalController extends Controller
         $this->requireAdminRole();
         abort_if($approval->action !== 'pending', 422, 'Can only resend notification for pending approvals.');
 
-        $sent = $this->approvals->resendApprovalEmail($approval);
+        try {
+            $sent = $this->approvals->resendApprovalEmail($approval);
 
-        if (!$sent) {
-            return response()->json(['error' => 'Assigned approver does not have a valid email address.'], 422);
+            if (!$sent) {
+                return response()->json(['error' => 'Assigned approver does not have a valid email address or email dispatch failed.'], 422);
+            }
+
+            $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
+            $this->actLog->log(
+                $logType,
+                $approval->entity_id,
+                'approval_email_resent',
+                ['level' => $approval->level, 'sent_to' => $approval->assignedTo?->email]
+            );
+
+            return response()->json([
+                'message' => "Approval email successfully resent to {$approval->assignedTo?->name} ({$approval->assignedTo?->email})."
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error("[ApprovalController@resendEmail] Error resending approval email: " . $e->getMessage(), [
+                'exception'   => $e,
+                'approval_id' => $approval->id,
+            ]);
+            return response()->json(['error' => 'Failed to resend approval email: ' . $e->getMessage()], 500);
         }
-
-        $logType = $approval->entity_type === 'PR_SHORT_CLOSE' ? 'PR' : $approval->entity_type;
-        $this->actLog->log(
-            $logType,
-            $approval->entity_id,
-            'approval_email_resent',
-            ['level' => $approval->level, 'sent_to' => $approval->assignedTo?->email]
-        );
-
-        return response()->json([
-            'message' => "Approval email successfully resent to {$approval->assignedTo?->name} ({$approval->assignedTo?->email})."
-        ]);
     }
 
     /** Find the current user's pending approval for a PO, or abort 403. */

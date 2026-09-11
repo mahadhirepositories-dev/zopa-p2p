@@ -21,11 +21,37 @@ class PdfService
             'tenant.locations', 'creator', 'approver',
         ]);
 
-        // PO PDFs use DomPDF directly — the server's wkhtmltopdf is the
-        // unpatched-Qt build, on which BOTH --header-* and <thead>/position:fixed
-        // repetition are broken, so repeating the PO number on every page is
-        // impossible there. DomPDF reliably repeats <thead> and position:fixed.
-        return static::generateWithDomPdf('pdf.purchase-order', ['po' => $po]);
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $fontDir = storage_path('fonts');
+        if (!file_exists($fontDir)) {
+            @mkdir($fontDir, 0775, true);
+        }
+
+        // For large POs (> 35 items), DomPDF struggles with memory and page breaks.
+        // wkhtmltopdf (Snappy) compiles C++ WebKit and renders 200+ items in < 1 second.
+        $itemCount = $po->items ? $po->items->count() : 0;
+        $binary = config('snappy.pdf.binary', '/usr/bin/wkhtmltopdf');
+        $hasSnappy = static::binaryExists($binary);
+
+        if ($itemCount > 35 && $hasSnappy) {
+            try {
+                return static::generateWithSnappy('pdf.purchase-order', ['po' => $po], $binary);
+            } catch (\Throwable $e) {
+                Log::warning('[PdfService] Snappy failed for large PO, falling back to DomPDF: ' . $e->getMessage());
+            }
+        }
+
+        try {
+            return static::generateWithDomPdf('pdf.purchase-order', ['po' => $po]);
+        } catch (\Throwable $e) {
+            Log::warning('[PdfService] DomPDF failed, trying Snappy fallback: ' . $e->getMessage());
+            if ($hasSnappy) {
+                return static::generateWithSnappy('pdf.purchase-order', ['po' => $po], $binary);
+            }
+            throw $e;
+        }
     }
 
     public static function makePrPdf($pr): string
@@ -104,6 +130,14 @@ class PdfService
 
     private static function generateWithDomPdf(string $view, array $data): string
     {
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $fontDir = storage_path('fonts');
+        if (!file_exists($fontDir)) {
+            @mkdir($fontDir, 0775, true);
+        }
+
         self::$lastEngineUsed = 'dompdf';
         $data['is_dompdf'] = true;
         return DomPdf::loadView($view, $data)

@@ -843,16 +843,25 @@ class PurchaseOrderController extends Controller
     public function pdf(PurchaseOrder $purchaseOrder): Response
     {
         $this->authorizePoAccess($purchaseOrder);
-        $po = $purchaseOrder->load(['items.product', 'vendor', 'vendorAddress', 'costCenter.department', 'costCenter.project', 'costCenter.location', 'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant', 'creator', 'approver']);
+        try {
+            $po = $purchaseOrder->load(['items.product', 'vendor', 'vendorAddress', 'costCenter.department', 'costCenter.project', 'costCenter.location', 'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant', 'creator', 'approver']);
 
-        $bytes  = PdfService::makePoPdf($po);
-        $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
+            $bytes  = PdfService::makePoPdf($po);
+            $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
 
-        return response($bytes, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
-            'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
-        ]);
+            return response($bytes, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+                'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error("[PurchaseOrderController@pdf] Failed to generate PDF for PO {$purchaseOrder->id}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            return response("Error generating PDF: " . $e->getMessage(), 500, [
+                'Content-Type' => 'text/plain',
+            ]);
+        }
     }
 
     /**
@@ -867,7 +876,7 @@ class PurchaseOrderController extends Controller
         \Cache::put("pdf_dl_{$token}", [
             'po_id'     => $purchaseOrder->id,
             'tenant_id' => $purchaseOrder->tenant_id,
-        ], now()->addMinutes(5));
+        ], now()->addMinutes(10));
 
         return response()->json([
             'url' => url("/api/po-pdf/{$purchaseOrder->id}") . '?token=' . $token,
@@ -882,7 +891,7 @@ class PurchaseOrderController extends Controller
     public function pdfByToken(int $id, \Illuminate\Http\Request $request): Response
     {
         $token = (string) $request->query('token', '');
-        $data  = \Cache::pull("pdf_dl_{$token}");   // single-use: consumed on first read
+        $data  = \Cache::get("pdf_dl_{$token}");
 
         abort_if(!$data, 403, 'Invalid or expired download link.');
         abort_if((int) $data['po_id'] !== $id, 403, 'Token / PO mismatch.');
@@ -892,21 +901,30 @@ class PurchaseOrderController extends Controller
         abort_if(!$purchaseOrder, 404, 'Purchase order not found.');
         abort_if((int) $data['tenant_id'] !== $purchaseOrder->tenant_id, 403, 'Tenant mismatch.');
 
-        $po = $purchaseOrder->load([
-            'items.product', 'vendor', 'vendorAddress',
-            'costCenter.department', 'costCenter.project', 'costCenter.location',
-            'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant',
-            'creator', 'approver',
-        ]);
+        try {
+            $po = $purchaseOrder->load([
+                'items.product', 'vendor', 'vendorAddress',
+                'costCenter.department', 'costCenter.project', 'costCenter.location',
+                'approvals.assignedTo', 'billToLocation', 'shipToLocation', 'tenant',
+                'creator', 'approver',
+            ]);
 
-        $bytes  = PdfService::makePoPdf($po);
-        $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
+            $bytes  = PdfService::makePoPdf($po);
+            $safeNo = str_replace(['/', '\\'], '-', (string) ($po->po_number ?: $po->id));
 
-        return response($bytes, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
-            'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
-        ]);
+            return response($bytes, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="PO-' . $safeNo . '.pdf"',
+                'X-Pdf-Engine'        => PdfService::$lastEngineUsed,
+            ]);
+        } catch (\Throwable $e) {
+            \Log::error("[PurchaseOrderController@pdfByToken] Failed to generate PDF for PO {$id}: " . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            return response("Error generating PDF: " . $e->getMessage(), 500, [
+                'Content-Type' => 'text/plain',
+            ]);
+        }
     }
 
     private function authorizePoAccess(PurchaseOrder $po): void
