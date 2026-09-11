@@ -514,10 +514,12 @@ class ApprovalService
             Mail::to($user->email)->send(new ApprovalRequestMail($approval, $entityType, $entity));
             return true;
         } catch (\Throwable $e) {
-            \Log::error("[ApprovalService@resendApprovalEmail] Failed to send approval email for Approval {$approval->id}: " . $e->getMessage(), [
-                'exception' => $e,
-            ]);
-            report($e);
+            try {
+                \Log::error("[ApprovalService@resendApprovalEmail] Failed to send approval email for Approval {$approval->id}: " . $e->getMessage(), [
+                    'exception' => $e,
+                ]);
+                report($e);
+            } catch (\Throwable) {}
             return false;
         }
     }

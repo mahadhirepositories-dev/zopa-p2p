@@ -68,6 +68,13 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             cd zopa-backend
+
+            # Ensure storage, logs, and font directories exist and are writable before running any commands
+            mkdir -p storage/fonts storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache
+            touch storage/logs/laravel.log
+            sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
+            sudo chmod -R 777 storage bootstrap/cache 2>/dev/null || true
+
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force
             php artisan pr:update-quantities
@@ -79,10 +86,9 @@ jobs:
             php artisan view:clear
             php artisan view:cache
             
-            # Ensure framework and font directories exist and have proper group ownership/permissions for the web server (www-data)
-            mkdir -p storage/fonts storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache
-            sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
-            sudo chmod -R 775 storage bootstrap/cache 2>/dev/null || chmod -R 775 storage bootstrap/cache 2>/dev/null || true
+            # Re-apply group ownership and permissions after caches are generated
+            sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
+            sudo chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 
             php artisan queue:restart
             php artisan queue:work --stop-when-empty || true
