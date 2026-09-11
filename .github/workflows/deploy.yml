@@ -70,8 +70,8 @@ jobs:
             cd zopa-backend
 
             # Ensure storage, logs, and font directories exist and are writable before running any commands
-            mkdir -p storage/fonts storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache
-            touch storage/logs/laravel.log
+            sudo mkdir -p storage/fonts storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views storage/framework/testing bootstrap/cache 2>/dev/null || true
+            sudo touch storage/logs/laravel.log 2>/dev/null || true
             sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
             sudo chmod -R 777 storage bootstrap/cache 2>/dev/null || true
 
