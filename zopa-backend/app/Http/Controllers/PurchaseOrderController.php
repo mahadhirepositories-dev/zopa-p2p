@@ -449,38 +449,51 @@ class PurchaseOrderController extends Controller
 
     public function submit(PurchaseOrder $purchaseOrder): JsonResponse
     {
-        $this->requireTransactRole();
-        $this->authorizePoAccess($purchaseOrder);
-
-        if ($purchaseOrder->status !== 'draft') {
-            return response()->json(['error' => 'Only draft POs can be submitted.'], 422);
-        }
-
-        if (!$purchaseOrder->cost_center_id) {
-            return response()->json(['error' => 'A Cost Center must be selected before submitting.'], 422);
-        }
-
-        // Budget check is enforced here (at submit) — not at draft creation.
-        // This allows a buyer to save a draft even when over budget, but they
-        // cannot submit for approval until within budget.
-        $cc = $purchaseOrder->costCenter()->with('tenant')->first();
-        $fiscalYear = $this->budget->currentFiscalYear($cc);
-        $available  = $this->budget->getAvailable($purchaseOrder->cost_center_id, $fiscalYear);
-        if ((float) $purchaseOrder->grand_total > (float) $available['available']) {
-            return response()->json([
-                'error' => 'Insufficient budget. Available: ₹' . number_format($available['available'], 2)
-                         . ', Required: ₹' . number_format($purchaseOrder->grand_total, 2) . '.'
-            ], 422);
-        }
-
         try {
-            DB::transaction(function () use ($purchaseOrder) {
-                $cc = $purchaseOrder->costCenter()->with('tenant')->first();
-                $fiscalYear = $this->budget->currentFiscalYear($cc);
+            $this->requireTransactRole();
+            $this->authorizePoAccess($purchaseOrder);
 
+            if ($purchaseOrder->status !== 'draft') {
+                return response()->json(['error' => 'Only draft POs can be submitted.'], 422);
+            }
+
+            // Ensure valid cost center
+            $cc = null;
+            if ($purchaseOrder->cost_center_id) {
+                $cc = CostCenter::with('tenant')->find($purchaseOrder->cost_center_id);
+            }
+            if (!$cc && $purchaseOrder->tenant_id) {
+                $cc = CostCenter::with('tenant')->where('tenant_id', $purchaseOrder->tenant_id)->where('is_active', true)->first()
+                    ?: CostCenter::with('tenant')->where('tenant_id', $purchaseOrder->tenant_id)->first();
+                if ($cc) {
+                    $purchaseOrder->update(['cost_center_id' => $cc->id]);
+                }
+            }
+
+            if (!$cc) {
+                return response()->json(['error' => 'A valid Cost Center must be selected before submitting.'], 422);
+            }
+
+            // Ensure tenant
+            $tenant = $cc->tenant ?: \App\Models\Tenant::find($purchaseOrder->tenant_id ?: $cc->tenant_id);
+            if (!$tenant) {
+                return response()->json(['error' => 'Tenant could not be resolved for this PO.'], 422);
+            }
+
+            // Budget check is enforced here (at submit) — not at draft creation.
+            $fiscalYear = $this->budget->currentFiscalYear($cc);
+            $available  = $this->budget->getAvailable($cc->id, $fiscalYear);
+            if ((float) $purchaseOrder->grand_total > (float) $available['available']) {
+                return response()->json([
+                    'error' => 'Insufficient budget. Available: ₹' . number_format($available['available'], 2)
+                             . ', Required: ₹' . number_format($purchaseOrder->grand_total, 2) . '.'
+                ], 422);
+            }
+
+            DB::transaction(function () use ($purchaseOrder, $cc, $tenant, $fiscalYear) {
                 // Generate PO number on first submission (draft has none)
                 if (!$purchaseOrder->po_number) {
-                    $poNumber = $this->poNumbers->generate($cc->tenant);
+                    $poNumber = $this->poNumbers->generate($tenant);
                     $purchaseOrder->update([
                         'po_number' => $poNumber,
                         'po_date'   => now()->toDateString(),
@@ -488,25 +501,28 @@ class PurchaseOrderController extends Controller
                 }
 
                 $this->budget->freeze(
-                    $purchaseOrder->cost_center_id,
+                    $purchaseOrder->cost_center_id ?: $cc->id,
                     $fiscalYear,
                     $purchaseOrder->grand_total,
                     'PO',
                     $purchaseOrder->id,
-                    auth()->id(),
+                    auth()->id() ?? ($purchaseOrder->created_by ?: 1),
                     "Budget frozen for PO submission"
                 );
 
                 $this->approval->routeForApproval($purchaseOrder);
                 $this->actLog->log('PO', $purchaseOrder->id, 'submitted');
             });
+
+            return response()->json($purchaseOrder->fresh());
         } catch (\RuntimeException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('PO Submit failed for PO #' . $purchaseOrder->id . ': ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
             return response()->json(['error' => 'Submission failed: ' . $e->getMessage()], 422);
         }
-
-        return response()->json($purchaseOrder->fresh());
     }
 
     public function release(Request $request, PurchaseOrder $purchaseOrder): JsonResponse

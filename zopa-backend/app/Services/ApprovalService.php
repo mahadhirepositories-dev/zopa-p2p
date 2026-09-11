@@ -102,8 +102,12 @@ class ApprovalService
         $this->createApprovalRecords('PO', $po->id, $firstLevel);
         $po->update(['status' => 'pending_l' . $firstLevel->level]);
 
-        // Notify all assigned approvers at this level
-        $this->notifyLevelApprovers('PO', $po->id, $firstLevel, $po->load('items.product', 'vendor', 'costCenter'));
+        // Notify all assigned approvers at this level (non-fatal if email fails)
+        try {
+            $this->notifyLevelApprovers('PO', $po->id, $firstLevel, $po->load('items.product', 'vendor', 'costCenter'));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     // ─── Invoice Approval ─────────────────────────────────────────────────────

@@ -10,7 +10,15 @@ class BudgetService
 {
     public function getAvailable(int $costCenterId, int $fiscalYear): array
     {
-        $cc = CostCenter::findOrFail($costCenterId);
+        $cc = CostCenter::find($costCenterId);
+        if (!$cc) {
+            return [
+                'annual' => 0.0,
+                'frozen' => 0.0,
+                'consumed' => 0.0,
+                'available' => 0.0,
+            ];
+        }
 
         $agg = BudgetLedger::where('cost_center_id', $costCenterId)
             ->where('fiscal_year', $fiscalYear)
@@ -74,10 +82,10 @@ class BudgetService
         ]);
     }
 
-    public function currentFiscalYear(CostCenter $cc): int
+    public function currentFiscalYear(?CostCenter $cc = null): int
     {
         $now = now();
-        $start = $cc->tenant->fiscal_year_start ?? 4;
+        $start = $cc?->tenant?->fiscal_year_start ?? 4;
         return $now->month >= $start ? $now->year : $now->year - 1;
     }
 }
