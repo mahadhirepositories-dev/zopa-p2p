@@ -200,34 +200,51 @@ class PurchaseOrderController extends Controller
                 'id', collect($request->items)->pluck('product_id')->filter()->unique()
             )->get()->keyBy('id');
 
+            $insertItems = [];
+            $prIncrements = [];
+            $now = now();
+
             foreach ($request->items as $i => $item) {
                 $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
                 $product = isset($item['product_id']) ? $productMap->get($item['product_id']) : null;
-                PoItem::create([
-                    'po_id' => $po->id,
-                    'sno' => $i + 1,
-                    'pr_item_id' => $item['pr_item_id'] ?? null,
-                    'product_id' => $item['product_id'] ?? null,
-                    'product_code' => $product?->code,
-                    'product_name' => $product?->name,
-                    'hsn_code' => $product?->hsn_code,
-                    'description' => $item['description'],
-                    'category_id' => $item['category_id'] ?? null,
-                    'qty' => $item['qty'],
-                    'unit' => $item['unit'] ?? null,
-                    'net_rate' => $item['net_rate'],
-                    'gst_rate' => $item['gst_rate'],
-                    'gross_rate' => $grossRate,
-                    'amount' => $grossRate * $item['qty'],
-                    'required_by' => $item['required_by'] ?? null,
+                $insertItems[] = [
+                    'po_id'           => $po->id,
+                    'sno'             => $i + 1,
+                    'pr_item_id'      => $item['pr_item_id'] ?? null,
+                    'product_id'      => $item['product_id'] ?? null,
+                    'product_code'    => $product?->code,
+                    'product_name'    => $product?->name,
+                    'hsn_code'        => $product?->hsn_code,
+                    'description'     => $item['description'],
+                    'category_id'     => $item['category_id'] ?? null,
+                    'qty'             => $item['qty'],
+                    'unit'            => $item['unit'] ?? null,
+                    'net_rate'        => $item['net_rate'],
+                    'gst_rate'        => $item['gst_rate'],
+                    'gross_rate'      => $grossRate,
+                    'amount'          => $grossRate * $item['qty'],
+                    'required_by'     => $item['required_by'] ?? null,
                     'warranty_months' => $item['warranty_months'] ?? 0,
-                ]);
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
 
-                // Update converted_qty on the source PR item
                 if (!empty($item['pr_item_id'])) {
-                    $prItem = \App\Models\PrItem::find($item['pr_item_id']);
-                    if ($prItem) {
-                        $prItem->increment('converted_qty', $item['qty']);
+                    $prItemId = (int) $item['pr_item_id'];
+                    $prIncrements[$prItemId] = ($prIncrements[$prItemId] ?? 0.0) + (float) $item['qty'];
+                }
+            }
+
+            foreach (array_chunk($insertItems, 200) as $chunk) {
+                PoItem::insert($chunk);
+            }
+
+            if (!empty($prIncrements)) {
+                $prItemsToUpdate = \App\Models\PrItem::whereIn('id', array_keys($prIncrements))->get();
+                foreach ($prItemsToUpdate as $prItem) {
+                    $inc = $prIncrements[$prItem->id] ?? 0;
+                    if ($inc > 0) {
+                        $prItem->increment('converted_qty', $inc);
                     }
                 }
             }
@@ -325,49 +342,65 @@ class PurchaseOrderController extends Controller
                     'id', collect($request->items)->pluck('product_id')->filter()->unique()
                 )->get()->keyBy('id');
 
-                // Decrement converted_qty on old PR items before deleting
+                // Track net conversion deltas per PR item (oldItem decrements, newItem increments)
+                $prDeltas = [];
                 foreach ($purchaseOrder->items as $oldItem) {
                     if ($oldItem->pr_item_id) {
-                        $prItem = \App\Models\PrItem::find($oldItem->pr_item_id);
-                        if ($prItem) {
-                            // Prevent negative quantities
-                            $decrementQty = min((float)$oldItem->qty, (float)$prItem->converted_qty);
-                            if ($decrementQty > 0) {
-                                $prItem->decrement('converted_qty', $decrementQty);
-                            }
-                        }
+                        $prItemId = (int) $oldItem->pr_item_id;
+                        $prDeltas[$prItemId] = ($prDeltas[$prItemId] ?? 0.0) - (float) $oldItem->qty;
                     }
                 }
 
                 $purchaseOrder->items()->delete();
+
+                $insertItems = [];
+                $now = now();
                 foreach ($request->items as $i => $item) {
                     $grossRate = $item['net_rate'] * (1 + $item['gst_rate'] / 100);
                     $product = isset($item['product_id']) ? $productMap->get($item['product_id']) : null;
-                    PoItem::create([
-                        'po_id' => $purchaseOrder->id,
-                        'sno' => $i + 1,
-                        'pr_item_id' => $item['pr_item_id'] ?? null,
-                        'product_id' => $item['product_id'] ?? null,
-                        'product_code' => $product?->code,
-                        'product_name' => $product?->name,
-                        'hsn_code' => $product?->hsn_code,
-                        'description' => $item['description'],
-                        'category_id' => $item['category_id'] ?? null,
-                        'qty' => $item['qty'],
-                        'unit' => $item['unit'] ?? null,
-                        'net_rate' => $item['net_rate'],
-                        'gst_rate' => $item['gst_rate'],
-                        'gross_rate' => $grossRate,
-                        'amount' => $grossRate * $item['qty'],
-                        'required_by' => $item['required_by'] ?? null,
+                    $insertItems[] = [
+                        'po_id'           => $purchaseOrder->id,
+                        'sno'             => $i + 1,
+                        'pr_item_id'      => $item['pr_item_id'] ?? null,
+                        'product_id'      => $item['product_id'] ?? null,
+                        'product_code'    => $product?->code,
+                        'product_name'    => $product?->name,
+                        'hsn_code'        => $product?->hsn_code,
+                        'description'     => $item['description'],
+                        'category_id'     => $item['category_id'] ?? null,
+                        'qty'             => $item['qty'],
+                        'unit'            => $item['unit'] ?? null,
+                        'net_rate'        => $item['net_rate'],
+                        'gst_rate'        => $item['gst_rate'],
+                        'gross_rate'      => $grossRate,
+                        'amount'          => $grossRate * $item['qty'],
+                        'required_by'     => $item['required_by'] ?? null,
                         'warranty_months' => $item['warranty_months'] ?? 0,
-                    ]);
+                        'created_at'      => $now,
+                        'updated_at'      => $now,
+                    ];
 
-                    // Increment converted_qty on new PR items
                     if (!empty($item['pr_item_id'])) {
-                        $prItem = \App\Models\PrItem::find($item['pr_item_id']);
-                        if ($prItem) {
-                            $prItem->increment('converted_qty', $item['qty']);
+                        $prItemId = (int) $item['pr_item_id'];
+                        $prDeltas[$prItemId] = ($prDeltas[$prItemId] ?? 0.0) + (float) $item['qty'];
+                    }
+                }
+
+                foreach (array_chunk($insertItems, 200) as $chunk) {
+                    PoItem::insert($chunk);
+                }
+
+                if (!empty($prDeltas)) {
+                    $prItemsToUpdate = \App\Models\PrItem::whereIn('id', array_keys($prDeltas))->get();
+                    foreach ($prItemsToUpdate as $prItem) {
+                        $delta = $prDeltas[$prItem->id] ?? 0.0;
+                        if ($delta > 0) {
+                            $prItem->increment('converted_qty', $delta);
+                        } elseif ($delta < 0) {
+                            $dec = min((float) $prItem->converted_qty, abs($delta));
+                            if ($dec > 0) {
+                                $prItem->decrement('converted_qty', $dec);
+                            }
                         }
                     }
                 }

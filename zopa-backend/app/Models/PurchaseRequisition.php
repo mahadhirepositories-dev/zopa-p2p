@@ -321,7 +321,10 @@ class PurchaseRequisition extends Model
         foreach ($pr->items as $prItem) {
             $totalConverted = (float) $poItems->where('pr_item_id', $prItem->id)->sum('qty');
             if ($totalConverted > 0) {
-                $prItem->update(['converted_qty' => max((float)$prItem->converted_qty, $totalConverted)]);
+                $newConverted = max((float)$prItem->converted_qty, $totalConverted);
+                if (abs((float)$prItem->converted_qty - $newConverted) > 0.0001) {
+                    $prItem->update(['converted_qty' => $newConverted]);
+                }
             }
         }
 

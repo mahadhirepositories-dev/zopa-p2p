@@ -157,8 +157,10 @@ class PurchaseRequisitionController extends Controller
                 'status'             => 'draft',
             ]);
 
+            $insertItems = [];
+            $now = now();
             foreach ($request->items as $i => $item) {
-                PrItem::create([
+                $insertItems[] = [
                     'pr_id'           => $pr->id,
                     'sno'             => $i + 1,
                     'product_id'      => $item['product_id'] ?? null,
@@ -168,7 +170,12 @@ class PurchaseRequisitionController extends Controller
                     'unit'            => $item['unit'] ?? 'nos',
                     'estimated_price' => $item['estimated_price'] ?? 0,
                     'remarks'         => $item['remarks'] ?? null,
-                ]);
+                    'created_at'      => $now,
+                    'updated_at'      => $now,
+                ];
+            }
+            foreach (array_chunk($insertItems, 200) as $chunk) {
+                PrItem::insert($chunk);
             }
 
             $this->actLog->log('PR', $pr->id, 'created', [
@@ -237,8 +244,10 @@ class PurchaseRequisitionController extends Controller
             if ($request->has('items')) {
                 $purchaseRequisition->items()->delete();
                 $estimated = 0;
+                $insertItems = [];
+                $now = now();
                 foreach ($request->items as $i => $item) {
-                    PrItem::create([
+                    $insertItems[] = [
                         'pr_id'           => $purchaseRequisition->id,
                         'sno'             => $i + 1,
                         'product_id'      => $item['product_id'] ?? null,
@@ -248,8 +257,13 @@ class PurchaseRequisitionController extends Controller
                         'unit'            => $item['unit'] ?? 'nos',
                         'estimated_price' => $item['estimated_price'] ?? 0,
                         'remarks'         => $item['remarks'] ?? null,
-                    ]);
+                        'created_at'      => $now,
+                        'updated_at'      => $now,
+                    ];
                     $estimated += ($item['qty'] * ($item['estimated_price'] ?? 0));
+                }
+                foreach (array_chunk($insertItems, 200) as $chunk) {
+                    PrItem::insert($chunk);
                 }
             }
 

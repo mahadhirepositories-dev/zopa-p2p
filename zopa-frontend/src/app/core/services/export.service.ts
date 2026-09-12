@@ -1,12 +1,14 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { NotificationService } from './notification.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ExportService {
   private http = inject(HttpClient);
+  private notify = inject(NotificationService);
 
   export(endpoint: string, params: any = {}, filename: string = 'export.xlsx') {
     let httpParams = new HttpParams();
@@ -19,15 +21,20 @@ export class ExportService {
     return this.http.get(`${environment.apiUrl}/${endpoint}`, {
       params: httpParams,
       responseType: 'blob'
-    }).subscribe(blob => {
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+    }).subscribe({
+      next: blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      },
+      error: () => {
+        this.notify.error('Failed to download export file. Please try again.');
+      }
     });
   }
 }

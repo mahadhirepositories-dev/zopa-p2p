@@ -39,40 +39,6 @@ use Illuminate\Support\Facades\Route;
 // Public — login is rate-limited (brute-force protection): 6 attempts/min per IP.
 Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:6,1');
 
-// TEMP DEBUG — remove after diagnosis
-Route::get('/debug-pdf-engine', function () {
-    $binary = config('snappy.pdf.binary', '/usr/bin/wkhtmltopdf');
-    $exists = file_exists($binary);
-    $executable = is_executable($binary);
-    exec('test -x ' . escapeshellarg($binary) . ' 2>/dev/null', $out, $code);
-    $testX = $code === 0;
-
-    $version = null;
-    exec(escapeshellarg($binary) . ' --version 2>&1', $vOut, $vCode);
-    $version = implode(' ', $vOut);
-
-    // Try generating a minimal 2-page PDF
-    $html = '<html><body><p style="page-break-after:always">Page 1</p><p>Page 2</p></body></html>';
-    $tmpIn  = sys_get_temp_dir() . '/dbg_in_'.uniqid().'.html';
-    $tmpOut = sys_get_temp_dir() . '/dbg_out_'.uniqid().'.pdf';
-    file_put_contents($tmpIn, $html);
-    exec(escapeshellarg($binary) . ' --header-right "PO No: TEST" --margin-top 15 ' . escapeshellarg($tmpIn) . ' ' . escapeshellarg($tmpOut) . ' 2>&1', $pdfOut, $pdfCode);
-    $pdfSize = file_exists($tmpOut) ? filesize($tmpOut) : 0;
-    @unlink($tmpIn); @unlink($tmpOut);
-
-    return response()->json([
-        'binary'      => $binary,
-        'exists'      => $exists,
-        'executable'  => $executable,
-        'test_x'      => $testX,
-        'version'     => $version,
-        'pdf_exit'    => $pdfCode,
-        'pdf_output'  => $pdfOut,
-        'pdf_size'    => $pdfSize,
-        'php_os'      => PHP_OS_FAMILY,
-        'snappy_cfg'  => config('snappy.pdf'),
-    ]);
-});
 
 // Public password reset (rate-limited). forgot-password emails a one-time link;
 // reset-password completes it with the emailed token.
@@ -92,8 +58,6 @@ Route::get('/grn-pdf/{id}', function ($id, \Illuminate\Http\Request $request) {
     $token = $request->query('token');
     $cachedId = \Illuminate\Support\Facades\Cache::get("grn_pdf_tkn_{$token}");
     abort_if(!$cachedId || (int) $cachedId !== (int) $id, 403, 'Invalid or expired token.');
-    \Illuminate\Support\Facades\Cache::forget("grn_pdf_tkn_{$token}");
-
     $grn = \App\Models\Grn::with([
         'items.poItem.product',
         'purchaseOrder.vendor', 'purchaseOrder.tenant',
@@ -376,7 +340,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/vendor-pdf/{id}', function (\Illuminate\Http\Request $request, $id) {
     $token = $request->query('token');
-    $payload = $token ? \Cache::pull("pdf_dl_vendor_{$token}") : null;
+    $payload = $token ? \Cache::get("pdf_dl_vendor_{$token}") : null;
 
     if (!$payload || (int) $payload['vendor_id'] !== (int) $id) {
         abort(403, 'Invalid or expired download token.');

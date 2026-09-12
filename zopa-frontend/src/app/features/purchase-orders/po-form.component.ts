@@ -1189,7 +1189,13 @@ export class PoFormComponent implements OnInit {
     // Pre-fill line items from PR items (rates, unit, gst, category, qty)
     if (pr.items?.length) {
       this.items.clear({ emitEvent: false });
-      pr.items.forEach((item: any) => {
+      const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0);
+      const itemsToConvert = hasAnyConversion
+        ? pr.items.filter((it: any) => (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
+        : pr.items;
+      const targetItems = itemsToConvert.length > 0 ? itemsToConvert : pr.items;
+
+      targetItems.forEach((item: any) => {
         const prod = item.product_id ? this.productMap().get(item.product_id) : (item.product ?? null);
         const prPrice = item.estimated_price != null ? +item.estimated_price : 0;
         const prodPrice = prod?.net_rate != null ? +prod.net_rate : 0;
@@ -1198,10 +1204,12 @@ export class PoFormComponent implements OnInit {
         const unit = item.unit || prod?.unit || null;
         const categoryId = item.category_id || prod?.category_id || null;
         const warrantyMonths = prod?.warranty_months != null ? +prod.warranty_months : 0;
+        const remainingQty = Math.max(0, +(item.qty != null ? item.qty : 1) - +(item.converted_qty || 0));
+        const finalQty = hasAnyConversion && remainingQty > 0 ? remainingQty : (item.qty != null ? +item.qty : 1);
 
         this.items.push(this.buildItem({
           description:     item.description,
-          qty:             item.qty != null ? +item.qty : 1,
+          qty:             finalQty,
           unit:            unit,
           net_rate:        netRate,
           gst_rate:        gstRate,
@@ -1250,7 +1258,13 @@ export class PoFormComponent implements OnInit {
         this.items.clear({ emitEvent: false });
         prs.forEach(pr => {
           if (pr.items?.length) {
-            pr.items.forEach((item: any) => {
+            const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0);
+            const itemsToConvert = hasAnyConversion
+              ? pr.items.filter((it: any) => (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
+              : pr.items;
+            const targetItems = itemsToConvert.length > 0 ? itemsToConvert : pr.items;
+
+            targetItems.forEach((item: any) => {
               const prod = item.product_id ? this.productMap().get(item.product_id) : (item.product ?? null);
               const prPrice = item.estimated_price != null ? +item.estimated_price : 0;
               const prodPrice = prod?.net_rate != null ? +prod.net_rate : 0;
@@ -1259,10 +1273,12 @@ export class PoFormComponent implements OnInit {
               const unit = item.unit || prod?.unit || null;
               const categoryId = item.category_id || prod?.category_id || null;
               const warrantyMonths = prod?.warranty_months != null ? +prod.warranty_months : 0;
+              const remainingQty = Math.max(0, +(item.qty != null ? item.qty : 1) - +(item.converted_qty || 0));
+              const finalQty = hasAnyConversion && remainingQty > 0 ? remainingQty : (item.qty != null ? +item.qty : 1);
 
               this.items.push(this.buildItem({
                 description:     item.description,
-                qty:             item.qty != null ? +item.qty : 1,
+                qty:             finalQty,
                 unit:            unit,
                 net_rate:        netRate,
                 gst_rate:        gstRate,
