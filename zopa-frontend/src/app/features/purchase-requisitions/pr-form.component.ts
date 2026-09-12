@@ -457,10 +457,15 @@ export class PrFormComponent implements OnInit {
       let desc = p.name;
       if (p.description && p.description.trim()) {
         const pDesc = p.description.trim();
-        if (!pDesc.toLowerCase().startsWith(p.name.toLowerCase())) {
-          desc = `${p.name} - ${pDesc}`;
-        } else {
+        const pName = p.name.trim();
+        const pDescLower = pDesc.toLowerCase();
+        const pNameLower = pName.toLowerCase();
+        if (pDescLower === pNameLower || pNameLower.includes(pDescLower)) {
+          desc = pName;
+        } else if (pDescLower.startsWith(pNameLower)) {
           desc = pDesc;
+        } else {
+          desc = `${pName} - ${pDesc}`;
         }
       }
 

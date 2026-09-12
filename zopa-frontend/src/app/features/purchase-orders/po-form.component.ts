@@ -1465,10 +1465,15 @@ export class PoFormComponent implements OnInit {
     let desc = product.name;
     if (product.description && product.description.trim()) {
       const pDesc = product.description.trim();
-      if (!pDesc.toLowerCase().startsWith(product.name.toLowerCase())) {
-        desc = `${product.name} - ${pDesc}`;
-      } else {
+      const pName = product.name.trim();
+      const pDescLower = pDesc.toLowerCase();
+      const pNameLower = pName.toLowerCase();
+      if (pDescLower === pNameLower || pNameLower.includes(pDescLower)) {
+        desc = pName;
+      } else if (pDescLower.startsWith(pNameLower)) {
         desc = pDesc;
+      } else {
+        desc = `${pName} - ${pDesc}`;
       }
     }
 

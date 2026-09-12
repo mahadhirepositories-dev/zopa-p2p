@@ -382,6 +382,24 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       $itCode = $item->product_code ?? $item->product?->code;
       $itName = $item->product_name ?? $item->product?->name;
       $itHsn = $item->hsn_code ?? $item->product?->hsn_code;
+
+      $extraDesc = trim((string)($item->description ?? ''));
+      if ($itName && !empty($extraDesc)) {
+          $nLower = strtolower(trim((string)$itName));
+          $dLower = strtolower($extraDesc);
+          if ($dLower === $nLower || str_contains($nLower, $dLower)) {
+              $extraDesc = '';
+          } elseif (str_starts_with($dLower, $nLower)) {
+              $rem = trim(substr($extraDesc, strlen(trim((string)$itName))));
+              $rem = ltrim($rem, " \t\n\r\0\x0B-–—:/");
+              $rem = trim($rem);
+              if (empty($rem) || strtolower($rem) === $nLower || str_contains($nLower, strtolower($rem))) {
+                  $extraDesc = '';
+              } else {
+                  $extraDesc = $rem;
+              }
+          }
+      }
     @endphp
     <tr>
       <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
@@ -389,8 +407,8 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       <td>
         @if($itName)
           <div style="font-weight:bold;color:#111827;font-size:9.5px;">{{ $itName }}</div>
-          @if($item->description && strtolower(trim((string)$item->description)) !== strtolower(trim((string)$itName)))
-            <div style="color:#4b5563;font-size:8.5px;margin-top:2px;white-space:pre-wrap;">{{ $item->description }}</div>
+          @if(!empty($extraDesc))
+            <div style="color:#4b5563;font-size:8.5px;margin-top:2px;white-space:pre-wrap;">{{ $extraDesc }}</div>
           @endif
         @else
           <div style="font-weight:bold;color:#1f2937;font-size:9.5px;white-space:pre-wrap;">{{ $item->description }}</div>

@@ -270,8 +270,8 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                           {{ i.product_name || i.product?.name }}
                         </div>
                       }
-                      @if (i.description && (i.description.trim() !== (i.product_name || i.product?.name || '').trim())) {
-                        <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;line-height:1.4;">{{ i.description }}</div>
+                      @if (getItemExtraDesc(i); as extra) {
+                        <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;line-height:1.4;">{{ extra }}</div>
                       } @else if (!i.product_name && !i.product?.name) {
                         <div style="font-weight:600;font-size:13px;color:var(--text-1);white-space:pre-wrap;">{{ i.description }}</div>
                       }
@@ -833,6 +833,28 @@ export class PoDetailComponent implements OnInit {
   ngOnInit() {
     this.loadPo();
     if (this.auth.isSuperAdmin()) this.loadDiagnostic();
+  }
+
+  getItemExtraDesc(item: any): string {
+    const desc = (item?.description || '').trim();
+    const name = (item?.product_name || item?.product?.name || '').trim();
+    if (!desc) return '';
+    if (!name) return '';
+
+    const nLower = name.toLowerCase();
+    const dLower = desc.toLowerCase();
+    if (dLower === nLower || nLower.includes(dLower)) return '';
+
+    if (dLower.startsWith(nLower)) {
+      let rem = desc.slice(name.length).trim();
+      rem = rem.replace(/^[\s\-–—:\/]+/, '').trim();
+      if (!rem || rem.toLowerCase() === nLower || nLower.includes(rem.toLowerCase())) {
+        return '';
+      }
+      return rem;
+    }
+
+    return desc;
   }
 
   loadingGrns = signal(false);

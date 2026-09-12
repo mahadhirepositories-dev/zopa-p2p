@@ -408,8 +408,8 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                           @if (item.product?.name) {
                             <div style="font-weight:700;font-size:13.5px;color:var(--text-1);margin-bottom:2px;">{{ item.product.name }}</div>
                           }
-                          @if (item.description && item.description.trim() !== (item.product?.name || '').trim()) {
-                            <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;">{{ item.description }}</div>
+                          @if (getItemExtraDesc(item); as extra) {
+                            <div style="font-size:12px;color:var(--text-2);white-space:pre-wrap;">{{ extra }}</div>
                           } @else if (!item.product?.name) {
                             <div style="font-weight:500;">{{ item.description }}</div>
                           }
@@ -582,6 +582,28 @@ export class PrDetailComponent implements OnInit {
       next: r => { this.pr.set(r); this.acting.set(false); this.notify.success('RFQ Approved'); },
       error: e => { this.notify.error(e.error?.error ?? 'Action failed'); this.acting.set(false); },
     });
+  }
+
+  getItemExtraDesc(item: any): string {
+    const desc = (item?.description || '').trim();
+    const name = (item?.product?.name || '').trim();
+    if (!desc) return '';
+    if (!name) return '';
+
+    const nLower = name.toLowerCase();
+    const dLower = desc.toLowerCase();
+    if (dLower === nLower || nLower.includes(dLower)) return '';
+
+    if (dLower.startsWith(nLower)) {
+      let rem = desc.slice(name.length).trim();
+      rem = rem.replace(/^[\s\-–—:\/]+/, '').trim();
+      if (!rem || rem.toLowerCase() === nLower || nLower.includes(rem.toLowerCase())) {
+        return '';
+      }
+      return rem;
+    }
+
+    return desc;
   }
 
   convertToPo() {
