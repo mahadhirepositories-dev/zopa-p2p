@@ -340,20 +340,22 @@ class PurchaseRequisition extends Model
             $convertedQty = (float)$it->converted_qty;
             $shortClosedQty = (float)$it->short_closed_qty;
             $reqQty = (float)$it->qty;
-            return $isShortClosed || $convertedQty >= $reqQty || ($convertedQty >= $reqQty - 1.0) || ($convertedQty + $shortClosedQty >= $reqQty);
+            return $isShortClosed 
+                || ($convertedQty >= $reqQty - 0.0001) 
+                || (($convertedQty + $shortClosedQty) >= $reqQty - 0.0001);
         });
 
         $anyProgress = $pr->items->some(function ($it) {
             $isShortClosed = $it->is_short_closed || ($it->remarks === 'Short Close');
-            return (float)$it->converted_qty > 0 || $isShortClosed;
+            return (float)$it->converted_qty > 0.0001 || $isShortClosed;
         });
 
         $hasShortClosedItems = $pr->items->some(fn($it) => $it->is_short_closed || ($it->remarks === 'Short Close'));
-        $hasConvertedItems = $pr->items->some(fn($it) => (float)$it->converted_qty > 0);
+        $hasConvertedItems = $pr->items->some(fn($it) => (float)$it->converted_qty > 0.0001);
         $isShortClosedPr = $pr->status === 'short_closed' || !empty($pr->short_closed_at) || !empty($pr->short_close_reason);
 
         if ($allResolved) {
-            if ($isShortClosedPr || ($hasShortClosedItems && $hasConvertedItems)) {
+            if ($isShortClosedPr || $hasShortClosedItems) {
                 $pr->update(['status' => 'short_closed', 'converted_at' => $pr->converted_at ?? now()]);
             } elseif (!in_array($pr->status, ['short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
                 $pr->update([
@@ -364,14 +366,14 @@ class PurchaseRequisition extends Model
         } elseif ($anyProgress) {
             if ($isShortClosedPr) {
                 $pr->update(['status' => 'short_closed']);
-            } elseif (!in_array($pr->status, ['short_closed', 'converted', 'short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
+            } elseif (!in_array($pr->status, ['short_close_pending_l1', 'short_close_pending_l2', 'short_close_pending_l3'])) {
                 $pr->update([
                     'status' => 'partially_converted',
                 ]);
             }
         } else {
             // Revert status if zero items have been converted or short closed
-            if (in_array($pr->status, ['partially_converted'])) {
+            if (in_array($pr->status, ['partially_converted', 'converted'])) {
                 $pr->update([
                     'status' => 'submitted',
                 ]);
