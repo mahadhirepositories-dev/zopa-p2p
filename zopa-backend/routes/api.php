@@ -16,6 +16,7 @@ use App\Http\Controllers\Master\OrgController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\VendorController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\OperationalReportController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\PurchaseRequisitionController;
 use App\Http\Controllers\ReportController;
@@ -335,6 +336,16 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Reports
         Route::get('reports/po-tat', [ReportController::class, 'poTat']);
+
+        // Operational Reports (McKinsey Style)
+        Route::get('operational-reports', [OperationalReportController::class, 'index']);
+        Route::get('operational-reports/approvers', [OperationalReportController::class, 'clientApprovers']);
+        Route::post('operational-reports/start', [OperationalReportController::class, 'start']);
+        Route::get('operational-reports/{operationalReport}', [OperationalReportController::class, 'show']);
+        Route::put('operational-reports/{operationalReport}', [OperationalReportController::class, 'update']);
+        Route::get('operational-reports/{operationalReport}/pdf', [OperationalReportController::class, 'pdf']);
+        Route::post('operational-reports/{operationalReport}/send', [OperationalReportController::class, 'send']);
+        Route::delete('operational-reports/{operationalReport}', [OperationalReportController::class, 'destroy']);
     });
 });
 

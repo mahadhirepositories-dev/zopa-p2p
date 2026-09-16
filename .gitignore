@@ -4,6 +4,7 @@
 # Logs & big build artifacts
 *.log
 *.zip
+*.xlsx
 zopa-po-md.pdf
 
 # Old "copy the app into a zip" deploy folder — not needed with CI/CD

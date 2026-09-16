@@ -89,6 +89,24 @@ class PdfService
         return static::generateWithDomPdf('pdf.grn', ['grn' => $grn]);
     }
 
+    public static function makeOperationalReportPdf(\App\Models\OperationalReport $report): string
+    {
+        $report->loadMissing(['tenant', 'creator', 'sender']);
+
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
+        $fontDir = storage_path('fonts');
+        if (!file_exists($fontDir)) {
+            @mkdir($fontDir, 0775, true);
+        }
+
+        self::$lastEngineUsed = 'dompdf';
+        return \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.operational-report', ['report' => $report])
+            ->setPaper('a4', 'landscape')
+            ->output();
+    }
+
     private static function generate(string $view, array $data): string
     {
         try {

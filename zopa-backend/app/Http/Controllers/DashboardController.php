@@ -365,8 +365,11 @@ class DashboardController extends Controller
             'pr_counts'             => $prsByStatus,
             'recent_prs'            => $recentPrs,
             'pr_kpi'                => $prKpi,
-            'pending_pr_tracking'   => $pendingPrs,
-            'po_delivery_tracking'  => $pendingDeliveryPos,
+            'pending_pr_tracking'       => $pendingPrs,
+            'po_delivery_tracking'      => $pendingDeliveryPos,
+            'latest_operational_report' => \App\Models\OperationalReport::where('tenant_id', $tenantId)
+                ->latest()
+                ->first(['id', 'title', 'status', 'period_start', 'period_end', 'sent_at', 'created_at']),
         ]);
     }
 }

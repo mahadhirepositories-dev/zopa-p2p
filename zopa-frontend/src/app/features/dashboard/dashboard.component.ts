@@ -45,6 +45,7 @@ interface DashboardStats {
   pr_kpi: PrKpi[];
   pending_pr_tracking?: any[];
   po_delivery_tracking?: any[];
+  latest_operational_report?: any;
 }
 
 @Component({
@@ -109,7 +110,25 @@ interface DashboardStats {
           <span>Loading dashboard…</span>
         </div>
 
-      } @else if (stats()) {
+        @if (stats()?.latest_operational_report; as op) {
+          <div class="op-report-banner" style="display:flex;justify-content:space-between;align-items:center;background:#0f2942;color:#ffffff;padding:12px 18px;border-radius:8px;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <mat-icon style="color:#38bdf8;">assignment</mat-icon>
+              <div>
+                <div style="font-weight:700;font-size:13px;">Latest Operational Report: {{ op.title }}</div>
+                <div style="font-size:11px;color:#94a3b8;">
+                  Status: <strong style="color:#ffffff;text-transform:uppercase;">{{ op.status }}</strong>
+                  @if (op.sent_at) {
+                    &bull; Dispatched: {{ op.sent_at | date:'dd MMM yyyy, HH:mm' }}
+                  }
+                </div>
+              </div>
+            </div>
+            <button mat-stroked-button style="color:#ffffff;border-color:#38bdf8;" routerLink="/reports">
+              <mat-icon>open_in_new</mat-icon> View Operational Reports
+            </button>
+          </div>
+        }
 
         <!-- ── Row 1: PR Stat cards ────────────────────────── -->
         <div class="stat-grid" style="margin-bottom:20px;">

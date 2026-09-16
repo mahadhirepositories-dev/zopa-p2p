@@ -569,6 +569,41 @@ export const HELP_ARTICLES: HelpArticle[] = [
       <p>The system will combine these to generate the final document numbers (e.g., <code>TH/2026-27/49</code>). Changing this configuration applies to all future documents generated.</p>`,
   },
   {
+    id: 'operational-reports',
+    title: 'Generating & Mailing Operational Reports (McKinsey Style)',
+    category: 'Dashboards & Reports',
+    icon: 'assignment',
+    summary: 'Auto-fetch weekly operational metrics, enter remarks, correct statuses, and email an executive PDF report.',
+    keywords: ['operational report', 'weekly report', 'mckinsey', 'pdf', 'buyer', 'client approver', 'cc', 'tat', 'deliveries', 'open prs', 'tasks'],
+    modules: ['reports'],
+    body: `<p>Buyers can create comprehensive, client-facing <strong>Operational Reports</strong> in under 15 minutes to review open requisitions, pending approvals, logistics fulfillment, and action items.</p>
+      <ol>
+        <li><strong>Start Operational Report</strong> — Go to <strong>Reports &rarr; Operational Reports</strong> tab and click <strong>Start Operational Report</strong>. The system automatically fetches:
+          <ul>
+            <li>6 Key Executive Metrics (PRs Closed, Avg PR TAT, POs Issued count &amp; value, Total Open PRs, PRs TAT &gt; 10 Days, Pending Deliveries).</li>
+            <li>All active Purchase Requisitions with age and cost centers.</li>
+            <li>All POs pending Level 1/2/3 approval.</li>
+            <li>All released POs awaiting delivery with fulfillment aging badges.</li>
+          </ul>
+        </li>
+        <li><strong>Enter Remarks &amp; Correct Statuses</strong> — The team reviews items side-by-side:
+          <ul>
+            <li><strong>Status Corrections</strong>: Directly update PR or delivery statuses (e.g. from Submitted to RFQ Approved or Partially Converted). Changes sync directly to the system and dashboard.</li>
+            <li><strong>Manual Remarks</strong>: Type item-specific remarks explaining current progress or vendor coordination.</li>
+            <li><strong>Operational Tasks</strong>: Add custom action items with owner, due date, status, and remarks.</li>
+          </ul>
+        </li>
+        <li><strong>Save Draft &amp; Preview PDF</strong> — Click <strong>Save Draft</strong> to store your work without losing anything. Click <strong>Preview PDF</strong> to inspect the generated executive McKinsey-style report with visual TAT distribution charts and delivery risk profiles.</li>
+        <li><strong>Mail Client Directly</strong> — Click <strong>Send to Client</strong>:
+          <ul>
+            <li><strong>To</strong>: Select a client approver from the dropdown or enter an address.</li>
+            <li><strong>CC</strong>: The generating Buyer and ZOPA Chief (<code>rajashyam@zopapro.com</code>) are automatically CC'd. Use the <strong>Additional CCs</strong> box to add any extra stakeholder emails.</li>
+            <li><strong>Attachment</strong>: The complete McKinsey-style PDF report is attached automatically to the executive email summary.</li>
+          </ul>
+        </li>
+      </ol>`,
+  },
+  {
     id: 'export-data',
     title: 'Export Data to Excel',
     category: 'Dashboards & Reports',
