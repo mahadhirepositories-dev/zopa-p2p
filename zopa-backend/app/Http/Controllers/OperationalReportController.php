@@ -335,15 +335,28 @@ class OperationalReportController extends Controller
      */
     public function pdf(OperationalReport $operationalReport)
     {
-        $operationalReport->loadMissing(['tenant', 'creator', 'sender']);
+        try {
+            $operationalReport->loadMissing(['tenant', 'creator', 'sender']);
 
-        $pdfBytes = PdfService::makeOperationalReportPdf($operationalReport);
-        $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $operationalReport->title ?: 'Operational_Report');
+            $pdfBytes = PdfService::makeOperationalReportPdf($operationalReport);
+            $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $operationalReport->title ?: 'Operational_Report');
 
-        return response($pdfBytes, 200, [
-            'Content-Type'        => 'application/pdf',
-            'Content-Disposition' => 'inline; filename="' . $safeTitle . '.pdf"',
-        ]);
+            return response($pdfBytes, 200, [
+                'Content-Type'        => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $safeTitle . '.pdf"',
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('OperationalReport PDF generation error: ' . $e->getMessage(), [
+                'report_id' => $operationalReport->id,
+                'file'      => $e->getFile(),
+                'line'      => $e->getLine(),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to generate PDF: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**

@@ -1147,28 +1147,50 @@ export class ReportsComponent implements OnInit {
     if (!report) return;
     this.previewingPdf.set(true);
 
-    const token = localStorage.getItem('auth_token') ?? '';
-    fetch(`${environment.apiUrl}/operational-reports/${report.id}/pdf`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to generate PDF');
-        return res.blob();
-      })
-      .then(blob => {
-        if (this.pdfCurrentBlobUrl) {
-          URL.revokeObjectURL(this.pdfCurrentBlobUrl);
+    const performPdfFetch = () => {
+      this.http.get(`${environment.apiUrl}/operational-reports/${report.id}/pdf`, { responseType: 'blob' }).subscribe({
+        next: (blob: Blob) => {
+          if (this.pdfCurrentBlobUrl) {
+            URL.revokeObjectURL(this.pdfCurrentBlobUrl);
+          }
+          const blobUrl = URL.createObjectURL(blob);
+          this.pdfCurrentBlobUrl = blobUrl;
+          this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl));
+          this.previewingPdf.set(false);
+          this.showPdfModal.set(true);
+        },
+        error: async (err: any) => {
+          this.previewingPdf.set(false);
+          let msg = 'Failed to generate PDF';
+          if (err.error instanceof Blob) {
+            try {
+              const text = await err.error.text();
+              const json = JSON.parse(text);
+              msg = json.error || json.message || text;
+            } catch (_) {
+              try { msg = await err.error.text(); } catch (_) {}
+            }
+          } else if (err.error?.message || err.error?.error) {
+            msg = err.error.message || err.error.error;
+          }
+          alert('Could not preview PDF: ' + msg);
         }
-        const blobUrl = URL.createObjectURL(blob);
-        this.pdfCurrentBlobUrl = blobUrl;
-        this.pdfSafeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(blobUrl));
-        this.previewingPdf.set(false);
-        this.showPdfModal.set(true);
-      })
-      .catch(err => {
-        this.previewingPdf.set(false);
-        alert('Could not preview PDF: ' + err.message);
       });
+    };
+
+    // If currently editing this report, save draft first to include latest edits
+    const rep = this.editingReport();
+    if (rep && rep.id === report.id) {
+      this.http.put<any>(`${environment.apiUrl}/operational-reports/${rep.id}`, rep).subscribe({
+        next: (res) => {
+          this.editingReport.set(res.report);
+          performPdfFetch();
+        },
+        error: () => performPdfFetch(),
+      });
+    } else {
+      performPdfFetch();
+    }
   }
 
   downloadPdfBlob() {

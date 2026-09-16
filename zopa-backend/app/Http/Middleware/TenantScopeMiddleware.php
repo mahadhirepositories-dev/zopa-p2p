@@ -13,7 +13,7 @@ class TenantScopeMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         $user = auth()->user();
-        $tenantId = $request->header('X-Tenant-ID');
+        $tenantId = $request->header('X-Tenant-ID') ?: $request->query('tenant_id');
 
         if (!$tenantId) {
             return response()->json(['error' => 'X-Tenant-ID header is required'], 400);
