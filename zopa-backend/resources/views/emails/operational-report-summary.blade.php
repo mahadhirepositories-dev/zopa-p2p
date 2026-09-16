@@ -39,7 +39,7 @@
   <div class="body">
     <div class="greeting">Dear {{ $recipientName }},</div>
     <div class="intro">
-      Please find the latest operational procurement review for <strong>{{ $tenantName }}</strong> below. The complete, detailed McKinsey-style executive briefing document with comprehensive turnaround time (TAT) charts, open requisitions, pending approvals, and delivery logistics tracking is attached as a PDF.
+      Please find the latest operational procurement review for <strong>{{ $tenantName }}</strong> below. The complete, detailed executive briefing document with comprehensive turnaround time (TAT) charts, open requisitions, pending approvals, and delivery logistics tracking is attached as a PDF.
     </div>
 
     @if(!empty($customMessage))

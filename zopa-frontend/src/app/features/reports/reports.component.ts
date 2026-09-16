@@ -36,7 +36,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <div class="page-header">
         <div>
           <h2>Procurement Reports &amp; Operational Reviews</h2>
-          <p>Generate McKinsey-style executive operational reports, review pipeline TAT, and brief client approvers.</p>
+          <p>Generate executive operational reports, review pipeline TAT, and brief client approvers.</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center;">
           @if (activeTab === 0 && !editingReport()) {
@@ -66,7 +66,7 @@ import { AuthService } from '../../core/auth/auth.service';
               } @else {
                 <mat-icon>picture_as_pdf</mat-icon>
               }
-              Preview PDF
+              View PDF
             </button>
             <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
               <mat-icon>send</mat-icon> Send to Client
@@ -159,7 +159,7 @@ import { AuthService } from '../../core/auth/auth.service';
                             <button mat-stroked-button (click)="openEditor(r)" matTooltip="Review and edit remarks/statuses">
                               <mat-icon>edit</mat-icon> Review / Edit
                             </button>
-                            <button mat-icon-button (click)="previewPdf(r)" matTooltip="Preview McKinsey PDF">
+                            <button mat-icon-button (click)="previewPdf(r)" matTooltip="View PDF">
                               <mat-icon>picture_as_pdf</mat-icon>
                             </button>
                             <button mat-icon-button color="primary" (click)="openSendModal(r)" matTooltip="Send to client approver">
@@ -524,7 +524,7 @@ import { AuthService } from '../../core/auth/auth.service';
                 } @else {
                   <mat-icon>picture_as_pdf</mat-icon>
                 }
-                Preview McKinsey PDF
+                View PDF
               </button>
               <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
                 <mat-icon>send</mat-icon> Send to Client
@@ -709,7 +709,7 @@ import { AuthService } from '../../core/auth/auth.service';
             <div class="modal-header">
               <div style="display:flex;align-items:center;gap:8px;">
                 <mat-icon style="color:#0f2942;">picture_as_pdf</mat-icon>
-                <h3 style="margin:0;font-size:16px;">McKinsey Executive PDF Report Preview</h3>
+                <h3 style="margin:0;font-size:16px;">Executive PDF Report Preview</h3>
               </div>
               <div style="display:flex;gap:8px;">
                 <button mat-stroked-button color="primary" (click)="downloadPdfBlob()">
@@ -794,7 +794,7 @@ import { AuthService } from '../../core/auth/auth.service';
               <!-- Attachment Note -->
               <div class="attach-badge">
                 <mat-icon style="color:#0284c7;">attach_file</mat-icon>
-                <span><strong>Attached:</strong> McKinsey-Style Executive PDF Report (Item-level tables, TAT distribution &amp; Logistics Risk charts).</span>
+                <span><strong>Attached:</strong> Executive PDF Report (Item-level tables, TAT distribution &amp; Logistics Risk charts).</span>
               </div>
 
               @if (sendError()) {

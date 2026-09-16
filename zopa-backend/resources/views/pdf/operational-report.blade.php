@@ -227,7 +227,7 @@
     </tr>
   </table>
 
-  <!-- Visual Charts Section (McKinsey Style) -->
+  <!-- Visual Charts Section (Executive Risk & TAT Distribution) -->
   @php
     $tatDist = $m['tat_distribution'] ?? ['< 1 Day' => 0, '1 - 3 Days' => 0, '4 - 7 Days' => 0, '8 - 10 Days' => 0, '> 10 Days' => 0];
     $maxTatVal = max(1, max(array_values($tatDist)));

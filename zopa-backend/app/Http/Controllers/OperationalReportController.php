@@ -331,7 +331,7 @@ class OperationalReportController extends Controller
     }
 
     /**
-     * Generate & stream McKinsey-style PDF report.
+     * Generate & stream Executive PDF report.
      */
     public function pdf(OperationalReport $operationalReport)
     {
@@ -360,7 +360,7 @@ class OperationalReportController extends Controller
     }
 
     /**
-     * Send email to client approver with McKinsey-style PDF attached.
+     * Send email to client approver with Executive PDF attached.
      */
     public function send(Request $request, OperationalReport $operationalReport): JsonResponse
     {

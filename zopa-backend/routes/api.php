@@ -337,7 +337,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Reports
         Route::get('reports/po-tat', [ReportController::class, 'poTat']);
 
-        // Operational Reports (McKinsey Style)
+        // Operational Reports (Executive)
         Route::get('operational-reports', [OperationalReportController::class, 'index']);
         Route::get('operational-reports/approvers', [OperationalReportController::class, 'clientApprovers']);
         Route::post('operational-reports/start', [OperationalReportController::class, 'start']);
