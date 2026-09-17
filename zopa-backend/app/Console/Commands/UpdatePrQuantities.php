@@ -120,6 +120,13 @@ class UpdatePrQuantities extends Command
                 69 => ['action' => 'update_qty', 'qty' => 50],
                 75 => ['action' => 'update_qty', 'qty' => 10],
             ],
+            'PR40' => [
+                6 => ['action' => 'short_close', 'short_qty' => 1800, 'desc' => 'PAIN RELIFE'],
+                8 => ['action' => 'short_close', 'short_qty' => 2000, 'desc' => 'CETRIZINE'],
+                42 => ['action' => 'short_close', 'short_qty' => 5, 'desc' => 'AVIL'],
+                50 => ['action' => 'short_close', 'short_qty' => 1000, 'desc' => 'OKASET', 'alt_sno' => 1000],
+                59 => ['action' => 'short_close', 'short_qty' => 600, 'desc' => 'OKASET', 'alt_sno' => 600],
+            ],
         ];
 
         $updatedPrCount = 0;
@@ -156,6 +163,21 @@ class UpdatePrQuantities extends Command
 
             foreach ($itemsToUpdate as $sno => $cfg) {
                 $item = $pr->items->firstWhere('sno', $sno);
+                if (!$item && isset($cfg['alt_sno'])) {
+                    $item = $pr->items->firstWhere('sno', $cfg['alt_sno']);
+                }
+                if (!$item && !empty($cfg['desc'])) {
+                    $descKw = $cfg['desc'];
+                    $item = $pr->items->first(fn($it) => stripos($it->description, $descKw) !== false);
+                }
+                if ($item && !empty($cfg['desc']) && stripos($item->description, $cfg['desc']) === false) {
+                    $descKw = $cfg['desc'];
+                    $byKw = $pr->items->first(fn($it) => stripos($it->description, $descKw) !== false);
+                    if ($byKw) {
+                        $item = $byKw;
+                    }
+                }
+
                 if ($item) {
                     if ($cfg['action'] === 'short_close') {
                         $updateData = [
@@ -170,7 +192,9 @@ class UpdatePrQuantities extends Command
                         $this->line("  ✓ Item #{$sno} ({$item->description}): Marked Short Close (Short Qty: {$cfg['short_qty']})");
                     } else {
                         $item->update([
-                            'qty' => $cfg['qty'],
+                            'qty'              => $cfg['qty'],
+                            'is_short_closed'  => false,
+                            'short_closed_qty' => 0,
                         ]);
                         $this->line("  ✓ Item #{$sno} ({$item->description}): Qty updated to {$cfg['qty']}");
                     }
@@ -188,6 +212,171 @@ class UpdatePrQuantities extends Command
                 $pr->update(['estimated_amount' => $newEstimated]);
 
                 // Sync conversion status
+                PurchaseRequisition::syncPrConversion($pr);
+                $updatedPrCount++;
+                $this->info("  -> PR {$pr->pr_number} estimated_amount: ₹{$newEstimated}, status: {$pr->fresh()->status}");
+            }
+        }
+
+        // Additional PR updates for AIVN and AVT (Tailoring)
+        $extraPackages = [
+            [
+                'name' => 'AIVN - PR 17',
+                'tenant_fn' => fn() => Tenant::where('name', 'like', '%Isha%')
+                    ->orWhere('name', 'like', '%Vidhya%')
+                    ->orWhere('name', 'like', '%Niketan%')
+                    ->orWhere('name', 'like', '%Vidhyalayam%')
+                    ->first(),
+                'pr_identifiers' => ['PR17', 'PR-17', 'PR 17', 'AIVN-PR17', 'AV-HIIGINBOTHAMS'],
+                'item_fingerprint' => null,
+                'items' => [
+                    1 => ['action' => 'short_close', 'short_qty' => 4, 'desc' => 'Ultimate Guide'],
+                ]
+            ],
+            [
+                'name' => 'AVT - AVTPR2026-278 (PR 8)',
+                'tenant_fn' => fn() => Tenant::where('name', 'like', '%Vidhyalayam%')
+                    ->orWhere('name', 'like', '%Isha%')
+                    ->orWhere('name', 'like', '%Tailoring%')
+                    ->orWhere('code', 'like', '%AV%')
+                    ->first(),
+                'pr_identifiers' => ['AVTPR2026-278', 'AVTPR/2026-27/8', 'AVTPR2026-27/8', 'AVTPR-2026-278', 'PR8', 'PR-8'],
+                'item_fingerprint' => 'Zip',
+                'items' => [
+                    8 => ['action' => 'update_qty', 'qty' => 5, 'desc' => 'White Zip'],
+                    9 => ['action' => 'update_qty', 'qty' => 1, 'desc' => 'Black Zip'],
+                    12 => ['action' => 'update_qty', 'qty' => 2, 'desc' => 'Pant Hook'],
+                    13 => ['action' => 'update_qty', 'qty' => 6, 'desc' => 'Blue-Swing'],
+                    14 => ['action' => 'update_qty', 'qty' => 1, 'desc' => 'White-Swing'],
+                    15 => ['action' => 'update_qty', 'qty' => 1, 'desc' => 'Black-Swing'],
+                    16 => ['action' => 'update_qty', 'qty' => 10, 'desc' => 'Grey-Swing'],
+                    17 => ['action' => 'update_qty', 'qty' => 2, 'desc' => 'Green-Swing'],
+                    18 => ['action' => 'update_qty', 'qty' => 10, 'desc' => 'Bone White-Swing'],
+                    22 => ['action' => 'short_close', 'short_qty' => 1, 'desc' => 'Overlock Cone -Grey'],
+                    23 => ['action' => 'short_close', 'short_qty' => 2, 'desc' => 'Overlock Cone -Green'],
+                    24 => ['action' => 'short_close', 'short_qty' => 3, 'desc' => 'Overlock Cone -Bone White'],
+                    31 => ['action' => 'short_close', 'short_qty' => 10, 'desc' => 'Size label-S'],
+                    32 => ['action' => 'short_close', 'short_qty' => 11, 'desc' => 'Size label-M'],
+                    33 => ['action' => 'short_close', 'short_qty' => 12, 'desc' => 'Size label-L'],
+                    34 => ['action' => 'short_close', 'short_qty' => 13, 'desc' => 'Size label-XL'],
+                    35 => ['action' => 'short_close', 'short_qty' => 16, 'desc' => 'Size label-2XL'],
+                    36 => ['action' => 'short_close', 'short_qty' => 17, 'desc' => 'Size label-3XL'],
+                ]
+            ],
+            [
+                'name' => 'AVT - AVTPR2026-272 (PR 2)',
+                'tenant_fn' => fn() => Tenant::where('name', 'like', '%Vidhyalayam%')
+                    ->orWhere('name', 'like', '%Isha%')
+                    ->orWhere('name', 'like', '%Tailoring%')
+                    ->orWhere('code', 'like', '%AV%')
+                    ->first(),
+                'pr_identifiers' => ['AVTPR2026-272', 'AVTPR/2026-27/2', 'AVTPR2026-27/2', 'AVTPR-2026-272', 'PR2', 'PR-2'],
+                'item_fingerprint' => 'Trovine',
+                'items' => [
+                    5 => ['action' => 'short_close', 'short_qty' => 264, 'desc' => 'Trovine'],
+                ]
+            ],
+        ];
+
+        foreach ($extraPackages as $pkg) {
+            $t = ($pkg['tenant_fn'])();
+            $tId = $t?->id;
+
+            $prQuery = PurchaseRequisition::with('items');
+            if ($tId) {
+                $prQuery->where('tenant_id', $tId);
+            }
+            $prQuery->where(function ($q) use ($pkg) {
+                foreach ($pkg['pr_identifiers'] as $idStr) {
+                    $q->orWhere('pr_number', $idStr)
+                      ->orWhere('pr_ref', $idStr)
+                      ->orWhere('title', 'like', "%{$idStr}%");
+                }
+            });
+            if (!empty($pkg['item_fingerprint'])) {
+                $fp = $pkg['item_fingerprint'];
+                $prQuery->whereExists(function ($sub) use ($fp) {
+                    $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                        ->from('pr_items')
+                        ->whereColumn('pr_items.pr_id', 'purchase_requisitions.id')
+                        ->where('description', 'like', "%{$fp}%");
+                });
+            }
+            $pr = $prQuery->first();
+
+            if (!$pr) {
+                $fbQuery = PurchaseRequisition::with('items')->where(function ($q) use ($pkg) {
+                    foreach ($pkg['pr_identifiers'] as $idStr) {
+                        $q->orWhere('pr_number', $idStr)
+                          ->orWhere('pr_ref', $idStr)
+                          ->orWhere('title', 'like', "%{$idStr}%");
+                    }
+                });
+                if (!empty($pkg['item_fingerprint'])) {
+                    $fp = $pkg['item_fingerprint'];
+                    $fbQuery->whereExists(function ($sub) use ($fp) {
+                        $sub->select(\Illuminate\Support\Facades\DB::raw(1))
+                            ->from('pr_items')
+                            ->whereColumn('pr_items.pr_id', 'purchase_requisitions.id')
+                            ->where('description', 'like', "%{$fp}%");
+                    });
+                }
+                $pr = $fbQuery->first();
+            }
+
+            if (!$pr) {
+                $this->warn("Extra PR {$pkg['name']} not found!");
+                continue;
+            }
+
+            $this->info("Processing Extra PR: {$pr->pr_number} (ID: {$pr->id})");
+            $prModified = false;
+
+            foreach ($pkg['items'] as $sno => $cfg) {
+                $item = $pr->items->firstWhere('sno', $sno);
+                if (!$item && isset($cfg['alt_sno'])) {
+                    $item = $pr->items->firstWhere('sno', $cfg['alt_sno']);
+                }
+                if (!$item && !empty($cfg['desc'])) {
+                    $descKw = $cfg['desc'];
+                    $item = $pr->items->first(fn($it) => stripos($it->description, $descKw) !== false);
+                }
+                if ($item && !empty($cfg['desc']) && stripos($item->description, $cfg['desc']) === false) {
+                    $descKw = $cfg['desc'];
+                    $byKw = $pr->items->first(fn($it) => stripos($it->description, $descKw) !== false);
+                    if ($byKw) {
+                        $item = $byKw;
+                    }
+                }
+
+                if ($item) {
+                    if ($cfg['action'] === 'short_close') {
+                        $item->update([
+                            'remarks'          => 'Short Close',
+                            'is_short_closed'  => true,
+                            'short_closed_qty' => $cfg['short_qty'],
+                        ]);
+                        $this->line("  ✓ Item #{$sno} ({$item->description}): Marked Short Close (Short Qty: {$cfg['short_qty']})");
+                    } else {
+                        $item->update([
+                            'qty'              => $cfg['qty'],
+                            'is_short_closed'  => false,
+                            'short_closed_qty' => 0,
+                        ]);
+                        $this->line("  ✓ Item #{$sno} ({$item->description}): Qty updated to {$cfg['qty']}");
+                    }
+                    $updatedItemCount++;
+                    $prModified = true;
+                } else {
+                    $this->warn("  ⚠️ Item #{$sno} not found in PR {$pr->pr_number}");
+                }
+            }
+
+            if ($prModified) {
+                $freshItems = $pr->items()->get();
+                $newEstimated = $freshItems->sum(fn($i) => (float)$i->qty * (float)$i->estimated_price);
+                $pr->update(['estimated_amount' => $newEstimated]);
+
                 PurchaseRequisition::syncPrConversion($pr);
                 $updatedPrCount++;
                 $this->info("  -> PR {$pr->pr_number} estimated_amount: ₹{$newEstimated}, status: {$pr->fresh()->status}");
