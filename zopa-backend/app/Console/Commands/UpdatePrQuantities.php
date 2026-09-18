@@ -402,23 +402,48 @@ class UpdatePrQuantities extends Command
         })->get();
 
         foreach ($avPos as $po) {
+            // Delete lines 5, 6, 7 if present
+            $delItems = $po->items()
+                ->where(function ($q) {
+                    $q->whereIn('sno', [5, 6, 7])
+                      ->orWhereIn('product_code', ['1226', '1227', '1228'])
+                      ->orWhere('description', 'like', '%Double Side Logo%')
+                      ->orWhere('description', 'like', '%Front Glass Top Black Sticker%')
+                      ->orWhere('description', 'like', '%Bus Back Side School Name%');
+                })
+                ->get();
+
+            $deletedAny = false;
+            foreach ($delItems as $delIt) {
+                if ($delIt->pr_item_id) {
+                    $prItem = \App\Models\PrItem::find($delIt->pr_item_id);
+                    if ($prItem) {
+                        $prItem->update(['converted_qty' => max(0, (float)$prItem->converted_qty - (float)$delIt->qty)]);
+                    }
+                }
+                $delIt->delete();
+                $deletedAny = true;
+                $this->info("  ✓ PO {$po->po_number}: removed line item #{$delIt->sno} ({$delIt->product_code})");
+            }
+
             $poItems = $po->items()->orderBy('sno')->orderBy('id')->get();
-            $poChanged = false;
+            $poChanged = $deletedAny;
             $itemsArray = [];
 
             foreach ($poItems as $idx => $it) {
-                $sno = $it->sno ?: ($idx + 1);
-                $targetQty = ($sno >= 1 && $sno <= 3) ? 7.00 : (($sno == 4) ? 6.00 : (float) $it->qty);
+                $newSno = $idx + 1;
+                $targetQty = ($newSno >= 1 && $newSno <= 3) ? 7.00 : (($newSno == 4) ? 6.00 : (float) $it->qty);
 
-                if ((float) $it->qty != $targetQty) {
+                if ((float) $it->qty != $targetQty || $it->sno != $newSno) {
                     $grossRate = round((float) $it->net_rate * (1 + (float) $it->gst_rate / 100), 2);
                     $it->update([
+                        'sno'        => $newSno,
                         'qty'        => $targetQty,
                         'gross_rate' => $grossRate,
                         'amount'     => round($grossRate * $targetQty, 2),
                     ]);
                     $poChanged = true;
-                    $this->info("  ✓ PO {$po->po_number} Item #{$sno}: updated qty to {$targetQty}");
+                    $this->info("  ✓ PO {$po->po_number} Item #{$newSno}: updated qty to {$targetQty}");
                 }
 
                 $itemsArray[] = [
