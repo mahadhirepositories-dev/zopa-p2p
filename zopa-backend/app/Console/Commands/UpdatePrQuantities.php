@@ -383,7 +383,94 @@ class UpdatePrQuantities extends Command
             }
         }
 
+        // ── Ensure Apollo Vidhyalayam PO AV/2026-27/29 quantities (lines 1-3: 7, line 4: 6) ──
+        $avTenant = Tenant::where('name', 'like', '%Apollo%Vidhyalayam%')->orWhere('code', 'like', '%APOLLO%')->first();
+        $avTenantId = $avTenant?->id ?? 7;
+
+        $avPos = \App\Models\PurchaseOrder::where(function ($q) use ($avTenantId) {
+            $q->where('po_number', 'AV/2026-27/29')
+              ->orWhere('po_number', 'like', '%AV%2026-27/29%')
+              ->orWhere('po_number', 'like', '%2026-27/29%')
+              ->orWhere(function ($sub) use ($avTenantId) {
+                  $sub->where('tenant_id', $avTenantId)
+                      ->where(function ($s) {
+                          $s->where('po_number', 'like', '%29%')
+                            ->orWhere('po_number', '29')
+                            ->orWhere('id', 29);
+                      });
+              });
+        })->get();
+
+        foreach ($avPos as $po) {
+            $poItems = $po->items()->orderBy('sno')->orderBy('id')->get();
+            $poChanged = false;
+            $itemsArray = [];
+
+            foreach ($poItems as $idx => $it) {
+                $sno = $it->sno ?: ($idx + 1);
+                $targetQty = ($sno >= 1 && $sno <= 3) ? 7.00 : (($sno == 4) ? 6.00 : (float) $it->qty);
+
+                if ((float) $it->qty != $targetQty) {
+                    $grossRate = round((float) $it->net_rate * (1 + (float) $it->gst_rate / 100), 2);
+                    $it->update([
+                        'qty'        => $targetQty,
+                        'gross_rate' => $grossRate,
+                        'amount'     => round($grossRate * $targetQty, 2),
+                    ]);
+                    $poChanged = true;
+                    $this->info("  ✓ PO {$po->po_number} Item #{$sno}: updated qty to {$targetQty}");
+                }
+
+                $itemsArray[] = [
+                    'net_rate' => (float) $it->net_rate,
+                    'qty'      => $targetQty,
+                    'gst_rate' => (float) $it->gst_rate,
+                ];
+            }
+
+            if ($poChanged) {
+                $gstService = app(\App\Services\GstService::class);
+                $vendorAddress   = \Illuminate\Support\Facades\DB::table('vendor_addresses')->where('id', $po->vendor_address_id)->first();
+                $billToLocation  = \Illuminate\Support\Facades\DB::table('locations')->where('id', $po->bill_to_location_id)->first();
+                $vendorStateCode = $vendorAddress?->state_code ?? '';
+                $companyStateCode = $billToLocation?->state_code ?? '';
+
+                $totals = $gstService->calculatePoTotals(
+                    $itemsArray,
+                    (float) ($po->freight ?? 0),
+                    $vendorStateCode,
+                    $companyStateCode,
+                    (float) ($po->freight_gst_rate ?? 0),
+                    (float) ($po->discount ?? 0)
+                );
+
+                $po->update([
+                    'net_total'   => $totals['net_total'],
+                    'freight'     => $totals['freight'],
+                    'tax_amount'  => $totals['tax_amount'],
+                    'discount'    => $totals['discount'],
+                    'grand_total' => $totals['grand_total'],
+                    'round_off'   => $totals['round_off'],
+                ]);
+
+                if (\Illuminate\Support\Facades\Schema::hasTable('budget_ledger')) {
+                    \Illuminate\Support\Facades\DB::table('budget_ledger')
+                        ->where('reference_type', 'PO')
+                        ->where('reference_id', $po->id)
+                        ->where('action', 'freeze')
+                        ->update(['freeze_amount' => $totals['grand_total']]);
+                    \Illuminate\Support\Facades\DB::table('budget_ledger')
+                        ->where('reference_type', 'PO')
+                        ->where('reference_id', $po->id)
+                        ->where('action', 'consume')
+                        ->update(['consume_amount' => $totals['grand_total']]);
+                }
+                $this->info("  -> PO {$po->po_number} totals recalculated: Grand Total: ₹{$totals['grand_total']}");
+            }
+        }
+
         $this->info("\nCompleted! Processed {$updatedItemCount} item(s) across {$updatedPrCount} PR(s).");
         return 0;
     }
 }
+
