@@ -383,7 +383,7 @@ class UpdatePrQuantities extends Command
             }
         }
 
-        // ── Ensure Apollo Vidhyalayam PO AV/2026-27/29 quantities (lines 1-3: 7, line 4: 6) ──
+        // ── Ensure Apollo Vidhyalayam PO AV/2026-27/29 has exact items 1 to 4 ──
         $avTenant = Tenant::where('name', 'like', '%Apollo%Vidhyalayam%')->orWhere('code', 'like', '%APOLLO%')->first();
         $avTenantId = $avTenant?->id ?? 7;
 
@@ -401,59 +401,47 @@ class UpdatePrQuantities extends Command
               });
         })->get();
 
+        $avSpecs = [
+            1 => ['code' => '1222', 'name' => 'Double Side Logo & School Name Size is 12 Feet to 10 inch', 'qty' => 7.00, 'net_rate' => 2200.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
+            2 => ['code' => '1223', 'name' => 'Front Glass Top Black Sticker Background Logo & School Name Size is . 7.5 Feet to 11inch', 'qty' => 7.00, 'net_rate' => 1500.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
+            3 => ['code' => '1224', 'name' => 'Bus Back Side School Name & Logo Adress, Email, Ph Number QR code-Total Size is 5 Feet to 2.5 Feet', 'qty' => 7.00, 'net_rate' => 800.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
+            4 => ['code' => '1225', 'name' => 'Bus Total Old Sticker Remove Labour Charges', 'qty' => 6.00, 'net_rate' => 1200.00, 'gst_rate' => 0.00, 'unit' => 'Nos'],
+        ];
+
         foreach ($avPos as $po) {
-            // Delete lines 5, 6, 7 if present
-            $delItems = $po->items()
-                ->where(function ($q) {
-                    $q->whereIn('sno', [5, 6, 7])
-                      ->orWhereIn('product_code', ['1226', '1227', '1228'])
-                      ->orWhere('description', 'like', '%Double Side Logo%')
-                      ->orWhere('description', 'like', '%Front Glass Top Black Sticker%')
-                      ->orWhere('description', 'like', '%Bus Back Side School Name%');
-                })
-                ->get();
+            $existingCodes = $po->items()->pluck('product_code')->filter()->toArray();
+            $needsRebuild = count($existingCodes) !== 4 || in_array('1226', $existingCodes) || in_array('1227', $existingCodes) || in_array('1228', $existingCodes) || !in_array('1222', $existingCodes);
 
-            $deletedAny = false;
-            foreach ($delItems as $delIt) {
-                if ($delIt->pr_item_id) {
-                    $prItem = \App\Models\PrItem::find($delIt->pr_item_id);
-                    if ($prItem) {
-                        $prItem->update(['converted_qty' => max(0, (float)$prItem->converted_qty - (float)$delIt->qty)]);
-                    }
-                }
-                $delIt->delete();
-                $deletedAny = true;
-                $this->info("  ✓ PO {$po->po_number}: removed line item #{$delIt->sno} ({$delIt->product_code})");
-            }
+            if ($needsRebuild) {
+                $po->items()->delete();
+                $itemsArray = [];
 
-            $poItems = $po->items()->orderBy('sno')->orderBy('id')->get();
-            $poChanged = $deletedAny;
-            $itemsArray = [];
+                foreach ($avSpecs as $sno => $spec) {
+                    $grossRate = round($spec['net_rate'] * (1 + $spec['gst_rate'] / 100), 2);
+                    $amount = round($grossRate * $spec['qty'], 2);
 
-            foreach ($poItems as $idx => $it) {
-                $newSno = $idx + 1;
-                $targetQty = ($newSno >= 1 && $newSno <= 3) ? 7.00 : (($newSno == 4) ? 6.00 : (float) $it->qty);
-
-                if ((float) $it->qty != $targetQty || $it->sno != $newSno) {
-                    $grossRate = round((float) $it->net_rate * (1 + (float) $it->gst_rate / 100), 2);
-                    $it->update([
-                        'sno'        => $newSno,
-                        'qty'        => $targetQty,
-                        'gross_rate' => $grossRate,
-                        'amount'     => round($grossRate * $targetQty, 2),
+                    $po->items()->create([
+                        'sno'             => $sno,
+                        'product_code'    => $spec['code'],
+                        'product_name'    => $spec['name'],
+                        'description'     => $spec['name'],
+                        'unit'            => $spec['unit'],
+                        'qty'             => $spec['qty'],
+                        'net_rate'        => $spec['net_rate'],
+                        'gst_rate'        => $spec['gst_rate'],
+                        'gross_rate'      => $grossRate,
+                        'amount'          => $amount,
+                        'required_by'     => '2026-09-21',
+                        'warranty_months' => 0,
                     ]);
-                    $poChanged = true;
-                    $this->info("  ✓ PO {$po->po_number} Item #{$newSno}: updated qty to {$targetQty}");
+
+                    $itemsArray[] = [
+                        'net_rate' => $spec['net_rate'],
+                        'qty'      => $spec['qty'],
+                        'gst_rate' => $spec['gst_rate'],
+                    ];
                 }
 
-                $itemsArray[] = [
-                    'net_rate' => (float) $it->net_rate,
-                    'qty'      => $targetQty,
-                    'gst_rate' => (float) $it->gst_rate,
-                ];
-            }
-
-            if ($poChanged) {
                 $gstService = app(\App\Services\GstService::class);
                 $vendorAddress   = \Illuminate\Support\Facades\DB::table('vendor_addresses')->where('id', $po->vendor_address_id)->first();
                 $billToLocation  = \Illuminate\Support\Facades\DB::table('locations')->where('id', $po->bill_to_location_id)->first();
@@ -462,18 +450,18 @@ class UpdatePrQuantities extends Command
 
                 $totals = $gstService->calculatePoTotals(
                     $itemsArray,
-                    (float) ($po->freight ?? 0),
+                    1200.00,
                     $vendorStateCode,
                     $companyStateCode,
-                    (float) ($po->freight_gst_rate ?? 0),
-                    (float) ($po->discount ?? 0)
+                    0.00,
+                    0.00
                 );
 
                 $po->update([
                     'net_total'   => $totals['net_total'],
                     'freight'     => $totals['freight'],
                     'tax_amount'  => $totals['tax_amount'],
-                    'discount'    => $totals['discount'],
+                    'discount'    => 0.00,
                     'grand_total' => $totals['grand_total'],
                     'round_off'   => $totals['round_off'],
                 ]);
@@ -490,7 +478,8 @@ class UpdatePrQuantities extends Command
                         ->where('action', 'consume')
                         ->update(['consume_amount' => $totals['grand_total']]);
                 }
-                $this->info("  -> PO {$po->po_number} totals recalculated: Grand Total: ₹{$totals['grand_total']}");
+
+                $this->info("  -> Restored PO {$po->po_number} with 4 items. Grand Total: ₹{$totals['grand_total']}");
             }
         }
 
