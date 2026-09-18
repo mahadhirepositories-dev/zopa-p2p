@@ -109,6 +109,7 @@ interface DashboardStats {
           <mat-spinner diameter="44" />
           <span>Loading dashboard…</span>
         </div>
+      } @else if (stats()) {
 
         @if (stats()?.latest_operational_report; as op) {
           <div class="op-report-banner" style="display:flex;justify-content:space-between;align-items:center;background:#0f2942;color:#ffffff;padding:12px 18px;border-radius:8px;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
@@ -236,7 +237,7 @@ interface DashboardStats {
           <div class="stat-card anim-3 clickable" (click)="router.navigate(['/purchase-orders'], { queryParams: { status: 'approved' } })">
             <div class="stat-card-body">
               <div class="stat-label">Approved</div>
-              <div class="stat-value" style="color:#16a34a;">{{ stats()!.po_counts['approved'] ?? 0 }}</div>
+              <div class="stat-value" style="color:#16a34a;">{{ stats()?.po_counts?.['approved'] ?? 0 }}</div>
               <div class="stat-trend">
                 <span class="trend-dot" style="background:#16a34a;"></span>
                 Ready for release
@@ -250,7 +251,7 @@ interface DashboardStats {
           <div class="stat-card anim-4 clickable" (click)="router.navigate(['/purchase-orders'], { queryParams: { status: 'released' } })">
             <div class="stat-card-body">
               <div class="stat-label">Released</div>
-              <div class="stat-value" style="color:#2563eb;">{{ stats()!.po_counts['released'] ?? 0 }}</div>
+              <div class="stat-value" style="color:#2563eb;">{{ stats()?.po_counts?.['released'] ?? 0 }}</div>
               <div class="stat-trend">
                 <span class="trend-dot" style="background:#2563eb;"></span>
                 Sent to vendor
