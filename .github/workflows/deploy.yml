@@ -74,6 +74,10 @@ jobs:
             sudo touch storage/logs/laravel.log 2>/dev/null || true
             sudo chgrp -R www-data storage bootstrap/cache 2>/dev/null || true
             sudo chmod -R 777 storage bootstrap/cache 2>/dev/null || true
+            sudo chmod 666 storage/logs/laravel.log 2>/dev/null || true
+            chmod -R 777 storage bootstrap/cache 2>/dev/null || true
+            chmod 666 storage/logs/laravel.log 2>/dev/null || true
+
 
             composer install --no-dev --optimize-autoloader --no-interaction
             php artisan migrate --force

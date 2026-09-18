@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use App\Services\GstService;
 use App\Models\PurchaseRequisition;
 
@@ -31,8 +30,6 @@ return new class extends Migration
 
         $avTenantId = $avTenant?->id ?? 7;
 
-        Log::info("Running update for PO AV/2026-27/29. Resolved AV Tenant ID: {$avTenantId}");
-
         // 2. Find target Purchase Order AV/2026-27/29
         $pos = DB::table('purchase_orders')
             ->where(function ($q) use ($avTenantId) {
@@ -51,12 +48,9 @@ return new class extends Migration
             })
             ->get();
 
-        Log::info("Found " . $pos->count() . " purchase order(s) matching AV/2026-27/29");
-
         foreach ($pos as $po) {
             $poId = $po->id;
             $items = DB::table('po_items')->where('po_id', $poId)->orderBy('sno')->orderBy('id')->get();
-            Log::info("Processing PO ID {$poId} ({$po->po_number}) with " . $items->count() . " items.");
 
             $itemsArray = [];
             foreach ($items as $index => $item) {
@@ -82,8 +76,6 @@ return new class extends Migration
                     'amount'     => $amount,
                     'updated_at' => now(),
                 ]);
-
-                Log::info("  -> Line {$sno} ({$item->product_name}): Qty updated from {$item->qty} to {$newQty}, Amount: {$amount}");
 
                 // Sync linked PR item if attached
                 if (!empty($item->pr_item_id)) {
@@ -128,8 +120,6 @@ return new class extends Migration
                 'round_off'   => $totals['round_off'],
                 'updated_at'  => now(),
             ]);
-
-            Log::info("PO {$po->po_number} totals updated: Net: {$totals['net_total']}, Tax: {$totals['tax_amount']}, Grand Total: {$totals['grand_total']}");
 
             // Update Budget Ledger Freeze & Consume amounts
             if (Schema::hasTable('budget_ledger')) {
@@ -177,7 +167,6 @@ return new class extends Migration
                     ]);
 
                     PurchaseRequisition::syncPrConversion($prModel);
-                    Log::info("  -> Linked PR {$prModel->pr_number} updated: estimated_amount = {$newPrEst}, status = {$prModel->fresh()->status}");
                 }
             }
 
@@ -251,7 +240,6 @@ return new class extends Migration
                     ]);
 
                     PurchaseRequisition::syncPrConversion($prModel);
-                    Log::info("PR {$pr->pr_number} quantities updated (Items 1-3: 7, Item 4: 6). New estimated total: {$newPrEst}");
                 }
             }
         }
