@@ -402,15 +402,21 @@ class UpdatePrQuantities extends Command
         })->get();
 
         $avSpecs = [
-            1 => ['code' => '1222', 'name' => 'Double Side Logo & School Name Size is 12 Feet to 10 inch', 'qty' => 7.00, 'net_rate' => 2200.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
-            2 => ['code' => '1223', 'name' => 'Front Glass Top Black Sticker Background Logo & School Name Size is . 7.5 Feet to 11inch', 'qty' => 7.00, 'net_rate' => 1500.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
+            1 => ['code' => '1222', 'name' => 'Double Side Logo & School Name Size is 12 Feet to 10 inch', 'qty' => 7.00, 'net_rate' => 2100.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
+            2 => ['code' => '1223', 'name' => 'Front Glass Top Black Sticker Background Logo & School Name Size is . 7.5 Feet to 11inch', 'qty' => 7.00, 'net_rate' => 1400.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
             3 => ['code' => '1224', 'name' => 'Bus Back Side School Name & Logo Adress, Email, Ph Number QR code-Total Size is 5 Feet to 2.5 Feet', 'qty' => 7.00, 'net_rate' => 800.00, 'gst_rate' => 18.00, 'unit' => 'Nos'],
             4 => ['code' => '1225', 'name' => 'Bus Total Old Sticker Remove Labour Charges', 'qty' => 6.00, 'net_rate' => 1200.00, 'gst_rate' => 0.00, 'unit' => 'Nos'],
         ];
 
         foreach ($avPos as $po) {
             $existingCodes = $po->items()->pluck('product_code')->filter()->toArray();
-            $needsRebuild = count($existingCodes) !== 4 || in_array('1226', $existingCodes) || in_array('1227', $existingCodes) || in_array('1228', $existingCodes) || !in_array('1222', $existingCodes);
+            $needsRebuild = count($existingCodes) !== 4
+                || (float) $po->grand_total !== 42918.00
+                || (float) $po->freight !== 200.00
+                || in_array('1226', $existingCodes)
+                || in_array('1227', $existingCodes)
+                || in_array('1228', $existingCodes)
+                || !in_array('1222', $existingCodes);
 
             if ($needsRebuild) {
                 $po->items()->delete();
@@ -450,7 +456,7 @@ class UpdatePrQuantities extends Command
 
                 $totals = $gstService->calculatePoTotals(
                     $itemsArray,
-                    1200.00,
+                    200.00,
                     $vendorStateCode,
                     $companyStateCode,
                     0.00,
@@ -458,12 +464,13 @@ class UpdatePrQuantities extends Command
                 );
 
                 $po->update([
-                    'net_total'   => $totals['net_total'],
-                    'freight'     => $totals['freight'],
-                    'tax_amount'  => $totals['tax_amount'],
-                    'discount'    => 0.00,
-                    'grand_total' => $totals['grand_total'],
-                    'round_off'   => $totals['round_off'],
+                    'net_total'        => $totals['net_total'],
+                    'freight'          => $totals['freight'],
+                    'freight_gst_rate' => 0.00,
+                    'tax_amount'       => $totals['tax_amount'],
+                    'discount'         => 0.00,
+                    'grand_total'      => $totals['grand_total'],
+                    'round_off'        => $totals['round_off'],
                 ]);
 
                 if (\Illuminate\Support\Facades\Schema::hasTable('budget_ledger')) {
