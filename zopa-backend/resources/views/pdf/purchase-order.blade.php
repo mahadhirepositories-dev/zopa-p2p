@@ -20,7 +20,7 @@ body {
   line-height: 1.45;
 }
 @if(isset($is_dompdf) && $is_dompdf)
-body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1.2cm 1.3cm 1.2cm 1.3cm; }
+body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 9.5px; margin: 1.0cm 0.7cm 1.0cm 0.7cm; }
 @endif
 
 /* ── Repeating running header (DomPDF) ───────────────────
@@ -68,16 +68,20 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10px; margin: 1
 
   <style>
 /* ── Items table ─────────────────────────────────────── */
-table.items { width:100%; border-collapse:collapse; }
+table.items { width:100%; border-collapse:collapse; table-layout:fixed; }
 table.items thead { display:table-header-group; }
 table.items th {
-  background:#1f2937; color:#fff; font-size:7.5px; font-weight:bold;
-  text-transform:uppercase; letter-spacing:0.5px;
-  padding:6px; border:1px solid #1f2937; text-align:left;
+  background:#1f2937; color:#fff; font-size:7px; font-weight:bold;
+  text-transform:uppercase; letter-spacing:0.3px;
+  padding:5px 2px; border:1px solid #1f2937; text-align:left;
+  overflow:hidden; word-wrap:break-word;
 }
 table.items th.r { text-align:right; }
 table.items th.c { text-align:center; }
-table.items td { padding:5px 6px; font-size:9px; color:#374151; border:1px solid #d1d5db; vertical-align:top; }
+table.items td {
+  padding:3px 2px; font-size:8px; color:#374151; border:1px solid #d1d5db;
+  vertical-align:top; overflow:hidden; word-wrap:break-word;
+}
 table.items tbody tr:nth-child(even) td { background:#f8f9fb; }
 
 /* ── Totals ──────────────────────────────────────────── */
@@ -162,6 +166,21 @@ $hasHSN =$po->items->contains(fn($i)=>!empty($i->hsn_code??$i->product?->hsn_cod
 $hasUOM =$po->items->contains(fn($i)=>!empty($i->unit)||!empty($i->product?->unit));
 $hasWar =$po->items->contains(fn($i)=>($i->warranty_months??0)>0);
 $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
+
+$colWidths = [
+    'sno'      => 3.5,
+    'code'     => $hasCode ? 7.0 : 0,
+    'hsn'      => $hasHSN ? 7.5 : 0,
+    'uom'      => $hasUOM ? 5.0 : 0,
+    'qty'      => 6.0,
+    'price'    => 9.0,
+    'gst'      => 10.5,
+    'amount'   => 11.0,
+    'warranty' => $hasWar ? 6.5 : 0,
+    'req_by'   => $hasRB ? 7.5 : 0,
+];
+$fixedTotal = array_sum($colWidths);
+$colWidths['desc'] = round(100.0 - $fixedTotal, 1);
 @endphp
 
 {{-- ═══════════ PAGE 1 HEADER ═══════════ --}}
@@ -355,19 +374,32 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
 
 {{-- ═══════════ LINE ITEMS ═══════════ --}}
 <table class="items" style="margin-bottom:8px;">
+  <colgroup>
+    <col style="width:{{ $colWidths['sno'] }}%;">
+    @if($hasCode)<col style="width:{{ $colWidths['code'] }}%;">@endif
+    <col style="width:{{ $colWidths['desc'] }}%;">
+    @if($hasHSN)<col style="width:{{ $colWidths['hsn'] }}%;">@endif
+    @if($hasUOM)<col style="width:{{ $colWidths['uom'] }}%;">@endif
+    <col style="width:{{ $colWidths['qty'] }}%;">
+    <col style="width:{{ $colWidths['price'] }}%;">
+    <col style="width:{{ $colWidths['gst'] }}%;">
+    <col style="width:{{ $colWidths['amount'] }}%;">
+    @if($hasWar)<col style="width:{{ $colWidths['warranty'] }}%;">@endif
+    @if($hasRB)<col style="width:{{ $colWidths['req_by'] }}%;">@endif
+  </colgroup>
   <thead>
     <tr>
-      <th style="width:18px;" class="c">Sl<br>No</th>
-      @if($hasCode)<th style="width:45px;">Code</th>@endif
+      <th class="c">Sl<br>No</th>
+      @if($hasCode)<th>Code</th>@endif
       <th>Description / Specification</th>
-      @if($hasHSN)<th style="width:35px;" class="c">HSN</th>@endif
-      @if($hasUOM)<th style="width:28px;" class="c">UOM</th>@endif
-      <th style="width:28px;" class="r">Qty</th>
-      <th style="width:55px;" class="r">Unit Price</th>
-      <th style="width:65px;" class="r">GST</th>
-      <th style="width:65px;" class="r">Amount</th>
-      @if($hasWar)<th style="width:35px;" class="c">Warranty</th>@endif
-      @if($hasRB)<th style="width:50px;">Req. By</th>@endif
+      @if($hasHSN)<th class="c">HSN</th>@endif
+      @if($hasUOM)<th class="c">UOM</th>@endif
+      <th class="r">Qty</th>
+      <th class="r">Unit Price</th>
+      <th class="r">GST</th>
+      <th class="r">Amount</th>
+      @if($hasWar)<th class="c">Warranty</th>@endif
+      @if($hasRB)<th>Req. By</th>@endif
     </tr>
   </thead>
   <tbody>
@@ -402,31 +434,31 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
       }
     @endphp
     <tr>
-      <td class="c fnt" style="font-size:8px;">{{ $item->sno }}</td>
-      @if($hasCode)<td style="font-size:8px;color:#6b7280;">{{ $itCode??'—' }}</td>@endif
+      <td class="c fnt" style="font-size:7.5px;">{{ $item->sno }}</td>
+      @if($hasCode)<td style="font-size:7.5px;color:#6b7280;">{{ $itCode??'—' }}</td>@endif
       <td>
         @if($itName)
-          <div style="font-weight:bold;color:#111827;font-size:9.5px;">{{ $itName }}</div>
+          <div style="font-weight:bold;color:#111827;font-size:8.5px;">{{ $itName }}</div>
           @if(!empty($extraDesc))
-            <div style="color:#4b5563;font-size:8.5px;margin-top:2px;white-space:pre-wrap;">{{ $extraDesc }}</div>
+            <div style="color:#4b5563;font-size:7.5px;margin-top:1px;white-space:pre-wrap;">{{ $extraDesc }}</div>
           @endif
         @else
-          <div style="font-weight:bold;color:#1f2937;font-size:9.5px;white-space:pre-wrap;">{{ $item->description }}</div>
+          <div style="font-weight:bold;color:#1f2937;font-size:8.5px;white-space:pre-wrap;">{{ $item->description }}</div>
         @endif
-        @if(!$hasCode&&$itCode&&$itCode!==$item->description)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">Code: {{ $itCode }}</div>@endif
-        @if(!$hasHSN&&$itHsn)<div style="font-size:7.5px;color:#9ca3af;margin-top:1px;">HSN: {{ $itHsn }}</div>@endif
+        @if(!$hasCode&&$itCode&&$itCode!==$item->description)<div style="font-size:7px;color:#9ca3af;margin-top:1px;">Code: {{ $itCode }}</div>@endif
+        @if(!$hasHSN&&$itHsn)<div style="font-size:7px;color:#9ca3af;margin-top:1px;">HSN: {{ $itHsn }}</div>@endif
       </td>
-      @if($hasHSN)<td class="c" style="font-size:8.5px;color:#475569;">{{ $itHsn??'—' }}</td>@endif
-      @if($hasUOM)<td class="c" style="font-size:9px;">{{ $item->unit??$item->product?->unit??'—' }}</td>@endif
-      <td class="r" style="font-size:9px;">{{ rtrim(rtrim(number_format($itQty,3),'0'),'.') }}</td>
-      <td class="r" style="font-size:9px;">&#8377;{{ number_format($itRate,2) }}</td>
-      <td class="r" style="font-size:9px;color:#475569;">
+      @if($hasHSN)<td class="c" style="font-size:7.5px;color:#475569;">{{ $itHsn??'—' }}</td>@endif
+      @if($hasUOM)<td class="c" style="font-size:8px;">{{ $item->unit??$item->product?->unit??'—' }}</td>@endif
+      <td class="r" style="font-size:8px;">{{ rtrim(rtrim(number_format($itQty,3),'0'),'.') }}</td>
+      <td class="r" style="font-size:8px;">&#8377;{{ number_format($itRate,2) }}</td>
+      <td class="r" style="font-size:8px;color:#475569;">
         {{ number_format($itGstRate,0) }}%
-        @if($lineGst>0)<br><span style="font-size:7.5px;">(&#8377;{{ number_format($lineGst,2) }})</span>@endif
+        @if($lineGst>0)<br><span style="font-size:6.5px;">(&#8377;{{ number_format($lineGst,2) }})</span>@endif
       </td>
-      <td class="r b" style="font-size:9.5px;color:#1f2937;">&#8377;{{ number_format($lineTotal,2) }}</td>
-      @if($hasWar)<td class="c" style="font-size:9px;color:#475569;">{{ ((int)($item->warranty_months??0))>0?$item->warranty_months.' mo':'—' }}</td>@endif
-      @if($hasRB)<td style="font-size:8.5px;color:#475569;">{{ $item->required_by?\Carbon\Carbon::parse($item->required_by)->format('d M Y'):'—' }}</td>@endif
+      <td class="r b" style="font-size:8.5px;color:#1f2937;">&#8377;{{ number_format($lineTotal,2) }}</td>
+      @if($hasWar)<td class="c" style="font-size:7.5px;color:#475569;">{{ ((int)($item->warranty_months??0))>0?$item->warranty_months.' mo':'—' }}</td>@endif
+      @if($hasRB)<td style="font-size:7.5px;color:#475569;">{{ $item->required_by?\Carbon\Carbon::parse($item->required_by)->format('d M Y'):'—' }}</td>@endif
     </tr>
     @endforeach
     @php
@@ -434,13 +466,13 @@ $hasRB  =$po->items->contains(fn($i)=>!empty($i->required_by));
     @endphp
     @if($poRoundOff != 0.0)
     <tr>
-      <td class="c fnt" style="font-size:8px;">—</td>
+      <td class="c fnt" style="font-size:7.5px;">—</td>
       @if($hasCode)<td></td>@endif
-      <td style="font-size:9px;color:#475569;font-style:italic;">Round Off</td>
+      <td style="font-size:8px;color:#475569;font-style:italic;">Round Off</td>
       @if($hasHSN)<td></td>@endif
       @if($hasUOM)<td></td>@endif
       <td></td><td></td><td></td>
-      <td class="r" style="font-size:9.5px;color:#475569;">{{ $poRoundOff>0?'+':'' }}&#8377;{{ number_format($poRoundOff,2) }}</td>
+      <td class="r" style="font-size:8.5px;color:#475569;">{{ $poRoundOff>0?'+':'' }}&#8377;{{ number_format($poRoundOff,2) }}</td>
       @if($hasWar)<td></td>@endif
       @if($hasRB)<td></td>@endif
     </tr>
