@@ -1189,9 +1189,9 @@ export class PoFormComponent implements OnInit {
     // Pre-fill line items from PR items (rates, unit, gst, category, qty)
     if (pr.items?.length) {
       this.items.clear({ emitEvent: false });
-      const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0);
+      const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0 || it.is_short_closed || it.remarks === 'Short Close');
       const itemsToConvert = hasAnyConversion
-        ? pr.items.filter((it: any) => (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
+        ? pr.items.filter((it: any) => !it.is_short_closed && it.remarks !== 'Short Close' && (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
         : pr.items;
       const targetItems = itemsToConvert.length > 0 ? itemsToConvert : pr.items;
 
@@ -1258,9 +1258,9 @@ export class PoFormComponent implements OnInit {
         this.items.clear({ emitEvent: false });
         prs.forEach(pr => {
           if (pr.items?.length) {
-            const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0);
+            const hasAnyConversion = pr.items.some((it: any) => +(it.converted_qty || 0) > 0 || it.is_short_closed || it.remarks === 'Short Close');
             const itemsToConvert = hasAnyConversion
-              ? pr.items.filter((it: any) => (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
+              ? pr.items.filter((it: any) => !it.is_short_closed && it.remarks !== 'Short Close' && (+(it.qty || 0) - +(it.converted_qty || 0)) > 0.0001)
               : pr.items;
             const targetItems = itemsToConvert.length > 0 ? itemsToConvert : pr.items;
 
