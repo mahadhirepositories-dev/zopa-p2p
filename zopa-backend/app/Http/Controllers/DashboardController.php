@@ -9,18 +9,27 @@ use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequisition;
 use App\Models\TatRecord;
 use App\Services\BudgetService;
+use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class DashboardController extends Controller
 {
+    use AuthorizesRoles;
+
     public function __construct(private BudgetService $budget) {}
 
     public function stats(Request $request): JsonResponse
     {
         $tenant   = app('currentTenant');
         $tenantId = $tenant->id;
+
+        // The screen only hides sections, so anything the matrix denies must not leave this endpoint.
+        // shortcut: denied sections are still computed and then dropped, skip those queries if this gets slow for PR and GRN users.
+        $canSeePos        = $this->can('purchase_orders', 'view');
+        $canSeePrs        = $this->can('purchase_requisitions', 'view');
+        $canSeeDeliveries = $canSeePos || $this->can('grns', 'view'); // GRN users work from the delivery list and its delayed count
 
         $period   = $request->input('period', 'all');
         $fromDate = $request->input('from_date');
@@ -98,16 +107,16 @@ class DashboardController extends Controller
         $livePos = PurchaseOrder::where('tenant_id', $tenantId);
         $livePrs = PurchaseRequisition::where('tenant_id', $tenantId);
         $attention = [
-            'pos_returned'              => (clone $livePos)->where('status', 'returned')->count(),
-            'pos_ready_to_release'      => (clone $livePos)->where('status', 'approved')->count(),
-            'deliveries_delayed'        => (clone $livePos)->whereIn('status', ['released', 'partially_delivered'])
+            'pos_returned'              => $canSeePos ? (clone $livePos)->where('status', 'returned')->count() : 0,
+            'pos_ready_to_release'      => $canSeePos ? (clone $livePos)->where('status', 'approved')->count() : 0,
+            'deliveries_delayed'        => $canSeeDeliveries ? (clone $livePos)->whereIn('status', ['released', 'partially_delivered'])
                 ->whereRaw('COALESCE(released_at, created_at) < ?', [now()->subDays(7)])
-                ->count(),
-            'prs_needing_clarification' => (clone $livePrs)->where('status', 'needs_clarification')->count(),
-            'prs_ageing'                => (clone $livePrs)
+                ->count() : 0,
+            'prs_needing_clarification' => $canSeePrs ? (clone $livePrs)->where('status', 'needs_clarification')->count() : 0,
+            'prs_ageing'                => $canSeePrs ? (clone $livePrs)
                 ->whereNotIn('status', ['draft', 'needs_clarification', 'converted', 'rejected', 'short_closed'])
                 ->where('created_at', '<', now()->subDays(7))
-                ->count(),
+                ->count() : 0,
         ];
 
         // ── Budget summary ─────────────────────────────────────────
@@ -381,26 +390,28 @@ class DashboardController extends Controller
                 'to_date'   => $toDate,
             ],
             'tat_summary' => [
-                'avg_total_days'           => $avgTotalFulfilmentDays,
-                'avg_pr_tat_days'          => $avgPrTatDays,
-                'avg_pr_tat_net_days'      => $avgPrTatNetDays,
-                'avg_approval_days'        => $avgApprovalDays,
-                'avg_release_days'         => $avgReleaseDays,
-                'avg_delivery_days'        => $avgDeliveryDays,
+                'avg_total_days'           => $canSeePos ? $avgTotalFulfilmentDays : null,
+                'avg_pr_tat_days'          => $canSeePrs ? $avgPrTatDays : null,
+                'avg_pr_tat_net_days'      => $canSeePrs ? $avgPrTatNetDays : null,
+                'avg_approval_days'        => $canSeePos ? $avgApprovalDays : null,
+                'avg_release_days'         => $canSeePos ? $avgReleaseDays : null,
+                'avg_delivery_days'        => $canSeePos ? $avgDeliveryDays : null,
             ],
-            'spend'                 => $spend,
+            'spend'                 => $canSeePos ? $spend : ['value' => 0, 'count' => 0, 'previous_value' => null, 'trend' => []],
             'attention'             => $attention,
-            'po_counts'             => $posByStatus,
+            'po_counts'             => $canSeePos ? $posByStatus : [],
             'pending_approvals'     => $pendingApprovals,
-            'budget_summary'        => $budgetSummary,
-            'po_kpi'                => $poKpi,
-            'pr_counts'             => $prsByStatus,
-            'pr_kpi'                => $prKpi,
-            'pending_pr_tracking'       => $pendingPrs,
-            'po_delivery_tracking'      => $pendingDeliveryPos,
-            'latest_operational_report' => \App\Models\OperationalReport::where('tenant_id', $tenantId)
-                ->latest()
-                ->first(['id', 'title', 'status', 'period_start', 'period_end', 'sent_at', 'created_at']),
+            'budget_summary'        => $this->can('cost_centers', 'view') ? $budgetSummary : [],
+            'po_kpi'                => $canSeePos ? $poKpi : [],
+            'pr_counts'             => $canSeePrs ? $prsByStatus : [],
+            'pr_kpi'                => $canSeePrs ? $prKpi : [],
+            'pending_pr_tracking'       => $canSeePrs ? $pendingPrs : [],
+            'po_delivery_tracking'      => $canSeeDeliveries ? $pendingDeliveryPos : [],
+            'latest_operational_report' => $this->can('reports', 'view')
+                ? \App\Models\OperationalReport::where('tenant_id', $tenantId)
+                    ->latest()
+                    ->first(['id', 'title', 'status', 'period_start', 'period_end', 'sent_at', 'created_at'])
+                : null,
         ]);
     }
 }
