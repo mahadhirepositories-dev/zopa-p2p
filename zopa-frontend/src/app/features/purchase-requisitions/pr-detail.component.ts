@@ -141,7 +141,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                     <span style="color:#dc2626;">Reject PR</span>
                   </button>
                 }
-                @if (pr()!.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+                @if (pr()!.status === 'draft' && (pr()!.requested_by?.id === auth.user()?.id || auth.canDo('purchase_requisitions', 'delete'))) {
                   <button mat-menu-item (click)="deletePr()" [disabled]="acting()">
                     <mat-icon style="color:#dc2626;">delete</mat-icon>
                     <span style="color:#dc2626;">Delete Draft</span>
@@ -531,7 +531,7 @@ export class PrDetailComponent implements OnInit {
     if (!pr) return false;
     const canClarifyOrShortClose = !['draft', 'short_closed', 'rejected', 'needs_clarification'].includes(pr.status ?? '') && !pr.status?.startsWith('short_close_pending') && this.auth.canTransact();
     const canReject = pr.status === 'submitted' && this.auth.isAdmin();
-    const canDelete = pr.status === 'draft' && (this.auth.canTransact() || this.auth.canDo('purchase_requisitions', 'delete'));
+    const canDelete = pr.status === 'draft' && (pr.requested_by?.id === this.auth.user()?.id || this.auth.canDo('purchase_requisitions', 'delete'));
     return canClarifyOrShortClose || canReject || canDelete;
   }
 

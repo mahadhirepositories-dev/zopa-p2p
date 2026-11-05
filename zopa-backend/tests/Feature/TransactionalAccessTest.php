@@ -131,4 +131,47 @@ class TransactionalAccessTest extends TestCase
             ])
             ->assertStatus(201);
     }
+
+    public function test_cleanup_drafts_blocked_without_matrix_delete(): void
+    {
+        $pr = $this->draftPr('cbuyer@acmetest.com');
+
+        $this->actAs('cl1@acmetest.com')
+            ->withHeaders($this->headers())
+            ->deleteJson('/api/purchase-requisitions/cleanup-drafts')
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('purchase_requisitions', ['id' => $pr->id]);
+    }
+
+    /** Cleanup spans the whole tenant, so the requester rule on single delete does not apply. */
+    public function test_cleanup_drafts_blocked_for_requester_without_matrix_delete(): void
+    {
+        $pr = $this->draftPr('cbuyer@acmetest.com');
+
+        $this->actAs('cbuyer@acmetest.com')
+            ->withHeaders($this->headers())
+            ->deleteJson('/api/purchase-requisitions/cleanup-drafts')
+            ->assertStatus(403);
+
+        $this->assertDatabaseHas('purchase_requisitions', ['id' => $pr->id]);
+    }
+
+    public function test_cleanup_drafts_respects_matrix_grant(): void
+    {
+        RolePermission::updateOrCreate(
+            ['role' => 'client_approver_l1', 'module' => 'purchase_requisitions'],
+            ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => true],
+        );
+        Cache::flush();
+
+        $pr = $this->draftPr('cbuyer@acmetest.com');
+
+        $this->actAs('cl1@acmetest.com')
+            ->withHeaders($this->headers())
+            ->deleteJson('/api/purchase-requisitions/cleanup-drafts')
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('purchase_requisitions', ['id' => $pr->id]);
+    }
 }
