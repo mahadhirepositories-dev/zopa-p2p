@@ -11,6 +11,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule, provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../../core/auth/auth.service';
 import { CostCenter } from '../../core/models';
 import { NotificationService } from '../../core/services/notification.service';
 
@@ -63,7 +64,11 @@ import { NotificationService } from '../../core/services/notification.service';
           </mat-form-field>
           <mat-form-field appearance="outline">
             <mat-label>Annual Budget (₹) *</mat-label>
-            <input matInput type="number" formControlName="annual_budget" min="0" />
+            <!-- readonly, not disabled: a disabled control drops out of form.value, and create requires annual_budget -->
+            <input matInput type="number" formControlName="annual_budget" min="0" [readonly]="!auth.isAdmin()" />
+            @if (!auth.isAdmin()) {
+              <mat-hint>Only an admin can set the budget</mat-hint>
+            }
           </mat-form-field>
         </div>
         <mat-form-field appearance="outline" class="full-width">
@@ -119,6 +124,7 @@ export class CostCenterFormDialogComponent implements OnInit {
   private fb = inject(FormBuilder);
   private notify = inject(NotificationService);
   private dialogRef = inject(MatDialogRef<CostCenterFormDialogComponent>);
+  readonly auth = inject(AuthService);
   data: CostCenter | null = inject(MAT_DIALOG_DATA);
 
   saving = signal(false);

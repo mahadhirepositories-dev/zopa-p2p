@@ -372,7 +372,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Control spend with budgets.',
     keywords: ['cost center', 'budget', 'spend', 'frozen', 'consumed', 'available'],
     modules: ['cost_centers'],
-    body: `<p>A <strong>Cost Center</strong> ties a budget to a department/project/location. Set the <strong>Annual Budget</strong> and fiscal year. As POs are raised, the budget shows:</p>
+    body: `<p>A <strong>Cost Center</strong> ties a budget to a department/project/location. Admins set the <strong>Annual Budget</strong>; buyers create a cost center with a budget of 0, and an admin adds funds through <strong>Adjust Budget</strong>. As POs are raised, the budget shows:</p>
       <ul>
         <li><strong>Frozen</strong> — reserved by draft/pending POs</li>
         <li><strong>Consumed</strong> — actually spent</li>
