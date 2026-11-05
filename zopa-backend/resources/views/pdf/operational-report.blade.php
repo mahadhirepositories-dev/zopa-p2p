@@ -10,7 +10,8 @@
   }
   * { box-sizing: border-box; }
   body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    /* DomPDF: Helvetica has no rupee sign or arrow, and any weight other than 400/700 falls back to serif */
+    font-family: "DejaVu Sans", Arial, sans-serif;
     font-size: 11px;
     color: #1e293b;
     margin: 0;
@@ -30,7 +31,7 @@
   }
   .masthead table { width: 100%; border-collapse: collapse; }
   .masthead .title { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; color: #ffffff; margin: 0; }
-  .masthead .org-name { font-size: 13px; color: #38bdf8; font-weight: 600; margin-top: 3px; }
+  .masthead .org-name { font-size: 13px; color: #38bdf8; font-weight: 700; margin-top: 3px; }
   .masthead .meta-right { text-align: right; font-size: 10.5px; color: #cbd5e1; }
   .masthead .meta-badge { display: inline-block; background: #0369a1; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-weight: 700; font-size: 9.5px; text-transform: uppercase; margin-bottom: 4px; }
 
@@ -48,7 +49,7 @@
   .kpi-box.danger { border-top-color: #dc2626; background: #fef2f2; }
   .kpi-box.success { border-top-color: #16a34a; background: #f0fdf4; }
   .kpi-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 3px; }
-  .kpi-value { font-size: 20px; font-weight: 800; color: #0f2942; line-height: 1.1; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: #0f2942; line-height: 1.1; }
   .kpi-box.warn .kpi-value { color: #c2410c; }
   .kpi-box.danger .kpi-value { color: #b91c1c; }
   .kpi-box.success .kpi-value { color: #15803d; }
@@ -64,7 +65,7 @@
     padding: 10px 14px;
   }
   .chart-header {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #0f2942;
     text-transform: uppercase;
@@ -78,7 +79,7 @@
   /* Bar Row */
   .bar-row { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
   .bar-row td { padding: 2px 0; }
-  .bar-label { width: 28%; font-size: 9.5px; font-weight: 600; color: #334155; }
+  .bar-label { width: 28%; font-size: 9.5px; font-weight: 700; color: #334155; }
   .bar-track { width: 58%; background: #e2e8f0; border-radius: 2px; height: 10px; overflow: hidden; }
   .bar-fill { height: 10px; border-radius: 2px; background: #0284c7; }
   .bar-fill.accent { background: #0f2942; }
@@ -143,7 +144,7 @@
 
   .remarks-cell {
     color: #0f172a;
-    font-weight: 500;
+    font-weight: 400;
     background: #fefce8;
     border-left: 2px solid #eab308;
     padding-left: 6px;
@@ -296,8 +297,8 @@
     <thead>
       <tr>
         <th style="width: 8%;">PR Number</th>
-        <th style="width: 7%;">Date</th>
-        <th style="width: 25%;">Scope &bull; Title</th>
+        <th style="width: 8%;">Date</th>
+        <th style="width: 24%;">Scope &bull; Title</th>
         <th style="width: 12%;">Cost Center</th>
         <th style="width: 12%;">Requested By</th>
         <th style="width: 9%;">Status</th>
