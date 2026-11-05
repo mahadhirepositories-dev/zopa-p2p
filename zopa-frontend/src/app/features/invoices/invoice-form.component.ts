@@ -145,9 +145,6 @@ import { NotificationService } from '../../core/services/notification.service';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px; }
-    .page-header h2 { margin:0; }
     .form-section {
       background:#ffffff;border:1px solid var(--border);border-radius:16px;
       padding:20px 24px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05);

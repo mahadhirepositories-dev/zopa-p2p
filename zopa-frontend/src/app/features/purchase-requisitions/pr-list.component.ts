@@ -216,28 +216,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    .cta-btn { height:40px!important; }
-    .toolbar-bar { display:flex;align-items:center;gap:16px;margin-bottom:16px;flex-wrap:wrap; }
     .search-field { flex:1;max-width:340px; }
     ::ng-deep .search-field .mat-mdc-form-field-infix { padding-top:8px!important;padding-bottom:8px!important; }
-    .filter-chips { display:flex;gap:6px;flex-wrap:wrap; }
-    .filter-chip { padding:5px 14px;border-radius:99px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all .15s; }
-    .filter-chip:hover { border-color:var(--brand);color:var(--brand); }
-    .filter-chip.active { background:var(--brand);border-color:var(--brand);color:white; }
-    .filter-chip.submitted.active { background:#d97706;border-color:#d97706; }
-    .filter-chip.rfq.active       { background:#2563eb;border-color:#2563eb; }
-    .filter-chip.converted.active { background:#16a34a;border-color:#16a34a; }
-    .filter-chip.rejected.active  { background:#dc2626;border-color:#dc2626; }
     .full-width { width:100%; }
     .clickable-row { cursor:pointer; }
     .pr-number-cell { display:flex;align-items:center;gap:10px; }
     .pr-icon { width:32px;height:32px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
     .pr-icon mat-icon { font-size:16px;width:16px;height:16px;color:var(--brand); }
-    .pr-num { font-size:13px;font-weight:600;color:var(--text-1); }
+    .pr-num { font-size:13px;font-weight:600;color:var(--text-1);white-space:nowrap; }
     .pr-date { font-size:11px;color:var(--text-3); }
     .row-arrow { color:var(--text-3);font-size:18px; }
     .priority-badge { display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
@@ -245,27 +231,14 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     .priority-normal { background:#eff6ff;color:#2563eb; }
     .priority-high   { background:#fff7ed;color:#d97706; }
     .priority-urgent { background:#fff1f2;color:#dc2626; }
-    .empty-state { display:flex;flex-direction:column;align-items:center;gap:8px;padding:60px 24px;color:var(--text-3);text-align:center; }
-    .empty-state mat-icon { font-size:48px;width:48px;height:48px;color:var(--border); }
-    .empty-state h3 { margin:0;font-size:16px;font-weight:600;color:var(--text-2); }
-    .empty-state p { margin:0; font-size:13px; }
 
     /* Table responsive wrapper */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
-    }
     .table-responsive table {
       min-width: 1000px;
     }
 
     /* Mobile header layout adjustments */
     @media (max-width: 768px) {
-      .page-wrapper { padding: 16px !important; }
-      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
-      .toolbar-bar { flex-direction: column; align-items: stretch !important; }
       .search-field { max-width: none !important; }
     }
   `],

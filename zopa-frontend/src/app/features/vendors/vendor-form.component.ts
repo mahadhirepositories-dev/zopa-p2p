@@ -383,10 +383,6 @@ const CURRENCIES = [
     </div>
   `,
   styles: [`
-    .page-wrapper { padding:28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;flex-wrap:wrap;gap:12px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:12px;color:var(--text-3); }
     .form-layout { display:flex;flex-direction:column;gap:20px; }
 
     .form-card mat-card-header { display:flex;align-items:center;gap:12px;padding-bottom:0; }

@@ -254,11 +254,6 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     </div>
   `,
   styles: [`
-    .page-wrapper {
-      padding: 24px;
-      max-width: 1320px;
-      margin: 0 auto;
-    }
 
     /* Header */
     .header-container {
@@ -307,11 +302,6 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       text-decoration: underline;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
     .primary-btn {
       padding: 0 18px;
       height: 40px;

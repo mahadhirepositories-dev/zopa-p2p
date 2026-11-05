@@ -161,27 +161,22 @@ A consolidated, cross-organization view. A **searchable organization picker** (t
 lets you filter to **All Organizations** or any single one — type to find an org, or use
 the keyboard (↑/↓/Enter).
 
-**Headline KPI band:**
-| KPI | Meaning |
-|---|---|
-| **Total POs** | Purchase orders across all organizations |
-| **Total PRs** | Requisitions across all organizations |
-| **GRNs** | Goods receipts recorded |
-| **Invoices** | Invoices in the system |
-| **Pending Approvals** | All approvals currently waiting |
-| **Total PO Value** | Combined ₹ value of all POs |
+**PO value:** the headline figure, leaving out drafts and cancelled POs. It matches *Total Value
+Managed* on the Executive Dashboard for the same organization and period.
 
-**Charts & breakdowns:**
-| Widget | What it shows |
-|---|---|
-| **PO Status Distribution** (donut) | POs split by status: Draft, Pending, Approved, Released, Delivered, Invoiced, Payment Released, Cancelled |
-| **Value at a Glance** | PO Value · PR Estimated Value · Invoice Total · Approved PO Value |
-| **PO Value by Organization** | Ranks organizations by purchase value |
-| **Purchase Orders by Status** | Bar breakdown of every PO status |
-| **PR Pipeline** | Draft → Submitted → In RFQ → Converted → Rejected |
-| **Invoice Summary** | Total · Pending · Approved · Rejected · Total Value |
-| **GRN Summary** | Total · Pending · Confirmed |
-| **Organization Overview** (table) | Per organization: POs, PRs, PO Value, Pending Approvals, Active/Inactive |
+**Documents:** purchase orders, requisitions, GRNs, invoices and POs pending approval.
+
+**Turnaround time:** average days from PO created to delivery, then per stage, with the slowest
+stage tagged. Only delivered orders count toward the total, and a stage shows **No data** until
+something has been measured. These follow the selected period.
+
+**Value at a glance:** all POs including drafts and cancelled, PR estimates and invoices. PR
+estimates depend on estimated prices being entered.
+
+**PO pipeline:** how many POs sit at each stage, from Draft to Paid, plus Cancelled.
+
+**Organizations:** POs, PRs, pending approvals, PO value including drafts, and average turnaround
+for each organization. Click an organization to filter the dashboard to it.
 
 ---
 

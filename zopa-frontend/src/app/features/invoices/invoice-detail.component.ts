@@ -24,7 +24,7 @@ import { NotificationService } from '../../core/services/notification.service';
             <button mat-icon-button routerLink="/invoices"><mat-icon>arrow_back</mat-icon></button>
             <h2>Invoice: {{ invoice()!.invoice_number }}</h2>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;">
+          <div class="header-actions">
             <mat-chip [class]="'status-' + invoice()!.status" [highlighted]="true">{{ invoice()!.status }}</mat-chip>
             @if (invoice()!.status === 'pending') {
               <button mat-raised-button color="primary" (click)="updateStatus('approved')">Approve</button>

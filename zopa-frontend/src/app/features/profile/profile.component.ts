@@ -188,10 +188,7 @@ import { NotificationService } from '../../core/services/notification.service';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; max-width: 980px; }
-    .page-header { margin-bottom: 22px; }
-    .page-header h2 { margin: 0; font-size: 22px; font-weight: 700; }
-    .page-header p { margin: 4px 0 0; font-size: 13px; color: var(--text-3); }
+    .page-wrapper { max-width: 980px; }
 
     .identity-card {
       display: flex; align-items: center; gap: 18px; flex-wrap: wrap;

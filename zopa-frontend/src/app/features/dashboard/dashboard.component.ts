@@ -14,6 +14,7 @@ import { animate, state, style, transition, trigger } from '@angular/animations'
 import { Subscription, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/auth/auth.service';
+import { inr } from '../../shared/inr';
 
 interface PoItem { sno: number; description: string; code: string|null; uom: string|null; qty: number; net_rate: number; gst_rate: number; amount: number; required_by: string|null; warranty_months: number; }
 interface PoKpi  { id: number; po_number: string; status: string; vendor: string; cost_center: string; grand_total: number; net_total: number; tax_amount: number; items_count: number; created_at: string; approved_at: string|null; released_at: string|null; days_to_approve: number|null; days_to_release: number|null; total_cycle_days: number|null; items: PoItem[]; tat_badge?: string; badge_color?: string; }
@@ -118,7 +119,7 @@ const PO_STAGES = [
     ]),
   ],
   template: `
-    <div class="page-wrapper dash">
+    <div class="page-wrapper ui-page">
 
       <div class="page-header">
         <div>
@@ -177,14 +178,14 @@ const PO_STAGES = [
       }
 
       @if (stats(); as s) {
-        <div class="dash-body" [class.refreshing]="loading()" [attr.aria-busy]="loading()">
+        <div class="ui-stack" [class.refreshing]="loading()" [attr.aria-busy]="loading()">
 
-          <div class="grid-top">
+          <div class="ui-grid-lead dash-top">
             <!-- First in the DOM so phones lead with what needs doing; wide layouts move it beside the hero. -->
-            <section class="panel attention" aria-labelledby="attention-title">
-              <div class="panel-head">
+            <section class="ui-panel attention" aria-labelledby="attention-title">
+              <div class="ui-panel-head">
                 <h3 id="attention-title">Needs attention</h3>
-                <span class="panel-note">Right now</span>
+                <span class="ui-panel-note">Right now</span>
               </div>
               @if (attention().length) {
                 <ul class="attn-list">
@@ -214,13 +215,13 @@ const PO_STAGES = [
             </section>
 
             @if (canSeePos()) {
-              <section class="hero" aria-labelledby="hero-title">
-                <div class="hero-head">
+              <section class="ui-hero" aria-labelledby="hero-title">
+                <div class="ui-hero-head">
                   <h3 id="hero-title">PO value</h3>
                   <span>{{ periodLabel() }}</span>
                 </div>
-                <div class="hero-figure" tabindex="0" [matTooltip]="'₹' + (s.spend.value | number:'1.0-0')">{{ inr(s.spend.value) }}</div>
-                <p class="hero-meta">
+                <div class="ui-hero-figure" tabindex="0" [matTooltip]="'₹' + (s.spend.value | number:'1.0-0')">{{ inr(s.spend.value) }}</div>
+                <p class="ui-hero-meta">
                   @if (spendDelta(); as d) {
                     <span class="delta"><mat-icon>{{ d.up ? 'north' : 'south' }}</mat-icon>{{ d.pct }}% {{ d.label }}</span>
                   }
@@ -252,32 +253,32 @@ const PO_STAGES = [
             }
           </div>
 
-          <div class="grid-mid">
+          <div class="ui-grid-even">
             @if (canSeePos()) {
-              <section class="panel" aria-labelledby="tat-title">
-                <div class="panel-head">
+              <section class="ui-panel" aria-labelledby="tat-title">
+                <div class="ui-panel-head">
                   <h3 id="tat-title">Turnaround time</h3>
-                  <span class="panel-note">{{ periodLabel() }}</span>
+                  <span class="ui-panel-note">{{ periodLabel() }}</span>
                 </div>
-                <div class="stat">
+                <div class="ui-stat dash-stat">
                   @if (s.tat_summary.avg_total_days !== null) {
-                    <span class="stat-value">{{ s.tat_summary.avg_total_days }} <small>days</small></span>
+                    <span class="ui-stat-value">{{ s.tat_summary.avg_total_days }} <small>days</small></span>
                   } @else {
-                    <span class="stat-value stat-value--none">No data</span>
+                    <span class="ui-stat-value ui-stat-value--none">No data</span>
                   }
-                  <span class="stat-sub">Total fulfilment, submitted PR to delivery. Delivered orders only.</span>
+                  <span class="ui-stat-sub">Total fulfilment, submitted PR to delivery. Delivered orders only.</span>
                 </div>
-                <ul class="stages">
+                <ul class="ui-bars">
                   @for (st of stages(); track st.label) {
-                    <li class="stage">
-                      <div class="stage-text">
-                        <span class="stage-label">{{ st.label }}
-                          @if (st.slowest) { <span class="slowest-tag">Slowest</span> }
+                    <li class="ui-bar">
+                      <div class="ui-bar-text">
+                        <span class="ui-bar-label">{{ st.label }}
+                          @if (st.slowest) { <span class="ui-tag">Slowest</span> }
                         </span>
-                        <span class="stage-sub">{{ st.sub }}</span>
+                        <span class="ui-bar-sub">{{ st.sub }}</span>
                       </div>
-                      <span class="stage-track"><span class="stage-fill" [class.stage-fill--slowest]="st.slowest" [style.width.%]="st.pct"></span></span>
-                      <span class="stage-val" [class.stage-val--none]="st.days === null">{{ st.days === null ? 'No data' : st.days + ' d' }}</span>
+                      <span class="ui-bar-track"><span class="ui-bar-fill" [class.ui-bar-fill--accent]="st.slowest" [style.width.%]="st.pct"></span></span>
+                      <span class="ui-bar-value" [class.ui-bar-value--none]="st.days === null">{{ st.days === null ? 'No data' : st.days + ' d' }}</span>
                     </li>
                   }
                 </ul>
@@ -285,13 +286,13 @@ const PO_STAGES = [
             }
 
             @if (auth.canDo('cost_centers', 'view')) {
-              <section class="panel" aria-labelledby="budget-title">
-                <div class="panel-head">
+              <section class="ui-panel" aria-labelledby="budget-title">
+                <div class="ui-panel-head">
                   <h3 id="budget-title">Budget used</h3>
-                  <span class="panel-note">This fiscal year</span>
+                  <span class="ui-panel-note">This fiscal year</span>
                 </div>
                 @if (budgets().length === 0) {
-                  <div class="empty empty--sm">
+                  <div class="empty-state dash-empty-sm">
                     <mat-icon>account_balance_wallet</mat-icon>
                     <p>No cost centers yet.</p>
                     @if (auth.canDo('cost_centers', 'create')) {
@@ -299,13 +300,13 @@ const PO_STAGES = [
                     }
                   </div>
                 } @else {
-                  <div class="stat">
+                  <div class="ui-stat dash-stat">
                     @if (budgetTotal().used !== null) {
-                      <span class="stat-value">{{ budgetTotal().used | number:'1.0-0' }}%</span>
-                      <span class="stat-sub">{{ inr(budgetTotal().committed) }} committed of {{ inr(budgetTotal().annual) }}</span>
+                      <span class="ui-stat-value">{{ budgetTotal().used | number:'1.0-0' }}%</span>
+                      <span class="ui-stat-sub">{{ inr(budgetTotal().committed) }} committed of {{ inr(budgetTotal().annual) }}</span>
                     } @else {
-                      <span class="stat-value stat-value--none">No budget set</span>
-                      <span class="stat-sub">An admin funds a cost center through Adjust Budget.</span>
+                      <span class="ui-stat-value ui-stat-value--none">No budget set</span>
+                      <span class="ui-stat-sub">An admin funds a cost center through Adjust Budget.</span>
                     }
                   </div>
                   <ul class="budget-list">
@@ -326,7 +327,7 @@ const PO_STAGES = [
                     }
                   </ul>
                   @if (budgets().length > topBudgets().length) {
-                    <a class="panel-link" routerLink="/cost-centers">All {{ budgets().length }} cost centers <mat-icon>arrow_forward</mat-icon></a>
+                    <a class="ui-panel-link" routerLink="/cost-centers">All {{ budgets().length }} cost centers <mat-icon>arrow_forward</mat-icon></a>
                   }
                 }
               </section>
@@ -334,24 +335,24 @@ const PO_STAGES = [
           </div>
 
           @if (lanes().length) {
-            <section class="panel" aria-labelledby="pipeline-title">
-              <div class="panel-head">
+            <section class="ui-panel" aria-labelledby="pipeline-title">
+              <div class="ui-panel-head">
                 <h3 id="pipeline-title">Pipeline</h3>
-                <span class="panel-note">{{ periodLabel() }}</span>
+                <span class="ui-panel-note">{{ periodLabel() }}</span>
               </div>
               @for (lane of lanes(); track lane.title) {
-                <div class="lane">
-                  <div class="lane-head">
-                    <span class="lane-title">{{ lane.title }}</span>
-                    <span class="lane-total">{{ lane.total | number }} total</span>
-                    @if (lane.closed) { <span class="lane-total">{{ lane.closed }}</span> }
+                <div class="ui-lane">
+                  <div class="ui-lane-head">
+                    <span class="ui-lane-title">{{ lane.title }}</span>
+                    <span class="ui-lane-total">{{ lane.total | number }} total</span>
+                    @if (lane.closed) { <span class="ui-lane-total">{{ lane.closed }}</span> }
                   </div>
-                  <div class="lane-stages">
+                  <div class="ui-lane-stages">
                     @for (st of lane.stages; track st.label) {
-                      <a class="lane-stage" [class.lane-stage--empty]="!st.count" [routerLink]="lane.route" [queryParams]="{ status: st.status }">
-                        <span class="lane-count">{{ st.count | number }}</span>
-                        <span class="lane-label">{{ st.label }}</span>
-                        <span class="lane-bar"><span [style.width.%]="st.pct"></span></span>
+                      <a class="ui-lane-stage" [class.ui-lane-stage--empty]="!st.count" [routerLink]="lane.route" [queryParams]="{ status: st.status }">
+                        <span class="ui-lane-count">{{ st.count | number }}</span>
+                        <span class="ui-lane-label">{{ st.label }}</span>
+                        <span class="ui-lane-bar"><span [style.width.%]="st.pct"></span></span>
                       </a>
                     }
                   </div>
@@ -361,7 +362,7 @@ const PO_STAGES = [
           }
 
           @if (tabs().length) {
-            <section class="panel tables" [class.tables--phone]="phone()" aria-label="Documents">
+            <section class="ui-panel tables" [class.tables--phone]="phone()" aria-label="Documents">
               <mat-tab-group [selectedIndex]="tabIndex()" (selectedIndexChange)="tabIndex.set($event)" animationDuration="0ms">
 
                 @if (tabs().includes('pos')) {
@@ -484,7 +485,7 @@ const PO_STAGES = [
                           </table>
                         </div>
                       } @else {
-                        <div class="empty">
+                        <div class="empty-state">
                           <mat-icon>receipt_long</mat-icon>
                           <p>No purchase orders in this period.</p>
                           @if (auth.canDo('purchase_orders', 'create')) {
@@ -559,7 +560,7 @@ const PO_STAGES = [
                           </table>
                         </div>
                       } @else {
-                        <div class="empty">
+                        <div class="empty-state">
                           <mat-icon>description</mat-icon>
                           <p>No requisitions in this period.</p>
                           @if (auth.canDo('purchase_requisitions', 'create')) {
@@ -613,7 +614,7 @@ const PO_STAGES = [
                           </table>
                         </div>
                       } @else {
-                        <div class="empty">
+                        <div class="empty-state">
                           <mat-icon>task_alt</mat-icon>
                           <p>No open requisitions.</p>
                         </div>
@@ -672,7 +673,7 @@ const PO_STAGES = [
                           </table>
                         </div>
                       } @else {
-                        <div class="empty">
+                        <div class="empty-state">
                           <mat-icon>local_shipping</mat-icon>
                           <p>Nothing is waiting on delivery.</p>
                         </div>
@@ -694,7 +695,7 @@ const PO_STAGES = [
           <div class="skel skel--half"></div>
         </div>
       } @else {
-        <div class="empty" role="alert">
+        <div class="empty-state" role="alert">
           <mat-icon>error_outline</mat-icon>
           <p>Unable to load dashboard data.</p>
           <button mat-stroked-button (click)="reload()">Try again</button>
@@ -713,23 +714,9 @@ const PO_STAGES = [
     </ng-template>
   `,
   styles: [`
-    .dash { margin: 0 auto; padding: 24px 28px 40px; container-type: inline-size; }
-    .page-header { flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
-    .page-header p { color: var(--text-2); }
     .head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
     /* ── Filters ── */
-    .filters { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; margin-bottom: 16px; }
-    .period-pills { display: flex; gap: 6px; flex-wrap: wrap; }
-    .pill-btn {
-      background: var(--surface); border: 1px solid var(--border); padding: 6px 14px; border-radius: 99px;
-      font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; transition: background .15s ease, color .15s ease;
-    }
-    .pill-btn:hover { background: #e2e8f0; color: #0f172a; }
-    .pill-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
-    .custom-date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .date-input-group { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-2); font-weight: 500; }
-    .date-picker-input { border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 12px; color: #0f172a; background: var(--surface); }
     .report-link {
       display: inline-flex; align-items: center; gap: 6px; margin-left: auto; min-width: 0; max-width: 100%;
       font-size: 12px; font-weight: 500; color: var(--text-2); text-decoration: none;
@@ -746,32 +733,12 @@ const PO_STAGES = [
     .refresh-error span { flex: 1; min-width: 0; }
     .refresh-error button { flex-shrink: 0; }
 
-    /* Keep the last render on a period change, so the page doesn't jump. */
-    .dash-body { display: flex; flex-direction: column; gap: 16px; transition: opacity .15s ease; }
-    .dash-body.refreshing { opacity: .55; pointer-events: none; }
 
-    /* ── Layout: follows the content width, which depends on the sidebar as well as the screen ── */
-    .grid-top, .grid-mid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+    /* Phones lead with what needs doing; wide layouts move it beside the hero */
     @container (min-width: 860px) {
-      .grid-top { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
-      .grid-top .attention { order: 2; }
-      .grid-top .attention:only-child { grid-column: 1 / -1; }
-      .grid-mid { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+      .dash-top .attention { order: 2; }
+      .dash-top .attention:only-child { grid-column: 1 / -1; }
     }
-
-    .panel {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
-      box-shadow: var(--shadow-xs); padding: 20px; min-width: 0;
-    }
-    .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 14px; }
-    .panel-head h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--text-1); }
-    .panel-note { font-size: 12px; color: var(--text-2); white-space: nowrap; }
-    .panel-link {
-      display: inline-flex; align-items: center; gap: 4px; margin-top: 12px;
-      font-size: 12px; font-weight: 600; color: var(--brand-hover); text-decoration: none;
-    }
-    .panel-link:hover { text-decoration: underline; }
-    .panel-link mat-icon { font-size: 14px; width: 14px; height: 14px; }
 
     /* ── Needs attention ── */
     .attn-list { list-style: none; margin: 0 -8px; padding: 0; }
@@ -798,14 +765,6 @@ const PO_STAGES = [
     .all-clear span { font-size: 12px; color: var(--text-2); }
 
     /* ── Hero ── */
-    .hero {
-      background: var(--text-1); color: #fff; border-radius: var(--r-lg); box-shadow: var(--shadow-md);
-      padding: 24px; min-width: 0; display: flex; flex-direction: column;
-    }
-    .hero-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12px; color: rgba(255,255,255,.72); }
-    .hero-head h3 { margin: 0; font-size: 14px; font-weight: 700; color: #fff; }
-    .hero-figure { margin-top: 10px; font-size: 56px; line-height: 1.05; font-weight: 700; letter-spacing: -.03em; width: fit-content; }
-    .hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 8px 0 20px; font-size: 13px; color: rgba(255,255,255,.72); }
     .delta { display: inline-flex; align-items: center; gap: 3px; font-weight: 600; color: #fff; }
     .delta mat-icon { font-size: 15px; width: 15px; height: 15px; }
 
@@ -820,25 +779,10 @@ const PO_STAGES = [
     .trend-col--now .trend-val, .trend-col--now .trend-month { color: #fff; font-weight: 700; }
     .trend-empty { margin: auto 0 0; font-size: 13px; color: rgba(255,255,255,.72); }
 
-    /* ── Stat figure, shared by turnaround and budget ── */
-    .stat { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
-    .stat-value { font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -.02em; color: var(--text-1); }
-    .stat-value small { font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--text-2); }
-    .stat-value--none { font-size: 20px; color: var(--text-2); }
-    .stat-sub { font-size: 12px; color: var(--text-2); }
+    .dash-stat { margin-bottom: 16px; }
+    .ui-hero-meta { margin-bottom: 20px; }
 
-    /* ── Turnaround stages ── */
-    .stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-    .stage { display: grid; grid-template-columns: minmax(0, 11fr) minmax(0, 8fr) 58px; align-items: center; gap: 12px; }
-    .stage-text { display: flex; flex-direction: column; min-width: 0; }
-    .stage-label { font-size: 13px; font-weight: 600; color: var(--text-1); }
-    .stage-sub { font-size: 11px; color: var(--text-2); }
-    .slowest-tag { margin-left: 4px; padding: 1px 6px; border-radius: 99px; background: var(--brand-light); color: #c2410c; font-size: 10px; font-weight: 700; white-space: nowrap; }
-    .stage-track { height: 8px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
-    .stage-fill { display: block; height: 100%; border-radius: 99px; background: #94a3b8; }
-    .stage-fill--slowest { background: var(--brand); }
-    .stage-val { font-size: 13px; font-weight: 700; color: var(--text-1); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    .stage-val--none { font-size: 11px; font-weight: 500; color: var(--text-2); }
+
 
     /* ── Budget ── */
     .budget-list { list-style: none; margin: 0 -8px; padding: 0; }
@@ -857,27 +801,10 @@ const PO_STAGES = [
     mat-progress-bar.meter--warn { --mat-progress-bar-active-indicator-color: #d97706; }
     mat-progress-bar.meter--over { --mat-progress-bar-active-indicator-color: #dc2626; }
 
-    /* ── Pipeline ── */
-    .lane { display: grid; gap: 8px 16px; grid-template-columns: minmax(0, 1fr); padding: 12px 0; border-top: 1px solid var(--border); }
-    .lane:first-of-type { border-top: 0; padding-top: 0; }
-    .lane:last-of-type { padding-bottom: 0; }
-    @container (min-width: 760px) { .lane { grid-template-columns: 130px minmax(0, 1fr); align-items: center; } }
-    .lane-head { display: flex; flex-direction: column; gap: 1px; }
-    .lane-title { font-size: 13px; font-weight: 600; color: var(--text-1); }
-    .lane-total { font-size: 11px; color: var(--text-2); }
-    .lane-stages { display: grid; grid-template-columns: repeat(auto-fit, minmax(76px, 1fr)); gap: 4px; }
-    .lane-stage { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; border-radius: 8px; color: inherit; text-decoration: none; transition: background .12s ease; }
-    .lane-stage:hover { background: var(--bg); }
-    .lane-count { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--text-1); }
-    .lane-label { font-size: 11px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
-    .lane-bar { margin-top: 5px; height: 4px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
-    .lane-bar span { display: block; height: 100%; border-radius: 99px; background: var(--brand); }
-    .lane-stage--empty .lane-count { color: var(--text-2); font-weight: 500; }
 
     /* ── Document tables ── */
     .tables { padding: 0; overflow: hidden; scroll-margin-top: 16px; }
     .tab-note { margin: 0; padding: 12px 16px 8px; font-size: 12px; color: var(--text-2); }
-    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .kpi-table { min-width: 940px; }
     .tables--phone .kpi-table { min-width: 0; }
     .kpi-table tr.mat-mdc-row { cursor: pointer; }
@@ -887,11 +814,6 @@ const PO_STAGES = [
     .doc-link { color: var(--brand-hover); font-weight: 600; font-size: 13px; text-decoration: none; white-space: nowrap; }
     .doc-link:hover { text-decoration: underline; }
     .doc-plain { font-weight: 600; white-space: nowrap; }
-    .status-pill { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .status-partially_delivered { background: #fef3c7; color: #b45309; }
-    .status-needs_clarification { background: #fff7ed; color: #c2410c; }
-    .status-partially_converted { background: #ecfdf5; color: #059669; }
-    .status-short_closed { background: #f1f5f9; color: #475569; }
     .vendor-cell { display: flex; align-items: center; gap: 8px; font-size: 12px; }
     .vendor-avatar { width: 28px; height: 28px; border-radius: 8px; background: var(--brand-light); color: var(--brand-hover); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .expand-btn { width: 28px; height: 28px; }
@@ -924,10 +846,7 @@ const PO_STAGES = [
     .detail-empty { margin: 0; padding: 16px 24px; font-size: 12px; color: var(--text-2); }
 
     /* ── Empty and loading ── */
-    .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 16px; color: var(--text-2); text-align: center; }
-    .empty--sm { padding: 24px 16px; }
-    .empty mat-icon { font-size: 36px; width: 36px; height: 36px; opacity: .5; }
-    .empty p { margin: 0; font-size: 13px; }
+    .dash-empty-sm { padding: 24px 16px; }
 
     .skeleton { display: grid; gap: 16px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
     .skel { border-radius: var(--r-lg); background: #e2e8f0; animation: skel-pulse 1.4s ease-in-out infinite; }
@@ -937,22 +856,14 @@ const PO_STAGES = [
     @container (min-width: 860px) { .skel--half:nth-child(3) { grid-column: span 3; } .skel--half:nth-child(4) { grid-column: span 2; } }
     @keyframes skel-pulse { 50% { opacity: .55; } }
 
-    a:focus-visible, button:focus-visible, .hero-figure:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 8px; }
 
     @media (prefers-reduced-motion: reduce) { .skel { animation: none; } }
 
     @media (max-width: 768px) {
-      .dash { padding: 16px 16px 32px; }
       .report-link { margin-left: 0; }
     }
     @media (max-width: 600px) {
       .head-actions { width: 100%; }
-      .head-actions a { flex: 1 1 auto; padding: 0 10px; white-space: nowrap; }
-      .hero-figure { font-size: 48px; }
-      .panel, .hero { padding: 16px; }
-      .tables { padding: 0; }
-      .stage { grid-template-columns: minmax(0, 1fr) 58px; }
-      .stage-track { grid-column: 1 / -1; grid-row: 2; }
       .skel--hero, .skel--side { grid-column: span 5; }
     }
   `],
@@ -964,6 +875,7 @@ export class DashboardComponent {
   private request?: Subscription;
 
   readonly periods = PERIODS;
+  readonly inr = inr;
 
   phone = toSignal(
     inject(BreakpointObserver).observe('(max-width: 600px)').pipe(map(r => r.matches)),
@@ -1172,15 +1084,6 @@ export class DashboardComponent {
 
   toggleKpi(po: PoKpi) {
     this.expandedKpi.update(cur => cur === po.id ? null : po.id);
-  }
-
-  /** Compact rupees for headline figures: lakh and crore, as the rest of the app reads them. */
-  inr(value: number): string {
-    const abs = Math.abs(value);
-    const sign = value < 0 ? '-' : '';
-    if (abs >= 1e7) return `${sign}₹${(abs / 1e7).toFixed(2)}Cr`;
-    if (abs >= 1e5) return `${sign}₹${(abs / 1e5).toFixed(1)}L`;
-    return `${sign}₹${Math.round(abs).toLocaleString('en-IN')}`;
   }
 
   tatClass(days: number): string {

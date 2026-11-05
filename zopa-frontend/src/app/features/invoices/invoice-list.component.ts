@@ -137,11 +137,6 @@ import { ExportService } from '../../core/services/export.service';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
-    .page-header h2 { margin:0; font-size:20px; font-weight:700; }
-    .page-header p  { margin:3px 0 0; font-size:13px; color:var(--text-3); }
-    .cta-btn { height:40px!important; }
     .full-width { width:100%; }
     .clickable-row { cursor:pointer; }
     .ref-cell { display:flex; align-items:center; gap:10px; }
@@ -160,30 +155,13 @@ import { ExportService } from '../../core/services/export.service';
       text-transform:uppercase;
     }
     .row-arrow { color:var(--text-3); font-size:18px; }
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center;
-      gap:8px; padding:60px 24px; text-align:center;
-    }
-    .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
-    .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
-    .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
 
     /* Table responsive wrapper */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
-    }
     .table-responsive table {
       min-width: 1000px;
     }
 
     /* Mobile header layout adjustments */
-    @media (max-width: 768px) {
-      .page-wrapper { padding: 16px !important; }
-      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
-    }
   `],
 })
 export class InvoiceListComponent implements OnInit {

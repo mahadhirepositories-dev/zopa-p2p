@@ -195,11 +195,6 @@ interface StaffMember {
     }
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    .cta-btn { height:40px!important; }
 
     /* Section headers */
     .section-header {
@@ -224,7 +219,7 @@ interface StaffMember {
     }
 
     /* Staff grid */
-    .staff-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px; }
+    .staff-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 340px), 1fr));gap:12px; }
 
     .staff-card {
       display:flex;align-items:center;gap:12px;

@@ -132,10 +132,10 @@ class AdminDashboardController extends Controller
             // TAT Summary
             fputcsv($file, ['TAT SUMMARY (AVERAGE DAYS)']);
             fputcsv($file, ['Stage', 'Average Days']);
-            fputcsv($file, ['PO Approval TAT', $data['tat_summary']['avg_approval_days'] . ' days']);
-            fputcsv($file, ['PO Vendor Release TAT', $data['tat_summary']['avg_release_days'] . ' days']);
-            fputcsv($file, ['GRN / Delivery TAT', $data['tat_summary']['avg_delivery_days'] . ' days']);
-            fputcsv($file, ['Total Procurement Cycle TAT', $data['tat_summary']['avg_total_days'] . ' days']);
+            fputcsv($file, ['PO Approval TAT', ($data['tat_summary']['avg_approval_days'] === null ? 'No data' : $data['tat_summary']['avg_approval_days'] . ' days')]);
+            fputcsv($file, ['PO Vendor Release TAT', ($data['tat_summary']['avg_release_days'] === null ? 'No data' : $data['tat_summary']['avg_release_days'] . ' days')]);
+            fputcsv($file, ['GRN / Delivery TAT', ($data['tat_summary']['avg_delivery_days'] === null ? 'No data' : $data['tat_summary']['avg_delivery_days'] . ' days')]);
+            fputcsv($file, ['Total Procurement Cycle TAT', ($data['tat_summary']['avg_total_days'] === null ? 'No data' : $data['tat_summary']['avg_total_days'] . ' days')]);
             fputcsv($file, []);
 
             // Organizations List
@@ -154,7 +154,7 @@ class AdminDashboardController extends Controller
                     $tStats['po']['total_value'],
                     $tStats['po']['pending_approvals'],
                     $tStats['pr']['total'],
-                    $tStats['tat_summary']['avg_total_days'],
+                    $tStats['tat_summary']['avg_total_days'] ?? 'No data',
                 ]);
             }
 
@@ -165,6 +165,12 @@ class AdminDashboardController extends Controller
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
+
+    /** Average days, empty rather than zero when nothing was measured. */
+    private function days(?float $average): ?float
+    {
+        return $average === null ? null : round($average, 1);
+    }
 
     private function applyDateFilter($query, string $period, ?string $fromDate, ?string $toDate, string $column = 'created_at')
     {
@@ -193,19 +199,20 @@ class AdminDashboardController extends Controller
         $this->applyDateFilter($invBase, $period, $fromDate, $toDate, 'created_at');
 
         // TAT summary calculation for this tenant
-        $allTats = TatRecord::whereHas('po', fn($q) => $q->where('tenant_id', $tenantId))->get();
+        $allTats = TatRecord::whereHas('po', fn($q) => $this->applyDateFilter($q->where('tenant_id', $tenantId), $period, $fromDate, $toDate))->get();
 
-        $avgApprovalDays = round($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
+        $avgApprovalDays = $this->days($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24));
 
-        $avgReleaseDays = round($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
-            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24) ?? 0, 1);
+        $avgReleaseDays = $this->days($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
+            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24));
 
-        $avgDeliveryDays = round($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
-            ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24) ?? 0, 1);
+        $avgDeliveryDays = $this->days($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
+            ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24));
 
-        $avgTotalDays = round($allTats->filter(fn($t) => $t->po_created_at && ($t->po_delivered_at ?? $t->po_released_at))
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_delivered_at ?? $t->po_released_at) / 24) ?? 0, 1);
+        // Only delivered orders count: a release is not a delivery.
+        $avgTotalDays = $this->days($allTats->filter(fn($t) => $t->po_created_at && ($t->po_delivered_at ?? $t->grn_received_at))
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24));
 
         return [
             'tenant_id' => $tenantId,
@@ -269,19 +276,20 @@ class AdminDashboardController extends Controller
         $this->applyDateFilter($invBase, $period, $fromDate, $toDate, 'created_at');
 
         // Consolidated TAT averages
-        $allTats = TatRecord::whereHas('po', fn($q) => $q->whereIn('tenant_id', $clientIds))->get();
+        $allTats = TatRecord::whereHas('po', fn($q) => $this->applyDateFilter($q->whereIn('tenant_id', $clientIds), $period, $fromDate, $toDate))->get();
 
-        $avgApprovalDays = round($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) ?? 0, 1);
+        $avgApprovalDays = $this->days($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24));
 
-        $avgReleaseDays = round($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
-            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24) ?? 0, 1);
+        $avgReleaseDays = $this->days($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
+            ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24));
 
-        $avgDeliveryDays = round($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
-            ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24) ?? 0, 1);
+        $avgDeliveryDays = $this->days($allTats->filter(fn($t) => $t->po_released_at && ($t->po_delivered_at ?? $t->grn_received_at))
+            ->avg(fn($t) => $t->po_released_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24));
 
-        $avgTotalDays = round($allTats->filter(fn($t) => $t->po_created_at && ($t->po_delivered_at ?? $t->po_released_at))
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_delivered_at ?? $t->po_released_at) / 24) ?? 0, 1);
+        // Only delivered orders count: a release is not a delivery.
+        $avgTotalDays = $this->days($allTats->filter(fn($t) => $t->po_created_at && ($t->po_delivered_at ?? $t->grn_received_at))
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24));
 
         return [
             'is_consolidated' => true,

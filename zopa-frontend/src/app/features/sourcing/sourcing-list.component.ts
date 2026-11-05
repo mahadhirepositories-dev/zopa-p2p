@@ -39,7 +39,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
           <p>{{ currentTabCount() }} item{{ currentTabCount() !== 1 ? 's' : '' }} found</p>
         </div>
 
-        <div style="display: flex; gap: 10px; align-items: center;">
+        <div class="header-actions">
           <button mat-stroked-button (click)="exportExcel()" [disabled]="exporting()">
             @if (exporting()) { <mat-spinner diameter="18" /> }
             @else { <mat-icon>download</mat-icon> }
@@ -347,49 +347,11 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
     
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-    .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
-    .page-header p  { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
-    .cta-btn { height: 40px !important; }
 
-    .toolbar-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
     .search-field { flex: 1; min-width: 260px; }
-    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filter-chip {
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-2);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .filter-chip:hover { border-color: var(--text-3); color: var(--text-1); }
-    .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .filter-chip.uncatalogued.active { background: #7c3aed; border-color: #7c3aed; }
 
     .table-card { border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
-    }
     .full-width { width: 100%; }
 
     .po-number-cell { display: flex; align-items: center; gap: 12px; }
@@ -442,18 +404,6 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     .btn-table-action { height: 32px!important; font-size: 11.5px!important; padding: 0 12px!important; line-height: 32px!important; }
     .btn-table-action mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 3px; }
 
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 60px 20px;
-      color: var(--text-3);
-      gap: 8px;
-      text-align: center;
-    }
-    .empty-state mat-icon { font-size: 44px; width: 44px; height: 44px; color: var(--text-3); }
-    .empty-state h3 { margin: 0; font-size: 16px; color: var(--text-1); font-weight: 600; }
-    .empty-state p { margin: 0 0 12px; font-size: 13px; }
   `]
 })
 export class SourcingListComponent implements OnInit {
