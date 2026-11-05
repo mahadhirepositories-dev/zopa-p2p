@@ -535,7 +535,6 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Import many products or vendors at once.',
     keywords: ['bulk', 'upload', 'import', 'excel', 'template', 'products', 'vendors', 'csv', 'xlsx'],
     modules: ['products', 'vendors'],
-    adminOnly: true,
     body: `<p>On the <strong>Products</strong> and <strong>Vendors</strong> lists use <strong>Template</strong> to download a ready-to-fill Excel file, then <strong>Bulk Upload</strong> to import it.</p>
       <ul>
         <li>The template includes a <strong>Categories (reference)</strong> sheet — enter category names exactly as listed. (Add categories first; they're matched by name.)</li>

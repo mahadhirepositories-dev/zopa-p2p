@@ -58,7 +58,7 @@ Every user has a **role** inside an organization. There are two families:
 | Role | Purpose |
 |---|---|
 | **Client Admin** | Full control within their own organization |
-| **Client Buyer** | Creates and manages PRs, POs, GRNs, Invoices |
+| **Client Buyer** | Creates and manages PRs, POs, GRNs, Invoices, and their organization's master data |
 | **Client Approver L1 / L2 / L3** | Approves documents at escalating levels |
 
 ### Default permissions (per module)
@@ -72,10 +72,10 @@ be changed at any time by the Super Admin (see *Access Control*, Section 9).
 | Goods Receipt (GRN) | Full | View, Create, Edit | View only | Full |
 | Invoices | Full | View, Create, Edit | View only | Full |
 | Approvals | Full | Act on assigned | **Act on assigned** | Full |
-| Vendors | Full | View (ZOPA buyer: +manage) | View only | Full |
-| Products / Categories | Full | View (ZOPA buyer: +manage) | View only | Full |
-| Cost Centers & Budget | Full | View (ZOPA buyer: +manage) | View only | Full |
-| Org Masters | Full | View (ZOPA buyer: +manage) | View only | Full |
+| Vendors | Full | View, Create, Edit | View only | Full |
+| Products / Categories | Full | View, Create, Edit | View only | Full |
+| Cost Centers & Budget | Full | View, Create, Edit | View only | Full |
+| Org Masters | Full | View, Create, Edit | View only | Full |
 | Reports | Full | View | View | Full |
 | Staff Management | Full | — | — | Full |
 
@@ -172,7 +172,7 @@ the keyboard (↑/↓/Enter).
 
 ## 6. Master Data (set this up first)
 
-Before creating documents, an Admin sets up the foundation. Menu: **Master Data**.
+Before creating documents, an Admin or Buyer sets up the foundation. Menu: **Master Data**.
 
 | Screen | What to add | Notes |
 |---|---|---|

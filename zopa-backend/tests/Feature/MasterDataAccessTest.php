@@ -15,7 +15,7 @@ use Tests\TestCase;
 
 /**
  * Master-data create/edit is governed by the Access Control matrix, not a coarse
- * "admin only" gate. A ZOPA Buyer (who manages client masters) can create them;
+ * "admin only" gate. ZOPA and client buyers can create and edit them by default;
  * the matrix can still grant/revoke per role; financial actions stay admin-only.
  */
 class MasterDataAccessTest extends TestCase
@@ -69,27 +69,32 @@ class MasterDataAccessTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_client_buyer_is_view_only_on_masters_by_default(): void
+    public function test_client_buyer_can_create_and_edit_masters_but_not_delete_by_default(): void
     {
-        $this->actAs('cbuyer@acmetest.com')
-            ->withHeaders($this->tenantHeaders())
-            ->postJson('/api/vendors', ['name' => 'X'])
-            ->assertStatus(403);
+        $this->actAs('cbuyer@acmetest.com');
+        $h = $this->tenantHeaders();
+
+        $vendorId = $this->withHeaders($h)->postJson('/api/vendors', ['name' => 'Client-added Vendor'])->assertStatus(201)->json('id');
+        $this->withHeaders($h)->postJson('/api/products', ['name' => 'Bolt', 'unit' => 'Nos', 'net_rate' => 10, 'gst_rate' => 18])->assertStatus(201);
+        $this->withHeaders($h)->postJson('/api/locations', ['name' => 'Plant 1'])->assertStatus(201);
+        $this->withHeaders($h)->postJson('/api/cost-centers', ['name' => 'Ops', 'annual_budget' => 100000, 'current_fiscal_year' => (int) date('Y')])->assertStatus(201);
+
+        $this->withHeaders($h)->putJson("/api/vendors/{$vendorId}", ['name' => 'Renamed Vendor'])->assertStatus(200);
+        $this->withHeaders($h)->deleteJson("/api/vendors/{$vendorId}")->assertStatus(403);
     }
 
-    public function test_matrix_grant_lets_client_buyer_create_a_vendor(): void
+    public function test_client_buyer_blocked_when_matrix_revokes_create(): void
     {
-        // Honor an explicit Access-Control grant for a buyer role.
         RolePermission::updateOrCreate(
             ['role' => 'client_buyer', 'module' => 'vendors'],
-            ['can_view' => true, 'can_create' => true, 'can_edit' => true, 'can_delete' => false],
+            ['can_view' => true, 'can_create' => false, 'can_edit' => false, 'can_delete' => false],
         );
         Cache::flush();
 
         $this->actAs('cbuyer@acmetest.com')
             ->withHeaders($this->tenantHeaders())
-            ->postJson('/api/vendors', ['name' => 'Client-added Vendor'])
-            ->assertStatus(201);
+            ->postJson('/api/vendors', ['name' => 'X'])
+            ->assertStatus(403);
     }
 
     public function test_matrix_grant_lets_any_role_create_master_data(): void

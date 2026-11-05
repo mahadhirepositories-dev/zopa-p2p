@@ -44,7 +44,7 @@ class TransactionalAccessTest extends TestCase
         return ['X-Tenant-ID' => (string) $this->acme->id];
     }
 
-    private function draftPr(): PurchaseRequisition
+    private function draftPr(string $requesterEmail): PurchaseRequisition
     {
         return PurchaseRequisition::create([
             'tenant_id'        => $this->acme->id,
@@ -54,11 +54,11 @@ class TransactionalAccessTest extends TestCase
             'estimated_amount' => 1000,
             'priority'         => 'normal',
             'status'           => 'draft',
-            'requested_by'     => User::where('email', 'cbuyer@acmetest.com')->firstOrFail()->id,
+            'requested_by'     => User::where('email', $requesterEmail)->firstOrFail()->id,
         ]);
     }
 
-    /** Bug B: a buyer granted delete in the matrix must be able to delete a draft PR. */
+    /** Bug B: a buyer granted delete in the matrix can delete a draft PR raised by someone else. */
     public function test_pr_delete_respects_matrix_grant(): void
     {
         RolePermission::updateOrCreate(
@@ -67,22 +67,39 @@ class TransactionalAccessTest extends TestCase
         );
         Cache::flush();
 
-        $pr = $this->draftPr();
+        $pr = $this->draftPr('cadmin@acmetest.com');
 
         $this->actAs('cbuyer@acmetest.com')
             ->withHeaders($this->headers())
             ->deleteJson("/api/purchase-requisitions/{$pr->id}")
-            ->assertStatus(204);
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('purchase_requisitions', ['id' => $pr->id]);
     }
 
     public function test_pr_delete_blocked_without_matrix_permission(): void
     {
-        $pr = $this->draftPr(); // client_buyer default: delete = false
+        $pr = $this->draftPr('cadmin@acmetest.com'); // client_buyer default: delete = false
 
         $this->actAs('cbuyer@acmetest.com')
             ->withHeaders($this->headers())
             ->deleteJson("/api/purchase-requisitions/{$pr->id}")
             ->assertStatus(403);
+
+        $this->assertDatabaseHas('purchase_requisitions', ['id' => $pr->id]);
+    }
+
+    /** The requester may discard their own draft without a matrix delete grant. */
+    public function test_requester_can_delete_own_draft_without_matrix_permission(): void
+    {
+        $pr = $this->draftPr('cbuyer@acmetest.com');
+
+        $this->actAs('cbuyer@acmetest.com')
+            ->withHeaders($this->headers())
+            ->deleteJson("/api/purchase-requisitions/{$pr->id}")
+            ->assertStatus(200);
+
+        $this->assertDatabaseMissing('purchase_requisitions', ['id' => $pr->id]);
     }
 
     public function test_transactional_create_is_matrix_enforced(): void

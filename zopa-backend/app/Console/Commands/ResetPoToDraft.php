@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  *   - invoices
  *   - approvals + their one-click email tokens
  *   - TAT lifecycle timestamps (approved/released/delivered/invoice-approved)
- *   - PO number + all lifecycle dates
+ *   - all lifecycle dates (the PO number and PO date are kept, so re-approval reuses them)
  * The dashboard is derived from PO status counts, so it self-corrects once the
  * status flips back to draft. Dry-run by default; pass --force to apply.
  */
@@ -63,7 +63,7 @@ class ResetPoToDraft extends Command
         $this->line("  • Invoices              : {$invoiceCount}");
         $this->line("  • Approvals / tokens    : {$approvalIds->count()} / {$tokenCount}");
         $this->line('  • TAT lifecycle stamps  : approved/released/delivered/invoice-approved → null');
-        $this->line('  • PO fields             : status→draft, po_number→null, all dates→null');
+        $this->line('  • PO fields             : status→draft, approval/lifecycle dates→null (PO number and PO date kept)');
 
         if (!$this->option('force')) {
             $this->warn(PHP_EOL . 'DRY RUN — nothing changed. Re-run with --force to apply.');

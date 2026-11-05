@@ -55,7 +55,7 @@ class RolePermissionSeeder extends Seeder
             $p('zopa_super_admin', $m, true, true, true, true);
         }
 
-        // ── zopa_buyer: transact on procurement docs, view-only on masters
+        // ── zopa_buyer: transact on procurement docs, create & edit masters
         $p('zopa_buyer', 'purchase_requisitions', true,  true,  true,  false);
         $p('zopa_buyer', 'purchase_orders',       true,  true,  true,  false);
         $p('zopa_buyer', 'grns',                  true,  true,  true,  false);
@@ -90,15 +90,15 @@ class RolePermissionSeeder extends Seeder
             $p('client_admin', $m, true, true, true, true);
         }
 
-        // ── client_buyer: transact on procurement docs, view-only on masters
+        // ── client_buyer: transact on procurement docs, create & edit masters
         $p('client_buyer', 'purchase_requisitions', true,  true,  true,  false);
         $p('client_buyer', 'purchase_orders',       true,  true,  true,  false);
         $p('client_buyer', 'grns',                  true,  true,  true,  false);
         $p('client_buyer', 'invoices',              true,  true,  true,  false);
-        $p('client_buyer', 'vendors',               true,  false, false, false);
-        $p('client_buyer', 'products',              true,  false, false, false);
-        $p('client_buyer', 'cost_centers',          true,  false, false, false);
-        $p('client_buyer', 'org_masters',           true,  false, false, false);
+        $p('client_buyer', 'vendors',               true,  true,  true,  false);
+        $p('client_buyer', 'products',              true,  true,  true,  false);
+        $p('client_buyer', 'cost_centers',          true,  true,  true,  false);
+        $p('client_buyer', 'org_masters',           true,  true,  true,  false);
         $p('client_buyer', 'approvals',             true,  false, false, false);
         $p('client_buyer', 'reports',               true,  false, false, false);
         $p('client_buyer', 'org_staff',             false, false, false, false);

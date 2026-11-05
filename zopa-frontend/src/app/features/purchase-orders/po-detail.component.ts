@@ -1045,8 +1045,8 @@ export class PoDetailComponent implements OnInit {
   resetToDraft() {
     if (!confirm(
       'Reset this PO back to draft?\n\nThis reverses the budget freeze and removes any goods receipts, '
-      + 'invoices and approvals for this PO so you can re-run the approval flow. The PO number is cleared '
-      + 'and regenerated on the next submit.\n\nContinue?'
+      + 'invoices and approvals for this PO so you can re-run the approval flow. The PO number is kept '
+      + 'and reused when it is approved again.\n\nContinue?'
     )) return;
     this.acting.set('reset');
     this.http.post<any>(`${environment.apiUrl}/purchase-orders/${this.id()}/reset-to-draft`, {}).subscribe({
