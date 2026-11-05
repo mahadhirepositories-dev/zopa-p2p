@@ -430,7 +430,7 @@ class PurchaseRequisitionController extends Controller
             return response()->json(['error' => 'Only draft PRs can be deleted.'], 422);
         }
 
-        if ($purchaseRequisition->requested_by !== auth()->id() && !$this->can('purchase_requisitions', 'delete') && !$this->canTransact()) {
+        if ($purchaseRequisition->requested_by !== auth()->id() && !$this->can('purchase_requisitions', 'delete')) {
             return response()->json(['error' => 'You do not have permission to delete this PR.'], 403);
         }
 
