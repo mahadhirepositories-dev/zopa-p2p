@@ -43,6 +43,11 @@ class CostCenterController extends Controller
             'location_ids.*'      => 'integer|exists:locations,id',
         ]);
 
+        // Non-admins start at zero; an admin funds it through adjustBudget(), which records the ledger entry.
+        if ((float) $validated['annual_budget'] !== 0.0) {
+            abort_unless($this->hasAdminRole(), 403, 'Only an admin can set the budget. Save with a budget of 0, then ask an admin to use Adjust Budget.');
+        }
+
         $tenant = app('currentTenant');
         $cc = CostCenter::create([
             'tenant_id'           => $tenant->id,

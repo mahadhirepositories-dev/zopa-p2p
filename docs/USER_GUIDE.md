@@ -74,7 +74,7 @@ be changed at any time by the Super Admin (see *Access Control*, Section 9).
 | Approvals | Full | Act on assigned | **Act on assigned** | Full |
 | Vendors | Full | View, Create, Edit | View only | Full |
 | Products / Categories | Full | View, Create, Edit | View only | Full |
-| Cost Centers & Budget | Full | View, Create, Edit | View only | Full |
+| Cost Centers & Budget | Full | View, Create, Edit (budget amount: admins only) | View only | Full |
 | Org Masters | Full | View, Create, Edit | View only | Full |
 | Reports | Full | View | View | Full |
 | Staff Management | Full | — | — | Full |
@@ -177,7 +177,7 @@ Before creating documents, an Admin or Buyer sets up the foundation. Menu: **Mas
 | Screen | What to add | Notes |
 |---|---|---|
 | **Org Masters** | Departments, Projects, Locations | Locations capture a full address (see below) |
-| **Cost Centers** | Budgets per department/project/location | Set Annual Budget + fiscal year; this enforces spend limits |
+| **Cost Centers** | Budgets per department/project/location | Admins set the Annual Budget, which enforces spend limits. Buyers create with a budget of 0 and an admin adds funds through **Adjust Budget** |
 | **Categories** | Product categories & sub-categories | Hierarchical (parent → child) |
 | **Products** | Catalogue items (name, HSN, GST %, unit, rate) | Speeds up PR/PO line entry |
 | **Vendors** | Suppliers (codes, PAN/GST, bank, addresses, documents) | Pincode auto-fills city/state; upload PAN/GST/cheque docs |

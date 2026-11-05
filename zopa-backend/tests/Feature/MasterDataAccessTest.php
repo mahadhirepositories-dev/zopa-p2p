@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BudgetLedger;
 use App\Models\CostCenter;
 use App\Models\RolePermission;
 use App\Models\Tenant;
@@ -52,7 +53,7 @@ class MasterDataAccessTest extends TestCase
         $this->withHeaders($h)->postJson('/api/categories', ['name' => 'Hardware'])->assertStatus(201);
         $this->withHeaders($h)->postJson('/api/products', ['name' => 'Bolt', 'unit' => 'Nos', 'net_rate' => 10, 'gst_rate' => 18])->assertStatus(201);
         $this->withHeaders($h)->postJson('/api/locations', ['name' => 'Plant 1'])->assertStatus(201);
-        $this->withHeaders($h)->postJson('/api/cost-centers', ['name' => 'Ops', 'annual_budget' => 100000, 'current_fiscal_year' => (int) date('Y')])->assertStatus(201);
+        $this->withHeaders($h)->postJson('/api/cost-centers', ['name' => 'Ops', 'annual_budget' => 0, 'current_fiscal_year' => (int) date('Y')])->assertStatus(201);
     }
 
     public function test_zopa_buyer_blocked_when_matrix_revokes_create(): void
@@ -77,7 +78,7 @@ class MasterDataAccessTest extends TestCase
         $vendorId = $this->withHeaders($h)->postJson('/api/vendors', ['name' => 'Client-added Vendor'])->assertStatus(201)->json('id');
         $this->withHeaders($h)->postJson('/api/products', ['name' => 'Bolt', 'unit' => 'Nos', 'net_rate' => 10, 'gst_rate' => 18])->assertStatus(201);
         $this->withHeaders($h)->postJson('/api/locations', ['name' => 'Plant 1'])->assertStatus(201);
-        $this->withHeaders($h)->postJson('/api/cost-centers', ['name' => 'Ops', 'annual_budget' => 100000, 'current_fiscal_year' => (int) date('Y')])->assertStatus(201);
+        $this->withHeaders($h)->postJson('/api/cost-centers', ['name' => 'Ops', 'annual_budget' => 0, 'current_fiscal_year' => (int) date('Y')])->assertStatus(201);
 
         $this->withHeaders($h)->putJson("/api/vendors/{$vendorId}", ['name' => 'Renamed Vendor'])->assertStatus(200);
         $this->withHeaders($h)->deleteJson("/api/vendors/{$vendorId}")->assertStatus(403);
@@ -205,5 +206,63 @@ class MasterDataAccessTest extends TestCase
             ->assertOk();
 
         $this->assertSame('2000000.00', $cc->fresh()->annual_budget);
+    }
+
+    public static function startingBudgetsByNonAdmins(): array
+    {
+        return [
+            'client buyer'        => ['cbuyer@acmetest.com', 100000],
+            'zopa buyer'          => ['zbuyer@zopatest.com', 100000],
+            'zopa buyer, 1 paisa' => ['zbuyer@zopatest.com', 0.01],
+        ];
+    }
+
+    #[DataProvider('startingBudgetsByNonAdmins')]
+    public function test_non_admin_cannot_create_cost_center_with_a_starting_budget(string $email, int|float $budget): void
+    {
+        $this->actAs($email)
+            ->withHeaders($this->tenantHeaders())
+            ->postJson('/api/cost-centers', ['name' => 'Funded by buyer', 'annual_budget' => $budget])
+            ->assertStatus(403);
+
+        $this->assertDatabaseMissing('cost_centers', ['name' => 'Funded by buyer']);
+    }
+
+    #[DataProvider('nonAdminEditors')]
+    public function test_non_admin_can_create_cost_center_with_zero_budget(string $email): void
+    {
+        $this->actAs($email)->withHeaders($this->tenantHeaders());
+
+        $this->postJson('/api/cost-centers', ['name' => 'Form default', 'annual_budget' => 0])
+            ->assertStatus(201)->assertJsonPath('annual_budget', '0.00');
+        $this->postJson('/api/cost-centers', ['name' => 'Zero as text', 'annual_budget' => '0.00'])
+            ->assertStatus(201)->assertJsonPath('annual_budget', '0.00');
+    }
+
+    #[DataProvider('admins')]
+    public function test_admin_can_create_cost_center_with_a_starting_budget(string $email): void
+    {
+        $this->actAs($email)
+            ->withHeaders($this->tenantHeaders())
+            ->postJson('/api/cost-centers', ['name' => 'Funded by admin', 'annual_budget' => 500000])
+            ->assertStatus(201)
+            ->assertJsonPath('annual_budget', '500000.00');
+    }
+
+    public function test_admin_can_fund_a_cost_center_a_buyer_created_at_zero(): void
+    {
+        $this->withHeaders($this->tenantHeaders());
+
+        $id = $this->actAs('cbuyer@acmetest.com')
+            ->postJson('/api/cost-centers', ['name' => 'Awaiting funds', 'annual_budget' => 0])
+            ->assertStatus(201)
+            ->json('id');
+
+        $this->actAs('cadmin@acmetest.com')
+            ->postJson("/api/cost-centers/{$id}/budget/adjust", ['action' => 'add', 'amount' => 500000, 'narration' => 'Opening budget'])
+            ->assertOk();
+
+        $this->assertSame('500000.00', CostCenter::find($id)->annual_budget);
+        $this->assertSame(1, BudgetLedger::where('cost_center_id', $id)->where('action', 'adjust')->count());
     }
 }
