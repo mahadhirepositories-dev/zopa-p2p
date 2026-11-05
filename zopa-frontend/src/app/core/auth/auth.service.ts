@@ -82,7 +82,9 @@ export class AuthService {
   private _restoring = false;
 
   constructor(private http: HttpClient, private router: Router) {
-    this._ready = this.restoreSession();
+    // Deferred because the HTTP interceptors inject this service, which throws
+    // NG0200 (circular dependency) until the constructor has returned.
+    this._ready = Promise.resolve().then(() => this.restoreSession());
   }
 
   /** Returns true while the initial session-restore is in flight. */
