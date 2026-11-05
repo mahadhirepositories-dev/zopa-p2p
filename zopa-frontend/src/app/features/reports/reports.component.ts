@@ -213,7 +213,7 @@ import { AuthService } from '../../core/auth/auth.service';
             </div>
             <div class="kpi-card-mckinsey">
               <div class="kpi-tag">Average PR TAT</div>
-              <div class="kpi-val">{{ editingReport().metrics_data?.avg_pr_tat_days || 0 }}<span class="kpi-unit">d</span></div>
+              <div class="kpi-val">{{ editingReport().metrics_data?.avg_pr_tat_days ?? 'N/A' }}@if (editingReport().metrics_data?.avg_pr_tat_days != null) {<span class="kpi-unit">d</span>}</div>
               <div class="kpi-hint">Submission &rarr; PO Draft</div>
             </div>
             <div class="kpi-card-mckinsey">

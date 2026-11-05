@@ -185,7 +185,7 @@
   @php
     $m = $report->metrics_data ?? [];
     $prsClosed = $m['prs_closed'] ?? 0;
-    $avgTat = $m['avg_pr_tat_days'] ?? 0;
+    $avgTat = $m['avg_pr_tat_days'] ?? null;
     $posIssued = $m['pos_issued'] ?? 0;
     $posVal = $m['pos_issued_value'] ?? 0;
     $totalOpenPrs = $m['total_open_prs'] ?? 0;
@@ -201,7 +201,7 @@
       </td>
       <td class="kpi-box" style="width: 16.6%;">
         <div class="kpi-title">Average PR TAT</div>
-        <div class="kpi-value">{{ $avgTat }} <span style="font-size:12px;font-weight:normal;">Days</span></div>
+        <div class="kpi-value">@if($avgTat === null) N/A @else {{ $avgTat }} <span style="font-size:12px;font-weight:normal;">Days</span> @endif</div>
         <div class="kpi-sub">Submit &rarr; PO Draft</div>
       </td>
       <td class="kpi-box" style="width: 16.6%;">

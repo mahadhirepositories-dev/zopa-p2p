@@ -129,8 +129,12 @@ interface TenantOption {
             <div class="kpi-icon icon-green"><mat-icon>savings</mat-icon></div>
             <div class="kpi-details">
               <span class="kpi-title">Total Savings Realized</span>
-              <span class="kpi-number text-green-600">₹{{ (kpis()!.total_savings_realized / 100000) | number:'1.1-2' }}L</span>
-              <span class="kpi-sub">PR Est. vs PO Actual</span>
+              @if (kpis()!.total_savings_realized !== null) {
+                <span class="kpi-number text-green-600">₹{{ (kpis()!.total_savings_realized / 100000) | number:'1.1-2' }}L</span>
+              } @else {
+                <span class="kpi-number">No data</span>
+              }
+              <span class="kpi-sub">PR Est. vs PO Actual, before GST</span>
             </div>
           </div>
 
@@ -139,7 +143,11 @@ interface TenantOption {
             <div class="kpi-icon icon-emerald"><mat-icon>percent</mat-icon></div>
             <div class="kpi-details">
               <span class="kpi-title">Average Savings %</span>
-              <span class="kpi-number text-emerald-600">{{ kpis()!.avg_savings_percentage }}%</span>
+              @if (kpis()!.avg_savings_percentage !== null) {
+                <span class="kpi-number text-emerald-600">{{ kpis()!.avg_savings_percentage }}%</span>
+              } @else {
+                <span class="kpi-number">No data</span>
+              }
               <span class="kpi-sub">Negotiated Price Savings</span>
             </div>
           </div>
@@ -197,11 +205,16 @@ interface TenantOption {
           </div>
 
           <!-- 18. Local Procurement Volume -->
-          <div class="scope-card">
+          <div class="scope-card" matTooltip="POs where the vendor and the bill-to location are in the same state">
             <mat-icon class="scope-icon text-teal-600">storefront</mat-icon>
             <div>
-              <div class="scope-val">₹{{ (kpis()!.local_procurement_spend / 100000) | number:'1.1-1' }}L</div>
-              <div class="scope-lbl">Local Spend ({{ kpis()!.local_procurement_pct }}%)</div>
+              @if (kpis()!.local_procurement_spend !== null) {
+                <div class="scope-val">₹{{ (kpis()!.local_procurement_spend / 100000) | number:'1.1-1' }}L</div>
+                <div class="scope-lbl">Local Spend ({{ kpis()!.local_procurement_pct }}%)</div>
+              } @else {
+                <div class="scope-val">No data</div>
+                <div class="scope-lbl">Local Spend</div>
+              }
             </div>
           </div>
         </div>
@@ -221,9 +234,9 @@ interface TenantOption {
                 <div class="tat-metric-row">
                   <div class="tm-left">
                     <span class="tm-label">11. Average PR TAT</span>
-                    <span class="tm-sub">PR Submission to Conversion</span>
+                    <span class="tm-sub">PR Submission to PO Creation, net of clarification</span>
                   </div>
-                  <span class="tm-val tat-ok-badge">{{ kpis()!.avg_pr_tat_days }} days</span>
+                  <span class="tm-val tat-ok-badge">{{ kpis()!.avg_pr_tat_days === null ? 'No data' : kpis()!.avg_pr_tat_days + ' days' }}</span>
                 </div>
                 <div class="tm-divider"></div>
                 <div class="tat-metric-row">
@@ -231,7 +244,7 @@ interface TenantOption {
                     <span class="tm-label">12. Average PO Issue TAT</span>
                     <span class="tm-sub">PO Creation to Vendor Release</span>
                   </div>
-                  <span class="tm-val tat-ok-badge">{{ kpis()!.avg_po_issue_tat_days }} days</span>
+                  <span class="tm-val tat-ok-badge">{{ kpis()!.avg_po_issue_tat_days === null ? 'No data' : kpis()!.avg_po_issue_tat_days + ' days' }}</span>
                 </div>
               </mat-card-content>
             </mat-card>
@@ -261,7 +274,7 @@ interface TenantOption {
               <div class="mtb-left">
                 <span class="mtb-tag"><mat-icon>warning</mat-icon> 14. MAXIMUM TAT DELAY CASE</span>
                 <span class="mtb-doc">{{ kpis()!.max_tat_case.number }} ({{ kpis()!.max_tat_case.type }})</span>
-                <span class="mtb-cause">Root Cause: {{ kpis()!.max_tat_case.root_cause }}</span>
+                <span class="mtb-cause">Slowest stage: {{ kpis()!.max_tat_case.slowest_stage }}</span>
               </div>
               <div class="mtb-right">
                 <span class="mtb-days">{{ kpis()!.max_tat_case.tat_days }} DAYS DELAY</span>
@@ -271,7 +284,7 @@ interface TenantOption {
 
           <!-- 15. Delay & Root Cause Mapping Table -->
           <mat-card class="delay-card mt-4">
-            <mat-card-header><mat-card-title>15. Delay & Root Cause Mapping</mat-card-title></mat-card-header>
+            <mat-card-header><mat-card-title>15. Delay by Workflow Stage</mat-card-title></mat-card-header>
             <mat-card-content style="padding:0!important;">
               <table mat-table [dataSource]="kpis()!.delay_mapping" class="delay-table">
                 <ng-container matColumnDef="stage">
@@ -286,9 +299,9 @@ interface TenantOption {
                   </td>
                 </ng-container>
 
-                <ng-container matColumnDef="root_cause">
-                  <th mat-header-cell *matHeaderCellDef>IDENTIFIED ROOT CAUSE</th>
-                  <td mat-cell *matCellDef="let row" style="color:#475569;">{{ row.root_cause }}</td>
+                <ng-container matColumnDef="oldest_days">
+                  <th mat-header-cell *matHeaderCellDef>OLDEST WAITING</th>
+                  <td mat-cell *matCellDef="let row" style="color:#475569;">{{ row.oldest_days === null ? '—' : row.oldest_days + ' days' }}</td>
                 </ng-container>
 
                 <ng-container matColumnDef="impact">
@@ -300,8 +313,8 @@ interface TenantOption {
                   </td>
                 </ng-container>
 
-                <tr mat-header-row *matHeaderRowDef="['stage', 'count', 'root_cause', 'impact']"></tr>
-                <tr mat-row *matRowDef="let row; columns: ['stage', 'count', 'root_cause', 'impact'];"></tr>
+                <tr mat-header-row *matHeaderRowDef="['stage', 'count', 'oldest_days', 'impact']"></tr>
+                <tr mat-row *matRowDef="let row; columns: ['stage', 'count', 'oldest_days', 'impact'];"></tr>
               </table>
             </mat-card-content>
           </mat-card>
@@ -328,7 +341,7 @@ interface TenantOption {
               </ng-container>
 
               <ng-container matColumnDef="spend">
-                <th mat-header-cell *matHeaderCellDef style="text-align:right;">SPEND (PO ACTUAL)</th>
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">SPEND (INCL. GST)</th>
                 <td mat-cell *matCellDef="let cat" style="text-align:right;">
                   <strong>₹{{ cat.spend | number:'1.0-0' }}</strong>
                 </td>
@@ -342,29 +355,30 @@ interface TenantOption {
               </ng-container>
 
               <ng-container matColumnDef="estimated_budget">
-                <th mat-header-cell *matHeaderCellDef style="text-align:right;">ESTIMATED PR BUDGET</th>
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">PR ESTIMATE (BEFORE GST)</th>
                 <td mat-cell *matCellDef="let cat" style="text-align:right;color:#64748b;">
-                  ₹{{ cat.estimated_budget | number:'1.0-0' }}
+                  @if (cat.estimated_budget !== null) { ₹{{ cat.estimated_budget | number:'1.0-0' }} } @else { — }
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="savings">
-                <th mat-header-cell *matHeaderCellDef style="text-align:right;">NEGOTIATED SAVINGS</th>
+                <th mat-header-cell *matHeaderCellDef style="text-align:right;">SAVINGS (BEFORE GST)</th>
                 <td mat-cell *matCellDef="let cat" style="text-align:right;" class="text-green-600">
-                  <strong>₹{{ cat.savings | number:'1.0-0' }}</strong>
+                  @if (cat.savings !== null) { <strong>₹{{ cat.savings | number:'1.0-0' }}</strong> } @else { — }
                 </td>
               </ng-container>
 
               <ng-container matColumnDef="savings_pct">
                 <th mat-header-cell *matHeaderCellDef style="text-align:center;">SAVINGS %</th>
                 <td mat-cell *matCellDef="let cat" style="text-align:center;">
-                  <span class="sav-badge">{{ cat.savings_pct }}%</span>
+                  @if (cat.savings_pct !== null) { <span class="sav-badge">{{ cat.savings_pct }}%</span> } @else { — }
                 </td>
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="['category_name', 'spend', 'share_pct', 'estimated_budget', 'savings', 'savings_pct']"></tr>
               <tr mat-row *matRowDef="let row; columns: ['category_name', 'spend', 'share_pct', 'estimated_budget', 'savings', 'savings_pct'];" class="cat-row"></tr>
             </table>
+            <p class="cat-note">Savings compare PO rates with PR estimates before GST, only on lines that came from a PR with an estimated price.</p>
           </mat-card-content>
         </mat-card>
 
@@ -508,6 +522,7 @@ interface TenantOption {
     .cat-name-cell { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #0f172a; }
     .share-chip { background: #eff6ff; color: #1d4ed8; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; }
     .sav-badge { background: #f0fdf4; color: #15803d; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #bbf7d0; }
+    .cat-note { margin: 0; padding: 10px 16px; font-size: 11px; color: #64748b; }
 
     @media (max-width: 900px) {
       .tat-grid { grid-template-columns: 1fr; }
