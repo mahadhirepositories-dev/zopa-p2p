@@ -177,12 +177,13 @@ class AccessControlTest extends TestCase
             ->assertStatus(403);
     }
 
-    public function test_buyer_cannot_create_master_data_by_default(): void
+    public function test_buyer_can_create_master_data_by_default(): void
     {
-        // client_buyer has products view but not create (mirrors old isAdmin gate).
+        // Empty body passes the authz gate and fails validation → proves the
+        // role is permitted to reach the create action.
         $this->asUser('cbuyer@acmetest.com')
             ->postJson('/api/products', [])
-            ->assertStatus(403);
+            ->assertStatus(422);
     }
 
     // ── 6. Super Admin immutability ───────────────────────────────────────────
