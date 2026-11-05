@@ -15,6 +15,7 @@ use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -105,12 +106,13 @@ class ExecutiveDashboardController extends Controller
             fputcsv($file, ['4. Categories Handled', $kpis['categories_handled'], 'Product Categories']);
             fputcsv($file, ['5. Projects Served', $kpis['projects_served'], 'Projects']);
             fputcsv($file, ['6. Project Locations Managed', $kpis['project_locations_managed'], 'Locations']);
-            fputcsv($file, ['7. Total Savings Realized', '₹' . number_format($kpis['total_savings_realized'], 2), 'INR (PR Est. vs PO Actual)']);
-            fputcsv($file, ['8. Average Savings Percentage', $kpis['avg_savings_percentage'] . '%', 'Percentage']);
-            fputcsv($file, ['9. Average PR TAT', $kpis['avg_pr_tat_days'] . ' days', 'Submission to Conversion']);
-            fputcsv($file, ['10. Average PO Issue TAT', $kpis['avg_po_issue_tat_days'] . ' days', 'Creation to Release']);
+            $orNoData = fn($value, string $text) => $value === null ? 'No data' : $text;
+            fputcsv($file, ['7. Total Savings Realized', $orNoData($kpis['total_savings_realized'], '₹' . number_format($kpis['total_savings_realized'] ?? 0, 2)), 'INR (PR Est. vs PO Actual, before GST)']);
+            fputcsv($file, ['8. Average Savings Percentage', $orNoData($kpis['avg_savings_percentage'], $kpis['avg_savings_percentage'] . '%'), 'Percentage']);
+            fputcsv($file, ['9. Average PR TAT', $orNoData($kpis['avg_pr_tat_days'], $kpis['avg_pr_tat_days'] . ' days'), 'Submission to PO Creation, net of clarification']);
+            fputcsv($file, ['10. Average PO Issue TAT', $orNoData($kpis['avg_po_issue_tat_days'], $kpis['avg_po_issue_tat_days'] . ' days'), 'Creation to Release']);
             fputcsv($file, ['11. Medicine & Lab Stock Outage Rate', $kpis['medicine_lab_outage_rate'] . '%', 'Urgent Requisitions Rate']);
-            fputcsv($file, ['12. Local Procurement Volume', '₹' . number_format($kpis['local_procurement_spend'], 2), $kpis['local_procurement_pct'] . '% of Total Spend']);
+            fputcsv($file, ['12. Local Procurement Volume', $orNoData($kpis['local_procurement_spend'], '₹' . number_format($kpis['local_procurement_spend'] ?? 0, 2)), $orNoData($kpis['local_procurement_pct'], $kpis['local_procurement_pct'] . '% of Total Spend (same-state vendors)')]);
             fputcsv($file, []);
 
             // PR TAT Distribution
@@ -129,7 +131,7 @@ class ExecutiveDashboardController extends Controller
                 fputcsv($file, ['Document Type', $mc['type']]);
                 fputcsv($file, ['Total TAT Days', $mc['tat_days'] . ' days']);
                 fputcsv($file, ['Status', $mc['status']]);
-                fputcsv($file, ['Delay Stage / Root Cause', $mc['root_cause']]);
+                fputcsv($file, ['Slowest Stage', $mc['slowest_stage']]);
             } else {
                 fputcsv($file, ['No delayed cases found.']);
             }
@@ -137,15 +139,15 @@ class ExecutiveDashboardController extends Controller
 
             // Category Spend & Savings Breakdown
             fputcsv($file, ['VALUE SHARE & NEGOTIATED SAVINGS BY CATEGORY']);
-            fputcsv($file, ['Category Name', 'Spend (INR)', 'Share %', 'Estimated PR (INR)', 'Realized Savings (INR)', 'Savings %']);
+            fputcsv($file, ['Category Name', 'Spend incl. GST (INR)', 'Share %', 'PR Estimate before GST (INR)', 'Savings before GST (INR)', 'Savings %']);
             foreach ($kpis['category_spend'] as $cat) {
                 fputcsv($file, [
                     $cat['category_name'],
                     $cat['spend'],
                     $cat['share_pct'] . '%',
-                    $cat['estimated_budget'],
-                    $cat['savings'],
-                    $cat['savings_pct'] . '%'
+                    $cat['estimated_budget'] ?? 'N/A',
+                    $cat['savings'] ?? 'N/A',
+                    $cat['savings_pct'] === null ? 'N/A' : $cat['savings_pct'] . '%',
                 ]);
             }
 
@@ -193,6 +195,41 @@ class ExecutiveDashboardController extends Controller
         ];
     }
 
+
+    /** Names the longer of the two recorded stages between PO creation and vendor release. */
+    private function slowestStage(PurchaseOrder $po): string
+    {
+        if (!$po->approved_at) {
+            return 'Stage timing not recorded';
+        }
+
+        $approval = round($po->created_at->diffInHours($po->approved_at) / 24, 1);
+        $release  = round($po->approved_at->diffInHours($po->released_at) / 24, 1);
+
+        return $approval >= $release
+            ? "Creation to approval ({$approval} days)"
+            : "Approval to vendor release ({$release} days)";
+    }
+
+    /** POs waiting at one stage, how long the oldest has waited, and the impact that implies. */
+    private function delayStage(string $stage, array $statuses, string $waitingSince, $tenantIds): array
+    {
+        $query  = PurchaseOrder::whereIn('tenant_id', $tenantIds)->whereIn('status', $statuses);
+        $oldest = (clone $query)->min($waitingSince);
+        $days   = $oldest ? round(Carbon::parse($oldest)->diffInHours(now()) / 24, 1) : null;
+
+        return [
+            'stage'       => $stage,
+            'count'       => $query->count(),
+            'oldest_days' => $days,
+            'impact'      => match (true) {
+                $days === null => 'None',
+                $days > 7      => 'High',
+                $days > 3      => 'Moderate',
+                default        => 'Low',
+            },
+        ];
+    }
 
     private function applyDateFilter($query, string $period, ?string $fromDate, ?string $toDate, string $column = 'created_at')
     {
@@ -254,62 +291,56 @@ class ExecutiveDashboardController extends Controller
         // 6. Project Locations Managed
         $locationsManaged = (clone $prBase)->whereNotNull('location_id')->distinct()->pluck('location_id')->count();
 
-        // 7 & 8. Total Savings Realized & Savings Percentage
-        $convertedPrs = (clone $prBase)->whereIn('status', ['converted', 'partially_converted'])->get();
-        $totalPrEst = $convertedPrs->sum('estimated_amount');
-        
-        $linkedPoTotal = 0;
-        foreach ($convertedPrs as $pr) {
-            $poTotal = $pr->purchaseOrders()->whereNotIn('status', ['draft', 'cancelled'])->sum('grand_total')
-                + $pr->linkedPurchaseOrders()->whereNotIn('status', ['draft', 'cancelled'])->sum('grand_total');
-            $linkedPoTotal += $poTotal;
-        }
-
-        $totalSavingsRealized = max(0, $totalPrEst - $linkedPoTotal);
-        $avgSavingsPercentage = ($totalPrEst > 0) ? round(($totalSavingsRealized / $totalPrEst) * 100, 1) : 0;
-
-        // 9 & 10. Value Share & Negotiated Savings by Category
-        $poItems = PoItem::whereIn('po_id', $poIds)
-            ->with(['product.category'])
+        // 7 to 10. Value share and savings by category, on issued POs.
+        // A saving needs a PO line traced to a PR line with an estimated price; both rates are before GST.
+        $issuedPoIds = (clone $poBase)->whereNotIn('status', ['draft', 'cancelled'])->pluck('id');
+        $poItems = PoItem::whereIn('po_id', $issuedPoIds)
+            ->with(['product.category', 'prItem:id,estimated_price'])
             ->get();
 
         $categorySpendGroup = [];
         foreach ($poItems as $item) {
             $catName = $item->product?->category?->name ?? 'General Procurement';
-            if (!isset($categorySpendGroup[$catName])) {
-                $categorySpendGroup[$catName] = 0;
+            $group = $categorySpendGroup[$catName] ?? ['spend' => 0.0, 'estimate' => 0.0, 'actual' => 0.0];
+
+            $group['spend'] += (float) $item->amount;
+            $estimatedPrice = (float) ($item->prItem?->estimated_price ?? 0);
+            if ($estimatedPrice > 0) {
+                $group['estimate'] += $estimatedPrice * (float) $item->qty;
+                $group['actual']   += (float) $item->net_rate * (float) $item->qty;
             }
-            $categorySpendGroup[$catName] += (float) $item->amount;
+
+            $categorySpendGroup[$catName] = $group;
         }
 
         $categorySpendList = [];
-        foreach ($categorySpendGroup as $name => $spend) {
-            $sharePct = ($totalValueManaged > 0) ? round(($spend / $totalValueManaged) * 100, 1) : 0;
-            // Est PR budget ~ 10-15% higher
-            $estBudget = round($spend * 1.12, 2);
-            $catSavings = max(0, $estBudget - $spend);
-            $catSavingsPct = ($estBudget > 0) ? round(($catSavings / $estBudget) * 100, 1) : 0;
+        foreach ($categorySpendGroup as $name => $group) {
+            $hasEstimate = $group['estimate'] > 0;
+            $savings = $group['estimate'] - $group['actual'];
 
             $categorySpendList[] = [
                 'category_name'    => $name,
-                'spend'            => round($spend, 2),
-                'share_pct'        => $sharePct,
-                'estimated_budget' => $estBudget,
-                'savings'          => round($catSavings, 2),
-                'savings_pct'      => $catSavingsPct,
+                'spend'            => round($group['spend'], 2),
+                'share_pct'        => ($totalValueManaged > 0) ? round(($group['spend'] / $totalValueManaged) * 100, 1) : 0,
+                'estimated_budget' => $hasEstimate ? round($group['estimate'], 2) : null,
+                'savings'          => $hasEstimate ? round($savings, 2) : null,
+                'savings_pct'      => $hasEstimate ? round(($savings / $group['estimate']) * 100, 1) : null,
             ];
         }
         usort($categorySpendList, fn($a, $b) => $b['spend'] <=> $a['spend']);
 
+        $totalEstimate = array_sum(array_column($categorySpendGroup, 'estimate'));
+        $totalActual   = array_sum(array_column($categorySpendGroup, 'actual'));
+        $totalSavingsRealized = ($totalEstimate > 0) ? round(max(0, $totalEstimate - $totalActual), 2) : null;
+        $avgSavingsPercentage = ($totalEstimate > 0) ? round(($totalSavingsRealized / $totalEstimate) * 100, 1) : null;
+
         // 11. Average PR Net TAT (Excluding Clarification Pause Duration)
-        $prTats = TatRecord::whereHas('pr', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))->get();
-        $avgPrTatDays = round($prTats->filter(fn($t) => $t->pr_submitted_at && $t->po_created_at)
-            ->avg(function($t) {
-                $totalSec = $t->pr_submitted_at->diffInSeconds($t->po_created_at);
-                $clarificationSec = $t->clarification_duration_seconds ?? 0;
-                $netSec = max(0, $totalSec - $clarificationSec);
-                return $netSec / 86400; // convert seconds to days
-            }) ?? 1.4, 1);
+        $prTats = TatRecord::whereHas('pr', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))
+            ->with('pr:id,total_clarification_duration_seconds')
+            ->get();
+        $avgPrTat = $prTats->filter(fn($t) => $t->pr_submitted_at && $t->po_created_at)
+            ->avg(fn($t) => $t->netPrTatDays());
+        $avgPrTatDays = $avgPrTat === null ? null : round($avgPrTat, 1);
 
         // 11b. Dedicated KPI: PR Clarification TAT (Average time taken to resolve clarification requests)
         $avgClarificationTatHours = round($prTats->filter(fn($t) => $t->clarification_requested_at && $t->clarification_provided_at)
@@ -317,9 +348,9 @@ class ExecutiveDashboardController extends Controller
 
         // 12. Average PO Issue TAT
         $poTats = TatRecord::whereHas('po', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))->get();
-        $avgPoIssueTatDays = round($poTats->filter(fn($t) => $t->po_created_at && $t->po_released_at)
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_released_at) / 24) ?? 1.8, 1);
-
+        $avgPoIssueTat = $poTats->filter(fn($t) => $t->po_created_at && $t->po_released_at)
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_released_at) / 24);
+        $avgPoIssueTatDays = $avgPoIssueTat === null ? null : round($avgPoIssueTat, 1);
 
         // 13. PR TAT Distribution
         $allPrs = (clone $prBase)->get();
@@ -349,55 +380,27 @@ class ExecutiveDashboardController extends Controller
             ->sortByDesc(fn($po) => $po->created_at->diffInHours($po->released_at))
             ->first();
 
+        $maxDays = ($maxPo && $maxPo->created_at && $maxPo->released_at)
+            ? round($maxPo->created_at->diffInHours($maxPo->released_at) / 24, 1)
+            : 0;
+
         $maxTatCase = null;
-        if ($maxPo && $maxPo->created_at && $maxPo->released_at) {
-            $maxDays = round($maxPo->created_at->diffInHours($maxPo->released_at) / 24, 1);
+        if ($maxDays > 0) {
             $maxTatCase = [
-                'id'         => $maxPo->id,
-                'number'     => $maxPo->po_number,
-                'type'       => 'Purchase Order',
-                'tat_days'   => $maxDays,
-                'status'     => ucfirst($maxPo->status),
-                'root_cause' => 'Vendor Quotation Delay & Multi-level Approvals',
+                'id'            => $maxPo->id,
+                'number'        => $maxPo->po_number,
+                'type'          => 'Purchase Order',
+                'tat_days'      => $maxDays,
+                'status'        => ucfirst($maxPo->status),
+                'slowest_stage' => $this->slowestStage($maxPo),
             ];
-        } else {
-            $maxPr = (clone $prBase)->latest()->first();
-            if ($maxPr) {
-                $maxTatCase = [
-                    'id'         => $maxPr->id,
-                    'number'     => $maxPr->pr_number ?? "PR #{$maxPr->id}",
-                    'type'       => 'Purchase Requisition',
-                    'tat_days'   => 3.5,
-                    'status'     => ucfirst($maxPr->status),
-                    'root_cause' => 'Cost Center Budget Verification & RFQ Compilation',
-                ];
-            }
         }
 
-        // 15. Delay & Root Cause Mapping
-        $pendingApprovalsCount = PurchaseOrder::whereIn('tenant_id', $clientTenantIds)->whereIn('status', ['pending_l1', 'pending_l2', 'pending_l3'])->count();
-        $pendingReleaseCount   = PurchaseOrder::whereIn('tenant_id', $clientTenantIds)->where('status', 'approved')->count();
-        $pendingDeliveryCount  = PurchaseOrder::whereIn('tenant_id', $clientTenantIds)->where('status', 'released')->count();
-
+        // 15. POs waiting at each stage, and how long the oldest has waited
         $delayMapping = [
-            [
-                'stage'      => 'Multi-level Approval',
-                'count'      => $pendingApprovalsCount,
-                'root_cause' => 'Approver review pending on high-value line items',
-                'impact'     => 'Moderate',
-            ],
-            [
-                'stage'      => 'Vendor Order Release',
-                'count'      => $pendingReleaseCount,
-                'root_cause' => 'Awaiting final vendor acknowledgement and terms signature',
-                'impact'     => 'Low',
-            ],
-            [
-                'stage'      => 'GRN Delivery & Receipt',
-                'count'      => $pendingDeliveryCount,
-                'root_cause' => 'Logistics transit lead time & site inspection delay',
-                'impact'     => 'High',
-            ],
+            $this->delayStage('Multi-level Approval', ['pending_l1', 'pending_l2', 'pending_l3'], 'created_at', $clientTenantIds),
+            $this->delayStage('Vendor Order Release', ['approved'], 'approved_at', $clientTenantIds),
+            $this->delayStage('GRN Delivery & Receipt', ['released'], 'released_at', $clientTenantIds),
         ];
 
         // 16. Vendor Onboarding & Vetting
@@ -421,16 +424,19 @@ class ExecutiveDashboardController extends Controller
         $totalPrCount = (clone $prBase)->count();
         $outageRate = ($totalPrCount > 0) ? round(($urgentPrs / $totalPrCount) * 100, 1) : 0.0;
 
-        // 18. Local Procurement Volume
-        $totalVendorIds = Vendor::whereIn('tenant_id', $clientTenantIds)->pluck('id');
-
-        $localSpend = (float) PurchaseOrder::whereIn('tenant_id', $clientTenantIds)
-            ->whereIn('vendor_id', $totalVendorIds)
+        // 18. Local Procurement: vendor address and bill-to location in the same state, the test GST uses for CGST + SGST.
+        // Stays empty when no PO records both states, because locality can't be told.
+        $posWithStates = (clone $poBase)
             ->whereNotIn('status', ['draft', 'cancelled'])
-            ->sum('grand_total');
-
-        $localSpendValue = ($totalValueManaged > 0) ? round($totalValueManaged * 0.42, 2) : 0;
-        $localPct = ($totalValueManaged > 0) ? 42.0 : 0;
+            ->with(['vendorAddress:id,state_code', 'billToLocation:id,state_code'])
+            ->get()
+            ->filter(fn($po) => $po->vendorAddress?->state_code && $po->billToLocation?->state_code);
+        $localSpendValue = $posWithStates->isEmpty() ? null : round((float) $posWithStates
+            ->filter(fn($po) => strcasecmp($po->vendorAddress->state_code, $po->billToLocation->state_code) === 0)
+            ->sum('grand_total'), 2);
+        $localPct = ($localSpendValue !== null && $totalValueManaged > 0)
+            ? round(($localSpendValue / $totalValueManaged) * 100, 1)
+            : null;
 
         // 19. Dedicated Tracking Data for Super Admin Oversight
         // Pending PRs: Created to Submitted / Pending Conversion
@@ -488,7 +494,7 @@ class ExecutiveDashboardController extends Controller
             'categories_handled'            => $categoriesHandled,
             'projects_served'               => $projectsServed,
             'project_locations_managed'     => $locationsManaged,
-            'total_savings_realized'        => round($totalSavingsRealized, 2),
+            'total_savings_realized'        => $totalSavingsRealized,
             'avg_savings_percentage'        => $avgSavingsPercentage,
             'category_spend'                => $categorySpendList,
             'avg_pr_tat_days'               => $avgPrTatDays,

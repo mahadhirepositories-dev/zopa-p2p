@@ -85,15 +85,13 @@ class OperationalReportController extends Controller
         $prsClosedCount = $prsClosedQuery->count();
 
         $prTats = TatRecord::whereHas('pr', fn($q) => $q->where('tenant_id', $tenant->id))
+            ->with('pr:id,total_clarification_duration_seconds')
             ->whereNotNull('pr_submitted_at')
             ->whereNotNull('po_created_at')
             ->get();
-        
-        $avgPrTatDays = round($prTats->avg(function ($t) {
-            $sec = $t->pr_submitted_at->diffInSeconds($t->po_created_at);
-            $clarSec = $t->clarification_duration_seconds ?? 0;
-            return max(0, $sec - $clarSec) / 86400;
-        }) ?? 2.8, 1);
+
+        $avgPrTat = $prTats->avg(fn($t) => $t->netPrTatDays());
+        $avgPrTatDays = $avgPrTat === null ? null : round($avgPrTat, 1);
 
         $posIssuedQuery = PurchaseOrder::where('tenant_id', $tenant->id)
             ->whereNotIn('status', ['draft', 'cancelled', 'pending_l1', 'pending_l2', 'pending_l3'])

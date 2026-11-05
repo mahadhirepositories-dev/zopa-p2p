@@ -441,6 +441,8 @@ class PurchaseRequisitionController extends Controller
 
     public function cleanupDrafts(Request $request): JsonResponse
     {
+        $this->requirePermission('purchase_requisitions', 'delete');
+
         $tenant = app('currentTenant');
         $query = PurchaseRequisition::where('tenant_id', $tenant->id)->where('status', 'draft');
 

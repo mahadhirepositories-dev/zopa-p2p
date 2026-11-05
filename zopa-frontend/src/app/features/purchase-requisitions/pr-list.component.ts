@@ -69,7 +69,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
           <button class="filter-chip rejected" [class.active]="statusFilter() === 'rejected'" (click)="setStatusFilter('rejected')">Rejected</button>
         </div>
 
-        @if (statusFilter() === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+        @if (statusFilter() === 'draft' && auth.canDo('purchase_requisitions', 'delete')) {
           <button mat-stroked-button color="warn" (click)="cleanupDrafts()" style="margin-left:auto;">
             <mat-icon>delete_sweep</mat-icon> Clean Up Today's Drafts
           </button>
@@ -187,7 +187,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let pr">
                   <div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">
-                    @if (pr.status === 'draft' && (auth.canTransact() || auth.canDo('purchase_requisitions', 'delete'))) {
+                    @if (pr.status === 'draft' && (pr.requested_by?.id === auth.user()?.id || auth.canDo('purchase_requisitions', 'delete'))) {
                       <button mat-icon-button color="warn" matTooltip="Delete Draft PR" (click)="$event.stopPropagation(); deletePrRow(pr.id)">
                         <mat-icon style="font-size:18px;width:18px;height:18px;">delete</mat-icon>
                       </button>

@@ -57,7 +57,7 @@
           <div class="kpi-label">PRs Closed in Period</div>
         </td>
         <td>
-          <div class="kpi-num">{{ $metrics['avg_pr_tat_days'] ?? 0 }}d</div>
+          <div class="kpi-num">{{ isset($metrics['avg_pr_tat_days']) ? $metrics['avg_pr_tat_days'] . 'd' : 'N/A' }}</div>
           <div class="kpi-label">Average PR TAT</div>
         </td>
         <td>
