@@ -369,7 +369,6 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
     .detail-header {
       display: flex;
       justify-content: space-between;
@@ -383,7 +382,6 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .title-row h2 { margin: 0; font-size: 20px; font-weight: 700; }
     .subtitle { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
-    .header-actions { display: flex; align-items: center; gap: 10px; }
 
     .status-badge {
       display: inline-block;

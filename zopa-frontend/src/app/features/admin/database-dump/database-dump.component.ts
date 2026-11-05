@@ -245,18 +245,7 @@ import { NotificationService } from '../../../core/services/notification.service
     </div>
   `,
   styles: [`
-    .page-wrapper {
-      padding: 24px 32px;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
 
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-    }
 
     .header-badge-row {
       display: flex;
@@ -264,12 +253,6 @@ import { NotificationService } from '../../../core/services/notification.service
       gap: 12px;
     }
 
-    .page-title {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #0f172a;
-    }
 
     .role-badge {
       display: inline-block;
@@ -520,9 +503,6 @@ import { NotificationService } from '../../../core/services/notification.service
       font-weight: 500;
     }
 
-    .table-responsive {
-      overflow-x: auto;
-    }
 
     .dump-table {
       width: 100%;
@@ -644,15 +624,6 @@ import { NotificationService } from '../../../core/services/notification.service
       height: 14px;
     }
 
-    .loading-state, .empty-state {
-      padding: 48px 24px;
-      text-align: center;
-      color: #64748b;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-    }
 
     .empty-icon {
       font-size: 42px;
@@ -661,12 +632,6 @@ import { NotificationService } from '../../../core/services/notification.service
       color: #cbd5e1;
     }
 
-    .empty-state p {
-      margin: 0;
-      font-size: 14px;
-      font-weight: 600;
-      color: #334155;
-    }
 
     .empty-hint {
       font-size: 12.5px;

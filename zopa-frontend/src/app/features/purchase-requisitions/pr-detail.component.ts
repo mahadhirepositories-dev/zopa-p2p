@@ -384,7 +384,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
             <mat-card class="items-card">
               <mat-card-header><mat-card-title>Line Items</mat-card-title></mat-card-header>
               <mat-card-content style="padding:0!important;">
-                <table class="items-table">
+                <div class="table-responsive"><table class="items-table">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -447,7 +447,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                       <td><strong>₹{{ pr()!.estimated_amount | number:'1.0-0' }}</strong></td>
                     </tr>
                   </tfoot>
-                </table>
+                </table></div>
               </mat-card-content>
             </mat-card>
           </div>
@@ -457,11 +457,9 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding:28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border); }
     .header-left { display:flex;align-items:center;gap:12px; }
     .title-row { display:flex;align-items:center;gap:10px; }
-    .title-row h2 { margin:0;font-size:22px;font-weight:800;color:var(--text-1);letter-spacing:-0.02em; }
+    .title-row h2 { margin:0;font-size:20px;font-weight:700;color:var(--text-1); }
     .subtitle { margin:3px 0 0;font-size:13px;color:var(--text-3); }
     .status-pill { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:0.04em; }
     .status-pill mat-icon { font-size:14px;width:14px;height:14px; }
@@ -469,7 +467,6 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     .status-pill--draft { background:#f1f5f9;color:#475569; }
     .status-pill--submitted { background:#fff7ed;color:#c2410c; }
     .status-pill--needs_clarification { background:#fef3c7;color:#b45309; }
-    .header-actions { display:flex;align-items:center;gap:8px; }
     .btn-compact { height:36px!important;line-height:36px!important;padding:0 14px!important;font-size:12.5px!important;font-weight:600!important;border-radius:8px!important; }
     .btn-compact mat-icon { font-size:18px;width:18px;height:18px;margin-right:4px; }
     .status-banner { display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;margin-bottom:20px;font-size:13px;font-weight:500; }
@@ -485,14 +482,12 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     .conv-none    { background:#f1f5f9;color:#64748b; }
     .conv-partial { background:#fff7ed;color:#d97706; }
     .conv-full    { background:#dcfce7;color:#15803d; }
-    .detail-grid { display:grid;grid-template-columns:380px 1fr;gap:20px;align-items:start; }
-    @media (max-width:1024px) { .detail-grid { grid-template-columns:1fr; } }
+    .detail-grid { display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start; }
+    @media (max-width:1024px) { .detail-grid { grid-template-columns:minmax(0,1fr); } }
     @media (max-width:768px) {
-      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .header-actions { flex-wrap: wrap; width: 100%; gap: 8px; justify-content: flex-start; }
       .header-actions button { flex: 1 1 auto; min-width: 110px; justify-content: center; }
     }
-    .left-col, .right-col { display:flex;flex-direction:column;gap:16px; }
+    .left-col, .right-col { display:flex;flex-direction:column;gap:16px;min-width:0; }
     .info-card mat-card-content { padding-top:12px!important; }
     .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px 16px; }
     .info-item { display:flex;flex-direction:column;gap:2px; }

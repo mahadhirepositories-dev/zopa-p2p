@@ -549,12 +549,6 @@ export interface OnboardingInvite {
       margin: 0 auto;
     }
 
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
 
     .breadcrumbs {
       font-size: 12px;
@@ -566,18 +560,7 @@ export interface OnboardingInvite {
       font-weight: 600;
     }
 
-    .page-header h2 {
-      font-size: 24px;
-      font-weight: 800;
-      color: #0f172a;
-      margin: 0 0 4px;
-    }
 
-    .subtitle {
-      font-size: 13.5px;
-      color: #64748b;
-      margin: 0;
-    }
 
     .tab-bar {
       display: flex;
@@ -626,38 +609,7 @@ export interface OnboardingInvite {
       flex-wrap: wrap;
     }
 
-    .filter-chips {
-      display: flex;
-      gap: 8px;
-    }
 
-    .filter-chip {
-      padding: 7px 14px;
-      border-radius: 99px;
-      border: 1px solid #e2e8f0;
-      background: #ffffff;
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #475569;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s;
-    }
-    .filter-chip:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-    }
-    .filter-chip--active {
-      background: #0f172a !important;
-      color: #ffffff !important;
-      border-color: #0f172a !important;
-    }
-    .filter-chip--pending.filter-chip--active {
-      background: #ea580c !important;
-      border-color: #ea580c !important;
-    }
 
     .chip-count {
       background: #fee2e2;
@@ -817,15 +769,6 @@ export interface OnboardingInvite {
       margin-right: 4px;
     }
 
-    .loading-state, .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 64px 24px;
-      gap: 14px;
-      color: #64748b;
-    }
     .empty-icon {
       font-size: 48px;
       width: 48px;

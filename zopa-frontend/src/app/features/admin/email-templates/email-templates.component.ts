@@ -71,7 +71,7 @@ interface EmailTemplate {
     .center { display: flex; align-items: center; justify-content: center; padding: 60px; }
     .muted { color: #94a3b8; font-size: 14px; }
 
-    .layout { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+    .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 18px; align-items: start; }
 
     .list { display: flex; flex-direction: column; gap: 8px; }
     .tpl {

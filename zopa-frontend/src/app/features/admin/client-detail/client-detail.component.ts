@@ -488,13 +488,6 @@ import { gstinValidator } from '../../../core/validators';
     }
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
     .client-title-block { display:flex; align-items:center; gap:12px; }
     .client-avatar-wrap { position:relative; flex-shrink:0; }
     .client-avatar {
@@ -532,10 +525,6 @@ import { gstinValidator } from '../../../core/validators';
 
     .raise-po-btn { height:40px!important; font-weight:700!important; }
 
-    .loading-state {
-      display:flex; flex-direction:column; align-items:center;
-      gap:16px; padding:80px; color:var(--text-3);
-    }
     .error-card {
       background:var(--surface); border:1px solid var(--border);
       border-radius:14px; padding:48px;

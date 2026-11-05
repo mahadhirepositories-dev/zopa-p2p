@@ -32,7 +32,7 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
           <h2>{{ vendor()?.name ?? 'Vendor' }}</h2>
         </div>
         @if (vendor()) {
-          <div style="display:flex;gap:10px;align-items:center;">
+          <div class="header-actions">
             <button mat-raised-button color="primary" (click)="downloadPdf()" [disabled]="downloading()">
               @if (downloading()) { <mat-spinner diameter="18" /> }
               @else { <mat-icon>picture_as_pdf</mat-icon> Download Vendor PDF }

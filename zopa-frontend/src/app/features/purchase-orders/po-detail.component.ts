@@ -499,7 +499,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     <strong>₹{{ budget()!.consumed | number:'1.0-0' }}</strong>
                   </div>
                   <mat-divider style="margin:8px 0;" />
-                  <div class="diag-row" style="font-size:13px;font-weight:700;">
+                  <div class="diag-row" style="font-weight:700;">
                     <span>Available Budget</span>
                     <span [style.color]="(budget()?.available ?? 0) < (po()?.grand_total ?? 0) ? '#dc2626' : '#16a34a'">
                       ₹{{ budget()!.available | number:'1.0-0' }}
@@ -682,13 +682,11 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     }
   `,
   styles: [`
-    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; padding-bottom:14px; border-bottom:1px solid var(--border); }
     .header-left { display:flex; align-items:center; gap:12px; }
     .title-row { display:flex; align-items:center; gap:10px; }
-    .title-row h2 { margin:0; font-size:22px; font-weight:800; color:var(--text-1); letter-spacing:-0.02em; }
+    .title-row h2 { margin:0; font-size:20px; font-weight:700; color:var(--text-1); }
     .subtitle { font-size:13px; color:var(--text-3); margin-top:3px; display:flex; align-items:center; gap:6px; }
     .status-pill { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:700; padding:3px 10px; border-radius:99px; text-transform:uppercase; letter-spacing:0.04em; }
-    .header-actions { display:flex; align-items:center; gap:8px; }
     .btn-compact { height:36px !important; line-height:36px !important; padding:0 14px !important; font-size:12.5px !important; font-weight:600 !important; border-radius:8px !important; }
     .btn-compact mat-icon { font-size:18px; width:18px; height:18px; margin-right:4px; }
     .btn-approve { background:#16a34a !important; color:#fff !important; }
@@ -701,11 +699,9 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .modal-overlay { position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000; }
     .modal-card { min-width:320px; }
     .status-returned { background:#fff3e0 !important; color:#e65100 !important; }
-    .detail-layout { display: grid; grid-template-columns: 1fr 360px; gap: 16px; }
+    .detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; }
 
     @media (max-width: 768px) {
-      .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-      .header-actions { flex-wrap: wrap; width: 100%; gap: 8px; justify-content: flex-start; }
       .header-actions button { flex: 1 1 auto; min-width: 110px; justify-content: center; }
       .detail-layout { grid-template-columns: 1fr; }
       .modal-card { width: 92vw; max-width: 440px; min-width: 0; margin: 16px; }
@@ -715,7 +711,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     .full-span { grid-column: 1 / -1; }
     .field { }
-    .label { font-size: 10px; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px; }
+    .label { font-size: 11px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 2px; }
     .section-divider { display: flex; align-items: center; gap: 8px; margin: 16px 0 12px; }
     .section-divider::before { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
     .section-divider::after { content: ''; flex: 3; height: 1px; background: #e0e0e0; }
@@ -730,7 +726,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .status-pr--submitted    { background:#fffbeb; color:#d97706; }
     .status-pr--draft        { background:#f1f5f9; color:#475569; }
     .status-pr--rejected     { background:#fee2e2; color:#b91c1c; }
-    .section-label { font-size: 10px; font-weight: 700; color: #1976d2; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .section-label { font-size: 12px; font-weight: 700; color: var(--text-1); white-space: nowrap; }
     .full-width { width: 100%; }
     .hsn-tag { display: inline-block; background: #f0f4ff; color: #3730a3; font-size: 10px; font-family: monospace; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
     .totals { display: flex; flex-direction: column; gap: 6px; }
@@ -770,7 +766,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .inv-status--approved { background:#ecfdf5; color:#065f46; }
     .inv-status--rejected { background:#fef2f2; color:#b91c1c; }
     .status-invoiced { background:#fef9c3 !important; color:#92400e !important; }
-    .diag-row { display:flex; justify-content:space-between; gap:8px; padding:3px 0; border-bottom:1px solid #f5f5f5; }
+    .diag-row { display:flex; justify-content:space-between; gap:8px; padding:4px 0; border-bottom:1px solid var(--border); font-size:13px; }
     .diag-cfg { padding:4px 0; color:#475569; border-bottom:1px solid #f8f8f8; }
     .diag-type { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#e2e8f0; color:#475569; margin-right:4px; }
     .diag-type.diag-po { background:#c2410c; color:#fff; }

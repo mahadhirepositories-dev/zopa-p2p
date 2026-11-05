@@ -179,24 +179,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-    }
-    .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
-    .page-header p  { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
 
-    .loading-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 80px;
-      color: var(--text-3);
-    }
 
     .empty-card {
       background: var(--surface);
@@ -309,14 +292,6 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
 
     /* ── Mobile responsiveness for approvals ── */
     @media (max-width: 768px) {
-      .page-wrapper {
-        padding: 16px !important;
-      }
-      .page-header {
-        flex-direction: column;
-        gap: 12px;
-        align-items: stretch !important;
-      }
       .approval-card {
         flex-direction: column;
         align-items: stretch;

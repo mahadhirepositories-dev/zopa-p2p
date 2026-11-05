@@ -271,17 +271,14 @@ import { Product } from '../../core/models';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding:28px; }
-    .page-header { margin-bottom:24px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    .form-grid { display:grid;grid-template-columns:1fr 1.2fr;gap:20px;align-items:start; }
-    @media (max-width:900px) { .form-grid { grid-template-columns:1fr; } }
+    .form-grid { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:20px;align-items:start; }
+    @media (max-width:900px) { .form-grid { grid-template-columns:minmax(0,1fr); } }
     .form-card mat-card-content { display:flex;flex-direction:column;gap:12px;padding-top:16px!important; }
     .form-card mat-card-header { padding-bottom:0!important;display:flex;align-items:center; }
     .full { width:100%; }
-    .two-col { display:grid;grid-template-columns:1fr 1fr;gap:12px; }
-    .three-col { display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px; }
+    .two-col { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+    .three-col { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px; }
+    @media (max-width:600px) { .two-col, .three-col { grid-template-columns:minmax(0,1fr); } }
     .item-row { display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border); }
     .item-row:last-of-type { border-bottom:none; }
     .item-num { width:24px;height:24px;border-radius:6px;background:var(--brand-light);color:var(--brand);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:12px; }
@@ -289,7 +286,7 @@ import { Product } from '../../core/models';
     .remove-btn { flex-shrink:0;margin-top:4px;color:var(--text-3)!important; }
     .totals-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:2px solid var(--border);font-size:14px;font-weight:600;color:var(--text-1); }
     .action-row { display:flex;justify-content:flex-end;gap:10px;margin-top:16px;flex-wrap:wrap; }
-    .left-col, .right-col { display:flex;flex-direction:column;gap:16px; }
+    .left-col, .right-col { display:flex;flex-direction:column;gap:16px;min-width:0; }
     .budget-banner {
       display:flex;align-items:flex-start;gap:10px;padding:10px 14px;
       border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;color:#1d4ed8;

@@ -20,7 +20,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
       <div class="page-header">
         <div>
-          <h2 style="margin:0;font-size:22px;font-weight:700;">Platform Settings</h2>
+          <h2>Platform Settings</h2>
           <div style="font-size:13px;color:var(--text-3);margin-top:3px;">
             Manage ZOPA's parent company branding. The platform logo appears in PDF footers
             and as a header fallback when a client has no logo of their own.
@@ -144,12 +144,10 @@ import { NotificationService } from '../../../core/services/notification.service
     </div>
   `,
   styles: [`
-    .page-wrapper  { padding: 28px; }
-    .page-header   { margin-bottom: 28px; }
 
     .settings-grid {
       display: grid;
-      grid-template-columns: 420px 1fr;
+      grid-template-columns: 420px minmax(0, 1fr);
       gap: 20px;
       align-items: start;
     }

@@ -39,7 +39,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
           <h2>Vendors</h2>
           <p>{{ filtered().length }} of {{ vendors().length }} vendor{{ vendors().length !== 1 ? 's' : '' }}</p>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div class="header-actions">
           <app-search-field class="search-field" [value]="search()" (valueChange)="search.set($event)"
                             placeholder="Search vendors…" />
           <button mat-stroked-button (click)="exportData()">
@@ -198,23 +198,10 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px; }
-    .page-header h2 { margin:0; font-size:20px; font-weight:700; color:var(--text-1); }
-    .page-header p  { margin:3px 0 0; font-size:13px; color:var(--text-3); }
-    .cta-btn { height:40px!important; }
     .search-field { width:220px; }
     ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper { display:none; }
 
     .filter-row { display:flex; gap:6px; margin-bottom:16px; }
-    .filter-chip {
-      padding:5px 14px; border-radius:20px;
-      border:1px solid var(--border); background:var(--surface);
-      font-size:12px; font-weight:500; color:var(--text-2);
-      cursor:pointer; transition:all .15s;
-    }
-    .filter-chip:hover { border-color:var(--brand); color:var(--brand); }
-    .filter-chip.active { background:var(--brand); color:#fff; border-color:var(--brand); font-weight:600; }
 
     .full-width { width:100%; }
     .hover-row { cursor:default; }
@@ -244,13 +231,6 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
     }
     .count-badge mat-icon { font-size:15px; width:15px; height:15px; color:var(--text-3); }
 
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center;
-      gap:8px; padding:60px 24px; text-align:center;
-    }
-    .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
-    .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
-    .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
 
     .import-errors { background:#fff7ed; border:1px solid #fed7aa; border-radius:10px; padding:12px 16px; margin-bottom:16px; }
     .import-errors-head { display:flex; align-items:center; gap:8px; font-weight:600; color:#9a3412; font-size:13px; }

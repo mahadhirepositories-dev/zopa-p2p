@@ -679,12 +679,6 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header {
-      display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 16px;
-    }
-    .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
     .form-card { margin-bottom: 16px; }
     .full-width { width: 100%; }
 

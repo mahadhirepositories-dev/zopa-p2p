@@ -142,13 +142,8 @@ import { RoleService, Role } from '../../../services/role.service';
     }
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px; }
-    .page-header h2 { margin:0;font-size:20px;font-weight:700; }
-    .page-header p  { margin:3px 0 0;font-size:13px;color:var(--text-3); }
-    .cta-btn { height:40px!important; }
 
-    .staff-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:14px; }
+    .staff-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 360px), 1fr));gap:14px; }
 
     .staff-card { padding:0!important; }
     .staff-row { display:flex;align-items:center;gap:14px;padding:16px; }
@@ -175,13 +170,6 @@ import { RoleService, Role } from '../../../services/role.service';
     .role-pill.role-zopa_approver_l2 { background:#f5f3ff;color:#7c3aed; }
     .role-pill.role-zopa_approver_l3 { background:#fff1f2;color:#dc2626; }
 
-    .empty-state {
-      display:flex;flex-direction:column;align-items:center;
-      gap:8px;padding:60px 24px;text-align:center;
-    }
-    .empty-state mat-icon { font-size:48px;width:48px;height:48px;color:var(--border); }
-    .empty-state h3 { margin:0;font-size:16px;font-weight:600;color:var(--text-2); }
-    .empty-state p  { margin:0;font-size:13px;color:var(--text-3); }
 
     /* Modal */
     .modal-overlay {

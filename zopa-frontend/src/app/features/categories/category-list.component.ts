@@ -37,7 +37,7 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
           <h2>Categories</h2>
           <p>{{ flatRows().length }} entr{{ flatRows().length !== 1 ? 'ies' : 'y' }} across {{ categories().length }} top-level type{{ categories().length !== 1 ? 's' : '' }}</p>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div class="header-actions">
           <app-search-field class="search-field" [value]="search()"
                             (valueChange)="search.set($event); onSearch()"
                             placeholder="Search categories…" />
@@ -122,11 +122,6 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
-    .page-header h2 { margin:0; font-size:20px; font-weight:700; color:var(--text-1); }
-    .page-header p  { margin:3px 0 0; font-size:13px; color:var(--text-3); }
-    .cta-btn { height:40px!important; }
     .search-field { width:220px; }
     ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper { display:none; }
 
@@ -174,13 +169,6 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
       font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px;
     }
 
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center;
-      gap:8px; padding:60px 24px; text-align:center;
-    }
-    .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
-    .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
-    .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
   `],
 })
 export class CategoryListComponent implements OnInit {

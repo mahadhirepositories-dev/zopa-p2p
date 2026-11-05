@@ -460,14 +460,6 @@ export interface FormTemplate {
       margin: 0 auto;
     }
 
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border, #e2e8f0);
-    }
 
     .breadcrumbs {
       font-size: 12px;
@@ -479,28 +471,8 @@ export interface FormTemplate {
       font-weight: 600;
     }
 
-    .page-header h2 {
-      font-size: 24px;
-      font-weight: 800;
-      color: var(--text-1, #0f172a);
-      margin: 0 0 4px;
-    }
 
-    .subtitle {
-      font-size: 13.5px;
-      color: var(--text-3, #64748b);
-      margin: 0;
-    }
 
-    .loading-state, .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 64px 24px;
-      gap: 14px;
-      color: var(--text-3, #64748b);
-    }
 
     .empty-icon {
       font-size: 48px;
@@ -511,7 +483,7 @@ export interface FormTemplate {
 
     .templates-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr));
       gap: 20px;
     }
 

@@ -83,7 +83,7 @@ describe('DashboardComponent', () => {
     expect(page.textContent).not.toContain('Waiting on your approval');
     expect(page.textContent).not.toContain('Returned for changes');
     expect(page.textContent).toContain('Open over 7 days');
-    expect(page.querySelector('.hero')).toBeNull();
+    expect(page.querySelector('.ui-hero')).toBeNull();
     expect(page.textContent).not.toContain('Budget used');
   });
 

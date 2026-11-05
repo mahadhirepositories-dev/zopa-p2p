@@ -174,46 +174,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 20px;
-    }
-    .page-header h2 { margin: 0; font-size: 20px; font-weight: 700; }
-    .page-header p  { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
-    .cta-btn { height: 40px !important; }
-    .toolbar-bar {
-      display: flex;
-      gap: 16px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
     .search-field { flex: 1; min-width: 260px; }
-    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filter-chip {
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text-2);
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-    .filter-chip:hover { border-color: var(--text-3); color: var(--text-1); }
-    .filter-chip.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-    .filter-chip.returned.active { background: #ef4444; border-color: #ef4444; }
-    .filter-chip.pending.active  { background: #f59e0b; border-color: #f59e0b; }
-    .filter-chip.approved.active { background: #22c55e; border-color: #22c55e; }
-    .filter-chip.released.active { background: #3b82f6; border-color: #3b82f6; }
-    .filter-chip.partial.active   { background: #b45309; border-color: #b45309; }
-    .filter-chip.delivered.active { background: #06b6d4; border-color: #06b6d4; }
-    .filter-chip.invoiced.active  { background: #8b5cf6; border-color: #8b5cf6; }
-    .filter-chip.payment.active   { background: #10b981; border-color: #10b981; }
 
     .po-number-cell { display: flex; align-items: center; gap: 12px; }
     .po-icon {
@@ -241,21 +202,12 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .row-arrow { color: var(--text-3); font-size: 20px; }
 
     /* Table responsive wrapper */
-    .table-responsive {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      margin-bottom: 8px;
-    }
     .table-responsive table {
       min-width: 1000px;
     }
 
     /* Mobile header layout adjustments */
     @media (max-width: 768px) {
-      .page-wrapper { padding: 16px !important; }
-      .page-header { flex-direction: column; gap: 12px; align-items: stretch !important; }
-      .toolbar-bar { flex-direction: column; align-items: stretch !important; }
       .search-field { max-width: none !important; width: 100% !important; }
     }
 
@@ -275,14 +227,6 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .status-closed     { background: #f8fafc; color: #64748b; }
     .status-cancelled  { background: #fef2f2; color: #991b1b; }
 
-    .empty-state {
-      padding: 60px 20px;
-      text-align: center;
-      color: var(--text-3);
-    }
-    .empty-state mat-icon { font-size: 48px; width: 48px; height: 48px; color: var(--border); }
-    .empty-state h3 { margin: 0; font-size: 16px; font-weight: 600; color: var(--text-2); }
-    .empty-state p { margin: 0; font-size: 13px; }
   `],
 })
 export class PoListComponent implements OnInit {

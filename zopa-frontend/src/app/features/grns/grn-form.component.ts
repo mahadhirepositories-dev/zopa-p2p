@@ -314,8 +314,6 @@ interface PoItemMeta {
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
 
     /* Header form */
     .form-section {

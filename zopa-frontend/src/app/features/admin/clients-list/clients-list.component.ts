@@ -187,11 +187,6 @@ import { gstinValidator } from '../../../core/validators';
     }
   `,
   styles: [`
-    .page-wrapper { padding: 28px; }
-    .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
-    .page-header h2 { margin:0; font-size:20px; font-weight:700; }
-    .page-header p  { margin:3px 0 0; font-size:13px; color:var(--text-3); }
-    .cta-btn { height:40px!important; }
     .full-width { width:100%; }
 
     .client-stats { display:flex; gap:10px; margin-bottom:16px; }
@@ -225,13 +220,6 @@ import { gstinValidator } from '../../../core/validators';
     .company-name  { font-size:14px; font-weight:600; color:var(--text-1); }
     .company-gstin { font-size:11px; color:var(--text-3); font-family:monospace; margin-top:2px; }
 
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center;
-      gap:8px; padding:60px 24px; text-align:center;
-    }
-    .empty-state mat-icon { font-size:48px; width:48px; height:48px; color:var(--border); }
-    .empty-state h3 { margin:0; font-size:16px; font-weight:600; color:var(--text-2); }
-    .empty-state p  { margin:0; font-size:13px; color:var(--text-3); }
 
     /* Modal */
     .modal-overlay {

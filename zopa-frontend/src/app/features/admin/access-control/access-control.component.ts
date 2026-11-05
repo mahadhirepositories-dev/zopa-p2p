@@ -205,11 +205,7 @@ const ACTION_COLS = [
 </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; max-width: 1100px; }
-    .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; gap: 20px; }
-    .page-header h2 { margin: 0; font-size: 22px; font-weight: 700; }
-    .page-header p  { margin: 6px 0 0; font-size: 13px; color: var(--text-3); line-height: 1.5; }
-    .header-actions { flex-shrink: 0; }
+    .page-wrapper { max-width: 1100px; }
     .info-pill {
       display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
       background: #f5f3ff; color: #7c3aed; border: 1px solid #e9d5ff;

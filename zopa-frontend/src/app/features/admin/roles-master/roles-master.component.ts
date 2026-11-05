@@ -252,45 +252,9 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
     </ng-template>
   `,
   styles: [`
-    .page-wrapper {
-      padding: 28px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
 
     /* ── Header ────────────────────────────────────────────────────────────── */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      gap: 20px;
-    }
-    .page-header h2 {
-      margin: 0;
-      font-size: 24px;
-      font-weight: 700;
-      color: #1e293b;
-    }
-    .page-header p {
-      margin: 6px 0 0;
-      font-size: 13px;
-      color: #64748b;
-      line-height: 1.5;
-    }
-    .header-actions {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      flex-shrink: 0;
-    }
 
-    .cta-btn {
-      border-radius: 8px;
-      font-weight: 600;
-      height: 42px;
-      padding: 0 20px;
-    }
 
     /* ── Metrics Strip ─────────────────────────────────────────────────────── */
     .metrics-strip {
@@ -477,18 +441,6 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
     .empty-cell {
       padding: 40px !important;
       text-align: center;
-    }
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      color: #94a3b8;
-    }
-    .empty-state mat-icon {
-      font-size: 32px;
-      width: 32px;
-      height: 32px;
     }
 
     /* ── Dialog ────────────────────────────────────────────────────────────── */

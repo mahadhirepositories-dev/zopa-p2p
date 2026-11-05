@@ -113,10 +113,7 @@ import {
     </div>
   `,
   styles: [`
-    .page-wrapper { padding: 28px; max-width: 1000px; }
-    .page-header { margin-bottom: 20px; }
-    .page-header h2 { margin: 0; font-size: 22px; font-weight: 700; }
-    .page-header p { margin: 4px 0 0; font-size: 13px; color: var(--text-3); }
+    .page-wrapper { max-width: 1000px; }
 
     /* Personalized card */
     .me-card { background: linear-gradient(120deg, #fff7ed 0%, #ffffff 65%); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
