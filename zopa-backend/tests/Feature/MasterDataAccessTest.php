@@ -10,6 +10,7 @@ use Database\Seeders\TestDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -123,5 +124,81 @@ class MasterDataAccessTest extends TestCase
             ->withHeaders($this->tenantHeaders())
             ->postJson("/api/cost-centers/{$cc->id}/budget/adjust", ['action' => 'add', 'amount' => 1000, 'narration' => 'test'])
             ->assertStatus(403);
+    }
+
+    public static function budgetChangesByNonAdmins(): array
+    {
+        return [
+            'client buyer raises it'    => ['cbuyer@acmetest.com', 2000000],
+            'zopa buyer raises it'      => ['zbuyer@zopatest.com', 2000000],
+            'raised by one paisa'       => ['zbuyer@zopatest.com', 1000000.01],
+            'zeroed'                    => ['zbuyer@zopatest.com', 0],
+        ];
+    }
+
+    #[DataProvider('budgetChangesByNonAdmins')]
+    public function test_non_admin_cannot_change_annual_budget_through_update(string $email, int|float $budget): void
+    {
+        $cc = CostCenter::where('tenant_id', $this->acme->id)->firstOrFail();
+        $originalName = $cc->name;
+
+        $this->actAs($email)
+            ->withHeaders($this->tenantHeaders())
+            ->putJson("/api/cost-centers/{$cc->id}", ['name' => 'Renamed', 'annual_budget' => $budget])
+            ->assertStatus(403);
+
+        $cc->refresh();
+        $this->assertSame('1000000.00', $cc->annual_budget);
+        $this->assertSame($originalName, $cc->name, 'A rejected budget change must not save the other fields');
+    }
+
+    public static function nonAdminEditors(): array
+    {
+        return [
+            'client buyer' => ['cbuyer@acmetest.com'],
+            'zopa buyer'   => ['zbuyer@zopatest.com'],
+        ];
+    }
+
+    #[DataProvider('nonAdminEditors')]
+    public function test_non_admin_can_edit_other_fields_when_budget_is_unchanged(string $email): void
+    {
+        $cc  = CostCenter::where('tenant_id', $this->acme->id)->firstOrFail();
+        $url = "/api/cost-centers/{$cc->id}";
+        $this->actAs($email)->withHeaders($this->tenantHeaders());
+
+        // The edit form always resends the budget: as the API's "1000000.00" string when
+        // the field is untouched, or as a number once it has been retyped.
+        $untouched = $this->getJson($url)->assertOk()->json('annual_budget');
+
+        $this->putJson($url, ['name' => 'Untouched', 'annual_budget' => $untouched])
+            ->assertOk()->assertJsonPath('name', 'Untouched');
+        $this->putJson($url, ['name' => 'Retyped', 'annual_budget' => 1000000])
+            ->assertOk()->assertJsonPath('name', 'Retyped');
+        $this->putJson($url, ['name' => 'Not sent'])
+            ->assertOk()->assertJsonPath('name', 'Not sent');
+
+        $this->assertSame('1000000.00', $cc->fresh()->annual_budget);
+    }
+
+    public static function admins(): array
+    {
+        return [
+            'client admin' => ['cadmin@acmetest.com'],
+            'super admin'  => ['superadmin@zopatest.com'],
+        ];
+    }
+
+    #[DataProvider('admins')]
+    public function test_admin_can_change_annual_budget_through_update(string $email): void
+    {
+        $cc = CostCenter::where('tenant_id', $this->acme->id)->firstOrFail();
+
+        $this->actAs($email)
+            ->withHeaders($this->tenantHeaders())
+            ->putJson("/api/cost-centers/{$cc->id}", ['annual_budget' => 2000000])
+            ->assertOk();
+
+        $this->assertSame('2000000.00', $cc->fresh()->annual_budget);
     }
 }

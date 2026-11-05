@@ -95,6 +95,11 @@ class CostCenterController extends Controller
             'location_ids.*'      => 'integer|exists:locations,id',
         ]);
 
+        // Budget changes are admin-only, as in adjustBudget(). Compare as numbers: the edit form resends the unchanged value on every save.
+        if (isset($validated['annual_budget']) && (float) $validated['annual_budget'] !== (float) $costCenter->annual_budget) {
+            abort_unless($this->hasAdminRole(), 403, 'Only an admin can change the annual budget.');
+        }
+
         $data = $request->only('name', 'annual_budget', 'is_active', 'current_fiscal_year');
         if ($request->has('department_id')) {
             $data['department_id'] = !empty($request->department_id) ? $request->department_id : null;
