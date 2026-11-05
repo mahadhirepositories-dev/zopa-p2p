@@ -254,6 +254,24 @@ class ExecutiveAndReportAccessTest extends TestCase
         $this->assertSame('short_closed', $pr->fresh()->status);
     }
 
+    // ── TAT report ──────────────────────────────────────────────────────────
+
+    public function test_pr_and_grn_users_cannot_read_or_export_the_tat_report(): void
+    {
+        foreach (self::DENIED as $email) {
+            foreach (['', '?export=csv', '?export=pdf'] as $query) {
+                $this->as($email)->get('/api/reports/po-tat' . $query)->assertForbidden();
+            }
+        }
+    }
+
+    public function test_roles_with_reports_view_keep_the_tat_report(): void
+    {
+        foreach (['cadmin@acmetest.com', 'cbuyer@acmetest.com', 'cl1@acmetest.com', 'superadmin@zopatest.com'] as $email) {
+            $this->as($email)->getJson('/api/reports/po-tat')->assertOk();
+        }
+    }
+
     // ── Operational reports: tenant isolation ───────────────────────────────
 
     public function test_another_organizations_report_stays_out_of_reach(): void
