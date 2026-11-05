@@ -5,7 +5,7 @@
 <style>
   body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1e293b; background: #f1f5f9; margin: 0; padding: 0; }
   .wrapper { max-width: 640px; margin: 24px auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-  .header { background: #1976d2; color: #fff; padding: 22px 26px; }
+  .header { background: #3c3c3b; color: #fff; padding: 22px 26px; }
   .header h1 { margin: 0; font-size: 19px; }
   .header .sub { margin-top: 4px; font-size: 13px; opacity: .9; }
   .body { padding: 24px 26px; }
@@ -16,7 +16,7 @@
   table.kv .v { font-size: 13px; }
   .items-title { font-size: 12px; font-weight: bold; color: #475569; text-transform: uppercase; letter-spacing: .05em; margin: 18px 0 6px; }
   table.items { width: 100%; border-collapse: collapse; font-size: 12px; }
-  table.items th { background: #1976d2; color: #fff; padding: 7px 8px; text-align: left; font-weight: bold; }
+  table.items th { background: #475569; color: #fff; padding: 7px 8px; text-align: left; font-weight: bold; }
   table.items td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; }
   table.items tbody tr:nth-child(even) { background: #f8fafc; }
   .actions { margin-top: 26px; text-align: center; }
@@ -29,6 +29,7 @@
 </head>
 <body>
 <div class="wrapper">
+  @include('emails.partials.logo')
   <div class="header">
     <h1>{{ $docTitle }} {{ $docNumber }}</h1>
     <div class="sub">Level {{ $approval->level }} approval required</div>

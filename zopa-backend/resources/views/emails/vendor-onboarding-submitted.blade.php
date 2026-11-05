@@ -5,24 +5,25 @@
 <style>
   body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1e293b; background: #f1f5f9; margin: 0; padding: 0; }
   .wrapper { max-width: 580px; margin: 24px auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-  .header { padding: 24px 28px; color: #fff; background: #0284c7; }
+  .header { padding: 24px 28px; color: #fff; background: #3c3c3b; }
   .header h1 { margin: 0; font-size: 20px; font-weight: 700; }
   .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
   .body { padding: 28px; line-height: 1.6; }
   .badge-row { margin: 12px 0 20px; }
-  .badge { display: inline-block; background: #e0f2fe; color: #0369a1; font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 99px; }
+  .badge { display: inline-block; background: #fbf6e4; color: #7f6100; font-weight: 700; font-size: 12px; padding: 4px 12px; border-radius: 99px; }
   .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
   .details-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
   .details-table td.label { font-weight: 600; color: #64748b; width: 35%; background: #f8fafc; }
   .details-table td.value { color: #0f172a; font-weight: 500; }
   .btn-wrap { text-align: center; margin: 28px 0; }
-  .btn { display: inline-block; background: #0284c7; color: #ffffff !important; text-decoration: none;
+  .btn { display: inline-block; background: #d8ac27; color: #2f2f2d !important; text-decoration: none;
          padding: 13px 30px; border-radius: 8px; font-weight: bold; font-size: 14px; }
   .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 28px; font-size: 11px; color: #94a3b8; text-align: center; }
 </style>
 </head>
 <body>
 <div class="wrapper">
+  @include('emails.partials.logo')
   <div class="header">
     <h1>New Vendor Onboarding Response</h1>
     <p>{{ $tenantName ?? 'ZOPA Procurement' }}</p>

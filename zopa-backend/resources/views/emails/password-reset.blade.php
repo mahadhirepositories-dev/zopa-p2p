@@ -12,7 +12,7 @@
   .btn { display: inline-block; background: #d8ac27; color: #2f2f2d !important; text-decoration: none;
          padding: 13px 30px; border-radius: 8px; font-weight: bold; font-size: 15px; }
   .muted { color: #64748b; font-size: 12px; }
-  .link-fallback { word-break: break-all; font-size: 12px; color: #2563eb; }
+  .link-fallback { word-break: break-all; font-size: 12px; color: #7f6100; }
   .footer { background: #f1f5f9; padding: 14px 26px; font-size: 11px; color: #94a3b8; text-align: center; }
 </style>
 </head>

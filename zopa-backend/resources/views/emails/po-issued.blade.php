@@ -24,7 +24,7 @@
   table.items th { background: #475569; color: #fff; padding: 7px 8px; text-align: left; font-weight: bold; }
   table.items td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; }
   table.items tbody tr:nth-child(even) { background: #f8fafc; }
-  .attach-note { background: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  .attach-note { background: #fbf6e4; border-left: 4px solid #d8ac27; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
   .footer { background: #f1f5f9; padding: 14px 26px; font-size: 11px; color: #94a3b8; text-align: center; }
 </style>
 </head>
@@ -123,7 +123,7 @@
       <strong>{{ $contactName }}</strong>
       @if($contactPhone)
         &nbsp;·&nbsp;
-        <a href="tel:{{ $contactPhone }}" style="color:#0369a1;text-decoration:none;font-weight:600;">{{ $contactPhone }}</a>
+        <a href="tel:{{ $contactPhone }}" style="color:#7f6100;text-decoration:none;font-weight:600;">{{ $contactPhone }}</a>
       @endif
       <br><span style="font-size:12px;color:#64748b;">{{ $buyerOrg }}</span>
     </p>

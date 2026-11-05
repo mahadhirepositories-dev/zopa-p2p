@@ -20,7 +20,7 @@
   .instructions li { margin-bottom: 4px; }
   .notice { color: #b45309; background: #fef3c7; border-radius: 6px; padding: 10px 14px; font-size: 12px; margin-top: 20px; }
   .muted { color: #64748b; font-size: 12px; margin-top: 16px; }
-  .link-fallback { word-break: break-all; font-size: 12px; color: #2563eb; }
+  .link-fallback { word-break: break-all; font-size: 12px; color: #7f6100; }
   .footer { background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 16px 28px; font-size: 11px; color: #94a3b8; text-align: center; }
 </style>
 </head>
