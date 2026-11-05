@@ -461,7 +461,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
     summary: 'Consolidated KPIs across all organizations.',
     keywords: ['zopa', 'admin', 'dashboard', 'consolidated', 'all organizations'],
     superAdminOnly: true,
-    body: `<p>The <strong>ZOPA Dashboard</strong> consolidates every organization. Filter to <em>All Organizations</em> or any one using the <strong>searchable organization picker</strong> (type to find an org; ↑/↓/Enter). It shows the headline band (POs, PRs, GRNs, Invoices, Pending Approvals, PO Value), a PO status donut, value comparisons, PO value by organization, the PR pipeline, invoice &amp; GRN summaries, and an organization overview table.</p>`,
+    body: `<p>The <strong>ZOPA Dashboard</strong> consolidates every organization. Filter to <em>All Organizations</em> or any one using the <strong>searchable organization picker</strong> (type to find an org; ↑/↓/Enter). It shows PO value, document counts, turnaround time per stage, a value comparison, the PO pipeline and a table of organizations. Turnaround shows <em>No data</em> until something has been measured, and only delivered orders count toward the total.</p>`,
   },
 
   // ── Administration ────────────────────────────────────────────────────────
