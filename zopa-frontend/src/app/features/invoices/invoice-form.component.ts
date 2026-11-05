@@ -156,7 +156,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .total-item { display:flex;flex-direction:column;gap:2px; }
     .total-label { font-size:10px;text-transform:uppercase;color:var(--text-3); }
     .total-item span:last-child { font-size:14px;font-weight:600;color:var(--text-1); }
-    .total-item.grand span:last-child { font-size:18px;color:var(--brand); }
+    .total-item.grand span:last-child { font-size:18px;color: var(--brand-text); }
   `],
 })
 export class InvoiceFormComponent implements OnInit {

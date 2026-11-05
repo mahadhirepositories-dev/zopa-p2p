@@ -349,8 +349,8 @@ type ConfigType = 'po' | 'invoice' | 'pr';
     .type-tabs { display:flex;gap:4px; }
     .type-tab { display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all .15s; }
     .type-tab mat-icon { font-size:15px;width:15px;height:15px; }
-    .type-tab:hover { border-color:var(--brand);color:var(--brand); }
-    .type-tab.active { background:var(--brand);border-color:var(--brand);color:white; }
+    .type-tab:hover { border-color:var(--brand);color: var(--brand-text); }
+    .type-tab.active { background:var(--brand);border-color:var(--brand);color: var(--brand-ink); }
     .approver-chips { display:flex;flex-wrap:wrap;gap:4px; }
     .approver-chip { background:#f1f5f9;color:#475569;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px; }
   `],

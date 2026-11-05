@@ -201,7 +201,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
       background:var(--brand-light);
       display:flex; align-items:center; justify-content:center;
     }
-    .avatar mat-icon { font-size:18px; width:18px; height:18px; color:var(--brand); }
+    .avatar mat-icon { font-size:18px; width:18px; height:18px; color: var(--brand-text); }
     .name-primary { font-size:13px; font-weight:600; color:var(--text-1); }
     .name-sub { font-size:11px; color:var(--text-3); margin-top:1px; }
     .font-mono { font-family:monospace; }

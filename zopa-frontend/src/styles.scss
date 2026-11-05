@@ -4,7 +4,7 @@ html {
   height: 100%;
   @include mat.theme((
     color: (
-      primary: mat.$orange-palette,
+      primary: mat.$yellow-palette,
       tertiary: mat.$blue-palette,
     ),
     typography: Roboto,
@@ -15,25 +15,30 @@ html {
 /* ── Design tokens ──────────────────────────────────────────── */
 :root {
   /* Brand */
-  --brand:        #f97316;
-  --brand-hover:  #ea580c;
-  --brand-light:  #fff7ed;
-  --brand-mid:    #fed7aa;
+  /* From the logo. Gold is 2.2:1 against white, so it fills and marks but never carries text:
+     text on gold uses --brand-ink, gold-coloured text on light surfaces uses --brand-text. */
+  --brand:        #d8ac27;
+  --brand-hover:  #c29a1f;
+  --brand-light:  #fbf6e4;
+  --brand-mid:    #f0dfa8;
+  --brand-text:   #7f6100;
+  --brand-ink:    #2f2f2d;
 
   /* Surface */
-  --bg:      #f0f4f8;
+  --bg:      #f5f5f2;
   --surface: #ffffff;
-  --border:  #e8edf3;
+  --border:  #e8e7e2;
 
   /* Typography */
-  --text-1: #1a2332;
-  --text-2: #4a5568;
-  --text-3: #64748b;
+  --text-1: #2f2f2d;
+  --text-2: #55534d;
+  --text-3: #6b6860;
 
-  /* White on brand orange fails contrast, so anything that carries white text uses these */
-  --select: #2563eb;
-  --action: #c2410c;
-  --action-hover: #9a3412;
+  /* Primary actions are gold with dark text; the current selection is charcoal with white text */
+  --select: #3c3c3b;
+  --action: var(--brand);
+  --action-hover: var(--brand-hover);
+  --action-ink: var(--brand-ink);
 
   /* Elevation */
   --shadow-xs: 0 1px 3px rgba(0,0,0,.04);
@@ -47,18 +52,20 @@ html {
   --r-lg: 16px;
   --r-xl: 20px;
 
-  /* ── Neutralise Material 3 orange surface tints completely ── */
+  /* ── Neutralise Material 3 surface tints completely ── */
   --mat-sys-surface:                   #ffffff;
-  --mat-sys-surface-dim:               #f0f4f8;
+  --mat-sys-surface-dim:               #f5f5f2;
   --mat-sys-surface-bright:            #ffffff;
   --mat-sys-surface-container-lowest:  #ffffff;
-  --mat-sys-surface-container-low:     #f8fafc;
-  --mat-sys-surface-container:         #f1f5f9;
-  --mat-sys-surface-container-high:    #edf1f7;
-  --mat-sys-surface-container-highest: #e2e8f0;
+  --mat-sys-surface-container-low:     #faf9f6;
+  --mat-sys-surface-container:         #f3f2ed;
+  --mat-sys-surface-container-high:    #eeece6;
+  --mat-sys-surface-container-highest: #e6e4dd;
   --mat-sys-surface-tint:              transparent;
-  --mat-sys-on-surface:                #1a2332;
-  --mat-sys-on-surface-variant:        #4a5568;
+  --mat-sys-on-surface:                #2f2f2d;
+  --mat-sys-on-surface-variant:        #55534d;
+  --mat-sys-primary:                   #7f6100;
+  --mat-sys-on-primary:                #ffffff;
 
   /* MDC card/dialog colours */
   --mdc-elevated-card-container-color: #ffffff;
@@ -142,7 +149,7 @@ body {
   overflow: hidden;
 }
 .mat-mdc-header-row {
-  background: #f8fafc !important;
+  background: #faf9f6 !important;
   min-height: 42px !important;
 }
 .mat-mdc-header-cell {
@@ -160,7 +167,7 @@ body {
   background: #ffffff !important;
 }
 .mat-mdc-row:hover .mat-mdc-cell {
-  background: #f8faff !important;
+  background: #faf9f6 !important;
   cursor: pointer;
 }
 .mat-mdc-cell {
@@ -253,8 +260,8 @@ mat-chip, .mat-mdc-chip {
   transition: background-color .15s ease !important;
   &:not(:disabled) {
     background-color: var(--action) !important;
-    color: #fff !important;
-    .mat-icon { color: #fff !important; }
+    color: var(--action-ink) !important;
+    .mat-icon { color: var(--action-ink) !important; }
   }
   &:hover:not(:disabled) { background-color: var(--action-hover) !important; }
 }
@@ -509,8 +516,8 @@ mat-chip, .mat-mdc-chip {
 .ui-bar-text { display: flex; flex-direction: column; min-width: 0; }
 .ui-bar-label { font-size: 13px; font-weight: 600; color: var(--text-1); }
 .ui-bar-sub { font-size: 11px; color: var(--text-2); }
-.ui-bar-track { height: 8px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
-.ui-bar-fill { display: block; height: 100%; border-radius: 99px; background: #94a3b8; }
+.ui-bar-track { height: 8px; border-radius: 99px; background: #eeece6; overflow: hidden; }
+.ui-bar-fill { display: block; height: 100%; border-radius: 99px; background: #a8a59c; }
 .ui-bar-fill--accent { background: var(--brand); }
 .ui-bar-value { font-size: 13px; font-weight: 700; color: var(--text-1); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ui-bar-value--none { font-size: 11px; font-weight: 500; color: var(--text-2); }
@@ -519,7 +526,7 @@ mat-chip, .mat-mdc-chip {
   padding: 1px 6px;
   border-radius: 99px;
   background: var(--brand-light);
-  color: #c2410c;
+  color: var(--brand-text);
   font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
@@ -569,7 +576,7 @@ mat-chip, .mat-mdc-chip {
 a.ui-lane-stage:hover { background: var(--bg); }
 .ui-lane-count { font-size: 20px; line-height: 1.2; font-weight: 700; color: var(--text-1); }
 .ui-lane-label { font-size: 11px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
-.ui-lane-bar { margin-top: 5px; height: 4px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
+.ui-lane-bar { margin-top: 5px; height: 4px; border-radius: 99px; background: #eeece6; overflow: hidden; }
 .ui-lane-bar span { display: block; height: 100%; border-radius: 99px; background: var(--brand); }
 .ui-lane-stage--empty .ui-lane-count { color: var(--text-2); font-weight: 500; }
 
@@ -586,7 +593,7 @@ a.ui-lane-stage:hover { background: var(--bg); }
   text-align: left;
   cursor: pointer;
   transition: background .15s ease;
-  &:hover { background: #f8fafc; }
+  &:hover { background: #faf9f6; }
 }
 .ofb-lead { font-size: 20px; width: 20px; height: 20px; color: var(--text-2); }
 .ofb-col { display: flex; flex-direction: column; }
@@ -613,7 +620,7 @@ a.ui-lane-stage:hover { background: var(--bg); }
   white-space: nowrap;
   cursor: pointer;
   transition: background .15s ease, color .15s ease;
-  &:hover { background: #e2e8f0; color: #0f172a; }
+  &:hover { background: #eeece6; color: var(--text-1); }
   &.active, &.filter-chip--active { background: var(--select); border-color: var(--select); color: #fff; }
 }
 .custom-date-inputs { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
@@ -717,3 +724,5 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--brand); outline
     overflow: hidden !important;
   }
 }
+
+::selection { background: var(--brand-mid); color: var(--brand-ink); }

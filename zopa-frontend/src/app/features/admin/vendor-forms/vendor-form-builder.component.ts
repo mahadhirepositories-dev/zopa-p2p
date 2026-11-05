@@ -467,7 +467,7 @@ export interface FormTemplate {
       margin-bottom: 6px;
     }
     .breadcrumbs .active {
-      color: var(--brand, #ea580c);
+      color: var(--brand-text);
       font-weight: 600;
     }
 
@@ -516,7 +516,7 @@ export interface FormTemplate {
       height: 42px;
       border-radius: 10px;
       background: #fff7ed;
-      color: #ea580c;
+      color: var(--brand-text);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -756,7 +756,7 @@ export interface FormTemplate {
       color: #0f172a;
     }
     .custom-input:focus {
-      border-color: #ea580c;
+      border-color: var(--brand);
       box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.1);
     }
 
@@ -872,7 +872,7 @@ export interface FormTemplate {
       padding: 0 4px;
       border-radius: 4px;
       border: 1px solid #e2e8f0;
-      color: #ea580c;
+      color: var(--brand-text);
     }
     .dot { color: #cbd5e1; }
 
@@ -924,7 +924,7 @@ export interface FormTemplate {
       font-size: 32px;
       width: 32px;
       height: 32px;
-      color: #ea580c;
+      color: var(--brand-text);
     }
     .preview-head-banner h4 {
       margin: 0;
@@ -977,7 +977,7 @@ export interface FormTemplate {
       color: #64748b;
     }
     .preview-file-dropzone mat-icon {
-      color: #ea580c;
+      color: var(--brand-text);
       font-size: 28px;
       width: 28px;
       height: 28px;

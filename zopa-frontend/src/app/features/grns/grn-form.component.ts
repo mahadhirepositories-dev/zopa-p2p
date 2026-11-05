@@ -161,7 +161,7 @@ interface PoItemMeta {
         <mat-card class="anim-2">
           <mat-card-header>
             <mat-card-title>
-              <mat-icon style="vertical-align:middle;margin-right:6px;font-size:18px;color:var(--brand);">inventory_2</mat-icon>
+              <mat-icon style="vertical-align:middle;margin-right:6px;font-size:18px;color: var(--brand-text);">inventory_2</mat-icon>
               Line Items
             </mat-card-title>
             <div style="flex:1;"></div>
@@ -461,7 +461,7 @@ interface PoItemMeta {
     }
     .qty-input:focus, .remarks-input:focus {
       border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(249,115,22,.12);
+      box-shadow: 0 0 0 3px rgba(216,172,39,.12);
     }
     .qty-input.input-error { border-color: #dc2626; }
     .qty-input { text-align: right; }

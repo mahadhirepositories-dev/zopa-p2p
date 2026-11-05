@@ -349,8 +349,8 @@ interface PublicFormData {
       gap: 12px;
     }
     .brand-badge {
-      background: #ea580c;
-      color: #ffffff;
+      background: var(--brand);
+      color: var(--brand-ink);
       font-size: 14px;
       font-weight: 800;
       letter-spacing: 0.05em;
@@ -526,7 +526,7 @@ interface PublicFormData {
       align-items: center;
       gap: 10px;
       background: #fff7ed;
-      border-left: 4px solid #ea580c;
+      border-left: 4px solid var(--brand);
       padding: 10px 14px;
       border-radius: 0 6px 6px 0;
       font-size: 12.5px;
@@ -536,7 +536,7 @@ interface PublicFormData {
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #ea580c;
+      color: var(--brand-text);
     }
 
     .fields-grid {
@@ -571,7 +571,7 @@ interface PublicFormData {
       transition: all 0.15s;
     }
     .form-ctrl:focus {
-      border-color: #ea580c;
+      border-color: var(--brand);
       box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
     }
 
@@ -603,13 +603,13 @@ interface PublicFormData {
       transition: all 0.15s;
     }
     .multiselect-chip:hover {
-      border-color: #ea580c;
+      border-color: var(--brand);
       background: #fff7ed;
     }
     .multiselect-chip--selected {
-      background: #ea580c !important;
-      color: #ffffff !important;
-      border-color: #ea580c !important;
+      background: var(--brand) !important;
+      color: var(--brand-ink) !important;
+      border-color: var(--brand) !important;
       font-weight: 600;
     }
     .multiselect-chip mat-icon {
@@ -644,7 +644,7 @@ interface PublicFormData {
       transition: all 0.2s;
     }
     .file-upload-zone:hover {
-      border-color: #ea580c;
+      border-color: var(--brand);
       background: #ffffff;
     }
     .file-upload-zone--has-file {
@@ -670,7 +670,7 @@ interface PublicFormData {
       font-size: 32px;
       width: 32px;
       height: 32px;
-      color: #ea580c;
+      color: var(--brand-text);
     }
     .file-label-main {
       font-size: 13.5px;
@@ -688,7 +688,7 @@ interface PublicFormData {
       gap: 12px;
     }
     .file-icon {
-      color: #ea580c;
+      color: var(--brand-text);
       font-size: 24px;
       width: 24px;
       height: 24px;
@@ -761,8 +761,8 @@ interface PublicFormData {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #ea580c;
-      color: #ffffff;
+      background: var(--brand);
+      color: var(--brand-ink);
       border: none;
       padding: 14px 28px;
       font-size: 15px;

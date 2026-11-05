@@ -232,11 +232,11 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
       justify-content: center;
       flex-shrink: 0;
     }
-    .po-icon-wrap mat-icon { color: var(--brand); font-size: 20px; width: 20px; height: 20px; }
+    .po-icon-wrap mat-icon { color: var(--brand-text); font-size: 20px; width: 20px; height: 20px; }
     .po-link {
       font-size: 14px;
       font-weight: 700;
-      color: var(--brand);
+      color: var(--brand-text);
       cursor: pointer;
     }
     .po-link:hover { text-decoration: underline; }
@@ -248,7 +248,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     .metric-value { font-size: 16px; font-weight: 700; color: var(--text-1); }
     .level-badge {
       background: var(--brand-light);
-      color: var(--brand);
+      color: var(--brand-text);
       font-size: 13px;
       font-weight: 700;
       padding: 3px 12px;
@@ -273,7 +273,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     }
     .return-btn mat-icon, .reject-btn mat-icon { font-size: 15px; width: 15px; height: 15px; }
     .type-badge { display:inline-block;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em; }
-    .type-badge--po { background:var(--brand-light);color:var(--brand); }
+    .type-badge--po { background:var(--brand-light);color: var(--brand-text); }
     .type-badge--invoice { background:#f0fdf4;color:#16a34a; }
     .type-badge--pr { background:#eff6ff;color:#2563eb; }
 
@@ -288,7 +288,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
     .approval-card.readonly:hover { box-shadow: var(--shadow-xs); transform: none; }
     .awaiting-col { flex-shrink: 0; text-align: right; min-width: 140px; }
     .awaiting-name { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text-2); margin-top: 4px; }
-    .approver-chip { width: 24px; height: 24px; border-radius: 6px; background: var(--brand-light); color: var(--brand); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; }
+    .approver-chip { width: 24px; height: 24px; border-radius: 6px; background: var(--brand-light); color: var(--brand-text); font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; text-transform: uppercase; }
 
     /* ── Mobile responsiveness for approvals ── */
     @media (max-width: 768px) {

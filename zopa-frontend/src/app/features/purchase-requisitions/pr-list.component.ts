@@ -222,7 +222,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     .clickable-row { cursor:pointer; }
     .pr-number-cell { display:flex;align-items:center;gap:10px; }
     .pr-icon { width:32px;height:32px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
-    .pr-icon mat-icon { font-size:16px;width:16px;height:16px;color:var(--brand); }
+    .pr-icon mat-icon { font-size:16px;width:16px;height:16px;color: var(--brand-text); }
     .pr-num { font-size:13px;font-weight:600;color:var(--text-1);white-space:nowrap; }
     .pr-date { font-size:11px;color:var(--text-3); }
     .row-arrow { color:var(--text-3);font-size:18px; }

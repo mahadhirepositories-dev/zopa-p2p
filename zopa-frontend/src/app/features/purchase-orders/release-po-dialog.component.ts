@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
   template: `
     <div style="padding:4px 0;">
       <h2 mat-dialog-title style="display:flex;align-items:center;gap:10px;margin:0 0 8px 0;font-size:18px;font-weight:600;">
-        <mat-icon style="color:var(--brand);font-size:24px;width:24px;height:24px;">send</mat-icon>
+        <mat-icon style="color: var(--brand-text);font-size:24px;width:24px;height:24px;">send</mat-icon>
         {{ data.title || 'Release Purchase Order' }}
       </h2>
 

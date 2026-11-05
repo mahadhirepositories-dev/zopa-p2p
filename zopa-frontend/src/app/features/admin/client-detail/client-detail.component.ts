@@ -132,7 +132,7 @@ import { gstinValidator } from '../../../core/validators';
           <mat-card class="user-card">
             <mat-card-header>
               <mat-card-title>
-                <mat-icon style="vertical-align:middle;margin-right:6px;color:var(--brand);">people</mat-icon>
+                <mat-icon style="vertical-align:middle;margin-right:6px;color: var(--brand-text);">people</mat-icon>
                 Client Users
               </mat-card-title>
               <div style="flex:1"></div>
@@ -295,7 +295,7 @@ import { gstinValidator } from '../../../core/validators';
           <mat-card-header>
             <div class="modal-head">
               <div class="modal-icon" style="background:var(--brand-light);">
-                <mat-icon style="color:var(--brand);">person_add</mat-icon>
+                <mat-icon style="color: var(--brand-text);">person_add</mat-icon>
               </div>
               <div>
                 <mat-card-title>Add Client User</mat-card-title>
@@ -450,7 +450,7 @@ import { gstinValidator } from '../../../core/validators';
           <mat-card-header>
             <div class="modal-head">
               <div class="modal-icon" style="background:#fff7ed;">
-                <mat-icon style="color:var(--brand);">manage_accounts</mat-icon>
+                <mat-icon style="color: var(--brand-text);">manage_accounts</mat-icon>
               </div>
               <div>
                 <mat-card-title>Change Role</mat-card-title>
@@ -493,7 +493,7 @@ import { gstinValidator } from '../../../core/validators';
     .client-avatar {
       width:52px; height:52px; border-radius:12px;
       background:linear-gradient(135deg,var(--brand),var(--brand-hover));
-      color:white; font-size:22px; font-weight:800;
+      color: var(--brand-ink); font-size:22px; font-weight:800;
       display:flex; align-items:center; justify-content:center;
     }
     .client-logo {
@@ -543,7 +543,7 @@ import { gstinValidator } from '../../../core/validators';
       border-radius:8px; padding:8px 14px;
       font-size:13px; color:var(--text-2);
     }
-    .info-chip mat-icon { font-size:15px; width:15px; height:15px; color:var(--brand); }
+    .info-chip mat-icon { font-size:15px; width:15px; height:15px; color: var(--brand-text); }
     .info-chip strong { color:var(--text-1); }
 
     .detail-grid {
@@ -559,7 +559,7 @@ import { gstinValidator } from '../../../core/validators';
     .user-row-cell { display:flex; align-items:center; gap:10px; }
     .user-chip {
       width:30px; height:30px; border-radius:8px;
-      background:var(--brand-light); color:var(--brand);
+      background:var(--brand-light); color: var(--brand-text);
       font-size:12px; font-weight:700;
       display:flex; align-items:center; justify-content:center;
       flex-shrink:0;

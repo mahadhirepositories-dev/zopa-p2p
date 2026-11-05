@@ -40,16 +40,7 @@ import { filter } from 'rxjs/operators';
 
           <!-- Brand / Logo -->
           <div class="sidebar-brand">
-            <svg width="36" height="36" viewBox="0 0 36 36" fill="none" style="flex-shrink:0;">
-              <rect width="36" height="36" rx="10" fill="#f97316"/>
-              <text x="18" y="26" text-anchor="middle"
-                    font-family="Arial,sans-serif" font-size="21"
-                    font-weight="900" fill="white" letter-spacing="-1">Z</text>
-            </svg>
-            <div>
-              <div class="brand-name">ZOPA</div>
-              <div class="brand-sub">P2P Suite</div>
-            </div>
+            <img src="brand/logo-dark.webp" alt="ZOPA, Procure Efficiently" width="136" height="48">
           </div>
 
           <!-- Tenant context — a switcher when the user belongs to >1 org -->
@@ -316,20 +307,6 @@ import { filter } from 'rxjs/operators';
       padding: 20px 16px 16px;
       border-bottom: 1px solid var(--border);
     }
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(249,115,22,0.35);
-    }
-    .brand-icon mat-icon { color: white; font-size: 20px; width: 20px; height: 20px; }
-    .brand-name { font-size: 16px; font-weight: 800; color: var(--text-1); letter-spacing: 0.5px; }
-    .brand-sub  { font-size: 10px; color: var(--text-3); letter-spacing: 0.8px; text-transform: uppercase; margin-top: 1px; }
 
     /* Tenant */
     .tenant-picker, .tenant-label {
@@ -340,7 +317,7 @@ import { filter } from 'rxjs/operators';
       border-bottom: 1px solid var(--border);
       background: #fafafa;
     }
-    .tenant-icon { font-size: 14px; width: 14px; height: 14px; color: var(--brand); }
+    .tenant-icon { font-size: 14px; width: 14px; height: 14px; color: var(--brand-text); }
     .tenant-select { flex: 1; font-size: 12px; }
     .tenant-label span { font-size: 12px; color: var(--text-2); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -350,34 +327,34 @@ import { filter } from 'rxjs/operators';
       padding: 10px 16px; border: 0; border-bottom: 1px solid var(--border);
       background: #fafafa; cursor: pointer; text-align: left; transition: background .12s;
     }
-    .tenant-switcher:hover { background: var(--brand-light, #fff1e6); }
+    .tenant-switcher:hover { background: var(--brand-light); }
     .tenant-switcher .tenant-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .tenant-switcher .tenant-name { font-size: 12px; color: var(--text-1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tenant-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #b45309; }
+    .tenant-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--brand-text); }
     .tenant-type--internal { color: #6d28d9; }
     .tenant-caret { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); flex-shrink: 0; }
 
     /* Active organization, in the top bar */
     .org-context {
       display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 10px; font: inherit; font-size: 13px;
-      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; color: #9a3412; cursor: pointer;
+      background: var(--brand-light); border: 1px solid var(--brand-mid); border-radius: 10px; color: var(--brand-text); cursor: pointer;
       transition: background .12s;
     }
-    .org-context:hover { background: #ffedd5; }
+    .org-context:hover { background: var(--brand-mid); }
     .org-context--internal { background: #f5f3ff; border-color: #ddd6fe; color: #5b21b6; }
     .org-context--internal:hover { background: #ede9fe; }
     .org-context mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
     .ctx-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ctx-text strong { font-weight: 700; }
     .ctx-chip { flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
-      background: #fdba74; color: #7c2d12; padding: 2px 8px; border-radius: 999px; }
+      background: var(--brand-mid); color: var(--brand-ink); padding: 2px 8px; border-radius: 999px; }
     .ctx-chip--internal { background: #c4b5fd; color: #4c1d95; }
     .ctx-note { font-size: 12px; color: var(--text-2); white-space: nowrap; }
     @media (max-width: 1200px) { .ctx-note { display: none; } }
     @media (max-width: 600px) { .ctx-lead, .ctx-chip { display: none; } }
     .org-menu-head { padding: 8px 16px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
     ::ng-deep .org-menu .mat-mdc-menu-item { min-height: 52px; }
-    .org-mini-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light, #fff1e6); color: var(--brand, #f97316); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
+    .org-mini-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light); color: var(--brand-text); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
     .org-mini-info { display: inline-flex; flex-direction: column; vertical-align: middle; }
     .org-mini-name { font-size: 13px; font-weight: 600; color: var(--text-1); line-height: 1.2; }
     .org-mini-role { font-size: 11px; color: var(--text-3); }
@@ -426,15 +403,15 @@ import { filter } from 'rxjs/operators';
     }
     .nav-link:hover {
       background: var(--brand-light);
-      color: var(--brand);
+      color: var(--brand-text);
     }
-    .nav-link:hover mat-icon { color: var(--brand); }
+    .nav-link:hover mat-icon { color: var(--brand-text); }
     .nav-link--active {
       background: var(--brand-light);
-      color: var(--brand) !important;
+      color: var(--brand-text) !important;
       font-weight: 600;
     }
-    .nav-link--active mat-icon { color: var(--brand) !important; }
+    .nav-link--active mat-icon { color: var(--brand-text) !important; }
 
     /* Footer */
     .sidebar-footer {
@@ -454,7 +431,7 @@ import { filter } from 'rxjs/operators';
       height: 32px;
       border-radius: 8px;
       background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
-      color: white;
+      color: var(--brand-ink);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -467,8 +444,8 @@ import { filter } from 'rxjs/operators';
       padding: 4px; border-radius: 8px; text-decoration: none; cursor: pointer;
       transition: background .12s;
     }
-    .user-link:hover { background: var(--brand-light, #fff1e6); }
-    .user-link--active { background: var(--brand-light, #fff1e6); }
+    .user-link:hover { background: var(--brand-light); }
+    .user-link--active { background: var(--brand-light); }
     .user-info { flex: 1; min-width: 0; }
     .user-name { font-size: 12px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-role { font-size: 10px; color: var(--text-3); text-transform: capitalize; }
@@ -530,7 +507,7 @@ import { filter } from 'rxjs/operators';
       height: 30px;
       border-radius: 8px;
       background: linear-gradient(135deg, var(--brand) 0%, var(--brand-hover) 100%);
-      color: white;
+      color: var(--brand-ink);
       display: flex;
       align-items: center;
       justify-content: center;

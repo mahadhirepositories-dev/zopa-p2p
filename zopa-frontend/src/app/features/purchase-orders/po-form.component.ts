@@ -337,7 +337,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
               <div class="pagination-info">
                 Showing {{ paginationStart() }}–{{ paginationEnd() }} of {{ indexedControls().length }} items
                 @if (indexedControls().length !== items.length) {
-                  <span style="color:var(--brand);font-weight:600;">(filtered from {{ items.length }})</span>
+                  <span style="color: var(--brand-text);font-weight:600;">(filtered from {{ items.length }})</span>
                 }
               </div>
 
@@ -693,7 +693,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
       background: var(--brand-light); border: 1px solid #fed7aa;
       border-radius: 8px; padding: 5px 12px; font-size: 12px; color: var(--text-2);
     }
-    .info-chip mat-icon { font-size: 14px; width: 14px; height: 14px; color: var(--brand); }
+    .info-chip mat-icon { font-size: 14px; width: 14px; height: 14px; color: var(--brand-text); }
     .info-chip.accent { background: #eff6ff; border-color: #bfdbfe; }
     .info-chip.accent mat-icon { color: #2563eb; }
 
@@ -714,7 +714,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     }
     .budget-banner.budget-warn { background: #fff7ed; border-color: #fed7aa; }
     .budget-banner mat-icon { color: #16a34a; }
-    .budget-banner.budget-warn mat-icon { color: var(--brand); }
+    .budget-banner.budget-warn mat-icon { color: var(--brand-text); }
     .po-total-badge {
       color: white; padding: 2px 12px; border-radius: 99px;
       font-size: 12px; font-weight: 600;
@@ -778,7 +778,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
 
     .totals-table { display: flex; flex-direction: column; gap: 6px; }
     .totals-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
-    .totals-row.grand { font-weight: 700; font-size: 16px; border-bottom: none; border-top: 2px solid var(--brand); padding-top: 10px; margin-top: 4px; color: var(--brand); }
+    .totals-row.grand { font-weight: 700; font-size: 16px; border-bottom: none; border-top: 2px solid var(--brand); padding-top: 10px; margin-top: 4px; color: var(--brand-text); }
 
     .attachment-row {
       display: flex; align-items: center; gap: 8px;
@@ -809,7 +809,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
       font-size: 12px; border-radius: 4px;
     }
     .page-size-picker button.active-size {
-      background: var(--brand); color: white; font-weight: 700;
+      background: var(--brand); color: var(--brand-ink); font-weight: 700;
     }
     .page-nav { display: flex; align-items: center; gap: 4px; }
     .page-indicator { font-size: 12px; font-weight: 600; color: var(--text-2); margin: 0 4px; }

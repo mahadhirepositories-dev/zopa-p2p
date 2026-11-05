@@ -556,7 +556,7 @@ export interface OnboardingInvite {
       margin-bottom: 6px;
     }
     .breadcrumbs .active {
-      color: #ea580c;
+      color: var(--brand-text);
       font-weight: 600;
     }
 
@@ -587,13 +587,13 @@ export interface OnboardingInvite {
       color: #0f172a;
     }
     .tab-btn--active {
-      color: #ea580c;
-      border-bottom-color: #ea580c;
+      color: var(--brand-text);
+      border-bottom-color: var(--brand);
     }
 
     .count-badge {
-      background: #ea580c;
-      color: #ffffff;
+      background: var(--brand);
+      color: var(--brand-ink);
       font-size: 11px;
       padding: 2px 7px;
       border-radius: 99px;
@@ -912,7 +912,7 @@ export interface OnboardingInvite {
       font-size: 24px;
       width: 24px;
       height: 24px;
-      color: #ea580c;
+      color: var(--brand-text);
     }
     .att-meta {
       flex: 1;
@@ -943,7 +943,7 @@ export interface OnboardingInvite {
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: #ea580c;
+      color: var(--brand-text);
       flex-shrink: 0;
     }
     .file-text {
@@ -1064,7 +1064,7 @@ export interface OnboardingInvite {
       color: #0f172a;
     }
     .custom-input:focus {
-      border-color: #ea580c;
+      border-color: var(--brand);
     }
 
     .dialog-hint {

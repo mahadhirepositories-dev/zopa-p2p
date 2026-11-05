@@ -316,7 +316,7 @@ import { DatePipe } from '@angular/common';
     }
     .entity-icon mat-icon { font-size:17px; width:17px; height:17px; }
     .entity-icon.dept { background:#fff7ed; }
-    .entity-icon.dept mat-icon { color:var(--brand); }
+    .entity-icon.dept mat-icon { color: var(--brand-text); }
     .entity-icon.proj { background:#f0fdf4; }
     .entity-icon.proj mat-icon { color:#16a34a; }
     .entity-icon.loc  { background:#eff6ff; }

@@ -20,12 +20,7 @@ import { AuthService } from '../../core/auth/auth.service';
     <div class="auth-shell">
       <div class="auth-card">
         <div class="logo">
-          <svg width="40" height="40" viewBox="0 0 44 44" fill="none">
-            <rect width="44" height="44" rx="12" fill="#f97316"/>
-            <text x="22" y="31" text-anchor="middle" font-family="Arial,sans-serif"
-                  font-size="24" font-weight="900" fill="white" letter-spacing="-1">Z</text>
-          </svg>
-          <span>ZOPA</span>
+          <img src="brand/logo-dark.webp" alt="ZOPA, Procure Efficiently" width="170" height="60">
         </div>
 
         @if (!token || !email) {
@@ -92,7 +87,7 @@ import { AuthService } from '../../core/auth/auth.service';
     .auth-shell {
       min-height: 100vh; display: flex; align-items: center; justify-content: center;
       padding: 24px;
-      background: radial-gradient(1200px 600px at 80% -10%, #fff7ed 0%, #ffffff 55%);
+      background: radial-gradient(1200px 600px at 80% -10%, var(--brand-light) 0%, #ffffff 55%);
     }
     .auth-card {
       width: 100%; max-width: 410px; background: #fff; padding: 38px 34px;
@@ -115,7 +110,7 @@ import { AuthService } from '../../core/auth/auth.service';
       width: 100%; height: 48px !important; font-size: 15px !important; font-weight: 700 !important;
       border-radius: 12px !important; margin-top: 8px;
       display: flex !important; align-items: center; justify-content: center; gap: 9px;
-      box-shadow: 0 6px 18px rgba(249,115,22,.30) !important;
+      box-shadow: 0 6px 18px rgba(216,172,39,.30) !important;
     }
     .success { text-align: center; padding: 6px 0 4px; }
     .success-icon {
@@ -129,7 +124,7 @@ import { AuthService } from '../../core/auth/auth.service';
       display: flex; align-items: center; justify-content: center; gap: 6px;
       margin-top: 24px; font-size: 13.5px; color: #64748b; text-decoration: none; font-weight: 600;
     }
-    .back-link:hover { color: #ea580c; }
+    .back-link:hover { color: var(--brand-text); }
     .back-link mat-icon { font-size: 17px; width: 17px; height: 17px; }
   `],
 })

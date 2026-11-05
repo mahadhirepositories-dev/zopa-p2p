@@ -354,7 +354,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                 <mat-card-content>
                   @for (po of allLinkedPos(); track po.id) {
                     <div class="po-row" [routerLink]="['/purchase-orders', po.id]">
-                      <mat-icon style="font-size:16px;color:var(--brand);">receipt_long</mat-icon>
+                      <mat-icon style="font-size:16px;color: var(--brand-text);">receipt_long</mat-icon>
                       <div>
                         <div style="font-size:13px;font-weight:600;">{{ po.po_number ?? ('PO #' + po.id) }}</div>
                         @if (po.vendor?.name) {

@@ -221,7 +221,7 @@ const ACTION_COLS = [
     .tab-label { display: flex; align-items: center; gap: 7px; padding: 4px 2px; }
     .tab-text  { font-size: 13px; font-weight: 600; }
     .role-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; color: white; font-size: 9px; font-weight: 800; letter-spacing: 0.03em; flex-shrink: 0; }
-    .dirty-dot { width: 7px; height: 7px; background: #f97316; border-radius: 50%; flex-shrink: 0; }
+    .dirty-dot { width: 7px; height: 7px; background: var(--brand); border-radius: 50%; flex-shrink: 0; }
 
     /* ── Tab content ─────────────────────────────────────────────────────── */
     .tab-content { padding: 20px; }

@@ -81,7 +81,7 @@ import { ExportService } from '../../core/services/export.service';
 
               <ng-container matColumnDef="po">
                 <th mat-header-cell *matHeaderCellDef>PO Reference</th>
-                <td mat-cell *matCellDef="let i" style="color:var(--brand);font-weight:600;">
+                <td mat-cell *matCellDef="let i" style="color: var(--brand-text);font-weight:600;">
                   {{ i.purchase_order?.po_number ?? '—' }}
                 </td>
               </ng-container>

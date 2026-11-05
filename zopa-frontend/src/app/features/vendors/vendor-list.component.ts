@@ -172,7 +172,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
                 <th mat-header-cell *matHeaderCellDef></th>
                 <td mat-cell *matCellDef="let v" style="text-align:right;white-space:nowrap;">
                   <button mat-icon-button matTooltip="View Vendor Details" (click)="$event.stopPropagation(); openViewModal(v)">
-                    <mat-icon style="color:var(--brand);">visibility</mat-icon>
+                    <mat-icon style="color: var(--brand-text);">visibility</mat-icon>
                   </button>
                   @if (auth.canDo('vendors','edit')) {
                     <button mat-icon-button matTooltip="Edit Vendor" (click)="$event.stopPropagation(); router.navigate(['/vendors', v.id, 'edit'])">
@@ -211,7 +211,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
     .avatar {
       width:34px; height:34px; border-radius:9px; flex-shrink:0;
       background:linear-gradient(135deg,var(--brand),var(--brand-hover));
-      color:white; font-size:14px; font-weight:700;
+      color: var(--brand-ink); font-size:14px; font-weight:700;
       display:flex; align-items:center; justify-content:center;
     }
     .name-primary { font-size:13px; font-weight:600; color:var(--text-1); }

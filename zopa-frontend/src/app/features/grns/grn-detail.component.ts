@@ -411,7 +411,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       font-size: 18px;
       width: 18px;
       height: 18px;
-      color: var(--brand);
+      color: var(--brand-text);
     }
     .count-pill {
       background: #e2e8f0;
@@ -449,7 +449,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       color: #0f172a;
     }
     .field-value.highlight {
-      color: var(--brand);
+      color: var(--brand-text);
     }
     .sub-date {
       font-size: 11px;
@@ -512,7 +512,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     .file-chip:hover {
       background: #f1f5f9;
       border-color: #94a3b8;
-      color: var(--brand);
+      color: var(--brand-text);
     }
     .file-icon {
       font-size: 18px;

@@ -22,15 +22,7 @@ import { AuthService } from '../../core/auth/auth.service';
       <!-- ── Brand panel (left) ─────────────────────────────── -->
       <aside class="brand-panel">
         <div class="brand-top">
-          <div class="brand-logo">
-            <svg width="40" height="40" viewBox="0 0 44 44" fill="none">
-              <rect width="44" height="44" rx="12" fill="#ffffff"/>
-              <text x="22" y="31" text-anchor="middle"
-                    font-family="Arial,sans-serif" font-size="24"
-                    font-weight="900" fill="#f97316" letter-spacing="-1">Z</text>
-            </svg>
-            <span>ZOPA</span>
-          </div>
+          <img class="brand-logo" src="brand/logo-light.webp" alt="ZOPA, Procure Efficiently" width="227" height="80">
         </div>
 
         <div class="brand-mid">
@@ -57,12 +49,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
           <!-- compact logo for mobile -->
           <div class="mobile-logo">
-            <svg width="38" height="38" viewBox="0 0 44 44" fill="none">
-              <rect width="44" height="44" rx="12" fill="#f97316"/>
-              <text x="22" y="31" text-anchor="middle" font-family="Arial,sans-serif"
-                    font-size="24" font-weight="900" fill="white" letter-spacing="-1">Z</text>
-            </svg>
-            <span>ZOPA</span>
+            <img src="brand/logo-dark.webp" alt="ZOPA, Procure Efficiently" width="170" height="60">
           </div>
 
           <div class="card-header">
@@ -138,10 +125,9 @@ import { AuthService } from '../../core/auth/auth.service';
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      background: linear-gradient(150deg, #ea580c 0%, #f97316 45%, #fb923c 100%);
+      background: linear-gradient(150deg, #3c3c3b 0%, var(--brand-ink) 100%);
     }
-    .brand-logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 900; letter-spacing: 1px; }
-    .brand-logo svg { filter: drop-shadow(0 2px 6px rgba(0,0,0,.15)); }
+    .brand-logo { display: block; position: relative; z-index: 2; }
 
     .brand-mid { max-width: 460px; position: relative; z-index: 2; }
     .brand-mid h1 { font-size: 38px; line-height: 1.15; font-weight: 800; margin: 0 0 16px; letter-spacing: -.5px; }
@@ -151,38 +137,38 @@ import { AuthService } from '../../core/auth/auth.service';
     .brand-features li { display: flex; align-items: center; gap: 13px; font-size: 14.5px; font-weight: 500; }
     .fi {
       width: 38px; height: 38px; flex-shrink: 0; border-radius: 11px;
-      background: rgba(255,255,255,.18); backdrop-filter: blur(4px);
+      background: rgba(216,172,39,.14);
       display: flex; align-items: center; justify-content: center;
-      border: 1px solid rgba(255,255,255,.25);
+      border: 1px solid rgba(216,172,39,.35);
     }
-    .fi mat-icon { font-size: 19px; width: 19px; height: 19px; color: #fff; }
+    .fi mat-icon { font-size: 19px; width: 19px; height: 19px; color: var(--brand); }
 
-    .brand-bottom { font-size: 12px; color: rgba(255,255,255,.8); position: relative; z-index: 2; }
+    .brand-bottom { font-size: 12px; color: rgba(255,255,255,.72); position: relative; z-index: 2; }
 
     .glow { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .55; }
-    .glow-1 { width: 320px; height: 320px; background: #fdba74; top: -90px; right: -80px; }
-    .glow-2 { width: 260px; height: 260px; background: #c2410c; bottom: -70px; left: -60px; opacity: .4; }
+    .glow-1 { width: 320px; height: 320px; background: var(--brand); top: -130px; right: -110px; opacity: .14; }
+    .glow-2 { width: 260px; height: 260px; background: var(--brand); bottom: -120px; left: -90px; opacity: .08; }
 
     /* ── Form panel ────────────────────────────────────── */
     .form-panel {
       display: flex; align-items: center; justify-content: center;
       padding: 40px 24px;
-      background: radial-gradient(1200px 600px at 80% -10%, #fff7ed 0%, #ffffff 55%);
+      background: radial-gradient(1200px 600px at 80% -10%, var(--brand-light) 0%, #ffffff 55%);
     }
     .form-card { width: 100%; max-width: 400px; }
 
-    .mobile-logo { display: none; align-items: center; gap: 10px; font-size: 20px; font-weight: 900; color: #0f172a; margin-bottom: 26px; }
+    .mobile-logo { display: none; margin-bottom: 26px; }
 
     .card-header { margin-bottom: 26px; }
-    .card-header h2 { font-size: 26px; font-weight: 800; color: #0f172a; margin: 0 0 6px; letter-spacing: -.4px; }
-    .card-header p { font-size: 14px; color: #94a3b8; margin: 0; }
+    .card-header h2 { font-size: 26px; font-weight: 800; color: var(--text-1); margin: 0 0 6px; letter-spacing: -.4px; }
+    .card-header p { font-size: 14px; color: var(--text-2); margin: 0; }
 
     .login-form { display: flex; flex-direction: column; gap: 6px; }
     .full-width { width: 100%; }
-    .login-form mat-icon[matSuffix] { color: #94a3b8; font-size: 19px; }
+    .login-form mat-icon[matSuffix] { color: var(--text-3); font-size: 19px; }
 
     .forgot-row { display: flex; justify-content: flex-end; margin: -2px 0 2px; }
-    .forgot-link { font-size: 13px; color: #ea580c; font-weight: 600; text-decoration: none; }
+    .forgot-link { font-size: 13px; color: var(--brand-text); font-weight: 600; text-decoration: none; }
     .forgot-link:hover { text-decoration: underline; }
 
     .error-banner {
@@ -197,12 +183,12 @@ import { AuthService } from '../../core/auth/auth.service';
       font-size: 15px !important; font-weight: 700 !important;
       border-radius: 12px !important; margin-top: 10px;
       display: flex !important; align-items: center; justify-content: center; gap: 10px;
-      box-shadow: 0 6px 18px rgba(249,115,22,.30) !important;
+      box-shadow: 0 6px 18px rgba(216,172,39,.30) !important;
     }
 
     .secure-note {
       margin-top: 26px; display: flex; align-items: center; justify-content: center; gap: 7px;
-      font-size: 12px; color: #94a3b8;
+      font-size: 12px; color: var(--text-3);
     }
     .secure-note mat-icon { font-size: 15px; width: 15px; height: 15px; }
 

@@ -197,9 +197,9 @@ import { NotificationService } from '../../core/services/notification.service';
     }
     .avatar {
       width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0;
-      background: linear-gradient(135deg, #f97316, #fb923c); color: #fff;
+      background: linear-gradient(135deg, var(--brand), var(--brand)); color: var(--brand-ink);
       display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 800;
-      box-shadow: 0 4px 14px rgba(249,115,22,.35);
+      box-shadow: 0 4px 14px rgba(216,172,39,.35);
     }
     .identity-info { flex: 1; min-width: 200px; }
     .identity-name { font-size: 20px; font-weight: 700; color: var(--text-1); }
@@ -231,13 +231,13 @@ import { NotificationService } from '../../core/services/notification.service';
     .access-row:hover { background: #f8fafc; }
     .access-row.current { background: #fff7ed; }
     .access-row.switchable { cursor: pointer; }
-    .access-row.switchable:hover { background: var(--brand-light, #fff1e6); }
-    .switch-hint { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand, #f97316); opacity: 0; transition: opacity .12s; }
+    .access-row.switchable:hover { background: var(--brand-light); }
+    .switch-hint { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand-text); opacity: 0; transition: opacity .12s; }
     .access-row.switchable:hover .switch-hint { opacity: 1; }
     .switch-hint mat-icon { font-size: 16px; width: 16px; height: 16px; }
     .org-avatar {
       width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
-      background: var(--brand-light, #fff1e6); color: var(--brand, #f97316);
+      background: var(--brand-light); color: var(--brand-text);
       display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px;
     }
     .org-name { font-size: 14px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 8px; }

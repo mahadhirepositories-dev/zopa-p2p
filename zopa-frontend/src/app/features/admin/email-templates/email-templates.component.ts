@@ -80,12 +80,12 @@ interface EmailTemplate {
       transition: border-color .15s, box-shadow .15s, transform .05s;
     }
     .tpl:hover { border-color: #fdba74; }
-    .tpl--active { border-color: #f97316; box-shadow: 0 2px 10px rgba(249,115,22,.14); }
+    .tpl--active { border-color: var(--brand); box-shadow: 0 2px 10px rgba(216,172,39,.14); }
     .tpl-icon {
       width: 38px; height: 38px; flex-shrink: 0; border-radius: 10px; background: #fff7ed;
       display: flex; align-items: center; justify-content: center;
     }
-    .tpl-icon mat-icon { color: #ea580c; font-size: 20px; width: 20px; height: 20px; }
+    .tpl-icon mat-icon { color: var(--brand-text); font-size: 20px; width: 20px; height: 20px; }
     .tpl-info { display: flex; flex-direction: column; min-width: 0; }
     .tpl-name { font-size: 14px; font-weight: 700; color: #0f172a; }
     .tpl-to { font-size: 12px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

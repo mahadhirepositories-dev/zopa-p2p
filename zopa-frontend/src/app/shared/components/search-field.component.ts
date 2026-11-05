@@ -52,8 +52,8 @@ import { MatIconModule } from '@angular/material/icon';
       transition: border-color .15s ease, box-shadow .15s ease;
     }
     .zsearch--focused {
-      border-color: var(--brand, #f97316);
-      box-shadow: 0 0 0 3px rgba(249, 115, 22, .14);
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(216,172,39, .14);
     }
 
     .zsearch__icon {

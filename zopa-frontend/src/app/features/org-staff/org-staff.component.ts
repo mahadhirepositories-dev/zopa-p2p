@@ -230,7 +230,7 @@ interface StaffMember {
     .staff-avatar {
       width:40px;height:40px;border-radius:10px;flex-shrink:0;
       background:linear-gradient(135deg,var(--brand),var(--brand-hover));
-      color:white;font-size:16px;font-weight:700;
+      color: var(--brand-ink);font-size:16px;font-weight:700;
       display:flex;align-items:center;justify-content:center;
     }
     .zopa-avatar {
@@ -282,7 +282,7 @@ interface StaffMember {
       background:var(--brand-light);
       display:flex;align-items:center;justify-content:center;
     }
-    .modal-icon mat-icon { color:var(--brand); }
+    .modal-icon mat-icon { color: var(--brand-text); }
     .modal-sub { margin:4px 0 0;font-size:12px;color:var(--text-3); }
     .modal-form { display:flex;flex-direction:column;gap:8px; }
     .form-row { display:flex;gap:12px; }

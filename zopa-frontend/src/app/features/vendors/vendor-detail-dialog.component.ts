@@ -200,7 +200,7 @@ import { NotificationService } from '../../core/services/notification.service';
                     <ng-container matColumnDef="po_number">
                       <th mat-header-cell *matHeaderCellDef>PO Number</th>
                       <td mat-cell *matCellDef="let po">
-                        <strong style="color:var(--brand);cursor:pointer;" (click)="openPo(po.id)">
+                        <strong style="color: var(--brand-text);cursor:pointer;" (click)="openPo(po.id)">
                           {{ po.po_number ?? ('PO #' + po.id) }}
                         </strong>
                       </td>
@@ -274,7 +274,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .dialog-content { padding: 0 !important; max-height: 75vh; }
     .tab-padding { padding: 16px 20px 24px; }
     .card-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
-    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand); margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand-text); margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
     
     .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px 18px; }
     .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 3px; letter-spacing: 0.5px; }
@@ -288,7 +288,7 @@ import { NotificationService } from '../../core/services/notification.service';
     .doc-info { flex: 1; min-width: 0; }
     .doc-type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 0.5px; }
     .doc-name { font-size: 12px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .doc-link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand); text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
+    .doc-link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand-text); text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
     .doc-link-btn:hover { background: #f1f5f9; }
     
     .address-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }

@@ -213,7 +213,7 @@ import { gstinValidator } from '../../../core/validators';
     .company-avatar {
       width:36px; height:36px; border-radius:10px;
       background:linear-gradient(135deg,var(--brand),var(--brand-hover));
-      color:white; font-size:15px; font-weight:700;
+      color: var(--brand-ink); font-size:15px; font-weight:700;
       display:flex; align-items:center; justify-content:center;
       flex-shrink:0;
     }
@@ -248,7 +248,7 @@ import { gstinValidator } from '../../../core/validators';
       background:var(--brand-light);
       display:flex; align-items:center; justify-content:center;
     }
-    .modal-icon mat-icon { color:var(--brand); }
+    .modal-icon mat-icon { color: var(--brand-text); }
     .client-form { display:flex; flex-direction:column; gap:14px; }
     .form-row { display:flex; gap:12px; }
     .half-width { flex:1; }

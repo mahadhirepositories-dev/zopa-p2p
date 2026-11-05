@@ -206,7 +206,7 @@ import { NotificationService } from '../../core/services/notification.service';
                           <input type="radio" name="prItemSelect" [value]="it.id" [checked]="selectedPrItemId() === it.id" (change)="selectPrItem(it)" />
                         </td>
                         <td>
-                          <div style="font-weight:700;font-size:12px;color:var(--brand);">
+                          <div style="font-weight:700;font-size:12px;color: var(--brand-text);">
                             {{ it.pr?.tenant?.name ?? 'Client' }}
                           </div>
                           <div style="font-size:11px;color:var(--text-3);">

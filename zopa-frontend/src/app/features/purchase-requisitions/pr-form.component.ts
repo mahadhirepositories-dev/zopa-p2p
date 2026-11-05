@@ -281,7 +281,7 @@ import { Product } from '../../core/models';
     @media (max-width:600px) { .two-col, .three-col { grid-template-columns:minmax(0,1fr); } }
     .item-row { display:flex;gap:10px;align-items:flex-start;padding:12px 0;border-bottom:1px solid var(--border); }
     .item-row:last-of-type { border-bottom:none; }
-    .item-num { width:24px;height:24px;border-radius:6px;background:var(--brand-light);color:var(--brand);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:12px; }
+    .item-num { width:24px;height:24px;border-radius:6px;background:var(--brand-light);color: var(--brand-text);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:12px; }
     .item-fields { flex:1;display:flex;flex-direction:column;gap:6px; }
     .remove-btn { flex-shrink:0;margin-top:4px;color:var(--text-3)!important; }
     .totals-row { display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:2px solid var(--border);font-size:14px;font-weight:600;color:var(--text-1); }

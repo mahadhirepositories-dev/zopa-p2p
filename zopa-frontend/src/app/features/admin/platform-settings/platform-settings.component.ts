@@ -34,7 +34,7 @@ import { NotificationService } from '../../../core/services/notification.service
         <mat-card class="logo-card">
           <mat-card-header>
             <mat-card-title>
-              <mat-icon style="vertical-align:middle;margin-right:6px;color:var(--brand);">image</mat-icon>
+              <mat-icon style="vertical-align:middle;margin-right:6px;color: var(--brand-text);">image</mat-icon>
               Platform Logo
             </mat-card-title>
           </mat-card-header>
@@ -92,7 +92,7 @@ import { NotificationService } from '../../../core/services/notification.service
         <mat-card class="preview-card">
           <mat-card-header>
             <mat-card-title>
-              <mat-icon style="vertical-align:middle;margin-right:6px;color:var(--brand);">picture_as_pdf</mat-icon>
+              <mat-icon style="vertical-align:middle;margin-right:6px;color: var(--brand-text);">picture_as_pdf</mat-icon>
               PDF Appearance
             </mat-card-title>
           </mat-card-header>
@@ -133,7 +133,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
             <div style="font-size:12px;color:var(--text-3);">
               To upload a client company logo, go to
-              <strong style="color:var(--brand);">Client Management → select client → camera icon</strong>
+              <strong style="color: var(--brand-text);">Client Management → select client → camera icon</strong>
               in the header.
             </div>
 

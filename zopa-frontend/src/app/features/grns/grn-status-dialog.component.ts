@@ -21,7 +21,7 @@ import { NotificationService } from '../../core/services/notification.service';
   template: `
     <div style="padding:4px 0;">
       <h2 mat-dialog-title style="display:flex;align-items:center;gap:10px;margin:0 0 12px 0;font-size:18px;font-weight:600;">
-        <mat-icon style="color:var(--brand);font-size:24px;width:24px;height:24px;">edit_note</mat-icon>
+        <mat-icon style="color: var(--brand-text);font-size:24px;width:24px;height:24px;">edit_note</mat-icon>
         Complete GRN &amp; Verify Line Items
       </h2>
 
@@ -63,7 +63,7 @@ import { NotificationService } from '../../core/services/notification.service';
         <!-- Line Items Quantities Section -->
         <div style="margin-bottom:16px;">
           <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
-            <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--brand);">inventory_2</mat-icon>
+            <mat-icon style="font-size:16px;width:16px;height:16px;color: var(--brand-text);">inventory_2</mat-icon>
             Item Quantities Delivered &amp; Accepted
           </div>
           <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">

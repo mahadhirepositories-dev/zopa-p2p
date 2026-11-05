@@ -391,7 +391,7 @@ const CURRENCIES = [
       width:36px;height:36px;border-radius:10px;
       background:var(--brand-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;
     }
-    .section-icon mat-icon { color:var(--brand);font-size:20px;width:20px;height:20px; }
+    .section-icon mat-icon { color: var(--brand-text);font-size:20px;width:20px;height:20px; }
 
     .grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px; }
     @media(max-width:900px) { .grid-3 { grid-template-columns:1fr 1fr; } }
@@ -419,7 +419,7 @@ const CURRENCIES = [
       display:flex;flex-direction:column;gap:8px;
     }
     .doc-slot-label { display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-1); }
-    .doc-slot-label mat-icon { font-size:18px;width:18px;height:18px;color:var(--brand); }
+    .doc-slot-label mat-icon { font-size:18px;width:18px;height:18px;color: var(--brand-text); }
     .doc-badge {
       font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;
       background:#fee2e2;color:#b91c1c;margin-left:auto;
@@ -435,7 +435,7 @@ const CURRENCIES = [
     .upload-btn {
       display:flex;align-items:center;gap:6px;
       border:1.5px dashed var(--brand);border-radius:8px;
-      padding:8px 14px;font-size:12px;font-weight:600;color:var(--brand);
+      padding:8px 14px;font-size:12px;font-weight:600;color: var(--brand-text);
       cursor:pointer;transition:background .15s;
     }
     .upload-btn:hover { background:var(--brand-light); }

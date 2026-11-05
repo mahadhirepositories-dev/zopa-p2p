@@ -331,7 +331,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               <mat-card style="margin-bottom:16px;">
                 <mat-card-header style="display:flex;justify-content:space-between;align-items:center;padding:16px 20px;">
                   <mat-card-title style="font-size:15px;display:flex;align-items:center;gap:8px;margin:0;">
-                    <mat-icon style="color:var(--brand);">inventory_2</mat-icon>
+                    <mat-icon style="color: var(--brand-text);">inventory_2</mat-icon>
                     Goods Receipt Notes (GRNs)
                     <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
                   </mat-card-title>
@@ -368,7 +368,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                       <ng-container matColumnDef="grn_number">
                         <th mat-header-cell *matHeaderCellDef>GRN Number</th>
                         <td mat-cell *matCellDef="let g">
-                          <a [routerLink]="['/grns', g.id]" style="font-weight:600;color:var(--brand);text-decoration:none;">
+                          <a [routerLink]="['/grns', g.id]" style="font-weight:600;color: var(--brand-text);text-decoration:none;">
                             {{ g.grn_number }}
                           </a>
                         </td>
@@ -481,7 +481,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               <mat-card style="margin-bottom:16px;">
                 <mat-card-header>
                   <mat-card-title style="font-size:14px;display:flex;align-items:center;gap:6px;">
-                    <mat-icon style="color:var(--brand);font-size:18px;">account_balance_wallet</mat-icon>
+                    <mat-icon style="color: var(--brand-text);font-size:18px;">account_balance_wallet</mat-icon>
                     Budget Availability
                   </mat-card-title>
                 </mat-card-header>
@@ -545,7 +545,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
             <mat-card style="margin-bottom:16px;">
               <mat-card-header>
                 <mat-card-title style="font-size:14px;display:flex;align-items:center;gap:6px;">
-                  <mat-icon style="color:var(--brand);font-size:18px;">history</mat-icon>
+                  <mat-icon style="color: var(--brand-text);font-size:18px;">history</mat-icon>
                   Activity Log
                 </mat-card-title>
               </mat-card-header>
@@ -715,7 +715,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .section-divider { display: flex; align-items: center; gap: 8px; margin: 16px 0 12px; }
     .section-divider::before { content: ''; flex: 1; height: 1px; background: #e0e0e0; }
     .section-divider::after { content: ''; flex: 3; height: 1px; background: #e0e0e0; }
-    .pr-ref-link { color:var(--brand); font-weight:600; font-size:13px; display:flex; align-items:center; cursor:pointer; }
+    .pr-ref-link { color: var(--brand-text); font-weight:600; font-size:13px; display:flex; align-items:center; cursor:pointer; }
     .pr-ref-link:hover { text-decoration:underline; }
     .pr-links-list { display:flex;flex-direction:column;gap:6px; }
     .pr-link-row { display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0; }

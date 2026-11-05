@@ -79,8 +79,8 @@ export interface SearchSelectData {
 
     .ssd-list { overflow-y: auto; padding: 6px; flex: 1; }
     .ssd-item { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; padding: 9px 12px; border-radius: 10px; transition: background .1s; }
-    .ssd-item--active { background: var(--brand-light, #fff1e6); }
-    .ssd-avatar { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: #fff1e6; color: #f97316; }
+    .ssd-item--active { background: var(--brand-light); }
+    .ssd-avatar { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: #fff1e6; color: var(--brand-text); }
     .ssd-avatar[data-accent="purple"] { background: #f5f3ff; color: #6d28d9; }
     .ssd-avatar[data-accent="green"]  { background: #dcfce7; color: #16a34a; }
     .ssd-avatar[data-accent="gray"]   { background: #f1f5f9; color: #64748b; }

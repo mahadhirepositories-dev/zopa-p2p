@@ -118,13 +118,13 @@ import {
     /* Personalized card */
     .me-card { background: linear-gradient(120deg, #fff7ed 0%, #ffffff 65%); border: 1px solid var(--border); border-radius: 16px; padding: 20px 22px; margin-bottom: 20px; }
     .me-top { display: flex; align-items: center; gap: 14px; }
-    .me-avatar { width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; background: linear-gradient(135deg,#f97316,#fb923c); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; }
+    .me-avatar { width: 48px; height: 48px; border-radius: 14px; flex-shrink: 0; background: linear-gradient(135deg,var(--brand),var(--brand)); color: var(--brand-ink); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; }
     .me-name { font-size: 17px; font-weight: 700; color: var(--text-1); }
     .me-role { font-size: 13px; color: var(--text-3); margin-top: 2px; }
     .me-sub { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); margin: 16px 0 10px; }
     .cap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
     .cap { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
-    .cap-icon { color: var(--brand, #f97316); flex-shrink: 0; }
+    .cap-icon { color: var(--brand-text); flex-shrink: 0; }
     .cap-label { font-size: 13px; font-weight: 600; color: var(--text-1); }
     .cap-actions { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; }
     .cap-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
@@ -140,13 +140,13 @@ import {
     .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 22px; }
     .chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--border); background: #fff; color: var(--text-2); font-size: 12.5px; font-weight: 500; padding: 6px 13px; border-radius: 99px; cursor: pointer; transition: all .12s; }
     .chip mat-icon { font-size: 15px; width: 15px; height: 15px; }
-    .chip:hover { border-color: var(--brand, #f97316); color: var(--brand, #f97316); }
-    .chip.active { background: var(--brand, #f97316); border-color: var(--brand, #f97316); color: #fff; }
+    .chip:hover { border-color: var(--brand); color: var(--brand-text); }
+    .chip.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 
     /* Category blocks */
     .cat-block { margin-bottom: 22px; }
     .cat-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
-    .cat-head mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--brand, #f97316); }
+    .cat-head mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--brand-text); }
     .cat-count { background: #f1f5f9; color: var(--text-3); font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
 
     .acc { display: block; }

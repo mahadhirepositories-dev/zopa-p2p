@@ -150,7 +150,7 @@ import { RoleService, Role } from '../../../services/role.service';
     .staff-avatar {
       width:44px;height:44px;border-radius:12px;flex-shrink:0;
       background:linear-gradient(135deg,var(--brand),var(--brand-hover));
-      color:white;font-size:18px;font-weight:700;
+      color: var(--brand-ink);font-size:18px;font-weight:700;
       display:flex;align-items:center;justify-content:center;
     }
     .staff-info { flex:1;min-width:0; }
@@ -186,7 +186,7 @@ import { RoleService, Role } from '../../../services/role.service';
       background:var(--brand-light);
       display:flex;align-items:center;justify-content:center;
     }
-    .modal-icon mat-icon { color:var(--brand); }
+    .modal-icon mat-icon { color: var(--brand-text); }
     .modal-sub { margin:4px 0 0;font-size:12px;color:var(--text-3); }
     .modal-form { display:flex;flex-direction:column;gap:8px; }
     .full-width { width:100%; }

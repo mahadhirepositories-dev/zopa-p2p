@@ -275,9 +275,9 @@ const PERIODS = [
     .plain-row, .plain-row:hover .mat-mdc-cell { cursor: default !important; }
     .tenants-table { min-width: 720px; }
     .org-cell { display: flex; align-items: center; gap: 10px; padding: 4px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
-    .org-cell:hover .org-name { color: var(--brand-hover); text-decoration: underline; }
+    .org-cell:hover .org-name { color: var(--brand-text); text-decoration: underline; }
     .org-avatar {
-      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light); color: var(--brand-hover);
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light); color: var(--brand-text);
       font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center;
     }
     .org-name { display: block; font-weight: 600; font-size: 13px; color: var(--text-1); }

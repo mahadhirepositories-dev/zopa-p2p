@@ -38,7 +38,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   `,
   styles: [`
     .rte { border: 1px solid var(--border, #d1d5db); border-radius: 10px; overflow: hidden; background: #fff; }
-    .rte:focus-within { border-color: var(--brand, #ea580c); }
+    .rte:focus-within { border-color: var(--brand); }
     .rte-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--border, #e5e7eb); background: #fafafa; }
     .rte-toolbar button { width: 32px; height: 32px; line-height: 32px; }
     .rte-toolbar mat-icon { font-size: 18px; width: 18px; height: 18px; color: #475569; }
