@@ -27,7 +27,8 @@ export const routes: Routes = [
   },
   {
     path: 'executive-dashboard',
-    canActivate: [authGuard],
+    canActivate: [authGuard, permissionGuard],
+    data: { module: 'purchase_orders' }, // the API also needs PO view: executive_dashboard view is on for every role by default
     loadComponent: () => import('./features/executive-dashboard/executive-dashboard.component').then(m => m.ExecutiveDashboardComponent),
   },
   {

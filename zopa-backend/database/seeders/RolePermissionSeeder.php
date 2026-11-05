@@ -67,7 +67,7 @@ class RolePermissionSeeder extends Seeder
         $p('zopa_buyer', 'cost_centers',          true,  true,  true,  false);
         $p('zopa_buyer', 'org_masters',           true,  true,  true,  false);
         $p('zopa_buyer', 'approvals',             true,  true,  true,  false);
-        $p('zopa_buyer', 'reports',               true,  false, false, false);
+        $p('zopa_buyer', 'reports',               true,  true,  true,  false);
         $p('zopa_buyer', 'org_staff',             true,  false, false, false);
 
         // ── ZOPA approvers (L1/L2/L3): view docs + act on approvals only
@@ -100,7 +100,7 @@ class RolePermissionSeeder extends Seeder
         $p('client_buyer', 'cost_centers',          true,  true,  true,  false);
         $p('client_buyer', 'org_masters',           true,  true,  true,  false);
         $p('client_buyer', 'approvals',             true,  false, false, false);
-        $p('client_buyer', 'reports',               true,  false, false, false);
+        $p('client_buyer', 'reports',               true,  true,  true,  false);
         $p('client_buyer', 'org_staff',             false, false, false, false);
 
         // ── Client approvers (L1/L2/L3): view docs + act on approvals only

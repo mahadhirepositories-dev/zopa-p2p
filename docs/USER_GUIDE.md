@@ -76,7 +76,7 @@ be changed at any time by the Super Admin (see *Access Control*, Section 9).
 | Products / Categories | Full | View, Create, Edit | View only | Full |
 | Cost Centers & Budget | Full | View, Create, Edit (budget amount: admins only) | View only | Full |
 | Org Masters | Full | View, Create, Edit | View only | Full |
-| Reports | Full | View | View | Full |
+| Reports | Full | View, Create, Edit | View | Full |
 | Staff Management | Full | — | — | Full |
 
 > **Important:** Buttons (Edit / Delete / Create) appear only if your role is
