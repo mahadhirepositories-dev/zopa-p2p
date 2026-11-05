@@ -5,14 +5,14 @@
 <style>
   body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; color: #1e293b; background: #f1f5f9; margin: 0; padding: 0; }
   .wrapper { max-width: 580px; margin: 24px auto; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-  .header { padding: 24px 28px; color: #fff; background: #ea580c; }
+  .header { padding: 24px 28px; color: #fff; background: #3c3c3b; }
   .header h1 { margin: 0; font-size: 20px; font-weight: 700; }
   .header p { margin: 6px 0 0; font-size: 13px; opacity: 0.9; }
   .body { padding: 28px; line-height: 1.6; }
-  .org-box { background: #fff7ed; border-left: 4px solid #ea580c; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; }
-  .org-box strong { color: #9a3412; }
+  .org-box { background: #fbf6e4; border-left: 4px solid #d8ac27; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; }
+  .org-box strong { color: #7f6100; }
   .btn-wrap { text-align: center; margin: 28px 0; }
-  .btn { display: inline-block; background: #ea580c; color: #ffffff !important; text-decoration: none;
+  .btn { display: inline-block; background: #d8ac27; color: #2f2f2d !important; text-decoration: none;
          padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 15px; letter-spacing: 0.02em; }
   .instructions { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; }
   .instructions h3 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #475569; }
@@ -26,6 +26,7 @@
 </head>
 <body>
 <div class="wrapper">
+  @include('emails.partials.logo')
   <div class="header">
     <h1>Vendor Registration Invitation</h1>
     <p>{{ $tenantName ?? 'ZOPA Procurement Partner' }}</p>

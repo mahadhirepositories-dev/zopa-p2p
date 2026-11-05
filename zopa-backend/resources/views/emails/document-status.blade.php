@@ -22,13 +22,15 @@
   table.items th { background: #475569; color: #fff; padding: 7px 8px; text-align: left; font-weight: bold; }
   table.items td { padding: 6px 8px; border-bottom: 1px solid #eef2f7; }
   table.items tbody tr:nth-child(even) { background: #f8fafc; }
-  .comments { background: #fff7ed; border-left: 4px solid #ea580c; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  .comments { background: #fbf6e4; border-left: 4px solid #d8ac27; padding: 12px 16px; margin: 18px 0; border-radius: 0 6px 6px 0; font-size: 13px; }
+  .comments.returned { background: #fff7ed; border-left-color: #ea580c; }
   .comments.needs_clarification { background: #f0f9ff; border-left-color: #0284c7; }
   .footer { background: #f1f5f9; padding: 14px 26px; font-size: 11px; color: #94a3b8; text-align: center; }
 </style>
 </head>
 <body>
 <div class="wrapper">
+  @include('emails.partials.logo')
   @php
     $icon = match($event) { 'approved' => '&#10003;', 'rejected' => '&#10007;', 'returned' => '&#8617;', 'needs_clarification' => '&#63;', default => '' };
   @endphp

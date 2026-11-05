@@ -21,25 +21,25 @@
 
   /* Header Masthead */
   .masthead {
-    background: #0f2942;
+    background: #3c3c3b;
     color: #ffffff;
     padding: 14px 20px;
     border-radius: 4px;
     margin-bottom: 12px;
-    border-bottom: 3px solid #0284c7;
+    border-bottom: 3px solid #d8ac27;
   }
   .masthead table { width: 100%; border-collapse: collapse; }
   .masthead .title { font-size: 18px; font-weight: 700; letter-spacing: 0.02em; color: #ffffff; margin: 0; }
-  .masthead .org-name { font-size: 13px; color: #38bdf8; font-weight: 600; margin-top: 3px; }
+  .masthead .org-name { font-size: 13px; color: #d8ac27; font-weight: 600; margin-top: 3px; }
   .masthead .meta-right { text-align: right; font-size: 10.5px; color: #cbd5e1; }
-  .masthead .meta-badge { display: inline-block; background: #0369a1; color: #ffffff; padding: 3px 8px; border-radius: 3px; font-weight: 700; font-size: 9.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .masthead .meta-badge { display: inline-block; background: #d8ac27; color: #2f2f2d; padding: 3px 8px; border-radius: 3px; font-weight: 700; font-size: 9.5px; text-transform: uppercase; margin-bottom: 4px; }
 
   /* KPI Scorecard */
   .kpi-table { width: 100%; border-collapse: separate; border-spacing: 6px; margin-bottom: 12px; }
   .kpi-box {
     background: #f8fafc;
     border: 1px solid #cbd5e1;
-    border-top: 3px solid #0f2942;
+    border-top: 3px solid #3c3c3b;
     border-radius: 4px;
     padding: 10px 12px;
     vertical-align: top;
@@ -48,7 +48,7 @@
   .kpi-box.danger { border-top-color: #dc2626; background: #fef2f2; }
   .kpi-box.success { border-top-color: #16a34a; background: #f0fdf4; }
   .kpi-title { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #475569; margin-bottom: 3px; }
-  .kpi-value { font-size: 20px; font-weight: 800; color: #0f2942; line-height: 1.1; }
+  .kpi-value { font-size: 20px; font-weight: 800; color: #2f2f2d; line-height: 1.1; }
   .kpi-box.warn .kpi-value { color: #c2410c; }
   .kpi-box.danger .kpi-value { color: #b91c1c; }
   .kpi-box.success .kpi-value { color: #15803d; }
@@ -66,7 +66,7 @@
   .chart-header {
     font-size: 11px;
     font-weight: 700;
-    color: #0f2942;
+    color: #2f2f2d;
     text-transform: uppercase;
     letter-spacing: 0.04em;
     border-bottom: 1px solid #e2e8f0;
@@ -80,20 +80,20 @@
   .bar-row td { padding: 2px 0; }
   .bar-label { width: 28%; font-size: 9.5px; font-weight: 600; color: #334155; }
   .bar-track { width: 58%; background: #e2e8f0; border-radius: 2px; height: 10px; overflow: hidden; }
-  .bar-fill { height: 10px; border-radius: 2px; background: #0284c7; }
-  .bar-fill.accent { background: #0f2942; }
+  .bar-fill { height: 10px; border-radius: 2px; background: #d8ac27; }
+  .bar-fill.accent { background: #3c3c3b; }
   .bar-fill.warn { background: #f97316; }
   .bar-fill.danger { background: #ef4444; }
-  .bar-val { width: 14%; text-align: right; font-size: 9.5px; font-weight: 700; color: #0f2942; }
+  .bar-val { width: 14%; text-align: right; font-size: 9.5px; font-weight: 700; color: #2f2f2d; }
 
   /* Data Section Titles */
   .section-banner {
-    background: #e2e8f0;
-    border-left: 4px solid #0f2942;
+    background: #fbf6e4;
+    border-left: 4px solid #d8ac27;
     padding: 5px 8px;
     font-size: 11px;
     font-weight: 700;
-    color: #0f2942;
+    color: #2f2f2d;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 12px 0 6px;
@@ -108,12 +108,12 @@
     page-break-inside: auto;
   }
   table.data-table th {
-    background: #0f2942;
+    background: #3c3c3b;
     color: #ffffff;
     font-weight: 700;
     text-align: left;
     padding: 5px 6px;
-    border: 1px solid #0f2942;
+    border: 1px solid #3c3c3b;
     text-transform: uppercase;
     letter-spacing: 0.03em;
   }
