@@ -66,19 +66,49 @@ class DashboardController extends Controller
             })
             ->count();
 
-        // ── Recent POs ─────────────────────────────────────────────
-        $recentPos = (clone $poQuery)
-            ->with(['vendor:id,name', 'costCenter:id,name'])
-            ->latest()
-            ->limit(5)
-            ->get(['id', 'po_number', 'status', 'grand_total', 'vendor_id', 'cost_center_id', 'created_at']);
+        // ── PO value: same definition as the executive dashboard's Total Value Managed ──
+        $issuedPos = PurchaseOrder::where('tenant_id', $tenantId)->whereNotIn('status', ['draft', 'cancelled']);
+        $issuedInPeriod = $applyFilter(clone $issuedPos, 'created_at');
 
-        // ── Recent PRs ─────────────────────────────────────────────
-        $recentPrs = (clone $prQuery)
-            ->with(['costCenter:id,name'])
-            ->latest()
-            ->limit(10)
-            ->get(['id', 'pr_number', 'title', 'status', 'estimated_amount', 'cost_center_id', 'created_at']);
+        // Compare with the same point in the last period: a part-finished month against a whole one would always look down.
+        $previousRange = match ($period) {
+            'today'      => [now()->subDay()->startOfDay(), now()->subDay()],
+            'this_week'  => [now()->subWeek()->startOfWeek(), now()->subWeek()],
+            'this_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()],
+            'this_year'  => [now()->subYear()->startOfYear(), now()->subYear()],
+            default      => null,
+        };
+
+        $issuedByMonth = (clone $issuedPos)
+            ->where('created_at', '>=', now()->startOfMonth()->subMonths(5))
+            ->get(['grand_total', 'created_at'])
+            ->groupBy(fn (PurchaseOrder $po) => $po->created_at->format('Y-m'));
+
+        $spend = [
+            'value'          => (float) (clone $issuedInPeriod)->sum('grand_total'),
+            'count'          => (clone $issuedInPeriod)->count(),
+            'previous_value' => $previousRange ? (float) (clone $issuedPos)->whereBetween('created_at', $previousRange)->sum('grand_total') : null,
+            'trend'          => collect(range(5, 0))->map(function (int $monthsAgo) use ($issuedByMonth) {
+                $month = now()->startOfMonth()->subMonths($monthsAgo)->format('Y-m');
+                return ['month' => $month, 'value' => (float) ($issuedByMonth->get($month)?->sum('grand_total') ?? 0)];
+            })->all(),
+        ];
+
+        // ── Work waiting right now, so the period filter doesn't apply ──
+        $livePos = PurchaseOrder::where('tenant_id', $tenantId);
+        $livePrs = PurchaseRequisition::where('tenant_id', $tenantId);
+        $attention = [
+            'pos_returned'              => (clone $livePos)->where('status', 'returned')->count(),
+            'pos_ready_to_release'      => (clone $livePos)->where('status', 'approved')->count(),
+            'deliveries_delayed'        => (clone $livePos)->whereIn('status', ['released', 'partially_delivered'])
+                ->whereRaw('COALESCE(released_at, created_at) < ?', [now()->subDays(7)])
+                ->count(),
+            'prs_needing_clarification' => (clone $livePrs)->where('status', 'needs_clarification')->count(),
+            'prs_ageing'                => (clone $livePrs)
+                ->whereNotIn('status', ['draft', 'needs_clarification', 'converted', 'rejected', 'short_closed'])
+                ->where('created_at', '<', now()->subDays(7))
+                ->count(),
+        ];
 
         // ── Budget summary ─────────────────────────────────────────
         $costCenters   = CostCenter::where('tenant_id', $tenantId)->where('is_active', true)->get();
@@ -245,7 +275,8 @@ class DashboardController extends Controller
         $pendingPrs = PurchaseRequisition::where('tenant_id', $tenantId)
             ->whereNotIn('status', ['converted', 'rejected', 'short_closed'])
             ->with(['requestedBy:id,name', 'buyer:id,name', 'costCenter:id,name'])
-            ->latest()
+            ->orderByRaw("status = 'draft'") // submitted work first: nobody is waiting on a draft
+            ->oldest()
             ->limit(20)
             ->get()
             ->map(function ($pr) {
@@ -266,7 +297,7 @@ class DashboardController extends Controller
         $pendingDeliveryPos = PurchaseOrder::where('tenant_id', $tenantId)
             ->whereIn('status', ['released', 'partially_delivered'])
             ->with(['creator:id,name', 'vendor:id,name', 'costCenter:id,name'])
-            ->latest()
+            ->orderByRaw('COALESCE(released_at, created_at)')
             ->limit(20)
             ->get()
             ->map(function ($po) {
@@ -286,61 +317,61 @@ class DashboardController extends Controller
                 ];
             });
 
-        // ── Overall Average TAT Summary (Gross Business Calendar Days) ──────
-        // ── Overall Average TAT Summary ──────────────────────────────────────────
-        $allTats = TatRecord::whereHas('po', fn($q) => $q->where('tenant_id', $tenantId))->get();
-        $allPosForTat = PurchaseOrder::where('tenant_id', $tenantId)->with('pr:id,created_at,submitted_at')->get();
+        // ── Average TAT for documents created in the period; empty, not zero, when nothing was measured ──
+        $days = fn (?float $average) => $average === null ? null : round($average, 1);
+
+        $allTats = TatRecord::whereHas('po', fn($q) => $applyFilter($q->where('tenant_id', $tenantId), 'created_at'))->get();
+        $allPosForTat = (clone $poQuery)->with('pr:id,created_at,submitted_at')->get();
 
         // 1. PO Approval TAT: PO creation to Approval
-        $avgApprovalDays = round($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
-            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24) 
-            ?? ($allPosForTat->filter(fn($p) => $p->created_at && $p->approved_at)->avg(fn($p) => $p->created_at->diffInHours($p->approved_at) / 24) ?? 0), 1);
+        $avgApprovalDays = $days($allTats->filter(fn($t) => $t->po_created_at && $t->po_approved_at)
+            ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_approved_at) / 24)
+            ?? $allPosForTat->filter(fn($p) => $p->created_at && $p->approved_at)->avg(fn($p) => $p->created_at->diffInHours($p->approved_at) / 24));
 
         // 2. Vendor Release TAT: Approved to Released
-        $avgReleaseDays = round($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
+        $avgReleaseDays = $days($allTats->filter(fn($t) => $t->po_approved_at && $t->po_released_at)
             ->avg(fn($t) => $t->po_approved_at->diffInHours($t->po_released_at) / 24)
-            ?? ($allPosForTat->filter(fn($p) => $p->approved_at && $p->released_at)->avg(fn($p) => $p->approved_at->diffInHours($p->released_at) / 24) ?? 0), 1);
+            ?? $allPosForTat->filter(fn($p) => $p->approved_at && $p->released_at)->avg(fn($p) => $p->approved_at->diffInHours($p->released_at) / 24));
 
         // 3. Delivery TAT: Approved PO to Delivery date
-        $avgDeliveryDays = round($allTats->filter(fn($t) => ($t->po_approved_at ?? $t->po_released_at) && ($t->po_delivered_at ?? $t->grn_received_at))
+        $avgDeliveryDays = $days($allTats->filter(fn($t) => ($t->po_approved_at ?? $t->po_released_at) && ($t->po_delivered_at ?? $t->grn_received_at))
             ->avg(fn($t) => ($t->po_approved_at ?? $t->po_released_at)->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24)
-            ?? ($allPosForTat->filter(fn($p) => ($p->approved_at ?? $p->released_at) && $p->delivered_at)->avg(fn($p) => ($p->approved_at ?? $p->released_at)->diffInHours($p->delivered_at) / 24) ?? 0), 1);
+            ?? $allPosForTat->filter(fn($p) => ($p->approved_at ?? $p->released_at) && $p->delivered_at)->avg(fn($p) => ($p->approved_at ?? $p->released_at)->diffInHours($p->delivered_at) / 24));
 
         // 4. Total PR TAT: Approved PR to PO creation TAT (Gross)
-        $prApprovedTats = PurchaseRequisition::where('tenant_id', $tenantId)
+        $prApprovedTats = (clone $prQuery)
             ->where(function($q) {
                 $q->whereNotNull('converted_at')
                   ->orWhere('status', 'converted');
             })
             ->get(['created_at', 'submitted_at', 'converted_at', 'updated_at', 'total_clarification_duration_seconds']);
 
-        $avgPrTatDays = round($prApprovedTats->avg(function($p) {
+        $avgPrTatDays = $days($prApprovedTats->avg(function($p) {
             $start = $p->submitted_at ?? $p->created_at;
             $end = $p->converted_at ?? $p->updated_at;
             return ($start && $end) ? $start->diffInHours($end) / 24 : null;
-        }) ?? 0, 1);
+        }));
 
         // 5. PR TAT (Net): Approved PR to PO creation, after reducing clarification period
-        $avgPrTatNetDays = round($prApprovedTats->avg(function($p) {
+        $avgPrTatNetDays = $days($prApprovedTats->avg(function($p) {
             $start = $p->submitted_at ?? $p->created_at;
             $end = $p->converted_at ?? $p->updated_at;
             if (!$start || !$end) return null;
             $gross = $start->diffInHours($end) / 24;
             $clarificationDays = ($p->total_clarification_duration_seconds ?? 0) / 86400;
             return max(0, $gross - $clarificationDays);
-        }) ?? 0, 1);
+        }));
 
-        // 6. Total Fulfilment TAT: Approved PR to Delivery date
+        // 6. Total Fulfilment TAT: Approved PR to Delivery date. Only delivered orders count: a release is not a delivery.
         $deliveredPosWithPr = $allPosForTat->filter(fn($p) => $p->delivered_at);
-        $avgTotalFulfilmentDays = round(
+        $avgTotalFulfilmentDays = $days(
             $deliveredPosWithPr->isNotEmpty()
                 ? $deliveredPosWithPr->avg(function($po) {
                     $prStart = $po->pr?->submitted_at ?? $po->pr?->created_at ?? $po->created_at;
                     return $prStart && $po->delivered_at ? $prStart->diffInHours($po->delivered_at) / 24 : null;
                 })
-                : ($allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && ($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at))
-                    ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_delivered_at ?? $t->po_released_at ?? $t->po_approved_at) / 24) ?? 0),
-            1
+                : $allTats->filter(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at) && ($t->po_delivered_at ?? $t->grn_received_at))
+                    ->avg(fn($t) => ($t->pr_submitted_at ?? $t->po_created_at)->diffInHours($t->po_delivered_at ?? $t->grn_received_at) / 24)
         );
 
         return response()->json([
@@ -357,13 +388,13 @@ class DashboardController extends Controller
                 'avg_release_days'         => $avgReleaseDays,
                 'avg_delivery_days'        => $avgDeliveryDays,
             ],
+            'spend'                 => $spend,
+            'attention'             => $attention,
             'po_counts'             => $posByStatus,
             'pending_approvals'     => $pendingApprovals,
-            'recent_pos'            => $recentPos,
             'budget_summary'        => $budgetSummary,
             'po_kpi'                => $poKpi,
             'pr_counts'             => $prsByStatus,
-            'recent_prs'            => $recentPrs,
             'pr_kpi'                => $prKpi,
             'pending_pr_tracking'       => $pendingPrs,
             'po_delivery_tracking'      => $pendingDeliveryPos,

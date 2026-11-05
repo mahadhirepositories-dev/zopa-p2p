@@ -404,6 +404,23 @@ export const HELP_ARTICLES: HelpArticle[] = [
 
   // ── Dashboards & Reports ──────────────────────────────────────────────────
   {
+    id: 'main-dashboard',
+    title: 'Reading your Dashboard',
+    category: 'Dashboards & Reports',
+    icon: 'dashboard',
+    summary: 'What needs attention now, PO value, turnaround time, budget and the pipeline.',
+    keywords: ['dashboard', 'kpi', 'needs attention', 'po value', 'turnaround', 'tat', 'budget', 'pipeline'],
+    body: `<p>The Dashboard opens on login and shows only the parts your role has permission to view.</p>
+      <ul>
+        <li><strong>Needs attention:</strong> work waiting right now, such as approvals assigned to you, delayed deliveries and budgets above 90%. Only items with something waiting appear, and the period filter doesn't change them. Click one to go to the work.</li>
+        <li><strong>PO value:</strong> POs raised in the selected period, leaving out drafts and cancelled POs. It matches <em>Total Value Managed</em> on the Executive Dashboard. The bars always show the last 6 months.</li>
+        <li><strong>Turnaround time:</strong> average days per stage for documents created in the period, with the slowest stage tagged. A stage shows <em>No data</em> until something has been measured.</li>
+        <li><strong>Budget used:</strong> the share of budget committed this fiscal year, then the four most-used cost centers.</li>
+        <li><strong>Pipeline:</strong> how many PRs and POs sit at each stage. Click a stage to open that filtered list.</li>
+        <li><strong>Tables:</strong> recent POs and PRs with their TAT, plus open requisitions and POs awaiting delivery, longest waiting first.</li>
+      </ul>`,
+  },
+  {
     id: 'dashboard',
     title: 'Executive Summary Dashboard & Organization Data Privacy',
     category: 'Dashboards & Reports',

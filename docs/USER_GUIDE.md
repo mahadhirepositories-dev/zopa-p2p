@@ -113,19 +113,33 @@ top of the sidebar.
 ## 5. Dashboards & KPIs
 
 ### 5a. Client / Organization Dashboard *(all transactional users)*
-Opens on login. Shows your organization's procurement health. It refreshes automatically
-when you switch organization.
+Opens on login. Shows what needs doing now and how procurement is performing in your
+organization. It refreshes automatically when you switch organization. You only see the parts
+your role has permission to view.
 
-**Top stat cards (KPIs):**
-| KPI | Meaning |
+**Needs attention:** work waiting right now. Only items with something waiting appear, and the
+period filter doesn't change them.
+| Item | Meaning |
 |---|---|
-| **Total POs** | All purchase orders in your organization |
-| **Pending Approvals** | Documents waiting for **you** to approve (click → goes to Approvals) |
-| **Approved** | Count of approved POs |
-| **Released / Delivered / Invoiced** | POs at each later stage of the lifecycle |
-| **Total PO Value** | Combined ₹ value of purchase orders |
+| **Waiting on your approval** | POs, PRs and invoices assigned to **you** (goes to Approvals) |
+| **Delivery delayed** | POs released over 7 days ago and not yet delivered |
+| **Above 90% of budget** | Cost centers close to or over budget |
+| **Returned for changes** | POs an approver sent back |
+| **Clarification requested** | PRs waiting on an answer |
+| **Open over 7 days** | Submitted PRs not yet converted to a PO |
+| **Approved, not released** | POs ready to send to the vendor |
 
-**Budget summary (per Cost Center):**
+**PO value:** combined ₹ value of POs raised in the selected period, leaving out drafts and
+cancelled POs. It matches *Total Value Managed* on the Executive Dashboard. For Today, This Week,
+This Month and This Year it also shows the change against the same point in the previous period.
+The bars always show the last 6 months.
+
+**Turnaround time:** average days per stage for documents created in the period, with the slowest
+stage tagged. Total fulfilment counts delivered orders only. A stage shows **No data** until
+something has been measured.
+
+**Budget used (this fiscal year):** the share of budget committed across cost centers, then the
+four most-used cost centers. A cost center with no budget shows **No budget set**.
 | Field | Meaning |
 |---|---|
 | **Annual** | The budget allocated for the cost center |
@@ -133,11 +147,12 @@ when you switch organization.
 | **Consumed** | Amount actually spent (approved/released) |
 | **Available** | What's left to spend |
 
-**Recent activity:** latest 5 Purchase Orders and latest 10 Requisitions.
+**Pipeline:** how many PRs and POs sit at each stage. Click a stage to open that filtered list.
 
-**Turnaround (TAT) tables:**
-- **PO cycle:** Days to Approve · Days to Release · Total Cycle Days (last 30 POs).
-- **PR cycle:** Days to Submit · Days in RFQ-Create · Days in RFQ-Approve · Days to Convert · Total Cycle Days (last 20 PRs).
+**Tables:**
+- **Purchase orders:** Days to Approve · Days to Release · Total Cycle Days, with line items (last 30 POs).
+- **Requisitions:** Days to Submit · Days in RFQ-Create · Days in RFQ-Approve · Total Cycle Days (last 30 PRs).
+- **Open requisitions** and **Awaiting delivery:** today's position, longest waiting first. The period filter doesn't change them.
 
 ---
 

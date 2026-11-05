@@ -251,6 +251,20 @@ import { filter } from 'rxjs/operators';
                 </button>
               </div>
             }
+            <!-- Active organization (multi-org / super admin), so it's always clear
+                 WHICH org the data you add/edit belongs to. -->
+            @if (auth.clients().length > 1) {
+              <button class="org-context" [class.org-context--internal]="auth.currentTenantIsInternal()"
+                      (click)="openOrgSwitcher()" matTooltip="Switch organization (Ctrl/⌘ + K)">
+                <mat-icon>corporate_fare</mat-icon>
+                <span class="ctx-text"><span class="ctx-lead">Working in </span><strong>{{ auth.currentTenantName() }}</strong></span>
+                <span class="ctx-chip" [class.ctx-chip--internal]="auth.currentTenantIsInternal()">
+                  {{ auth.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client Organization' }}
+                </span>
+                <mat-icon class="ctx-swap">swap_horiz</mat-icon>
+              </button>
+              <span class="ctx-note">Anything you add here belongs to this organization.</span>
+            }
             <div class="topbar-spacer"></div>
             <div class="topbar-actions">
               <a mat-icon-button matTooltip="Help & User Manual" class="topbar-btn" routerLink="/help">
@@ -262,25 +276,6 @@ import { filter } from 'rxjs/operators';
               <a class="topbar-avatar" (click)="router.navigate(['/profile'])" matTooltip="My Profile">{{ auth.user()?.name?.[0]?.toUpperCase() }}</a>
             </div>
           </header>
-
-          <!-- Active-organization context bar (multi-org / super admin) so it's
-               always clear WHICH org the data you add/edit belongs to. -->
-          @if (auth.clients().length > 1) {
-            <div class="org-context-bar" [class.org-context-bar--internal]="auth.currentTenantIsInternal()">
-              <mat-icon>corporate_fare</mat-icon>
-              <span class="ctx-text">Working in <strong>{{ auth.currentTenantName() }}</strong></span>
-              <span class="ctx-chip" [class.ctx-chip--internal]="auth.currentTenantIsInternal()">
-                {{ auth.currentTenantIsInternal() ? 'ZOPA Internal' : 'Client Organization' }}
-              </span>
-              <span class="ctx-note">Anything you add here belongs to this organization.</span>
-              <button mat-stroked-button class="switch-org-btn" (click)="openOrgSwitcher()"
-                      matTooltip="Switch organization (Ctrl/⌘ + K)"
-                      style="margin-left:auto;height:28px;line-height:26px;font-size:12px;padding:0 12px;border-radius:6px;background:white;color:var(--text-1);font-weight:600;display:inline-flex;align-items:center;gap:4px;border:1px solid #cbd5e1;cursor:pointer;">
-                <mat-icon style="font-size:16px;width:16px;height:16px;color:var(--brand);">swap_horiz</mat-icon>
-                Switch Org
-              </button>
-            </div>
-          }
 
           <main class="page-content" [@routePage]="routeUrl()">
             <router-outlet />
@@ -362,19 +357,24 @@ import { filter } from 'rxjs/operators';
     .tenant-type--internal { color: #6d28d9; }
     .tenant-caret { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); flex-shrink: 0; }
 
-    /* Active-org context bar */
-    .org-context-bar {
-      display: flex; align-items: center; gap: 10px; padding: 8px 22px;
-      background: #fff7ed; border-bottom: 1px solid #fed7aa; color: #9a3412; font-size: 13px;
+    /* Active organization, in the top bar */
+    .org-context {
+      display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 10px; font: inherit; font-size: 13px;
+      background: #fff7ed; border: 1px solid #fed7aa; border-radius: 10px; color: #9a3412; cursor: pointer;
+      transition: background .12s;
     }
-    .org-context-bar--internal { background: #f5f3ff; border-bottom-color: #ddd6fe; color: #5b21b6; }
-    .org-context-bar mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
-    .org-context-bar .ctx-text strong { font-weight: 700; }
-    .ctx-chip { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
-      background: #fdba74; color: #7c2d12; padding: 2px 9px; border-radius: 999px; }
+    .org-context:hover { background: #ffedd5; }
+    .org-context--internal { background: #f5f3ff; border-color: #ddd6fe; color: #5b21b6; }
+    .org-context--internal:hover { background: #ede9fe; }
+    .org-context mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
+    .ctx-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ctx-text strong { font-weight: 700; }
+    .ctx-chip { flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+      background: #fdba74; color: #7c2d12; padding: 2px 8px; border-radius: 999px; }
     .ctx-chip--internal { background: #c4b5fd; color: #4c1d95; }
-    .ctx-note { color: inherit; opacity: .72; font-size: 12px; margin-left: auto; }
-    @media (max-width: 760px) { .org-context-bar .ctx-note { display: none; } }
+    .ctx-note { font-size: 12px; color: var(--text-2); white-space: nowrap; }
+    @media (max-width: 1200px) { .ctx-note { display: none; } }
+    @media (max-width: 600px) { .ctx-lead, .ctx-chip { display: none; } }
     .org-menu-head { padding: 8px 16px 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-3); }
     ::ng-deep .org-menu .mat-mdc-menu-item { min-height: 52px; }
     .org-mini-avatar { width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0; background: var(--brand-light, #fff1e6); color: var(--brand, #f97316); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; margin-right: 10px; }
@@ -494,7 +494,6 @@ import { filter } from 'rxjs/operators';
       align-items: center;
       padding: 0 20px;
       gap: 12px;
-      flex-wrap: wrap;
     }
 
     /* Impersonation banner */
@@ -524,7 +523,7 @@ import { filter } from 'rxjs/operators';
     }
     .exit-btn mat-icon { font-size: 14px !important; width: 14px !important; height: 14px !important; }
     .topbar-spacer { flex: 1; }
-    .topbar-actions { display: flex; align-items: center; gap: 4px; }
+    .topbar-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .topbar-btn mat-icon { color: var(--text-2); }
     .topbar-avatar {
       width: 30px;
@@ -554,8 +553,8 @@ import { filter } from 'rxjs/operators';
 
     /* Menu toggle button on topbar (mobile-only) */
     .menu-toggle-btn {
-      display: none;
-      margin-right: 8px;
+      display: none !important; /* the global icon-button rule forces inline-flex */
+      flex-shrink: 0;
     }
 
     /* Backdrop for mobile menu overlay */
@@ -591,11 +590,11 @@ import { filter } from 'rxjs/operators';
         transform: translateX(-100%);
         transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         z-index: 100 !important;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
       }
 
       .sidebar--open {
         transform: translateX(0) !important;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
       }
 
       .topbar {
