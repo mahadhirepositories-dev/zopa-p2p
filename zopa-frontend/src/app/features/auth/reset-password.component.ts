@@ -91,15 +91,15 @@ import { AuthService } from '../../core/auth/auth.service';
     }
     .auth-card {
       width: 100%; max-width: 410px; background: #fff; padding: 38px 34px;
-      border-radius: 16px; box-shadow: 0 10px 40px rgba(15,23,42,.08); border: 1px solid #f1f5f9;
+      border-radius: 16px; box-shadow: 0 10px 40px rgba(15,23,42,.08); border: 1px solid #f3f2ed;
     }
-    .logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 900; color: #0f172a; margin-bottom: 26px; }
+    .logo { display: flex; align-items: center; gap: 10px; font-size: 22px; font-weight: 900; color: var(--text-1); margin-bottom: 26px; }
     .head { margin-bottom: 20px; }
-    .head h2 { font-size: 23px; font-weight: 800; color: #0f172a; margin: 0 0 6px; letter-spacing: -.4px; }
-    .head p { font-size: 14px; color: #94a3b8; margin: 0; line-height: 1.5; }
+    .head h2 { font-size: 23px; font-weight: 800; color: var(--text-1); margin: 0 0 6px; letter-spacing: -.4px; }
+    .head p { font-size: 14px; color: var(--text-3); margin: 0; line-height: 1.5; }
     .form { display: flex; flex-direction: column; gap: 6px; }
     .full-width { width: 100%; }
-    .form mat-icon[matSuffix] { color: #94a3b8; font-size: 19px; }
+    .form mat-icon[matSuffix] { color: var(--text-3); font-size: 19px; }
     .error-banner {
       display: flex; align-items: center; gap: 8px;
       background: #fff1f2; border: 1px solid #fecdd3; color: #e11d48;
@@ -118,11 +118,11 @@ import { AuthService } from '../../core/auth/auth.service';
       display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
     }
     .success-icon mat-icon { color: #16a34a; font-size: 32px; width: 32px; height: 32px; }
-    .success h2 { font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 8px; }
-    .success p { font-size: 14px; color: #475569; margin: 0; line-height: 1.5; }
+    .success h2 { font-size: 22px; font-weight: 800; color: var(--text-1); margin: 0 0 8px; }
+    .success p { font-size: 14px; color: var(--text-2); margin: 0; line-height: 1.5; }
     .back-link {
       display: flex; align-items: center; justify-content: center; gap: 6px;
-      margin-top: 24px; font-size: 13.5px; color: #64748b; text-decoration: none; font-weight: 600;
+      margin-top: 24px; font-size: 13.5px; color: var(--text-3); text-decoration: none; font-weight: 600;
     }
     .back-link:hover { color: var(--brand-text); }
     .back-link mat-icon { font-size: 17px; width: 17px; height: 17px; }

@@ -150,11 +150,11 @@ import { NotificationService } from '../../core/services/notification.service';
       padding:20px 24px 16px;box-shadow:0 2px 10px rgba(0,0,0,.05);
     }
     .section-label { font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-3);margin-bottom:14px; }
-    .fields-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .fields-grid { display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));gap:16px; }
     .fields-grid mat-form-field { width:100%; }
-    .totals-row { display:flex;gap:24px;align-items:center;background:#f8faff;border-radius:8px;padding:12px 16px;flex-wrap:wrap; }
+    .totals-row { display:flex;gap:24px;align-items:center;background:#faf9f6;border-radius:8px;padding:12px 16px;flex-wrap:wrap; }
     .total-item { display:flex;flex-direction:column;gap:2px; }
-    .total-label { font-size:10px;text-transform:uppercase;color:var(--text-3); }
+    .total-label { font-size: 11px;text-transform:uppercase;color:var(--text-3); }
     .total-item span:last-child { font-size:14px;font-weight:600;color:var(--text-1); }
     .total-item.grand span:last-child { font-size:18px;color: var(--brand-text); }
   `],

@@ -91,7 +91,7 @@ type ConfigType = 'po' | 'invoice' | 'pr';
               </div>
             </div>
             <div style="margin-top:16px;">
-              <div style="font-size:12px;color:#888;margin-bottom:4px;">
+              <div style="font-size:12px;color: var(--text-3);margin-bottom:4px;">
                 Utilisation: {{ utilisation() | number:'1.1-1' }}%
               </div>
               <mat-progress-bar mode="determinate" [value]="utilisation()"
@@ -103,7 +103,7 @@ type ConfigType = 'po' | 'invoice' | 'pr';
               <mat-divider style="margin:16px 0;" />
               <form [formGroup]="adjustForm" (ngSubmit)="submitAdjustment()" class="adjust-form">
                 <div style="font-size:13px;font-weight:600;color:var(--text-1);margin-bottom:12px;">Adjust Budget</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 140px), 1fr));gap:12px;">
                   <mat-form-field appearance="outline">
                     <mat-label>Action</mat-label>
                     <mat-select formControlName="action">
@@ -248,7 +248,7 @@ type ConfigType = 'po' | 'invoice' | 'pr';
                   @for (u of users(); track u.id) {
                     <mat-option [value]="u.id">
                       {{ u.name }}
-                      <span style="font-size:11px;color:#94a3b8;margin-left:6px;">
+                      <span style="font-size:11px;color: var(--text-3);margin-left:6px;">
                         ({{ u.tenant_name ?? orgLabelFallback(u.role) }})
                       </span>
                     </mat-option>
@@ -321,16 +321,16 @@ type ConfigType = 'po' | 'invoice' | 'pr';
     </div>
   `,
   styles: [`
-    .budget-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:16px; }
+    .budget-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:16px; }
     .budget-stat { text-align:center; }
-    .stat-label { font-size:11px;color:#888;text-transform:uppercase;display:block; }
+    .stat-label { font-size:11px;color: var(--text-3);text-transform:uppercase;display:block; }
     .stat-value { font-size:20px;font-weight:700;display:block; }
     .stat-value.warn { color:#e65100; }
     .stat-value.danger { color:#c62828; }
     .stat-value.success { color:#2e7d32; }
-    .adjust-form { background:#f8faff;padding:16px;border-radius:10px;border:1px solid #dbeafe;display:flex;flex-direction:column;gap:8px; }
+    .adjust-form { background:#faf9f6;padding:16px;border-radius:10px;border:1px solid #dbeafe;display:flex;flex-direction:column;gap:8px; }
     .ledger-table { font-size:12px; }
-    .ledger-action { display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700; }
+    .ledger-action { display:inline-block;padding:2px 8px;border-radius:99px;font-size: 11px;font-weight:700; }
     .ledger-adjust  { background:#ecfdf5;color:#065f46; }
     .ledger-freeze  { background:#fff7ed;color:#c2410c; }
     .ledger-consume { background:#fef2f2;color:#b91c1c; }
@@ -342,17 +342,18 @@ type ConfigType = 'po' | 'invoice' | 'pr';
       padding:10px 14px;font-size:12px;margin-bottom:16px;
     }
     .governance-notice mat-icon { font-size:16px;width:16px;height:16px;flex-shrink:0;margin-top:1px; }
-    .config-form { display:flex;flex-direction:column;gap:4px;margin-bottom:16px;background:#f8faff;padding:16px;border-radius:10px;border:1px solid #dbeafe; }
+    .config-form { display:flex;flex-direction:column;gap:4px;margin-bottom:16px;background:#faf9f6;padding:16px;border-radius:10px;border:1px solid #dbeafe; }
     .cf-row { display:flex;gap:12px;align-items:flex-start; }
     .cf-actions { display:flex;gap:8px;justify-content:flex-end;padding-top:4px; }
     .full-width { width:100%; }
-    .type-tabs { display:flex;gap:4px; }
+    .type-tabs { display:flex;flex-wrap:wrap;gap:4px; }
     .type-tab { display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);font-size:12px;font-weight:500;color:var(--text-2);cursor:pointer;transition:all .15s; }
     .type-tab mat-icon { font-size:15px;width:15px;height:15px; }
     .type-tab:hover { border-color:var(--brand);color: var(--brand-text); }
     .type-tab.active { background:var(--brand);border-color:var(--brand);color: var(--brand-ink); }
     .approver-chips { display:flex;flex-wrap:wrap;gap:4px; }
-    .approver-chip { background:#f1f5f9;color:#475569;font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px; }
+    .approver-chip { background:#f3f2ed;color: var(--text-2);font-size:11px;font-weight:500;padding:2px 8px;border-radius:99px; }
+    @media (max-width: 600px) { .mat-column-narration, .mat-column-by { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class CostCenterDetailComponent implements OnInit {

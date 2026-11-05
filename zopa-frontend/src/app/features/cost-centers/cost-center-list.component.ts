@@ -146,7 +146,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     ::ng-deep .search-field .mat-mdc-form-field-subscript-wrapper { display:none; }
 
     .full-width { width:100%; }
-    .hover-row:hover { background:#fafafa; }
+    .hover-row:hover { background:#faf9f6; }
 
     .name-cell { display:flex; align-items:center; gap:10px; padding:4px 0; }
     .avatar {
@@ -160,13 +160,14 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 
     .tag {
       display:inline-block; font-size:12px; font-weight:500;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       padding:2px 8px; border-radius:5px;
     }
 
     .budget-cell { display:flex; flex-direction:column; gap:4px; }
     .budget-amount { font-size:13px; font-weight:700; color:var(--text-1); }
 
+    @media (max-width: 600px) { .mat-column-project, .mat-column-users { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class CostCenterListComponent implements OnInit {

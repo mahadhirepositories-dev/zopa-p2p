@@ -200,12 +200,12 @@ import { gstinValidator } from '../../../core/validators';
     .stat-pill.active  { background:#f0fdf4; color:#16a34a; border-color:#bbf7d0; }
     .stat-pill.inactive{ background:#fff1f2; color:#e11d48; border-color:#fecdd3; }
 
-    .hover-row:hover { background:#f8fafc; cursor:pointer; }
+    .hover-row:hover { background:#faf9f6; cursor:pointer; }
 
     .code-badge {
       display:inline-block;
       padding:3px 10px; border-radius:6px;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       font-size:11px; font-weight:700;
       font-family:monospace; letter-spacing:0.05em;
     }
@@ -260,6 +260,7 @@ import { gstinValidator } from '../../../core/validators';
       margin-top:12px;
     }
     .save-error mat-icon { font-size:16px; width:16px; height:16px; }
+    @media (max-width: 600px) { .mat-column-code, .mat-column-status { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class ClientsListComponent implements OnInit {

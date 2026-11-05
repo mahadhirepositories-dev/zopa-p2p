@@ -265,7 +265,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
                   @if (request()!.specification) {
                     <mat-divider style="margin:12px 0;" />
                     <div style="font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;margin-bottom:4px;">Specification</div>
-                    <div style="font-size:13px;color:var(--text-1);white-space:pre-wrap;background:#f8fafc;padding:10px 12px;border-radius:6px;border:1px solid #e2e8f0;">{{ request()!.specification }}</div>
+                    <div style="font-size:13px;color:var(--text-1);white-space:pre-wrap;background:#faf9f6;padding:10px 12px;border-radius:6px;border:1px solid #e8e7e2;">{{ request()!.specification }}</div>
                   }
                 }
               </mat-card-content>
@@ -284,7 +284,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
               </mat-card-header>
               <mat-card-content style="padding:0!important;">
                 @if (request()!.vendor_contacts?.length) {
-                  <table class="quotes-table">
+                  <div class="table-responsive"><table class="quotes-table">
                     <thead>
                       <tr>
                         <th>Vendor / Company</th>
@@ -317,9 +317,9 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
                           <td>
                             @if (c.quoted_price !== null && c.quoted_price !== undefined) {
                               <div style="font-size:14px;font-weight:800;color:#16a34a;">₹{{ c.quoted_price | number:'1.2-2' }}</div>
-                              @if (c.gst_rate) { <div style="font-size:10px;color:#16a34a;font-weight:600;">+{{ c.gst_rate }}% GST</div> }
+                              @if (c.gst_rate) { <div style="font-size: 11px;color:#16a34a;font-weight:600;">+{{ c.gst_rate }}% GST</div> }
                             } @else {
-                              <span style="color:#94a3b8;font-size:12px;">—</span>
+                              <span style="color: var(--text-3);font-size:12px;">—</span>
                             }
                           </td>
 
@@ -332,7 +332,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
                             @if (c.notes) {
                               <div style="font-size:11.5px;color:var(--text-2);max-width:180px;font-style:italic;">"{{ c.notes }}"</div>
                             } @else {
-                              <span style="color:#94a3b8;font-size:11px;">—</span>
+                              <span style="color: var(--text-3);font-size:11px;">—</span>
                             }
                           </td>
 
@@ -349,7 +349,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
                         </tr>
                       }
                     </tbody>
-                  </table>
+                  </table></div>
                 } @else {
                   <div style="text-align:center;padding:32px 20px;color:var(--text-3);">
                     <p style="margin:0 0 8px;font-size:13px;">No vendor quotations added yet.</p>
@@ -378,7 +378,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
       gap: 12px;
     }
     .header-left { display: flex; align-items: center; gap: 12px; }
-    .back-btn { background: #f1f5f9; }
+    .back-btn { background: #f3f2ed; }
     .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .title-row h2 { margin: 0; font-size: 20px; font-weight: 700; }
     .subtitle { margin: 3px 0 0; font-size: 13px; color: var(--text-3); }
@@ -415,30 +415,31 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     .banner-desc { font-size: 12.5px; color: #3b82f6; margin: 3px 0 10px; }
     .suggestions-row { display: flex; flex-wrap: wrap; gap: 8px; }
     .sugg-chip { background: #fff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 6px 12px; display: flex; align-items: center; gap: 12px; }
-    .sugg-info { font-size: 12px; color: #1e293b; }
-    .match-pct { background: #2563eb; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-left: 6px; }
+    .sugg-info { font-size: 12px; color: var(--text-1); }
+    .match-pct { background: #2563eb; color: #fff; font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 4px; margin-left: 6px; }
     .btn-xs-sugg { height: 26px!important; font-size: 11px!important; padding: 0 8px!important; line-height: 26px!important; }
 
-    .detail-grid { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; align-items: start; }
-    @media (max-width: 1000px) { .detail-grid { grid-template-columns: 1fr; } }
+    .detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 20px; align-items: start; }
+    .left-col, .right-col { min-width: 0; }
+    @media (max-width: 1000px) { .detail-grid { grid-template-columns: minmax(0, 1fr); } }
 
     .info-card, .items-card { border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-top: 8px; }
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 12px; padding-top: 8px; }
     .info-item { display: flex; flex-direction: column; gap: 2px; }
     .info-label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-3); letter-spacing: .05em; }
     .info-item span:last-child { font-size: 13px; color: var(--text-1); }
 
-    .spec-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 8px; }
+    .spec-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; padding-top: 8px; }
     .col-span-2 { grid-column: 1 / -1; }
 
-    .remark-bubble { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+    .remark-bubble { background: #faf9f6; border: 1px solid #e8e7e2; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
     .remark-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
     .remark-user { font-size: 12px; font-weight: 700; color: #0284c7; }
     .remark-date { font-size: 11px; color: var(--text-3); }
     .remark-text { font-size: 13px; color: var(--text-1); white-space: pre-wrap; }
 
     .quotes-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-    .quotes-table th { background: #f8fafc; color: var(--text-3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
+    .quotes-table th { background: #faf9f6; color: var(--text-3); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: left; }
     .quotes-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .action-btn-mini { width: 28px!important; height: 28px!important; line-height: 28px!important; }
     .action-btn-mini mat-icon { font-size: 16px; width: 16px; height: 16px; }

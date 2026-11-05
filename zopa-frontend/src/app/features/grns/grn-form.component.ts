@@ -329,7 +329,7 @@ interface PoItemMeta {
       letter-spacing: .07em; color: var(--text-3); margin-bottom: 14px;
     }
     .fields-row {
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 16px;
     }
     .fields-row mat-form-field { width: 100%; }
     .spinner-row { display:flex; justify-content:center; padding:32px; }
@@ -337,10 +337,10 @@ interface PoItemMeta {
     .file-upload-wrap { display: flex; flex-direction: column; gap: 8px; justify-content: center; }
     .file-upload-btn {
       display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px;
-      background: #f1f5f9; color: #334155; border-radius: 6px; border: 1px dashed #cbd5e1;
+      background: #f3f2ed; color: var(--text-2); border-radius: 6px; border: 1px dashed #d6d4cc;
       cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.2s;
     }
-    .file-upload-btn:hover { background: #e2e8f0; border-color: #94a3b8; }
+    .file-upload-btn:hover { background: #e8e7e2; border-color: #94a3b8; }
     .file-upload-btn mat-icon { font-size: 18px; width: 18px; height: 18px; }
     
     .file-list { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -367,7 +367,7 @@ interface PoItemMeta {
     .prior-grn-banner mat-icon { color: #2563eb; }
     .grn-ref-badge {
       background: #dbeafe; color: #1e40af;
-      font-size: 10px; font-weight: 700;
+      font-size: 11px; font-weight: 700;
       padding: 2px 7px; border-radius: 99px;
       cursor: default;
     }
@@ -380,12 +380,12 @@ interface PoItemMeta {
       font-size: 13px;
     }
     .grn-table thead tr {
-      background: #f8fafc;
+      background: #faf9f6;
       border-bottom: 2px solid var(--border);
     }
     .grn-table th {
       padding: 10px 14px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: .06em;
@@ -400,7 +400,7 @@ interface PoItemMeta {
       height: 12px !important;
       vertical-align: middle;
       margin-left: 3px;
-      color: #94a3b8;
+      color: var(--text-3);
       cursor: help;
     }
 
@@ -419,7 +419,7 @@ interface PoItemMeta {
     .item-meta { font-size: 11px; color: var(--text-3); margin-top: 1px; }
     .badge-full {
       display: inline-block; background: #dcfce7; color: #15803d;
-      font-size: 10px; font-weight: 700; padding: 1px 7px;
+      font-size: 11px; font-weight: 700; padding: 1px 7px;
       border-radius: 99px; margin-top: 4px;
     }
 
@@ -431,14 +431,14 @@ interface PoItemMeta {
     }
     .qty-badge.ordered   { background: #eff6ff; color: #1d4ed8; }
     .qty-badge.received  { background: #fff7ed; color: #c2410c; cursor: default; }
-    .qty-badge.received.zero { background: #f1f5f9; color: #94a3b8; }
+    .qty-badge.received.zero { background: #f3f2ed; color: var(--text-3); }
     .qty-badge.remaining { background: #f0fdf4; color: #15803d; }
     .qty-badge.remaining.zero { background: #fff1f2; color: #dc2626; }
 
     /* Per-GRN breakdown chips */
     .bd-chips { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; align-items: center; }
     .bd-chip {
-      font-size: 9px; color: #64748b; background: #f1f5f9;
+      font-size: 11px; color: var(--text-3); background: #f3f2ed;
       padding: 1px 5px; border-radius: 4px; white-space: nowrap;
     }
 
@@ -467,8 +467,8 @@ interface PoItemMeta {
     .qty-input { text-align: right; }
     .remarks-input { text-align: left; }
 
-    .input-err-msg { font-size: 10px; color: #dc2626; margin-top: 2px; }
-    .input-hint    { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+    .input-err-msg { font-size: 11px; color: #dc2626; margin-top: 2px; }
+    .input-hint    { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 
     /* Fully-received banner */
     .fully-received-banner {
@@ -482,7 +482,7 @@ interface PoItemMeta {
     /* Disabled input placeholder for fully-received rows */
     .qty-input-disabled {
       display:block; text-align:center;
-      color:#94a3b8; font-size:16px; padding:6px 0;
+      color: var(--text-3); font-size:16px; padding:6px 0;
     }
 
     /* Remove number spinners */

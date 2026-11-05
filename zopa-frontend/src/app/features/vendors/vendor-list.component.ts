@@ -205,7 +205,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
 
     .full-width { width:100%; }
     .hover-row { cursor:default; }
-    .hover-row:hover { background:#fafafa; }
+    .hover-row:hover { background:#faf9f6; }
 
     .name-cell { display:flex; align-items:center; gap:10px; padding:4px 0; }
     .avatar {
@@ -220,7 +220,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
 
     .mono-tag {
       font-family:monospace; font-size:12px; font-weight:600;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       padding:2px 8px; border-radius:5px;
     }
     .mono-tag.gstin { background:#eff6ff; color:#1d4ed8; }
@@ -238,6 +238,7 @@ import { VendorDetailDialogComponent } from './vendor-detail-dialog.component';
     .import-errors-head button { margin-left:auto; }
     .import-errors ul { margin:8px 0 0; padding-left:34px; }
     .import-errors li { font-size:12.5px; color:#7c2d12; margin:2px 0; }
+    @media (max-width: 600px) { .mat-column-pan, .mat-column-gstin, .mat-column-category, .mat-column-addresses { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class VendorListComponent implements OnInit {

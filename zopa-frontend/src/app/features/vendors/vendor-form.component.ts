@@ -369,7 +369,7 @@ const CURRENCIES = [
                       <div class="doc-file-row pending">
                         <mat-icon style="font-size:16px;color:#f59e0b;">hourglass_empty</mat-icon>
                         <span class="doc-filename">{{ pf.name }}</span>
-                        <span style="font-size:10px;color:#888;">(will upload on save)</span>
+                        <span style="font-size: 11px;color: var(--text-3);">(will upload on save)</span>
                       </div>
                     }
                   }
@@ -393,8 +393,8 @@ const CURRENCIES = [
     }
     .section-icon mat-icon { color: var(--brand-text);font-size:20px;width:20px;height:20px; }
 
-    .grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px; }
-    @media(max-width:900px) { .grid-3 { grid-template-columns:1fr 1fr; } }
+    .grid-3 { display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));gap:12px; }
+    
     .grid-3 mat-form-field { width:100%; }
     .span-3 { grid-column:1/-1; }
 
@@ -409,10 +409,10 @@ const CURRENCIES = [
 
     /* Category rows */
     .cat-row { display:flex;align-items:center;gap:12px;margin-bottom:8px; }
-    .empty-hint { font-size:13px;color:var(--text-3);text-align:center;padding:20px;background:#f8faff;border-radius:10px;border:1px dashed var(--border); }
+    .empty-hint { font-size:13px;color:var(--text-3);text-align:center;padding:20px;background:#faf9f6;border-radius:10px;border:1px dashed var(--border); }
 
     /* Documents */
-    .doc-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px; }
+    .doc-grid { display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));gap:16px; }
     @media(max-width:768px) { .doc-grid { grid-template-columns:1fr; } }
     .doc-slot {
       border:1px solid var(--border);border-radius:12px;padding:14px 16px;
@@ -421,13 +421,13 @@ const CURRENCIES = [
     .doc-slot-label { display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--text-1); }
     .doc-slot-label mat-icon { font-size:18px;width:18px;height:18px;color: var(--brand-text); }
     .doc-badge {
-      font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;
+      font-size: 11px;font-weight:700;padding:2px 7px;border-radius:99px;
       background:#fee2e2;color:#b91c1c;margin-left:auto;
     }
     .doc-badge.secondary { background:#eff6ff;color:#1d4ed8; }
     .doc-file-row {
       display:flex;align-items:center;gap:8px;
-      background:#f8faff;border-radius:8px;padding:6px 10px;
+      background:#faf9f6;border-radius:8px;padding:6px 10px;
       font-size:12px;
     }
     .doc-file-row.pending { background:#fffbeb; }

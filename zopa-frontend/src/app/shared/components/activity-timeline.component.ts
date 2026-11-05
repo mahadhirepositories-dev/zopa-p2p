@@ -88,7 +88,7 @@ interface ActivityEntry {
     .tl-by  { font-size:12px;color:var(--text-3); }
     .tl-time { font-size:11px;color:var(--text-3);margin-left:auto; }
     .tl-comment { margin-top:4px;font-size:12px;color:var(--text-2);font-style:italic;
-      background:#f8fafc;padding:6px 10px;border-radius:6px;border-left:3px solid var(--border); }
+      background:#faf9f6;padding:6px 10px;border-radius:6px;border-left:3px solid var(--border); }
   `],
 })
 export class ActivityTimelineComponent implements OnChanges {

@@ -381,13 +381,13 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: #faf9f6;
+      border: 1px solid #e8e7e2;
       border-radius: 8px;
       padding: 4px 8px;
     }
     .match-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; }
-    .match-score { font-size: 10.5px; font-weight: 700; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px; }
+    .match-score { font-size: 11px; font-weight: 700; background: #2563eb; color: #fff; padding: 1px 5px; border-radius: 4px; }
     .match-title { font-weight: 600; color: var(--text-1); }
     .match-rate { font-size: 11.5px; color: #16a34a; font-weight: 600; }
     .btn-map-action {
@@ -404,6 +404,7 @@ import { SourcingContactDialogComponent } from './sourcing-contact-dialog.compon
     .btn-table-action { height: 32px!important; font-size: 11.5px!important; padding: 0 12px!important; line-height: 32px!important; }
     .btn-table-action mat-icon { font-size: 14px; width: 14px; height: 14px; margin-right: 3px; }
 
+    @media (max-width: 600px) { .mat-column-client, .mat-column-category, .mat-column-qty, .mat-column-target_price, .mat-column-quotes, .mat-column-arrow, .mat-column-smart_match, .mat-column-description { display: none; } .table-responsive table { min-width: 0; } .po-icon { display: none; } .text-truncate { white-space: normal; } }
   `]
 })
 export class SourcingListComponent implements OnInit {

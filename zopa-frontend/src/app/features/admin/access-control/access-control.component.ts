@@ -220,13 +220,13 @@ const ACTION_COLS = [
 
     .tab-label { display: flex; align-items: center; gap: 7px; padding: 4px 2px; }
     .tab-text  { font-size: 13px; font-weight: 600; }
-    .role-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; color: white; font-size: 9px; font-weight: 800; letter-spacing: 0.03em; flex-shrink: 0; }
+    .role-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 6px; color: white; font-size: 11px; font-weight: 800; letter-spacing: 0.03em; flex-shrink: 0; }
     .dirty-dot { width: 7px; height: 7px; background: var(--brand); border-radius: 50%; flex-shrink: 0; }
 
     /* ── Tab content ─────────────────────────────────────────────────────── */
     .tab-content { padding: 20px; }
 
-    .role-info-strip { display: flex; align-items: center; justify-content: space-between; background: #f8fafc; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
+    .role-info-strip { display: flex; align-items: center; justify-content: space-between; background: #faf9f6; border: 1px solid var(--border); border-radius: 10px; padding: 14px 18px; margin-bottom: 20px; gap: 16px; flex-wrap: wrap; }
     .role-info-left { display: flex; align-items: center; gap: 12px; }
     .role-full-badge { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; color: white; font-size: 13px; font-weight: 800; flex-shrink: 0; }
     .role-full-name { font-size: 15px; font-weight: 700; color: var(--text-1); }
@@ -240,7 +240,7 @@ const ACTION_COLS = [
     /* ── Permission matrix ───────────────────────────────────────────────── */
     .matrix-card { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
 
-    .matrix-header-row { display: grid; grid-template-columns: 1fr repeat(4, 110px); align-items: center; background: #f1f5f9; padding: 10px 16px; gap: 4px; border-bottom: 2px solid var(--border); }
+    .matrix-header-row { display: grid; grid-template-columns: 1fr repeat(4, 110px); align-items: center; background: #f3f2ed; padding: 10px 16px; gap: 4px; border-bottom: 2px solid var(--border); }
     .module-col-header { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .07em; }
     .action-col-header { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .07em; }
     .action-col-header mat-icon { font-size: 16px; width: 16px; height: 16px; }
@@ -248,7 +248,7 @@ const ACTION_COLS = [
     .group-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px 6px; font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: .08em; background: #fafbfc; border-top: 1px solid var(--border); }
     .group-icon { font-size: 14px; width: 14px; height: 14px; color: var(--text-3); }
 
-    .matrix-row { display: grid; grid-template-columns: 1fr repeat(4, 110px); align-items: center; padding: 11px 16px; gap: 4px; border-top: 1px solid #f1f5f9; transition: background .12s; }
+    .matrix-row { display: grid; grid-template-columns: 1fr repeat(4, 110px); align-items: center; padding: 11px 16px; gap: 4px; border-top: 1px solid #f3f2ed; transition: background .12s; }
     .matrix-row:hover { background: #fafbff; }
     .matrix-row.protected-row { opacity: 0.85; }
 

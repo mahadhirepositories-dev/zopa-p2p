@@ -794,7 +794,7 @@ const PO_STAGES = [
     .budget-left { display: block; margin-top: 4px; font-size: 11px; color: var(--text-2); }
     mat-progress-bar {
       --mat-progress-bar-active-indicator-color: var(--brand);
-      --mat-progress-bar-track-color: #eef2f6;
+      --mat-progress-bar-track-color: #eeece6;
       --mat-progress-bar-active-indicator-height: 6px;
       --mat-progress-bar-track-height: 6px;
     }
@@ -832,12 +832,12 @@ const PO_STAGES = [
 
     .detail-row { height: 0; }
     .detail-cell { padding: 0 !important; border: none !important; }
-    .item-detail-wrap { overflow: hidden; background: #f8faff; }
+    .item-detail-wrap { overflow: hidden; background: #faf9f6; }
     .item-detail-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .item-detail-table thead tr { background: #eef2ff; }
-    .item-detail-table th { padding: 8px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #475569; border-bottom: 1px solid #dbeafe; text-align: left; white-space: nowrap; }
+    .item-detail-table th { padding: 8px 14px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--text-2); border-bottom: 1px solid #dbeafe; text-align: left; white-space: nowrap; }
     .item-detail-table th.num { text-align: right; }
-    .item-detail-table td { padding: 8px 14px; border-bottom: 1px solid #e2e8f0; color: #334155; vertical-align: middle; }
+    .item-detail-table td { padding: 8px 14px; border-bottom: 1px solid #e8e7e2; color: var(--text-2); vertical-align: middle; }
     .item-detail-table tbody tr:last-child td { border-bottom: none; }
     .overdue-row td { background: #fff7ed !important; }
     .req-ok { color: #15803d; font-weight: 600; font-size: 11px; }
@@ -849,7 +849,7 @@ const PO_STAGES = [
     .dash-empty-sm { padding: 24px 16px; }
 
     .skeleton { display: grid; gap: 16px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
-    .skel { border-radius: var(--r-lg); background: #e2e8f0; animation: skel-pulse 1.4s ease-in-out infinite; }
+    .skel { border-radius: var(--r-lg); background: #e8e7e2; animation: skel-pulse 1.4s ease-in-out infinite; }
     .skel--hero { grid-column: span 3; height: 300px; }
     .skel--side { grid-column: span 2; height: 300px; }
     .skel--half { grid-column: span 5; height: 200px; }

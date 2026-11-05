@@ -294,33 +294,34 @@ import { DatePipe, TitleCasePipe } from '@angular/common';
     </div>
   `,
   styles: [`
-    .detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .label { font-size: 11px; color: #888; text-transform: uppercase; display: block; margin-bottom: 4px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 16px; }
+    .label { font-size: 11px; color: var(--text-3); text-transform: uppercase; display: block; margin-bottom: 4px; }
     .simple-input { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 14px; box-sizing: border-box; }
     .simple-input:focus { outline: none; border-color: #1976d2; }
-    .badge-default { background: #1976d2; color: white; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
-    .contact-phone { font-size: 11px; color: #888; margin-left: 6px; }
+    .badge-default { background: #1976d2; color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; margin-left: 6px; }
+    .contact-phone { font-size: 11px; color: var(--text-3); margin-left: 6px; }
     .field-error { font-size: 11px; color: #e53e3e; margin-top: 3px; display: block; }
     .addr-form {
       background: #f8f9fa; padding: 16px; border-radius: 8px;
-      margin-bottom: 20px; border: 1px solid #e2e8f0;
+      margin-bottom: 20px; border: 1px solid #e8e7e2;
     }
-    .addr-form-title { font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 12px; }
-    .addr-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .addr-form-title { font-size: 13px; font-weight: 600; color: var(--text-2); margin-bottom: 12px; }
+    .addr-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; }
     .timeline { display: flex; flex-direction: column; gap: 16px; position: relative; padding-left: 20px; }
     .timeline::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 2px; background: var(--border); }
     .timeline-item { display: flex; gap: 12px; position: relative; }
     .timeline-badge { position: absolute; left: -20px; background: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
     .timeline-badge mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-2); }
-    .timeline-body { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0; }
+    .timeline-body { flex: 1; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #e8e7e2; }
     .timeline-header { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 6px; }
     .timeline-action { font-weight: 600; color: var(--primary); }
     .timeline-date { color: var(--text-3); font-size: 11px; margin-left: auto; }
-    .timeline-changes { margin-top: 8px; border-top: 1px dashed #cbd5e1; padding-top: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+    .timeline-changes { margin-top: 8px; border-top: 1px dashed #d6d4cc; padding-top: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
     .change-pair { display: flex; align-items: center; }
-    .change-field { font-weight: 600; color: #475569; margin-right: 6px; text-transform: capitalize; }
+    .change-field { font-weight: 600; color: var(--text-2); margin-right: 6px; text-transform: capitalize; }
     .change-old { color: #ef4444; text-decoration: line-through; }
     .change-new { color: #22c55e; font-weight: 500; }
+    @media (max-width: 600px) { .mat-column-gstin, .mat-column-contact { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class VendorDetailComponent implements OnInit {
@@ -490,7 +491,7 @@ export class VendorDetailComponent implements OnInit {
       pdfWin.document.write(
         '<html><head><title>Loading Vendor PDF…</title></head>' +
         '<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;">' +
-        '<div style="text-align:center;color:#555;">' +
+        '<div style="text-align:center;color: var(--text-2);">' +
         '<div style="font-size:32px;margin-bottom:16px;">📄</div>' +
         '<div style="font-size:18px;font-weight:600;">Generating Vendor Profile PDF…</div>' +
         '</div></body></html>'

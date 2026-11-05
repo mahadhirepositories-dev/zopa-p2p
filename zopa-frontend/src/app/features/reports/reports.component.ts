@@ -829,7 +829,7 @@ import { AuthService } from '../../core/auth/auth.service';
       background:var(--surface);color:var(--text-2);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s ease,color .15s ease;
     }
     .nav-tab-btn mat-icon { font-size:16px;width:16px;height:16px; }
-    .nav-tab-btn:hover { background:#e2e8f0; }
+    .nav-tab-btn:hover { background:#e8e7e2; }
     .nav-tab-btn.active { background:var(--select);color:#ffffff;border-color:var(--select); }
 
     /* McKinsey KPI Grid */
@@ -848,7 +848,7 @@ import { AuthService } from '../../core/auth/auth.service';
     .kpi-hint { font-size:11px;color:var(--text-2);margin-top:2px; }
 
     /* McKinsey Charts */
-    .charts-grid { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+    .charts-grid { display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));gap:14px; }
     @media (max-width:992px) { .charts-grid { grid-template-columns:1fr; } }
     .mckinsey-chart-box {
       background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;
@@ -858,7 +858,7 @@ import { AuthService } from '../../core/auth/auth.service';
     .chart-box-title mat-icon { font-size:18px;width:18px;height:18px;color:var(--text-2); }
     .chart-bar-line { display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:11.5px; }
     .bar-name { width:120px;font-weight:600;color:var(--text-1); }
-    .bar-bg { flex:1;background:#eef2f6;height:8px;border-radius:99px;overflow:hidden; }
+    .bar-bg { flex:1;background:#eeece6;height:8px;border-radius:99px;overflow:hidden; }
     .bar-progress { height:8px;border-radius:99px; }
     .bg-primary { background:#94a3b8; }
     .bg-warn { background:#f97316; }
@@ -871,21 +871,21 @@ import { AuthService } from '../../core/auth/auth.service';
     .section-card-header { display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:18px 20px 12px; }
     .section-card-header h3 { margin:0;font-size:14px;font-weight:700;color:var(--text-1); }
     .section-card-header p { margin:2px 0 0;font-size:12px;color:var(--text-2); }
-    .count-pill { background:#f1f5f9;color:var(--text-1);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700; }
+    .count-pill { background:#f3f2ed;color:var(--text-1);padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700; }
 
     /* Custom Tables */
     .custom-table { width:100%;border-collapse:collapse;font-size:12.5px; }
-    .custom-table th { background:#f8fafc;color:var(--text-3);font-weight:700;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.06em; }
+    .custom-table th { background:#faf9f6;color:var(--text-3);font-weight:700;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.06em; }
     .custom-table td { padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle; }
-        .custom-table tbody tr:hover { background:#f8faff; }
+        .custom-table tbody tr:hover { background:#faf9f6; }
 
     .table-input {
-      width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #cbd5e1;border-radius:8px;
+      width:100%;box-sizing:border-box;padding:6px 10px;border:1px solid #d6d4cc;border-radius:8px;
       font-size:12px;font-family:inherit;background:#ffffff;transition:border-color 0.15s ease;
     }
     .table-input:focus { outline:none;border-color:var(--brand);box-shadow:0 0 0 2px var(--brand-mid); }
     .status-dropdown {
-      width:100%;padding:5px 8px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;
+      width:100%;padding:5px 8px;border:1px solid #d6d4cc;border-radius:8px;font-size:12px;
       font-weight:600;font-family:inherit;background:var(--surface);color:var(--text-1);cursor:pointer;
     }
 
@@ -895,7 +895,7 @@ import { AuthService } from '../../core/auth/auth.service';
     .pill-danger { background:#fee2e2;color:#b91c1c; }
     .pill-info { background:#e0f2fe;color:#0369a1; }
 
-    .age-pill { display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#f1f5f9;color:var(--text-1); }
+    .age-pill { display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:#f3f2ed;color:var(--text-1); }
     .age-warn { background:#ffedd5;color:#c2410c; }
     .age-bad { background:#fee2e2;color:#b91c1c; }
 
@@ -924,8 +924,8 @@ import { AuthService } from '../../core/auth/auth.service';
     .modal-body { padding:20px;max-height:80vh;overflow-y:auto; }
     .modal-footer { display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--border); }
 
-    .locked-cc-box { background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:10px 14px;margin-bottom:12px; }
-    .cc-label { display:flex;align-items:center;gap:6px;font-size:11.5px;color:#475569;margin-bottom:6px; }
+    .locked-cc-box { background:#f3f2ed;border:1px solid #d6d4cc;border-radius:6px;padding:10px 14px;margin-bottom:12px; }
+    .cc-label { display:flex;align-items:center;gap:6px;font-size:11.5px;color: var(--text-2);margin-bottom:6px; }
     .cc-chips { display:flex;flex-wrap:wrap;gap:6px; }
     .cc-chip { background:var(--surface);border:1px solid var(--border);color:var(--text-1);font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px; }
 

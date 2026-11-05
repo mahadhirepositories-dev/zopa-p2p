@@ -118,7 +118,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
                   @if (!vendor()!.documents?.length) {
                     <div class="empty-docs">
-                      <mat-icon style="color:#94a3b8;">attach_file</mat-icon>
+                      <mat-icon style="color: var(--text-3);">attach_file</mat-icon>
                       <span>No registration documents attached.</span>
                     </div>
                   } @else {
@@ -160,7 +160,7 @@ import { NotificationService } from '../../core/services/notification.service';
                   <div class="sec-title">Registered Addresses ({{ vendor()!.addresses?.length ?? 0 }})</div>
                   @if (!vendor()!.addresses?.length) {
                     <div class="empty-docs">
-                      <mat-icon style="color:#94a3b8;">location_off</mat-icon>
+                      <mat-icon style="color: var(--text-3);">location_off</mat-icon>
                       <span>No addresses recorded.</span>
                     </div>
                   } @else {
@@ -176,7 +176,7 @@ import { NotificationService } from '../../core/services/notification.service';
                           <div class="addr-body">
                             {{ addr.address }}<br>
                             {{ addr.city ? addr.city + ', ' : '' }}{{ addr.state }} {{ addr.pincode }}<br>
-                            @if (addr.gstin) { <span class="mono" style="font-size:11px;color:#475569;">GSTIN: {{ addr.gstin }}</span> }
+                            @if (addr.gstin) { <span class="mono" style="font-size:11px;color: var(--text-2);">GSTIN: {{ addr.gstin }}</span> }
                           </div>
                         </div>
                       }
@@ -192,8 +192,8 @@ import { NotificationService } from '../../core/services/notification.service';
               <div class="tab-padding">
                 @if (!vendor()!.purchase_orders?.length) {
                   <div class="empty-docs" style="padding:48px 0;">
-                    <mat-icon style="font-size:36px;width:36px;height:36px;color:#cbd5e1;">receipt_long</mat-icon>
-                    <span style="font-size:14px;color:#64748b;">No Purchase Orders issued to this vendor yet.</span>
+                    <mat-icon style="font-size:36px;width:36px;height:36px;color: var(--text-3);">receipt_long</mat-icon>
+                    <span style="font-size:14px;color: var(--text-3);">No Purchase Orders issued to this vendor yet.</span>
                   </div>
                 } @else {
                   <table mat-table [dataSource]="vendor()!.purchase_orders!" class="full-width">
@@ -227,7 +227,7 @@ import { NotificationService } from '../../core/services/notification.service';
                           <span [style.color]="po.delivery_status === 'partially_delivered' ? '#d97706' : '#16a34a'" style="font-weight:600;font-size:12px;">
                             {{ po.delivery_status === 'partially_delivered' ? 'Partially Delivered' : 'Delivered' }}
                           </span>
-                        } @else { <span style="color:#94a3b8;">Pending</span> }
+                        } @else { <span style="color: var(--text-3);">Pending</span> }
                       </td>
                     </ng-container>
 
@@ -263,39 +263,39 @@ import { NotificationService } from '../../core/services/notification.service';
     .dialog-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 12px; background: #ffffff; }
     .v-title-box { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 240px; }
     .avatar { width: 44px; height: 44px; border-radius: 10px; background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .v-name { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+    .v-name { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-1); line-height: 1.2; }
     .v-sub { display: flex; align-items: center; gap: 8px; margin-top: 3px; font-size: 12px; flex-wrap: wrap; }
-    .mono-code { font-family: monospace; font-weight: 600; color: #475569; background: #f1f5f9; padding: 1px 6px; border-radius: 4px; }
-    .v-dot { color: #cbd5e1; }
+    .mono-code { font-family: monospace; font-weight: 600; color: var(--text-2); background: #f3f2ed; padding: 1px 6px; border-radius: 4px; }
+    .v-dot { color: var(--text-3); }
     .badge-active { background: #dcfce7; color: #166534; font-weight: 700; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
     .badge-inactive { background: #fef2f2; color: #991b1b; font-weight: 700; padding: 2px 8px; border-radius: 99px; font-size: 11px; }
     .dialog-header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
     
     .dialog-content { padding: 0 !important; max-height: 75vh; }
     .tab-padding { padding: 16px 20px 24px; }
-    .card-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
-    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand-text); margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+    .card-section { background: #faf9f6; border: 1px solid #e8e7e2; border-radius: 10px; padding: 14px 16px; margin-bottom: 14px; }
+    .sec-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--brand-text); margin-bottom: 12px; border-bottom: 1px solid #e8e7e2; padding-bottom: 5px; }
     
     .info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px 18px; }
-    .lbl { font-size: 10px; text-transform: uppercase; color: #64748b; display: block; margin-bottom: 3px; letter-spacing: 0.5px; }
+    .lbl { font-size: 11px; text-transform: uppercase; color: var(--text-3); display: block; margin-bottom: 3px; letter-spacing: 0.5px; }
     .mono { font-family: monospace; }
-    .count-badge { font-size: 11px; background: #e2e8f0; color: #334155; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+    .count-badge { font-size: 11px; background: #e8e7e2; color: var(--text-2); padding: 2px 8px; border-radius: 99px; font-weight: 600; }
     
-    .empty-docs { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 13px; padding: 12px 0; justify-content: center; }
+    .empty-docs { display: flex; align-items: center; gap: 8px; color: var(--text-3); font-size: 13px; padding: 12px 0; justify-content: center; }
     .doc-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-    .doc-card { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 12px; }
+    .doc-card { display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #d6d4cc; border-radius: 8px; padding: 10px 12px; }
     .doc-icon { width: 34px; height: 34px; border-radius: 6px; background: #eff6ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .doc-info { flex: 1; min-width: 0; }
-    .doc-type { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 0.5px; }
-    .doc-name { font-size: 12px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .doc-type { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #2563eb; letter-spacing: 0.5px; }
+    .doc-name { font-size: 12px; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .doc-link-btn { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; color: var(--brand-text); text-decoration: none; padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border); }
-    .doc-link-btn:hover { background: #f1f5f9; }
+    .doc-link-btn:hover { background: #f3f2ed; }
     
     .address-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-    .addr-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+    .addr-card { background: #ffffff; border: 1px solid #e8e7e2; border-radius: 8px; padding: 12px 14px; }
     .addr-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 4px; }
-    .def-badge { font-size: 9px; font-weight: 700; background: #dcfce7; color: #166534; padding: 1px 6px; border-radius: 4px; }
-    .addr-body { font-size: 12px; color: #475569; line-height: 1.45; }
+    .def-badge { font-size: 11px; font-weight: 700; background: #dcfce7; color: #166534; padding: 1px 6px; border-radius: 4px; }
+    .addr-body { font-size: 12px; color: var(--text-2); line-height: 1.45; }
     .full-width { width: 100%; }
   `],
 })
@@ -348,7 +348,7 @@ export class VendorDetailDialogComponent implements OnInit {
       pdfWin.document.write(
         '<html><head><title>Loading Vendor PDF…</title></head>' +
         '<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;">' +
-        '<div style="text-align:center;color:#555;">' +
+        '<div style="text-align:center;color: var(--text-2);">' +
         '<div style="font-size:32px;margin-bottom:16px;">📄</div>' +
         '<div style="font-size:18px;font-weight:600;">Generating Vendor Profile PDF…</div>' +
         '</div></body></html>'

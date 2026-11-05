@@ -213,7 +213,7 @@ interface StaffMember {
     .section-sub   { font-size:12px;color:var(--text-3);margin-top:2px; }
     .count-badge {
       margin-left:auto;
-      background:#f1f5f9;color:var(--text-2);
+      background:#f3f2ed;color:var(--text-2);
       font-size:12px;font-weight:600;
       padding:2px 10px;border-radius:99px;
     }
@@ -244,7 +244,7 @@ interface StaffMember {
     .role-pill {
       padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;
       white-space:nowrap;flex-shrink:0;
-      background:#f1f5f9;color:#475569;
+      background:#f3f2ed;color: var(--text-2);
     }
     .role-pill.role-client_admin        { background:#fff7ed;color:#c2410c; }
     .role-pill.role-client_buyer        { background:#eff6ff;color:#2563eb; }
@@ -262,7 +262,7 @@ interface StaffMember {
     .empty-band {
       display:flex;align-items:center;gap:8px;
       padding:16px 20px;border-radius:10px;
-      background:#f8fafc;border:1px dashed var(--border);
+      background:#faf9f6;border:1px dashed var(--border);
       font-size:13px;color:var(--text-3);margin-bottom:8px;
     }
     .empty-band mat-icon { font-size:18px;width:18px;height:18px;color:var(--border); }

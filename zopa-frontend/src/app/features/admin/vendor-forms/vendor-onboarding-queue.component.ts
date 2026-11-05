@@ -552,7 +552,7 @@ export interface OnboardingInvite {
 
     .breadcrumbs {
       font-size: 12px;
-      color: #94a3b8;
+      color: var(--text-3);
       margin-bottom: 6px;
     }
     .breadcrumbs .active {
@@ -565,7 +565,7 @@ export interface OnboardingInvite {
     .tab-bar {
       display: flex;
       gap: 12px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
       margin-bottom: 20px;
     }
 
@@ -579,12 +579,12 @@ export interface OnboardingInvite {
       border-bottom: 2px solid transparent;
       font-size: 14px;
       font-weight: 600;
-      color: #64748b;
+      color: var(--text-3);
       cursor: pointer;
       transition: all 0.15s;
     }
     .tab-btn:hover {
-      color: #0f172a;
+      color: var(--text-1);
     }
     .tab-btn--active {
       color: var(--brand-text);
@@ -616,7 +616,7 @@ export interface OnboardingInvite {
       color: #b91c1c;
       padding: 1px 6px;
       border-radius: 99px;
-      font-size: 10.5px;
+      font-size: 11px;
     }
     .filter-chip--active .chip-count {
       background: rgba(255, 255, 255, 0.2);
@@ -627,14 +627,14 @@ export interface OnboardingInvite {
       display: flex;
       align-items: center;
       background: #ffffff;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       padding: 6px 12px;
       gap: 8px;
       width: 320px;
     }
     .search-box mat-icon {
-      color: #94a3b8;
+      color: var(--text-3);
       font-size: 20px;
       width: 20px;
       height: 20px;
@@ -648,7 +648,7 @@ export interface OnboardingInvite {
 
     .table-card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 12px;
       overflow-x: auto;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -661,49 +661,49 @@ export interface OnboardingInvite {
       font-size: 13px;
     }
     .data-table th {
-      background: #f8fafc;
+      background: #faf9f6;
       padding: 12px 16px;
       font-weight: 700;
-      color: #475569;
-      border-bottom: 1px solid #e2e8f0;
+      color: var(--text-2);
+      border-bottom: 1px solid #e8e7e2;
       white-space: nowrap;
     }
     .data-table td {
       padding: 12px 16px;
-      border-bottom: 1px solid #f1f5f9;
-      color: #1e293b;
+      border-bottom: 1px solid #f3f2ed;
+      color: var(--text-1);
       vertical-align: middle;
     }
     .data-table tr:hover td {
-      background: #f8fafc;
+      background: #faf9f6;
     }
 
     .date-cell {
       display: flex;
       flex-direction: column;
     }
-    .date-main { font-weight: 600; color: #0f172a; }
-    .date-sub { font-size: 11px; color: #94a3b8; }
+    .date-main { font-weight: 600; color: var(--text-1); }
+    .date-sub { font-size: 11px; color: var(--text-3); }
 
     .vendor-cell {
       display: flex;
       flex-direction: column;
     }
-    .vendor-name { font-weight: 700; color: #0f172a; }
-    .vendor-pan { font-size: 11px; color: #64748b; font-family: monospace; }
+    .vendor-name { font-weight: 700; color: var(--text-1); }
+    .vendor-pan { font-size: 11px; color: var(--text-3); font-family: monospace; }
 
     .contact-cell {
       display: flex;
       flex-direction: column;
     }
     .contact-email { font-weight: 500; color: #2563eb; }
-    .contact-phone { font-size: 11.5px; color: #64748b; }
+    .contact-phone { font-size: 11.5px; color: var(--text-3); }
 
     .template-badge {
       font-size: 11.5px;
       font-weight: 600;
-      background: #f1f5f9;
-      color: #334155;
+      background: #f3f2ed;
+      color: var(--text-2);
       padding: 2px 8px;
       border-radius: 6px;
     }
@@ -773,7 +773,7 @@ export interface OnboardingInvite {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #cbd5e1;
+      color: var(--text-3);
     }
 
     /* Modal Styling */
@@ -804,13 +804,13 @@ export interface OnboardingInvite {
 
     .modal-header {
       padding: 18px 24px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: #0f172a; }
-    .modal-header p { margin: 4px 0 0; font-size: 12.5px; color: #64748b; }
+    .modal-header h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--text-1); }
+    .modal-header p { margin: 4px 0 0; font-size: 12.5px; color: var(--text-3); }
 
     .modal-content {
       padding: 20px 24px;
@@ -822,8 +822,8 @@ export interface OnboardingInvite {
 
     .modal-footer {
       padding: 14px 24px;
-      border-top: 1px solid #e2e8f0;
-      background: #f8fafc;
+      border-top: 1px solid #e8e7e2;
+      background: #faf9f6;
       display: flex;
       justify-content: flex-end;
       gap: 10px;
@@ -831,7 +831,7 @@ export interface OnboardingInvite {
 
     .section-box {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 10px;
       padding: 16px;
     }
@@ -843,19 +843,19 @@ export interface OnboardingInvite {
     .section-title {
       font-size: 14px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-1);
       margin: 0 0 12px;
     }
     .approval-hint {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-3);
       margin: -6px 0 14px;
       line-height: 1.4;
     }
 
     .details-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
       gap: 14px;
     }
     .detail-item.full-width {
@@ -866,7 +866,7 @@ export interface OnboardingInvite {
       display: block;
       font-size: 11.5px;
       font-weight: 600;
-      color: #64748b;
+      color: var(--text-3);
       text-transform: uppercase;
       letter-spacing: 0.03em;
       margin-bottom: 2px;
@@ -874,7 +874,7 @@ export interface OnboardingInvite {
     .detail-val {
       font-size: 13.5px;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .val-chips-wrap {
@@ -904,9 +904,9 @@ export interface OnboardingInvite {
       align-items: center;
       gap: 10px;
       padding: 10px 12px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 8px;
-      background: #f8fafc;
+      background: #faf9f6;
     }
     .att-icon-wrap mat-icon {
       font-size: 24px;
@@ -926,8 +926,8 @@ export interface OnboardingInvite {
       justify-content: space-between;
       gap: 10px;
       padding: 6px 10px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
+      background: #faf9f6;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       width: 100%;
       box-sizing: border-box;
@@ -949,7 +949,7 @@ export interface OnboardingInvite {
     .file-text {
       font-size: 12.5px;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -983,27 +983,27 @@ export interface OnboardingInvite {
       height: 14px;
     }
     .file-action-pill--dl {
-      background: #f1f5f9;
-      color: #334155;
-      border: 1px solid #cbd5e1;
+      background: #f3f2ed;
+      color: var(--text-2);
+      border: 1px solid #d6d4cc;
       padding: 4px 8px;
     }
     .file-action-pill--dl:hover {
-      background: #e2e8f0;
-      color: #0f172a;
+      background: #e8e7e2;
+      color: var(--text-1);
     }
 
     .att-name {
       font-size: 12px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-1);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
     .att-type {
-      font-size: 10.5px;
-      color: #64748b;
+      font-size: 11px;
+      color: var(--text-3);
     }
 
     .approved-banner {
@@ -1050,18 +1050,18 @@ export interface OnboardingInvite {
     .form-group label {
       font-size: 12.5px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-2);
     }
     .req { color: #dc2626; }
 
     .custom-input {
       padding: 9px 12px;
       font-size: 13px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       outline: none;
       background: #ffffff;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .custom-input:focus {
       border-color: var(--brand);
@@ -1069,7 +1069,7 @@ export interface OnboardingInvite {
 
     .dialog-hint {
       font-size: 12.5px;
-      color: #64748b;
+      color: var(--text-3);
       margin: 0 0 14px;
       line-height: 1.5;
     }

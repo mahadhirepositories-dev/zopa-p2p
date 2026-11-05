@@ -305,7 +305,7 @@ import { DatePipe } from '@angular/common';
     .tab-count { font-size:13px; color:var(--text-3); font-weight:500; }
 
     .full-width { width:100%; }
-    .hover-row:hover { background:#fafafa; }
+    .hover-row:hover { background:#faf9f6; }
     .spinner-wrap { display:flex; justify-content:center; padding:60px; }
 
     /* Entity cell */
@@ -327,10 +327,11 @@ import { DatePipe } from '@angular/common';
 
     .mono-tag {
       font-family:monospace; font-size:12px; font-weight:600;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       padding:2px 8px; border-radius:5px;
     }
 
+    @media (max-width: 600px) { .mat-column-head, .mat-column-end_date, .mat-column-gstin { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class OrgMastersComponent implements OnInit {

@@ -51,7 +51,7 @@ import { NotificationService } from '../../../core/services/notification.service
                   <img [src]="settings()!.logo_url" class="logo-preview-img" alt="Platform Logo" />
                 } @else {
                   <div class="logo-placeholder">
-                    <mat-icon style="font-size:48px;width:48px;height:48px;color:#cbd5e1;">image</mat-icon>
+                    <mat-icon style="font-size:48px;width:48px;height:48px;color: var(--text-3);">image</mat-icon>
                     <div style="font-size:13px;color:var(--text-3);margin-top:8px;">No logo uploaded yet</div>
                   </div>
                 }
@@ -170,7 +170,7 @@ import { NotificationService } from '../../../core/services/notification.service
       justify-content: center;
       align-items: center;
       min-height: 160px;
-      background: #f8fafc;
+      background: #faf9f6;
       border: 2px dashed var(--border);
       border-radius: 10px;
       margin-bottom: 20px;

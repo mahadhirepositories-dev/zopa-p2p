@@ -158,10 +158,11 @@ import { ExportService } from '../../core/services/export.service';
 
     /* Table responsive wrapper */
     .table-responsive table {
-      min-width: 1000px;
+      min-width: 760px;
     }
 
     /* Mobile header layout adjustments */
+    @media (max-width: 600px) { .mat-column-vendor, .mat-column-po, .mat-column-invoice_date, .mat-column-actions, .mat-column-arrow { display: none; } .table-responsive table { min-width: 0; } .po-icon, .pr-icon, .ref-icon { display: none; } }
   `],
 })
 export class InvoiceListComponent implements OnInit {

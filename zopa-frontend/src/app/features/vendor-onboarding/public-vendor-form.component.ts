@@ -322,16 +322,16 @@ interface PublicFormData {
   styles: [`
     .public-wrapper {
       min-height: 100vh;
-      background: #f1f5f9;
+      background: #f3f2ed;
       display: flex;
       flex-direction: column;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .public-header {
       background: #ffffff;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
       padding: 16px 24px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     }
@@ -364,11 +364,11 @@ interface PublicFormData {
     .brand-title {
       font-size: 15px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .brand-sub {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .tenant-pill {
@@ -400,7 +400,7 @@ interface PublicFormData {
 
     .card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 14px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.06);
     }
@@ -417,11 +417,11 @@ interface PublicFormData {
       margin: 0;
       font-size: 24px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .state-msg {
       font-size: 15px;
-      color: #475569;
+      color: var(--text-2);
       max-width: 560px;
       line-height: 1.6;
       margin: 0;
@@ -446,8 +446,8 @@ interface PublicFormData {
     .icon-circle--error { background: #fee2e2; color: #dc2626; }
 
     .info-tag {
-      background: #f1f5f9;
-      color: #334155;
+      background: #f3f2ed;
+      color: var(--text-2);
       font-size: 13px;
       font-weight: 600;
       padding: 6px 14px;
@@ -455,13 +455,13 @@ interface PublicFormData {
     }
     .help-foot {
       font-size: 12.5px;
-      color: #94a3b8;
+      color: var(--text-3);
       margin-top: 12px;
     }
 
     .success-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: #faf9f6;
+      border: 1px solid #e8e7e2;
       border-radius: 10px;
       padding: 16px 20px;
       width: 100%;
@@ -474,11 +474,11 @@ interface PublicFormData {
       justify-content: space-between;
       padding: 6px 0;
       font-size: 13px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f3f2ed;
     }
     .success-row:last-child { border-bottom: none; }
-    .success-row .lbl { color: #64748b; }
-    .success-row .val { font-weight: 600; color: #0f172a; }
+    .success-row .lbl { color: var(--text-3); }
+    .success-row .val { font-weight: 600; color: var(--text-1); }
 
     /* Active Form Styles */
     .form-card {
@@ -488,7 +488,7 @@ interface PublicFormData {
     .form-header {
       margin-bottom: 28px;
       padding-bottom: 22px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
     }
     .form-header-badge {
       display: inline-flex;
@@ -512,11 +512,11 @@ interface PublicFormData {
       margin: 0 0 8px;
       font-size: 24px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .form-desc {
       font-size: 14px;
-      color: #475569;
+      color: var(--text-2);
       line-height: 1.5;
       margin: 0 0 16px;
     }
@@ -553,7 +553,7 @@ interface PublicFormData {
       display: block;
       font-size: 13px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-1);
       margin-bottom: 6px;
     }
     .req { color: #dc2626; font-weight: 700; }
@@ -563,10 +563,10 @@ interface PublicFormData {
       box-sizing: border-box;
       padding: 10px 14px;
       font-size: 14px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       background: #ffffff;
-      color: #0f172a;
+      color: var(--text-1);
       outline: none;
       transition: all 0.15s;
     }
@@ -578,7 +578,7 @@ interface PublicFormData {
     .field-hint {
       display: block;
       font-size: 11.5px;
-      color: #64748b;
+      color: var(--text-3);
       margin-top: 4px;
     }
 
@@ -594,9 +594,9 @@ interface PublicFormData {
       gap: 6px;
       padding: 8px 14px;
       border-radius: 8px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       background: #ffffff;
-      color: #334155;
+      color: var(--text-2);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -629,16 +629,16 @@ interface PublicFormData {
       align-items: center;
       gap: 8px;
       font-size: 13.5px;
-      color: #334155;
+      color: var(--text-2);
       cursor: pointer;
     }
 
     /* File dropzone */
     .file-upload-zone {
       position: relative;
-      border: 2px dashed #cbd5e1;
+      border: 2px dashed #d6d4cc;
       border-radius: 10px;
-      background: #f8fafc;
+      background: #faf9f6;
       padding: 20px;
       text-align: center;
       transition: all 0.2s;
@@ -648,7 +648,7 @@ interface PublicFormData {
       background: #ffffff;
     }
     .file-upload-zone--has-file {
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       background: #ffffff;
       padding: 12px 16px;
     }
@@ -675,11 +675,11 @@ interface PublicFormData {
     .file-label-main {
       font-size: 13.5px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-1);
     }
     .file-label-sub {
       font-size: 11.5px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .file-attached-pill {
@@ -702,16 +702,16 @@ interface PublicFormData {
     .file-info-text .name {
       font-size: 13px;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .file-info-text .size {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
     }
     .remove-file-btn {
       background: none;
       border: none;
-      color: #94a3b8;
+      color: var(--text-3);
       cursor: pointer;
       padding: 4px;
       display: flex;
@@ -721,8 +721,8 @@ interface PublicFormData {
     }
 
     .declaration-box {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: #faf9f6;
+      border: 1px solid #e8e7e2;
       border-radius: 8px;
       padding: 14px 18px;
       margin-bottom: 24px;
@@ -732,7 +732,7 @@ interface PublicFormData {
       align-items: flex-start;
       gap: 10px;
       font-size: 13px;
-      color: #334155;
+      color: var(--text-2);
       line-height: 1.5;
       cursor: pointer;
     }
@@ -783,9 +783,9 @@ interface PublicFormData {
     .public-footer {
       padding: 24px 16px;
       text-align: center;
-      color: #94a3b8;
+      color: var(--text-3);
       font-size: 12px;
-      border-top: 1px solid #e2e8f0;
+      border-top: 1px solid #e8e7e2;
       background: #ffffff;
     }
   `]

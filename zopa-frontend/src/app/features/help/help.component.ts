@@ -127,7 +127,7 @@ import {
     .cap-icon { color: var(--brand-text); flex-shrink: 0; }
     .cap-label { font-size: 13px; font-weight: 600; color: var(--text-1); }
     .cap-actions { display: flex; gap: 4px; margin-top: 3px; flex-wrap: wrap; }
-    .cap-tag { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+    .cap-tag { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
     .cap-tag.view { background: #eff6ff; color: #2563eb; }
     .cap-tag.create { background: #dcfce7; color: #16a34a; }
     .cap-tag.edit { background: #fef9c3; color: #a16207; }
@@ -147,7 +147,7 @@ import {
     .cat-block { margin-bottom: 22px; }
     .cat-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
     .cat-head mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--brand-text); }
-    .cat-count { background: #f1f5f9; color: var(--text-3); font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
+    .cat-count { background: #f3f2ed; color: var(--text-3); font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 99px; }
 
     .acc { display: block; }
     .art { border-radius: 10px !important; margin-bottom: 8px !important; border: 1px solid var(--border); box-shadow: none !important; }
@@ -160,7 +160,7 @@ import {
     .art-body p { margin: 0 0 10px; }
     .art-body ol, .art-body ul { margin: 0 0 10px; padding-left: 20px; }
     .art-body li { margin-bottom: 5px; }
-    .art-body code { background: #f1f5f9; padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #be123c; }
+    .art-body code { background: #f3f2ed; padding: 1px 6px; border-radius: 4px; font-size: 12px; color: #be123c; }
     .art-body strong { color: var(--text-1); }
 
     .empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 60px 20px; color: var(--text-3); text-align: center; }

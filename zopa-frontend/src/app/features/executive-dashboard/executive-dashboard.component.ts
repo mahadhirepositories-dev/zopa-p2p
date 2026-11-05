@@ -329,9 +329,10 @@ const PERIODS = [
     th.num, td.num { text-align: right; }
     th.center, td.center { text-align: center; }
     .plain-row, .plain-row:hover .mat-mdc-cell { cursor: default !important; }
-    .cat-table { min-width: 760px; }
-    .count-badge { background: #f1f5f9; color: var(--text-1); padding: 2px 8px; border-radius: 99px; font-weight: 700; font-size: 12px; }
-    .impact-chip { padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #475569; white-space: nowrap; }
+    .cat-table { min-width: 700px; }
+    @media (max-width: 600px) { .cat-table { min-width: 0; } .mat-column-share_pct, .mat-column-estimated_budget, .mat-column-savings { display: none; } }
+    .count-badge { background: #f3f2ed; color: var(--text-1); padding: 2px 8px; border-radius: 99px; font-weight: 700; font-size: 12px; }
+    .impact-chip { padding: 3px 8px; border-radius: 99px; font-size: 11px; font-weight: 700; background: #f3f2ed; color: var(--text-2); white-space: nowrap; }
     .impact-high { background: #fee2e2; color: #991b1b; }
     .impact-med { background: #ffedd5; color: #c2410c; }
   `],

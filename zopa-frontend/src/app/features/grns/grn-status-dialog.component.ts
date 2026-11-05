@@ -62,41 +62,41 @@ import { NotificationService } from '../../core/services/notification.service';
 
         <!-- Line Items Quantities Section -->
         <div style="margin-bottom:16px;">
-          <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:8px;display:flex;align-items:center;gap:6px;">
+          <div style="font-size:13px;font-weight:700;color: var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px;">
             <mat-icon style="font-size:16px;width:16px;height:16px;color: var(--brand-text);">inventory_2</mat-icon>
             Item Quantities Delivered &amp; Accepted
           </div>
-          <div style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">
+          <div style="border:1px solid #e8e7e2;border-radius:8px;overflow:hidden;">
             @for (item of items; track item.id; let i = $index) {
-              <div style="padding:10px 12px;border-bottom:1px solid #f1f5f9;background:#fafafa;">
-                <div style="font-weight:600;font-size:12.5px;color:#1e293b;margin-bottom:6px;">
+              <div style="padding:10px 12px;border-bottom:1px solid #f3f2ed;background:#faf9f6;">
+                <div style="font-weight:600;font-size:12.5px;color: var(--text-1);margin-bottom:6px;">
                   {{ i + 1 }}. {{ item.po_item?.description || 'Item' }}
-                  <span style="font-size:11px;color:#64748b;font-weight:normal;margin-left:6px;">
+                  <span style="font-size:11px;color: var(--text-3);font-weight:normal;margin-left:6px;">
                     (Ordered: {{ item.po_item?.qty | number:'1.0-3' }})
                   </span>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;">
                   <div>
-                    <label style="font-size:10px;color:#64748b;font-weight:600;display:block;margin-bottom:2px;">RECEIVED QTY</label>
+                    <label style="font-size: 11px;color: var(--text-3);font-weight:600;display:block;margin-bottom:2px;">RECEIVED QTY</label>
                     <input type="number" [(ngModel)]="item.received_qty" (ngModelChange)="onReceivedQtyChange(item)"
-                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;" min="0" />
+                           style="width:100%;padding:4px 8px;border:1px solid #d6d4cc;border-radius:4px;font-size:12px;font-weight:600;" min="0" />
                   </div>
                   <div>
-                    <label style="font-size:10px;color:#15803d;font-weight:600;display:block;margin-bottom:2px;">ACCEPTED QTY</label>
+                    <label style="font-size: 11px;color:#15803d;font-weight:600;display:block;margin-bottom:2px;">ACCEPTED QTY</label>
                     <input type="number" [(ngModel)]="item.accepted_qty" (ngModelChange)="onAcceptedQtyChange(item)"
-                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#15803d;" min="0" />
+                           style="width:100%;padding:4px 8px;border:1px solid #d6d4cc;border-radius:4px;font-size:12px;font-weight:600;color:#15803d;" min="0" />
                   </div>
                   <div>
-                    <label style="font-size:10px;color:#dc2626;font-weight:600;display:block;margin-bottom:2px;">REJECTED QTY</label>
+                    <label style="font-size: 11px;color:#dc2626;font-weight:600;display:block;margin-bottom:2px;">REJECTED QTY</label>
                     <input type="number" [(ngModel)]="item.rejected_qty" (ngModelChange)="onRejectedQtyChange(item)"
-                           style="width:100%;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;font-size:12px;font-weight:600;color:#dc2626;" min="0" />
+                           style="width:100%;padding:4px 8px;border:1px solid #d6d4cc;border-radius:4px;font-size:12px;font-weight:600;color:#dc2626;" min="0" />
                   </div>
                 </div>
 
                 <!-- Rejection / Defect Reason Dropdown -->
                 @if (+item.rejected_qty > 0) {
                   <div style="margin-top:6px;">
-                    <label style="font-size:10px;color:#dc2626;font-weight:700;display:block;margin-bottom:2px;">REJECTION REASON</label>
+                    <label style="font-size: 11px;color:#dc2626;font-weight:700;display:block;margin-bottom:2px;">REJECTION REASON</label>
                     <select [(ngModel)]="item.rejection_reason" style="width:100%;padding:4px 8px;border:1px solid #fecdd3;border-radius:4px;font-size:12px;background:#fff1f2;color:#991b1b;">
                       <option value="Damaged">Damaged in Transit</option>
                       <option value="Not as per specification">Not as per specification</option>
@@ -110,7 +110,7 @@ import { NotificationService } from '../../core/services/notification.service';
         </div>
 
         <!-- File Upload Section -->
-        <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:14px;text-align:center;">
+        <div style="background:#faf9f6;border:1px dashed #d6d4cc;border-radius:10px;padding:14px;text-align:center;">
           <label style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#0284c7;font-weight:600;font-size:13px;">
             <mat-icon style="font-size:20px;width:20px;height:20px;">cloud_upload</mat-icon>
             {{ selectedFile ? 'Selected: ' + selectedFile.name : 'Upload Vendor Photo / PDF / Delivery Document' }}

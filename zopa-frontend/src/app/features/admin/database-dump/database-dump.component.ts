@@ -270,7 +270,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .page-subtitle {
       margin: 6px 0 0 0;
       font-size: 13.5px;
-      color: #64748b;
+      color: var(--text-3);
       line-height: 1.5;
     }
 
@@ -305,8 +305,8 @@ import { NotificationService } from '../../../core/services/notification.service
     }
 
     .last-dump-banner.no-dump {
-      background: #f8fafc;
-      border-color: #e2e8f0;
+      background: #faf9f6;
+      border-color: #e8e7e2;
     }
 
     .banner-icon-box {
@@ -325,8 +325,8 @@ import { NotificationService } from '../../../core/services/notification.service
     }
 
     .no-dump .banner-icon-box {
-      background: #f1f5f9;
-      color: #64748b;
+      background: #f3f2ed;
+      color: var(--text-3);
     }
 
     .banner-content {
@@ -336,13 +336,13 @@ import { NotificationService } from '../../../core/services/notification.service
     .banner-title {
       font-size: 14px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-1);
       margin-bottom: 4px;
     }
 
     .banner-details {
       font-size: 13px;
-      color: #334155;
+      color: var(--text-2);
       display: flex;
       flex-wrap: wrap;
       align-items: center;
@@ -355,11 +355,11 @@ import { NotificationService } from '../../../core/services/notification.service
       height: 16px;
       vertical-align: -3px;
       margin-right: 3px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .detail-sep {
-      color: #94a3b8;
+      color: var(--text-3);
     }
 
     .banner-stat {
@@ -377,7 +377,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
     .stat-label {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
       margin-top: 4px;
       text-transform: uppercase;
       font-weight: 600;
@@ -387,7 +387,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .action-card {
       margin-bottom: 24px;
       border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
@@ -409,7 +409,7 @@ import { NotificationService } from '../../../core/services/notification.service
       display: block;
       font-size: 13px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-2);
       margin-bottom: 10px;
     }
 
@@ -429,13 +429,13 @@ import { NotificationService } from '../../../core/services/notification.service
     .format-name {
       font-weight: 600;
       font-size: 14px;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .format-badge.recommended {
       background: #dbeafe;
       color: #1e40af;
-      font-size: 10.5px;
+      font-size: 11px;
       font-weight: 700;
       padding: 2px 7px;
       border-radius: 6px;
@@ -444,7 +444,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
     .format-desc {
       font-size: 12.5px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .download-trigger-row {
@@ -453,7 +453,7 @@ import { NotificationService } from '../../../core/services/notification.service
       gap: 20px;
       flex-wrap: wrap;
       padding-top: 14px;
-      border-top: 1px solid #f1f5f9;
+      border-top: 1px solid #f3f2ed;
     }
 
     .download-cta {
@@ -472,7 +472,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
     .security-note {
       font-size: 12.5px;
-      color: #64748b;
+      color: var(--text-3);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -486,7 +486,7 @@ import { NotificationService } from '../../../core/services/notification.service
     /* ── History Card ────────────────────────────────────── */
     .history-card {
       border-radius: 12px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
 
@@ -499,7 +499,7 @@ import { NotificationService } from '../../../core/services/notification.service
 
     .record-count {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-3);
       font-weight: 500;
     }
 
@@ -509,28 +509,28 @@ import { NotificationService } from '../../../core/services/notification.service
     }
 
     .dump-table th {
-      background: #f8fafc;
+      background: #faf9f6;
       font-size: 12px;
       font-weight: 600;
-      color: #475569;
+      color: var(--text-2);
       padding: 12px 16px;
     }
 
     .dump-table td {
       padding: 12px 16px;
       font-size: 13px;
-      color: #1e293b;
-      border-bottom: 1px solid #f1f5f9;
+      color: var(--text-1);
+      border-bottom: 1px solid #f3f2ed;
     }
 
     .cell-datetime .datetime-primary {
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .cell-datetime .datetime-relative {
       font-size: 11.5px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .user-cell {
@@ -543,8 +543,8 @@ import { NotificationService } from '../../../core/services/notification.service
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #e2e8f0;
-      color: #334155;
+      background: #e8e7e2;
+      color: var(--text-2);
       font-size: 12px;
       font-weight: 700;
       display: flex;
@@ -555,25 +555,25 @@ import { NotificationService } from '../../../core/services/notification.service
     .user-name {
       font-weight: 600;
       font-size: 13px;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .user-email {
       font-size: 11.5px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .file-code {
       font-size: 12px;
-      background: #f1f5f9;
+      background: #f3f2ed;
       padding: 2px 6px;
       border-radius: 4px;
-      color: #334155;
+      color: var(--text-2);
     }
 
     .size-text {
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .format-pill {
@@ -582,8 +582,8 @@ import { NotificationService } from '../../../core/services/notification.service
       border-radius: 6px;
       font-size: 11px;
       font-weight: 600;
-      background: #f1f5f9;
-      color: #475569;
+      background: #f3f2ed;
+      color: var(--text-2);
     }
 
     .format-pill.gz {
@@ -594,7 +594,7 @@ import { NotificationService } from '../../../core/services/notification.service
     .ip-text {
       font-family: monospace;
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .status-pill {
@@ -629,13 +629,13 @@ import { NotificationService } from '../../../core/services/notification.service
       font-size: 42px;
       width: 42px;
       height: 42px;
-      color: #cbd5e1;
+      color: var(--text-3);
     }
 
 
     .empty-hint {
       font-size: 12.5px;
-      color: #94a3b8;
+      color: var(--text-3);
     }
   `]
 })

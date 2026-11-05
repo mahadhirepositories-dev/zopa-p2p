@@ -194,9 +194,9 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                     <span class="priority-badge priority-{{ pr()!.priority }}">{{ pr()!.priority | titlecase }}</span>
                   </div>
                   @if (pr()!.short_close_reason) {
-                    <div class="info-item" style="grid-column:1/-1;background:#f8fafc;padding:8px 12px;border-radius:6px;border:1px solid #e2e8f0;margin-top:8px;">
-                      <span class="info-label" style="color:#64748b;">Short Close Reason</span>
-                      <span style="font-size:13px;color:#334155;">{{ pr()!.short_close_reason }}</span>
+                    <div class="info-item" style="grid-column:1/-1;background:#faf9f6;padding:8px 12px;border-radius:6px;border:1px solid #e8e7e2;margin-top:8px;">
+                      <span class="info-label" style="color: var(--text-3);">Short Close Reason</span>
+                      <span style="font-size:13px;color: var(--text-2);">{{ pr()!.short_close_reason }}</span>
                     </div>
                   }
                   <div class="info-item"><span class="info-label">Required By Date</span><span>{{ pr()!.required_by_date | date:'dd MMM yyyy' }}</span></div>
@@ -236,7 +236,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                           {{ c.requested_at | date:'dd MMM yyyy HH:mm' }}
                         </span>
                       </div>
-                      <div style="font-size:13px;color:#1e293b;margin-bottom:8px;white-space:pre-line;">
+                      <div style="font-size:13px;color: var(--text-1);margin-bottom:8px;white-space:pre-line;">
                         "{{ c.request_notes }}"
                       </div>
 
@@ -246,7 +246,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                             <a (click)="downloadClarificationAttachment(att)" style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1px solid #fed7aa;border-radius:6px;padding:3px 8px;font-size:11.5px;color:#c2410c;cursor:pointer;text-decoration:none;">
                               <mat-icon style="font-size:14px;width:14px;height:14px;">attach_file</mat-icon>
                               {{ att.original_name || att.name }}
-                              @if (att.size) { <span style="color:#94a3b8;font-size:10px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
+                              @if (att.size) { <span style="color: var(--text-3);font-size: 11px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
                             </a>
                           }
                         </div>
@@ -258,11 +258,11 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                             <span style="font-size:11.5px;font-weight:700;color:#0284c7;">
                               ✓ Response by {{ c.responder?.name || 'Requester' }}
                             </span>
-                            <span style="font-size:11px;color:#64748b;">
+                            <span style="font-size:11px;color: var(--text-3);">
                               {{ c.provided_at | date:'dd MMM yyyy HH:mm' }}
                             </span>
                           </div>
-                          <div style="font-size:12.5px;color:#334155;white-space:pre-line;">
+                          <div style="font-size:12.5px;color: var(--text-2);white-space:pre-line;">
                             {{ c.response_notes }}
                           </div>
 
@@ -272,7 +272,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                                 <a (click)="downloadClarificationAttachment(att)" style="display:inline-flex;align-items:center;gap:4px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:6px;padding:3px 8px;font-size:11.5px;color:#0369a1;cursor:pointer;text-decoration:none;">
                                   <mat-icon style="font-size:14px;width:14px;height:14px;">attach_file</mat-icon>
                                   {{ att.original_name || att.name }}
-                                  @if (att.size) { <span style="color:#94a3b8;font-size:10px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
+                                  @if (att.size) { <span style="color: var(--text-3);font-size: 11px;">({{ att.size / 1024 | number:'1.0-0' }} KB)</span> }
                                 </a>
                               }
                             </div>
@@ -311,21 +311,21 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                           <mat-icon style="font-size:16px;width:16px;height:16px;">account_circle</mat-icon>
                           {{ upd.sent_by?.name || 'Buyer' }}
                         </span>
-                        <span style="font-size:11px;color:#64748b;">
+                        <span style="font-size:11px;color: var(--text-3);">
                           {{ upd.created_at | date:'dd MMM yyyy, hh:mm a' }}
                         </span>
                       </div>
 
                       @if (upd.cc_emails?.length) {
-                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color:#475569;">
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;font-size:11px;color: var(--text-2);">
                           <span style="font-weight:600;color:#0369a1;">CC Tagged:</span>
                           @for (email of upd.cc_emails; track email) {
-                            <span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size:10.5px;">{{ email }}</span>
+                            <span style="background:#e0f2fe;color:#0369a1;padding:1px 6px;border-radius:4px;font-size: 11px;">{{ email }}</span>
                           }
                         </div>
                       }
 
-                      <div style="font-size:13px;color:#1e293b;white-space:pre-wrap;line-height:1.5;">{{ upd.message }}</div>
+                      <div style="font-size:13px;color: var(--text-1);white-space:pre-wrap;line-height:1.5;">{{ upd.message }}</div>
 
                       @if (upd.attachments?.length) {
                         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:8px;border-top:1px dashed #bae6fd;">
@@ -361,7 +361,7 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
                           <div style="font-size:11px;color:var(--text-3);">{{ po.vendor.name }}</div>
                         }
                       </div>
-                      <mat-chip [class]="'status-' + po.status" [highlighted]="true" style="margin-left:auto;font-size:10px;">{{ po.status }}</mat-chip>
+                      <mat-chip [class]="'status-' + po.status" [highlighted]="true" style="margin-left:auto;font-size: 11px;">{{ po.status }}</mat-chip>
                       <mat-icon style="font-size:16px;color:var(--text-3);">chevron_right</mat-icon>
                     </div>
                   }
@@ -464,22 +464,22 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     .status-pill { display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase;letter-spacing:0.04em; }
     .status-pill mat-icon { font-size:14px;width:14px;height:14px; }
     .status-pill--converted { background:#dcfce7;color:#15803d; }
-    .status-pill--draft { background:#f1f5f9;color:#475569; }
+    .status-pill--draft { background:#f3f2ed;color: var(--text-2); }
     .status-pill--submitted { background:#fff7ed;color:#c2410c; }
     .status-pill--needs_clarification { background:#fef3c7;color:#b45309; }
     .btn-compact { height:36px!important;line-height:36px!important;padding:0 14px!important;font-size:12.5px!important;font-weight:600!important;border-radius:8px!important; }
     .btn-compact mat-icon { font-size:18px;width:18px;height:18px;margin-right:4px; }
     .status-banner { display:flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;margin-bottom:20px;font-size:13px;font-weight:500; }
     .status-banner mat-icon { font-size:18px;width:18px;height:18px; }
-    .status-banner--draft        { background:#f1f5f9;color:#64748b; }
+    .status-banner--draft        { background:#f3f2ed;color: var(--text-3); }
     .status-banner--submitted    { background:#fff7ed;color:#d97706; }
     .status-banner--rfq_created  { background:#eff6ff;color:#2563eb; }
     .status-banner--rfq_approved { background:#ecfdf5;color:#059669; }
     .status-banner--converted           { background:#f0fdf4;color:#16a34a; }
     .status-banner--partially_converted { background:#ecfdf5;color:#059669; }
     .status-banner--rejected            { background:#fff1f2;color:#dc2626; }
-    .conv-badge { display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700; }
-    .conv-none    { background:#f1f5f9;color:#64748b; }
+    .conv-badge { display:inline-block;padding:2px 8px;border-radius:99px;font-size: 11px;font-weight:700; }
+    .conv-none    { background:#f3f2ed;color: var(--text-3); }
     .conv-partial { background:#fff7ed;color:#d97706; }
     .conv-full    { background:#dcfce7;color:#15803d; }
     .detail-grid { display:grid;grid-template-columns:380px minmax(0,1fr);gap:20px;align-items:start; }
@@ -489,12 +489,12 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     }
     .left-col, .right-col { display:flex;flex-direction:column;gap:16px;min-width:0; }
     .info-card mat-card-content { padding-top:12px!important; }
-    .info-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px 16px; }
+    .info-grid { display:grid;grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));gap:10px 16px; }
     .info-item { display:flex;flex-direction:column;gap:2px; }
-    .info-label { font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
+    .info-label { font-size: 11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3); }
     .info-item span:last-child { font-size:13px;color:var(--text-1); }
     .priority-badge { display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
-    .priority-low    { background:#f1f5f9;color:#64748b; }
+    .priority-low    { background:#f3f2ed;color: var(--text-3); }
     .priority-normal { background:#eff6ff;color:#2563eb; }
     .priority-high   { background:#fff7ed;color:#d97706; }
     .priority-urgent { background:#fff1f2;color:#dc2626; }
@@ -502,10 +502,10 @@ import { SendPrUpdateDialogComponent } from './send-pr-update-dialog.component';
     .po-row:last-child { border-bottom:none; }
     .po-row:hover { background:var(--brand-light); }
     .items-table { width:100%;border-collapse:collapse; }
-    .items-table th { background:#f8fafc;color:var(--text-3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:8px 16px;border-bottom:1px solid var(--border);text-align:left; }
+    .items-table th { background:#faf9f6;color:var(--text-3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:8px 16px;border-bottom:1px solid var(--border);text-align:left; }
     .items-table td { padding:10px 16px;font-size:13px;color:var(--text-1);border-bottom:1px solid var(--border); }
     .items-table tbody tr:last-child td { border-bottom:none; }
-    .total-row td { font-size:13px;font-weight:600;color:var(--text-1);background:#f8fafc;padding:10px 16px;border-top:2px solid var(--border); }
+    .total-row td { font-size:13px;font-weight:600;color:var(--text-1);background:#faf9f6;padding:10px 16px;border-top:2px solid var(--border); }
     .btn-xs-source { height:26px!important; font-size:11px!important; padding:0 8px!important; line-height:26px!important; }
   `],
 })

@@ -274,6 +274,7 @@ const PERIODS = [
     th.center, td.center { text-align: center; }
     .plain-row, .plain-row:hover .mat-mdc-cell { cursor: default !important; }
     .tenants-table { min-width: 720px; }
+    @media (max-width: 600px) { .tenants-table { min-width: 0; } .mat-column-prs, .mat-column-tat, .org-sub { display: none; } }
     .org-cell { display: flex; align-items: center; gap: 10px; padding: 4px 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
     .org-cell:hover .org-name { color: var(--brand-text); text-decoration: underline; }
     .org-avatar {

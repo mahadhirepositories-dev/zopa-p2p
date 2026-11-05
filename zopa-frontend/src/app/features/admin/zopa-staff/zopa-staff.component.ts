@@ -160,7 +160,7 @@ import { RoleService, Role } from '../../../services/role.service';
 
     .role-pill {
       padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;
-      background:#f1f5f9;color:#475569;
+      background:#f3f2ed;color: var(--text-2);
     }
     .role-pill.role-zopa_super_admin { background:#fef3c7;color:#b45309; }
     .role-pill.role-zopa_buyer       { background:#dbeafe;color:#2563eb; }

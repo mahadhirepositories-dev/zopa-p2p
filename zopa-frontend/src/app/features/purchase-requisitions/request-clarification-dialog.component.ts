@@ -22,7 +22,7 @@ import { NotificationService } from '../../core/services/notification.service';
       </h2>
 
       <mat-dialog-content style="padding-top:10px!important;">
-        <p style="font-size:13px;color:#64748b;margin:0 0 14px 0;">
+        <p style="font-size:13px;color: var(--text-3);margin:0 0 14px 0;">
           Specify the missing information, incomplete specifications, or queries required from the client/requester.
           PR TAT calculation will be paused while awaiting clarification response.
         </p>
@@ -33,10 +33,10 @@ import { NotificationService } from '../../core/services/notification.service';
         </mat-form-field>
 
         <!-- Attachment upload section -->
-        <div style="border:1px dashed #cbd5e1;border-radius:8px;padding:12px;margin-bottom:12px;background:#f8fafc;">
+        <div style="border:1px dashed #d6d4cc;border-radius:8px;padding:12px;margin-bottom:12px;background:#faf9f6;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <span style="font-size:12px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px;">
-              <mat-icon style="font-size:16px;width:16px;height:16px;color:#64748b;">attach_file</mat-icon> Attachments (Optional)
+            <span style="font-size:12px;font-weight:600;color: var(--text-2);display:flex;align-items:center;gap:6px;">
+              <mat-icon style="font-size:16px;width:16px;height:16px;color: var(--text-3);">attach_file</mat-icon> Attachments (Optional)
             </span>
             <button mat-stroked-button type="button" (click)="fileInput.click()" style="font-size:12px;height:32px;line-height:30px;">
               <mat-icon style="font-size:16px;width:16px;height:16px;margin-right:4px;">upload_file</mat-icon> Choose Files
@@ -47,11 +47,11 @@ import { NotificationService } from '../../core/services/notification.service';
           @if (selectedFiles.length > 0) {
             <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px;">
               @for (file of selectedFiles; track file.name; let i = $index) {
-                <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:6px 10px;font-size:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid #e8e7e2;border-radius:6px;padding:6px 10px;font-size:12px;">
                   <span style="display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:320px;">
                     <mat-icon style="font-size:16px;width:16px;height:16px;color:#0284c7;">description</mat-icon>
                     {{ file.name }}
-                    <span style="color:#94a3b8;font-size:11px;">({{ file.size / 1024 | number:'1.0-0' }} KB)</span>
+                    <span style="color: var(--text-3);font-size:11px;">({{ file.size / 1024 | number:'1.0-0' }} KB)</span>
                   </span>
                   <button mat-icon-button color="warn" type="button" (click)="removeFile(i)" style="width:24px;height:24px;line-height:24px;">
                     <mat-icon style="font-size:16px;width:16px;height:16px;">close</mat-icon>
@@ -60,7 +60,7 @@ import { NotificationService } from '../../core/services/notification.service';
               }
             </div>
           } @else {
-            <div style="font-size:11px;color:#94a3b8;">Max 10MB per file (PDF, Excel, Word, Images, etc.)</div>
+            <div style="font-size:11px;color: var(--text-3);">Max 10MB per file (PDF, Excel, Word, Images, etc.)</div>
           }
         </div>
       </mat-dialog-content>

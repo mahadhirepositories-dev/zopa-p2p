@@ -214,8 +214,8 @@ import { NotificationService } from '../../core/services/notification.service';
     .acct-chip mat-icon { font-size: 15px; width: 15px; height: 15px; }
     .member-since { font-size: 11px; color: var(--text-3); }
 
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+    @media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
     .span-2 { grid-column: 1 / -1; }
     mat-card { border-radius: 14px !important; }
     .ct-icon { font-size: 18px; width: 18px; height: 18px; vertical-align: middle; margin-right: 6px; color: var(--text-3); }
@@ -228,7 +228,7 @@ import { NotificationService } from '../../core/services/notification.service';
 
     .access-list { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; }
     .access-row { display: flex; align-items: center; gap: 12px; padding: 10px 8px; border-radius: 10px; transition: background .12s; }
-    .access-row:hover { background: #f8fafc; }
+    .access-row:hover { background: #faf9f6; }
     .access-row.current { background: #fff7ed; }
     .access-row.switchable { cursor: pointer; }
     .access-row.switchable:hover { background: var(--brand-light); }
@@ -242,7 +242,7 @@ import { NotificationService } from '../../core/services/notification.service';
     }
     .org-name { font-size: 14px; font-weight: 600; color: var(--text-1); display: flex; align-items: center; gap: 8px; }
     .org-role { font-size: 12px; color: var(--text-3); margin-top: 1px; }
-    .active-tag { font-size: 10px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 1px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
+    .active-tag { font-size: 11px; font-weight: 700; color: #16a34a; background: #dcfce7; padding: 1px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: .04em; }
   `],
 })
 export class ProfileComponent {

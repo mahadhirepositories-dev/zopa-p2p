@@ -172,7 +172,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                     <mat-option [value]="l.id" style="height: auto; min-height: 48px; padding: 6px 16px;">
                       <div style="display: flex; flex-direction: column; line-height: 1.35;">
                         <span style="font-weight: 500; font-size: 13.5px;">{{ l.name }}</span>
-                        <span style="font-size: 10.5px; color: #6b7280;">
+                        <span style="font-size: 11px; color: var(--text-3);">
                           {{ l.city }}@if(l.city && l.state){, }{{ l.state }}@if(l.pincode){ - {{ l.pincode }}}
                         </span>
                       </div>
@@ -191,7 +191,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                     <mat-option [value]="l.id" style="height: auto; min-height: 48px; padding: 6px 16px;">
                       <div style="display: flex; flex-direction: column; line-height: 1.35;">
                         <span style="font-weight: 500; font-size: 13.5px;">{{ l.name }}</span>
-                        <span style="font-size: 10.5px; color: #6b7280;">
+                        <span style="font-size: 11px; color: var(--text-3);">
                           {{ l.city }}@if(l.city && l.state){, }{{ l.state }}@if(l.pincode){ - {{ l.pincode }}}
                         </span>
                       </div>
@@ -697,13 +697,13 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     .info-chip.accent { background: #eff6ff; border-color: #bfdbfe; }
     .info-chip.accent mat-icon { color: #2563eb; }
 
-    .addr-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 14px; }
-    .addr-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #475569; line-height: 1.55; }
-    .addr-card--muted { color: #94a3b8; font-style: italic; }
+    .addr-preview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 12px; margin: 4px 0 14px; }
+    .addr-card { background: #faf9f6; border: 1px solid #e8e7e2; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: var(--text-2); line-height: 1.55; }
+    .addr-card--muted { color: var(--text-3); font-style: italic; }
     .addr-head { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: #1565c0; margin-bottom: 6px; }
     .addr-head mat-icon { font-size: 15px; width: 15px; height: 15px; }
-    .addr-name { font-weight: 700; color: #1e293b; font-size: 13px; }
-    .addr-gstin { margin-top: 3px; font-weight: 600; color: #334155; }
+    .addr-name { font-weight: 700; color: var(--text-1); font-size: 13px; }
+    .addr-gstin { margin-top: 3px; font-weight: 600; color: var(--text-2); }
     @media (max-width: 720px) { .addr-preview { grid-template-columns: 1fr; } }
 
     .budget-banner {
@@ -736,7 +736,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
 
     .item-calc { text-align: center; min-width: 90px; padding: 6px 4px; }
     .amount-col { min-width: 110px; }
-    .calc-label { font-size: 10px; color: var(--text-3); display: block; text-transform: uppercase; letter-spacing: 0.05em; }
+    .calc-label { font-size: 11px; color: var(--text-3); display: block; text-transform: uppercase; letter-spacing: 0.05em; }
     .calc-val { font-size: 13px; font-weight: 600; color: var(--text-2); display: block; }
     .amount-val { font-size: 15px; color: var(--text-1); }
 
@@ -757,7 +757,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
 
     .terms-total {
       font-size: 12px; font-weight: 600; padding: 4px 10px;
-      border-radius: 6px; background: #f1f5f9; color: var(--text-2);
+      border-radius: 6px; background: #f3f2ed; color: var(--text-2);
       white-space: nowrap;
     }
     .terms-total.terms-over { background: #fff1f2; color: #e11d48; }
@@ -770,7 +770,7 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     }
     .terms-warn mat-icon { font-size: 16px; width: 16px; height: 16px; }
 
-    .two-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; box-sizing: border-box; }
+    .two-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 16px; margin-bottom: 16px; box-sizing: border-box; }
     .two-panel mat-card { overflow: hidden; box-sizing: border-box; }
     @media (max-width: 1150px) {
       .two-panel { grid-template-columns: 1fr; }
@@ -791,11 +791,11 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     .line-items-toolbar {
       display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 10px; margin-bottom: 12px; padding: 8px 12px;
-      background: #f8fafc; border: 1px solid var(--border); border-radius: 8px;
+      background: #faf9f6; border: 1px solid var(--border); border-radius: 8px;
     }
     .items-search-box {
       display: flex; align-items: center; gap: 6px; background: white;
-      border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px;
+      border: 1px solid #d6d4cc; border-radius: 6px; padding: 4px 8px;
       min-width: 220px; flex: 1; max-width: 320px;
     }
     .items-search-box mat-icon { color: var(--text-3); font-size: 18px; width: 18px; height: 18px; }

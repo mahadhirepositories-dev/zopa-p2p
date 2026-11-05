@@ -268,15 +268,15 @@ import { NotificationService } from '../../core/services/notification.service';
     .section-title { font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px; margin:10px 0 4px; }
     
     .pr-filters-row { display:flex; gap:10px; align-items:flex-start; }
-    .pr-items-container { max-height:360px; overflow-y:auto; border:1px solid #e2e8f0; border-radius:8px; }
+    .pr-items-container { max-height:360px; overflow-y:auto; border:1px solid #e8e7e2; border-radius:8px; }
     .pr-items-table { width:100%; border-collapse:collapse; font-size:12.5px; }
-    .pr-items-table th { background:#f8fafc; padding:10px 12px; text-align:left; font-weight:700; color:#475569; border-bottom:1px solid #e2e8f0; position:sticky; top:0; z-index:2; }
-    .pr-items-table td { padding:10px 12px; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-    .pr-items-table tr:hover { background:#f8fafc; }
+    .pr-items-table th { background:#faf9f6; padding:10px 12px; text-align:left; font-weight:700; color: var(--text-2); border-bottom:1px solid #e8e7e2; position:sticky; top:0; z-index:2; }
+    .pr-items-table td { padding:10px 12px; border-bottom:1px solid #f3f2ed; vertical-align:middle; }
+    .pr-items-table tr:hover { background:#faf9f6; }
     .selected-row { background:#eff6ff!important; }
-    .unpriced-badge { background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; font-size:10.5px; font-weight:700; }
+    .unpriced-badge { background:#fef3c7; color:#b45309; padding:2px 8px; border-radius:4px; font-size: 11px; font-weight:700; }
     .btn-xs { height:28px!important; font-size:11px!important; padding:0 10px!important; line-height:28px!important; }
-    .empty-state { display:flex; flex-direction:column; align-items:center; padding:40px; color:#94a3b8; gap:8px; }
+    .empty-state { display:flex; flex-direction:column; align-items:center; padding:40px; color: var(--text-3); gap:8px; }
   `]
 })
 export class SourcingFormDialogComponent implements OnInit {

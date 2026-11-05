@@ -47,7 +47,7 @@ import { MatIconModule } from '@angular/material/icon';
       height: 42px;
       padding: 0 10px 0 12px;
       background: #fff;
-      border: 1px solid var(--border, #e2e8f0);
+      border: 1px solid var(--border, #e8e7e2);
       border-radius: 10px;
       transition: border-color .15s ease, box-shadow .15s ease;
     }
@@ -90,7 +90,7 @@ import { MatIconModule } from '@angular/material/icon';
       color: var(--text-3, #94a3b8);
       transition: background .12s ease, color .12s ease;
     }
-    .zsearch__clear:hover { background: #f1f5f9; color: var(--text-1, #1e293b); }
+    .zsearch__clear:hover { background: #f3f2ed; color: var(--text-1, #1e293b); }
     .zsearch__clear mat-icon { font-size: 16px; width: 16px; height: 16px; }
   `],
 })

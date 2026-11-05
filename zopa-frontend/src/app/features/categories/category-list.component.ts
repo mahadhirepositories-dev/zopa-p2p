@@ -129,14 +129,14 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
     .tree-table { width: 100%; }
     .tree-header {
       display: flex; align-items: center; padding: 10px 16px;
-      background: #f8fafc; border-bottom: 2px solid #e0e0e0;
-      font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase;
+      background: #faf9f6; border-bottom: 2px solid #e0e0e0;
+      font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase;
     }
     .tree-row {
       display: flex; align-items: center; padding: 8px 16px;
       border-bottom: 1px solid #f0f0f0; transition: background 0.1s;
     }
-    .tree-row:hover { background: #fafafa; }
+    .tree-row:hover { background: #faf9f6; }
     .tree-row.depth-0 { background: #fafcff; }
     .tree-row.depth-0:hover { background: #f0f4ff; }
 
@@ -158,14 +158,14 @@ interface FlatRow { cat: Category; depth: number; isLeaf: boolean; }
     .l2 { background: #dcfce7; } .l2 mat-icon { color: #16a34a; }
 
     .level-badge {
-      font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
     }
     .level-badge.l0 { background: #dbeafe; color: #1d4ed8; }
     .level-badge.l1 { background: #ede9fe; color: #7c3aed; }
     .level-badge.l2 { background: #dcfce7; color: #16a34a; }
 
     .child-count {
-      display: inline-block; background: #f1f5f9; color: #64748b;
+      display: inline-block; background: #f3f2ed; color: var(--text-3);
       font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 10px;
     }
 

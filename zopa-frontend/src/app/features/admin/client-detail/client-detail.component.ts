@@ -513,7 +513,7 @@ import { gstinValidator } from '../../../core/validators';
     h2 { margin:0; font-size:20px; font-weight:700; }
     .client-meta { display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap; }
     .code-tag {
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       font-family:monospace; font-size:11px; font-weight:700;
       padding:2px 8px; border-radius:5px;
     }
@@ -547,7 +547,7 @@ import { gstinValidator } from '../../../core/validators';
     .info-chip strong { color:var(--text-1); }
 
     .detail-grid {
-      display:grid; grid-template-columns:1fr 1fr; gap:20px;
+      display:grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:20px;
     }
     @media (max-width:900px) { .detail-grid { grid-template-columns:1fr; } }
 
@@ -572,7 +572,7 @@ import { gstinValidator } from '../../../core/validators';
 
     .role-chip {
       display:inline-block;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       font-size:11px; font-weight:600;
       padding:3px 9px; border-radius:6px;
     }

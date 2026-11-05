@@ -156,14 +156,15 @@ import { ExportService } from '../../core/services/export.service';
     .badge-confirmed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .badge-pending   { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
     .badge-rejected  { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
-    .badge-draft     { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .badge-draft     { background: #f3f2ed; color: var(--text-2); border: 1px solid #e8e7e2; }
 
     /* Table responsive wrapper */
     .table-responsive table {
-      min-width: 1000px;
+      min-width: 700px;
     }
 
     /* Mobile header layout adjustments */
+    @media (max-width: 600px) { .mat-column-po, .mat-column-received_by, .mat-column-arrow { display: none; } .table-responsive table { min-width: 0; } .po-icon, .pr-icon, .ref-icon { display: none; } }
   `],
 })
 export class GrnListComponent implements OnInit {

@@ -71,10 +71,10 @@ export interface SearchSelectData {
   `,
   styles: [`
     .ssd { display: flex; flex-direction: column; max-height: 70vh; }
-    .ssd-search { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border, #e2e8f0); }
-    .ssd-search > mat-icon { color: #94a3b8; flex-shrink: 0; }
-    .ssd-search input { flex: 1; border: 0; outline: none; font-size: 15px; color: #0f172a; background: transparent; }
-    .ssd-clear { border: 0; background: transparent; cursor: pointer; color: #94a3b8; display: flex; padding: 2px; }
+    .ssd-search { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border, #e8e7e2); }
+    .ssd-search > mat-icon { color: var(--text-3); flex-shrink: 0; }
+    .ssd-search input { flex: 1; border: 0; outline: none; font-size: 15px; color: var(--text-1); background: transparent; }
+    .ssd-clear { border: 0; background: transparent; cursor: pointer; color: var(--text-3); display: flex; padding: 2px; }
     .ssd-clear mat-icon { font-size: 18px; width: 18px; height: 18px; }
 
     .ssd-list { overflow-y: auto; padding: 6px; flex: 1; }
@@ -83,21 +83,21 @@ export interface SearchSelectData {
     .ssd-avatar { width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; background: #fff1e6; color: var(--brand-text); }
     .ssd-avatar[data-accent="purple"] { background: #f5f3ff; color: #6d28d9; }
     .ssd-avatar[data-accent="green"]  { background: #dcfce7; color: #16a34a; }
-    .ssd-avatar[data-accent="gray"]   { background: #f1f5f9; color: #64748b; }
+    .ssd-avatar[data-accent="gray"]   { background: #f3f2ed; color: var(--text-3); }
     .ssd-info { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-    .ssd-name { font-size: 14px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ssd-sub { font-size: 12px; color: #94a3b8; }
-    .ssd-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; background: #fff7ed; color: #b45309; }
+    .ssd-name { font-size: 14px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ssd-sub { font-size: 12px; color: var(--text-3); }
+    .ssd-badge { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; background: #fff7ed; color: #b45309; }
     .ssd-badge[data-accent="purple"] { background: #f5f3ff; color: #6d28d9; }
     .ssd-badge[data-accent="green"]  { background: #dcfce7; color: #16a34a; }
-    .ssd-badge[data-accent="gray"]   { background: #f1f5f9; color: #64748b; }
+    .ssd-badge[data-accent="gray"]   { background: #f3f2ed; color: var(--text-3); }
     .ssd-check { color: #16a34a; flex-shrink: 0; }
 
-    .ssd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 44px 16px; color: #94a3b8; font-size: 14px; }
+    .ssd-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 44px 16px; color: var(--text-3); font-size: 14px; }
     .ssd-empty mat-icon { font-size: 34px; width: 34px; height: 34px; opacity: .5; }
 
-    .ssd-footer { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-top: 1px solid var(--border, #e2e8f0); font-size: 11.5px; color: #94a3b8; }
-    .ssd-hint kbd { font-family: inherit; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 0 5px; margin: 0 1px; font-size: 10.5px; color: #64748b; }
+    .ssd-footer { display: flex; justify-content: space-between; align-items: center; padding: 9px 16px; border-top: 1px solid var(--border, #e8e7e2); font-size: 11.5px; color: var(--text-3); }
+    .ssd-hint kbd { font-family: inherit; background: #f3f2ed; border: 1px solid #e8e7e2; border-radius: 4px; padding: 0 5px; margin: 0 1px; font-size: 11px; color: var(--text-3); }
   `],
 })
 export class SearchSelectDialogComponent {

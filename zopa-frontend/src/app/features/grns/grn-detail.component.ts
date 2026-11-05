@@ -36,7 +36,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
               <mat-icon>arrow_back</mat-icon>
             </button>
             <div>
-              <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;">
                 <h1 class="page-title">{{ grn()!.grn_number }}</h1>
                 <span class="status-badge" [class]="'badge-' + (grn()!.status || 'confirmed')">
                   {{ getStatusLabel(grn()!) }}
@@ -239,7 +239,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
                       @if (+item.rejected_qty > 0) {
                         <span class="qty-badge rejected">{{ item.rejected_qty | number:'1.0-3' }}</span>
                       } @else {
-                        <span style="color:#cbd5e1;">—</span>
+                        <span style="color: var(--text-3);">—</span>
                       }
                     </td>
                     <td class="remarks-cell">{{ item.remarks || '—' }}</td>
@@ -258,6 +258,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     /* Header */
     .header-container {
       display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
       align-items: flex-start;
       margin-bottom: 20px;
@@ -269,19 +270,13 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       gap: 12px;
     }
     .back-btn {
-      color: #64748b;
+      color: var(--text-3);
       margin-top: 2px;
     }
-    .page-title {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.01em;
-    }
+    .page-title { margin: 0; font-size: 20px; font-weight: 700; color: var(--text-1); }
     .po-subtext {
       font-size: 13px;
-      color: #64748b;
+      color: var(--text-3);
       margin-top: 4px;
       display: flex;
       align-items: center;
@@ -291,7 +286,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       font-size: 16px;
       width: 16px;
       height: 16px;
-      color: #94a3b8;
+      color: var(--text-3);
     }
     .po-link {
       color: #2563eb;
@@ -328,7 +323,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     .badge-confirmed { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .badge-pending   { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
     .badge-rejected  { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
-    .badge-draft     { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+    .badge-draft     { background: #f3f2ed; color: var(--text-2); border: 1px solid #e8e7e2; }
 
     /* Pending Alert Banner */
     .pending-alert-banner {
@@ -371,13 +366,13 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     /* Cards & Grids */
     .overview-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
       gap: 16px;
       margin-bottom: 16px;
     }
     .info-card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0,0,0,0.03);
@@ -387,22 +382,24 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     }
     .items-card {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0,0,0,0.03);
     }
 
     .card-header-bar {
+      flex-wrap: wrap;
+      gap: 8px;
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #f8fafc;
+      background: #faf9f6;
       padding: 12px 18px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
       font-size: 13.5px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-1);
     }
     .flex-between {
       justify-content: space-between;
@@ -414,8 +411,8 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       color: var(--brand-text);
     }
     .count-pill {
-      background: #e2e8f0;
-      color: #334155;
+      background: #e8e7e2;
+      color: var(--text-2);
       font-size: 11px;
       font-weight: 700;
       padding: 2px 8px;
@@ -428,7 +425,7 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
 
     .field-grid-2 {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr));
       gap: 16px;
     }
     .field-item {
@@ -436,9 +433,9 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       flex-direction: column;
     }
     .field-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
-      color: #64748b;
+      color: var(--text-3);
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 4px;
@@ -446,14 +443,14 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     .field-value {
       font-size: 13.5px;
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .field-value.highlight {
       color: var(--brand-text);
     }
     .sub-date {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
       font-weight: normal;
       margin-left: 4px;
     }
@@ -461,14 +458,13 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     .remarks-box {
       margin-top: 14px;
       padding: 10px 12px;
-      background: #f8fafc;
-      border-left: 3px solid var(--brand);
+      background: #faf9f6;
       border-radius: 6px;
     }
     .remarks-box p {
       margin: 2px 0 0 0;
       font-size: 12.5px;
-      color: #334155;
+      color: var(--text-2);
     }
 
     /* Attachments */
@@ -501,16 +497,16 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       gap: 8px;
       padding: 8px 14px;
       border-radius: 8px;
-      background: #f8fafc;
-      border: 1px solid #cbd5e1;
+      background: #faf9f6;
+      border: 1px solid #d6d4cc;
       font-size: 12.5px;
       font-weight: 600;
-      color: #1e293b;
+      color: var(--text-1);
       cursor: pointer;
       transition: all 0.2s;
     }
     .file-chip:hover {
-      background: #f1f5f9;
+      background: #f3f2ed;
       border-color: #94a3b8;
       color: var(--brand-text);
     }
@@ -524,14 +520,14 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       font-size: 16px;
       width: 16px;
       height: 16px;
-      color: #64748b;
+      color: var(--text-3);
       margin-left: 4px;
     }
     .empty-docs {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: #94a3b8;
+      color: var(--text-3);
       font-size: 12.5px;
       font-style: italic;
     }
@@ -543,37 +539,37 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
       font-size: 13px;
     }
     .grn-items-table thead tr {
-      background: #f8fafc;
-      border-bottom: 1px solid #e2e8f0;
+      background: #faf9f6;
+      border-bottom: 1px solid #e8e7e2;
     }
     .grn-items-table th {
       padding: 11px 16px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: #64748b;
+      color: var(--text-3);
       text-align: left;
     }
     .grn-items-table tbody tr {
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f3f2ed;
       transition: background 0.15s;
     }
     .grn-items-table tbody tr:hover {
-      background: #f8fafc;
+      background: #faf9f6;
     }
     .grn-items-table td {
       padding: 12px 16px;
       vertical-align: middle;
     }
     .sno {
-      color: #94a3b8;
+      color: var(--text-3);
       font-size: 12px;
       font-weight: 600;
     }
     .item-name {
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: 13px;
     }
     .item-meta-row {
@@ -583,11 +579,11 @@ import { GrnStatusDialogComponent } from './grn-status-dialog.component';
     }
     .item-meta {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
     }
     .remarks-cell {
       font-size: 12px;
-      color: #475569;
+      color: var(--text-2);
     }
 
     .qty-badge {

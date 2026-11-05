@@ -25,7 +25,7 @@ import { NotificationService } from '../../core/services/notification.service';
             <h2>Invoice: {{ invoice()!.invoice_number }}</h2>
           </div>
           <div class="header-actions">
-            <mat-chip [class]="'status-' + invoice()!.status" [highlighted]="true">{{ invoice()!.status }}</mat-chip>
+            <mat-chip [class]="'status-' + invoice()!.status" [highlighted]="true" style="text-transform:capitalize;">{{ invoice()!.status }}</mat-chip>
             @if (invoice()!.status === 'pending') {
               <button mat-raised-button color="primary" (click)="updateStatus('approved')">Approve</button>
               <button mat-stroked-button color="warn" (click)="updateStatus('rejected')">Reject</button>
@@ -55,7 +55,7 @@ import { NotificationService } from '../../core/services/notification.service';
       }
     </div>
   `,
-  styles: [`.page-wrapper{padding:24px} .page-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px} .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px} .label{font-size:10px;color:#888;text-transform:uppercase;display:block;margin-bottom:2px}`],
+  styles: [`.detail-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(min(100%, 150px), 1fr));gap:16px} .label{font-size: 11px;color: var(--text-3);text-transform:uppercase;display:block;margin-bottom:2px}`],
 })
 export class InvoiceDetailComponent implements OnInit {
   id = input.required<string>();

@@ -19,11 +19,11 @@ import { FormsModule } from '@angular/forms';
 
       <mat-dialog-content style="padding-top:12px!important;">
         <!-- Vendor Info Preview -->
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:4px;">
+        <div style="background:#faf9f6;border:1px solid #e8e7e2;border-radius:8px;padding:12px 16px;margin-bottom:16px;">
+          <div style="font-size:11px;color: var(--text-3);text-transform:uppercase;font-weight:600;letter-spacing:0.5px;margin-bottom:4px;">
             Target Vendor
           </div>
-          <div style="font-size:14px;font-weight:600;color:#1e293b;">
+          <div style="font-size:14px;font-weight:600;color: var(--text-1);">
             {{ data.vendorName || 'Vendor' }}
           </div>
           @if (data.vendorEmail) {
@@ -42,7 +42,7 @@ import { FormsModule } from '@angular/forms';
         <mat-form-field appearance="outline" style="width:100%;">
           <mat-label>Additional CC Email Addresses (Optional)</mat-label>
           <input matInput [(ngModel)]="ccEmails" placeholder="e.g. accounts@client.com, manager@client.com" />
-          <mat-icon matSuffix style="color:#64748b;">mail_outline</mat-icon>
+          <mat-icon matSuffix style="color: var(--text-3);">mail_outline</mat-icon>
           <mat-hint>Separate multiple email addresses with commas</mat-hint>
         </mat-form-field>
       </mat-dialog-content>

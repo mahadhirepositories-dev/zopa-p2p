@@ -190,8 +190,8 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .vendor-avatar {
       width: 28px; height: 28px;
       border-radius: 50%;
-      background: #f1f5f9;
-      color: #475569;
+      background: #f3f2ed;
+      color: var(--text-2);
       font-size: 12px; font-weight: 600;
       display: flex; align-items: center; justify-content: center;
       text-transform: uppercase;
@@ -203,7 +203,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 
     /* Table responsive wrapper */
     .table-responsive table {
-      min-width: 1000px;
+      min-width: 700px;
     }
 
     /* Mobile header layout adjustments */
@@ -211,7 +211,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
       .search-field { max-width: none !important; width: 100% !important; }
     }
 
-    .status-draft      { background: #f1f5f9; color: #475569; }
+    .status-draft      { background: #f3f2ed; color: var(--text-2); }
     .status-returned   { background: #fef2f2; color: #dc2626; }
     .status-pending_l1 { background: #fffbeb; color: #d97706; }
     .status-pending_l2 { background: #fffbeb; color: #d97706; }
@@ -224,9 +224,10 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .status-fully_delivered { background: #ecfeff; color: #0891b2; }
     .status-invoiced   { background: #f5f3ff; color: #7c3aed; }
     .status-payment_released { background: #ecfdf5; color: #059669; }
-    .status-closed     { background: #f8fafc; color: #64748b; }
+    .status-closed     { background: #faf9f6; color: var(--text-3); }
     .status-cancelled  { background: #fef2f2; color: #991b1b; }
 
+    @media (max-width: 600px) { .mat-column-vendor, .mat-column-cost_center, .mat-column-arrow { display: none; } .table-responsive table { min-width: 0; } .po-icon, .pr-icon, .ref-icon { display: none; } }
   `],
 })
 export class PoListComponent implements OnInit {

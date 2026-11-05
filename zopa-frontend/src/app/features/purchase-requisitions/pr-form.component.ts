@@ -129,7 +129,7 @@ import { Product } from '../../core/models';
                       <mat-option [value]="l.id" style="height: auto; min-height: 48px; padding: 6px 16px;">
                         <div style="display: flex; flex-direction: column; line-height: 1.35;">
                           <span style="font-weight: 500; font-size: 13.5px;">{{ l.name }}</span>
-                          <span style="font-size: 10.5px; color: #6b7280;">
+                          <span style="font-size: 11px; color: var(--text-3);">
                             {{ l.city }}@if(l.city && l.state){, }{{ l.state }}@if(l.pincode){ - {{ l.pincode }}}
                           </span>
                         </div>
@@ -295,11 +295,11 @@ import { Product } from '../../core/models';
     .budget-banner.budget-warn { background:#fff7ed;border-color:#fed7aa;color:#c2410c; }
     .budget-banner mat-icon { flex-shrink:0;margin-top:2px;font-size:18px;width:18px;height:18px; }
 
-    .addr-card { background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#475569;line-height:1.55; }
+    .addr-card { background:#faf9f6;border:1px solid #e8e7e2;border-radius:10px;padding:12px 14px;font-size:12.5px;color: var(--text-2);line-height:1.55; }
     .addr-head { display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#1565c0;margin-bottom:6px; }
     .addr-head mat-icon { font-size:15px;width:15px;height:15px; }
-    .addr-name { font-weight:700;color:#1e293b;font-size:13px; }
-    .addr-gstin { margin-top:3px;font-weight:600;color:#334155; }
+    .addr-name { font-weight:700;color: var(--text-1);font-size:13px; }
+    .addr-gstin { margin-top:3px;font-weight:600;color: var(--text-2); }
   `],
 })
 export class PrFormComponent implements OnInit {

@@ -39,12 +39,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   styles: [`
     .rte { border: 1px solid var(--border, #d1d5db); border-radius: 10px; overflow: hidden; background: #fff; }
     .rte:focus-within { border-color: var(--brand); }
-    .rte-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--border, #e5e7eb); background: #fafafa; }
+    .rte-toolbar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--border, #e5e7eb); background: #faf9f6; }
     .rte-toolbar button { width: 32px; height: 32px; line-height: 32px; }
-    .rte-toolbar mat-icon { font-size: 18px; width: 18px; height: 18px; color: #475569; }
+    .rte-toolbar mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--text-2); }
     .rte-divider { width: 1px; height: 20px; background: var(--border, #e5e7eb); margin: 0 4px; }
-    .rte-body { min-height: 180px; max-height: 380px; overflow-y: auto; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: #1f2937; outline: none; }
-    .rte-body:empty::before { content: attr(data-placeholder); color: #9ca3af; }
+    .rte-body { min-height: 180px; max-height: 380px; overflow-y: auto; padding: 12px 14px; font-size: 13px; line-height: 1.6; color: var(--text-1); outline: none; }
+    .rte-body:empty::before { content: attr(data-placeholder); color: var(--text-3); }
     .rte-body ul, .rte-body ol { margin: 4px 0; padding-left: 22px; }
   `],
 })

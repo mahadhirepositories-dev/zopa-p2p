@@ -315,7 +315,7 @@ import { filter } from 'rxjs/operators';
       gap: 6px;
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
-      background: #fafafa;
+      background: #faf9f6;
     }
     .tenant-icon { font-size: 14px; width: 14px; height: 14px; color: var(--brand-text); }
     .tenant-select { flex: 1; font-size: 12px; }
@@ -325,12 +325,12 @@ import { filter } from 'rxjs/operators';
     .tenant-switcher {
       display: flex; align-items: center; gap: 6px; width: 100%;
       padding: 10px 16px; border: 0; border-bottom: 1px solid var(--border);
-      background: #fafafa; cursor: pointer; text-align: left; transition: background .12s;
+      background: #faf9f6; cursor: pointer; text-align: left; transition: background .12s;
     }
     .tenant-switcher:hover { background: var(--brand-light); }
     .tenant-switcher .tenant-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
     .tenant-switcher .tenant-name { font-size: 12px; color: var(--text-1); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tenant-type { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--brand-text); }
+    .tenant-type { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--brand-text); }
     .tenant-type--internal { color: #6d28d9; }
     .tenant-caret { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); flex-shrink: 0; }
 
@@ -346,7 +346,7 @@ import { filter } from 'rxjs/operators';
     .org-context mat-icon { font-size: 18px; width: 18px; height: 18px; flex-shrink: 0; }
     .ctx-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .ctx-text strong { font-weight: 700; }
-    .ctx-chip { flex-shrink: 0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+    .ctx-chip { flex-shrink: 0; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
       background: var(--brand-mid); color: var(--brand-ink); padding: 2px 8px; border-radius: 999px; }
     .ctx-chip--internal { background: #c4b5fd; color: #4c1d95; }
     .ctx-note { font-size: 12px; color: var(--text-2); white-space: nowrap; }
@@ -372,7 +372,7 @@ import { filter } from 'rxjs/operators';
 
     .nav-section { margin-bottom: 4px; }
     .nav-section-label {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       color: var(--text-3);
       text-transform: uppercase;
@@ -417,7 +417,7 @@ import { filter } from 'rxjs/operators';
     .sidebar-footer {
       padding: 12px;
       border-top: 1px solid var(--border);
-      background: #fafafa;
+      background: #faf9f6;
     }
     .user-row {
       display: flex;
@@ -448,7 +448,7 @@ import { filter } from 'rxjs/operators';
     .user-link--active { background: var(--brand-light); }
     .user-info { flex: 1; min-width: 0; }
     .user-name { font-size: 12px; font-weight: 600; color: var(--text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-role { font-size: 10px; color: var(--text-3); text-transform: capitalize; }
+    .user-role { font-size: 11px; color: var(--text-3); text-transform: capitalize; }
     .logout-btn { width: 28px !important; height: 28px !important; }
     .logout-btn mat-icon { font-size: 16px; width: 16px; height: 16px; color: var(--text-3); }
 
@@ -539,8 +539,8 @@ import { filter } from 'rxjs/operators';
       display: none;
     }
 
-    /* ── Mobile responsiveness (max-width: 768px) ── */
-    @media (max-width: 768px) {
+    /* ── Phones and tablets: the sidebar slides out instead of taking 240px of the screen ── */
+    @media (max-width: 1024px) {
       .menu-toggle-btn {
         display: inline-flex !important;
         align-items: center;

@@ -268,7 +268,7 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
       align-items: center;
       gap: 8px;
       background: white;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       padding: 8px 16px;
       border-radius: 99px;
       font-size: 13px;
@@ -280,11 +280,11 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
       height: 18px;
     }
     .metric-label {
-      color: #64748b;
+      color: var(--text-3);
       font-weight: 500;
     }
     .metric-value {
-      color: #0f172a;
+      color: var(--text-1);
       font-weight: 700;
     }
     .role-dot {
@@ -300,7 +300,7 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
     /* ── Table Card ────────────────────────────────────────────────────────── */
     .table-card {
       background: white;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -316,27 +316,27 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
     }
 
     th.mat-header-cell {
-      background: #f8fafc;
-      color: #475569;
+      background: #faf9f6;
+      color: var(--text-2);
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.06em;
       padding: 14px 20px;
-      border-bottom: 2px solid #e2e8f0;
+      border-bottom: 2px solid #e8e7e2;
     }
 
     td.mat-cell {
       padding: 14px 20px;
-      border-bottom: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f3f2ed;
       font-size: 13px;
-      color: #1e293b;
+      color: var(--text-1);
     }
 
     .table-row {
       transition: background 0.15s ease;
     }
     .table-row:hover {
-      background: #f8fafc;
+      background: #faf9f6;
     }
 
     /* ── Cell Specific Styles ──────────────────────────────────────────────── */
@@ -364,22 +364,22 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
     }
     .role-title {
       font-weight: 600;
-      color: #0f172a;
+      color: var(--text-1);
       font-size: 14px;
     }
     .role-sub {
       font-size: 11px;
-      color: #94a3b8;
+      color: var(--text-3);
     }
 
     .slug-badge {
       font-family: 'Fira Code', monospace, inherit;
-      background: #f1f5f9;
-      color: #475569;
+      background: #f3f2ed;
+      color: var(--text-2);
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 12px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
     }
 
     .type-chip {
@@ -427,9 +427,9 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
       border: 1px solid #ffedd5;
     }
     .access-badge.custom {
-      background: #f8fafc;
-      color: #64748b;
-      border: 1px solid #e2e8f0;
+      background: #faf9f6;
+      color: var(--text-3);
+      border: 1px solid #e8e7e2;
     }
 
     .action-buttons {
@@ -482,6 +482,7 @@ import { SearchFieldComponent } from '../../../shared/components/search-field.co
       vertical-align: middle;
       margin-right: 6px;
     }
+    @media (max-width: 600px) { .mat-column-slug, .mat-column-type, .mat-column-is_system { display: none; } .table-responsive table { min-width: 0; } }
   `]
 })
 export class RolesMasterComponent implements OnInit {

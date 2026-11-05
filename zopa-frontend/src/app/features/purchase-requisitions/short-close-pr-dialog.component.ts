@@ -18,7 +18,7 @@ import { FormsModule } from '@angular/forms';
       </h2>
 
       <mat-dialog-content style="padding-top:12px!important;">
-        <p style="font-size:13px;color:#64748b;margin:0 0 16px 0;">
+        <p style="font-size:13px;color: var(--text-3);margin:0 0 16px 0;">
           Short closing will mark remaining unconverted quantities as closed and route for cost center approval if configured.
         </p>
 

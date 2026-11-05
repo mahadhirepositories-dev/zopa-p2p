@@ -244,7 +244,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
 
     .approval-metrics { display: flex; gap: 28px; flex-shrink: 0; }
     .metric { text-align: center; }
-    .metric-label { font-size: 10px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 4px; }
+    .metric-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 4px; }
     .metric-value { font-size: 16px; font-weight: 700; color: var(--text-1); }
     .level-badge {
       background: var(--brand-light);
@@ -256,7 +256,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
       display: inline-block;
     }
 
-    .approval-actions { display: flex; gap: 8px; flex-shrink: 0; align-items: center; }
+    .approval-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .approve-btn {
       display: flex !important;
       align-items: center !important;
@@ -272,7 +272,7 @@ import { ApprovalActionDialogComponent } from './approval-action-dialog.componen
       font-size: 12px !important;
     }
     .return-btn mat-icon, .reject-btn mat-icon { font-size: 15px; width: 15px; height: 15px; }
-    .type-badge { display:inline-block;padding:1px 6px;border-radius:5px;font-size:10px;font-weight:700;letter-spacing:.04em; }
+    .type-badge { display:inline-block;padding:1px 6px;border-radius:5px;font-size: 11px;font-weight:700;letter-spacing:.04em; }
     .type-badge--po { background:var(--brand-light);color: var(--brand-text); }
     .type-badge--invoice { background:#f0fdf4;color:#16a34a; }
     .type-badge--pr { background:#eff6ff;color:#2563eb; }

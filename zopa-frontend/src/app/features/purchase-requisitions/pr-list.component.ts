@@ -227,20 +227,22 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     .pr-date { font-size:11px;color:var(--text-3); }
     .row-arrow { color:var(--text-3);font-size:18px; }
     .priority-badge { display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600; }
-    .priority-low    { background:#f1f5f9;color:#64748b; }
+    .priority-low    { background:#f3f2ed;color: var(--text-3); }
     .priority-normal { background:#eff6ff;color:#2563eb; }
     .priority-high   { background:#fff7ed;color:#d97706; }
     .priority-urgent { background:#fff1f2;color:#dc2626; }
 
     /* Table responsive wrapper */
     .table-responsive table {
-      min-width: 1000px;
+      min-width: 760px;
     }
+    @media (max-width: 1024px) { .mat-column-project, .mat-column-location { display: none; } }
 
     /* Mobile header layout adjustments */
     @media (max-width: 768px) {
       .search-field { max-width: none !important; }
     }
+    @media (max-width: 600px) { .mat-column-select, .mat-column-title, .mat-column-cost_center, .mat-column-project, .mat-column-location, .mat-column-requested_by, .mat-column-priority, .mat-column-amount, .mat-column-arrow { display: none; } .table-responsive table { min-width: 0; } .po-icon, .pr-icon, .ref-icon { display: none; } }
   `],
 })
 export class PrListComponent implements OnInit {

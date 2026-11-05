@@ -208,14 +208,14 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                       <div class="field">
                         <span class="label">Bill To</span>
                         <strong>{{ po()!.bill_to_location?.name }}</strong>
-                        @if (po()!.bill_to_location?.gstin) { <div style="font-size:11px;color:#666;">GSTIN: {{ po()!.bill_to_location?.gstin }}</div> }
+                        @if (po()!.bill_to_location?.gstin) { <div style="font-size:11px;color: var(--text-2);">GSTIN: {{ po()!.bill_to_location?.gstin }}</div> }
                       </div>
                     }
                     @if (po()!.ship_to_location) {
                       <div class="field">
                         <span class="label">Ship To</span>
                         <strong>{{ po()!.ship_to_location?.name }}</strong>
-                        @if (po()!.ship_to_location?.gstin) { <div style="font-size:11px;color:#666;">GSTIN: {{ po()!.ship_to_location?.gstin }}</div> }
+                        @if (po()!.ship_to_location?.gstin) { <div style="font-size:11px;color: var(--text-2);">GSTIN: {{ po()!.ship_to_location?.gstin }}</div> }
                         @if (po()!.ship_to_location?.receiver_name || po()!.ship_to_location?.receiver_phone) {
                           <div style="font-size:11px;color:#c2410c;margin-top:2px;">
                             Receiver: {{ po()!.ship_to_location?.receiver_name || '—' }}
@@ -227,7 +227,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                       <div class="field">
                         <span class="label">Ship To</span>
                         <strong>{{ po()!.bill_to_location?.name }}</strong>
-                        <div style="font-size:11px;color:#6b7280;font-style:italic;">Same as Bill To</div>
+                        <div style="font-size:11px;color: var(--text-3);font-style:italic;">Same as Bill To</div>
                       </div>
                     }
                   </div>
@@ -333,7 +333,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                   <mat-card-title style="font-size:15px;display:flex;align-items:center;gap:8px;margin:0;">
                     <mat-icon style="color: var(--brand-text);">inventory_2</mat-icon>
                     Goods Receipt Notes (GRNs)
-                    <span style="font-size:11px;background:#e2e8f0;color:#334155;padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
+                    <span style="font-size:11px;background:#e8e7e2;color: var(--text-2);padding:2px 8px;border-radius:99px;font-weight:700;">{{ grns().length }}</span>
                   </mat-card-title>
                   @if (!isGrnFullyCaptured && auth.canDo('grns', 'create') && ['partially_delivered', 'delivered'].includes(po()!.delivery_status ?? '')) {
                     <button mat-stroked-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
@@ -353,10 +353,10 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                       <mat-spinner diameter="28" />
                     </div>
                   } @else if (grns().length === 0) {
-                    <div style="padding:24px;text-align:center;color:#64748b;">
-                      <mat-icon style="font-size:36px;width:36px;height:36px;color:#cbd5e1;margin-bottom:6px;">inventory_2</mat-icon>
-                      <div style="font-size:13px;font-weight:600;color:#334155;">No GRNs Recorded Yet</div>
-                      <p style="font-size:12px;color:#64748b;margin:4px 0 12px;">Record a Goods Receipt Note when goods arrive against this PO.</p>
+                    <div style="padding:24px;text-align:center;color: var(--text-3);">
+                      <mat-icon style="font-size:36px;width:36px;height:36px;color: var(--text-3);margin-bottom:6px;">inventory_2</mat-icon>
+                      <div style="font-size:13px;font-weight:600;color: var(--text-2);">No GRNs Recorded Yet</div>
+                      <p style="font-size:12px;color: var(--text-3);margin:4px 0 12px;">Record a Goods Receipt Note when goods arrive against this PO.</p>
                       @if (auth.canDo('grns', 'create')) {
                         <button mat-raised-button color="primary" [routerLink]="['/grns/create']" [queryParams]="{ po_id: po()!.id }">
                           <mat-icon>add</mat-icon> Create GRN
@@ -425,7 +425,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
             @if (po()!.terms_conditions) {
               <mat-card style="margin-bottom:16px;">
                 <mat-card-header><mat-card-title>Terms &amp; Conditions</mat-card-title></mat-card-header>
-                <mat-card-content style="padding:16px;white-space:pre-wrap;font-size:13px;color:#555;" [innerHTML]="po()!.terms_conditions"></mat-card-content>
+                <mat-card-content style="padding:16px;white-space:pre-wrap;font-size:13px;color: var(--text-2);" [innerHTML]="po()!.terms_conditions"></mat-card-content>
               </mat-card>
             }
           </div>
@@ -456,7 +456,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                   <div class="total-row grand"><span>Grand Total</span><span>₹{{ po()!.grand_total | number:'1.2-2' }}</span></div>
                 </div>
                 <mat-divider style="margin:16px 0;" />
-                <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px;">Payment Terms</div>
+                <div style="font-size:12px;font-weight:600;color: var(--text-2);margin-bottom:8px;">Payment Terms</div>
                 @if (po()!.payment_terms_json?.length) {
                   @for (t of po()!.payment_terms_json; track t.stage) {
                     <div class="payment-term">
@@ -519,7 +519,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               <mat-card-header><mat-card-title>Approval Timeline</mat-card-title></mat-card-header>
               <mat-card-content style="padding-top:16px;">
                 @if (!po()!.approvals?.length) {
-                  <p style="color:#aaa;font-size:13px;">No approvals yet.</p>
+                  <p style="color: var(--text-3);font-size:13px;">No approvals yet.</p>
                 }
                 @for (a of po()!.approvals; track a.id) {
                   <div class="approval-item">
@@ -529,8 +529,8 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     <div class="approval-body">
                       <strong>L{{ a.level }}: {{ a.assigned_to?.name }}</strong>
                       <div class="approval-meta">
-                        <mat-chip [class]="'status-' + a.action" [highlighted]="true" style="font-size:10px;">{{ a.action }}</mat-chip>
-                        @if (a.acted_at) { <span style="font-size:11px;color:#888;">{{ a.acted_at | date:'dd MMM, HH:mm' }}</span> }
+                        <mat-chip [class]="'status-' + a.action" [highlighted]="true" style="font-size: 11px;">{{ a.action }}</mat-chip>
+                        @if (a.acted_at) { <span style="font-size:11px;color: var(--text-3);">{{ a.acted_at | date:'dd MMM, HH:mm' }}</span> }
                       </div>
                       @if (a.comments) {
                         <div class="approval-comment">"{{ a.comments }}"</div>
@@ -576,7 +576,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                   <div class="diag-row"><span>Would route to</span>
                     <strong>{{ diag().would_route_to?.length ? diag().would_route_to.join(' → ') : 'Auto-approve (no config)' }}</strong>
                   </div>
-                  <div style="margin-top:10px;font-weight:600;color:#666;">Configs on this cost center:</div>
+                  <div style="margin-top:10px;font-weight:600;color: var(--text-2);">Configs on this cost center:</div>
                   @if (!diag().configs_for_this_cost_center?.length) {
                     <div style="color:#b91c1c;padding:4px 0;">None — this is why it auto-approves.</div>
                   }
@@ -602,7 +602,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                     <div class="invoice-row" [routerLink]="['/invoices', inv.id]">
                       <div>
                         <strong style="font-size:13px;">{{ inv.invoice_number }}</strong>
-                        <div style="font-size:11px;color:#888;">{{ inv.invoice_date | date:'dd MMM yyyy' }}</div>
+                        <div style="font-size:11px;color: var(--text-3);">{{ inv.invoice_date | date:'dd MMM yyyy' }}</div>
                       </div>
                       <div style="text-align:right;">
                         <strong style="font-size:13px;">₹{{ inv.amount | number:'1.0-0' }}</strong>
@@ -618,7 +618,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
               <mat-card style="margin-bottom:16px;">
                 <mat-card-header><mat-card-title>Invoices</mat-card-title></mat-card-header>
                 <mat-card-content style="padding:16px;">
-                  <div style="font-size:13px;color:#aaa;margin-bottom:10px;">No invoices raised yet.</div>
+                  <div style="font-size:13px;color: var(--text-3);margin-bottom:10px;">No invoices raised yet.</div>
                   @if (po()!.status === 'delivered') {
                     <button mat-stroked-button routerLink="/invoices/create" style="width:100%;">
                       <mat-icon>add</mat-icon> Raise Invoice
@@ -634,7 +634,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
                 <mat-card-content style="padding-top:16px;">
                   @for (att of po()!.attachments; track att.id) {
                     <div class="attachment-row">
-                      <mat-icon style="color:#888;">attach_file</mat-icon>
+                      <mat-icon style="color: var(--text-3);">attach_file</mat-icon>
                       <span>{{ att.original_name }}</span>
                     </div>
                   }
@@ -708,7 +708,7 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     }
     .main-col { min-width: 0; }
     .side-col { min-width: 0; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 130px), 1fr)); gap: 12px; }
     .full-span { grid-column: 1 / -1; }
     .field { }
     .label { font-size: 11px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 2px; }
@@ -724,11 +724,11 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .status-pr--rfq_approved { background:#ecfdf5; color:#059669; }
     .status-pr--rfq_created  { background:#eff6ff; color:#2563eb; }
     .status-pr--submitted    { background:#fffbeb; color:#d97706; }
-    .status-pr--draft        { background:#f1f5f9; color:#475569; }
+    .status-pr--draft        { background:#f3f2ed; color: var(--text-2); }
     .status-pr--rejected     { background:#fee2e2; color:#b91c1c; }
     .section-label { font-size: 12px; font-weight: 700; color: var(--text-1); white-space: nowrap; }
     .full-width { width: 100%; }
-    .hsn-tag { display: inline-block; background: #f0f4ff; color: #3730a3; font-size: 10px; font-family: monospace; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
+    .hsn-tag { display: inline-block; background: #f0f4ff; color: #3730a3; font-size: 11px; font-family: monospace; padding: 1px 5px; border-radius: 3px; margin-left: 6px; }
     .totals { display: flex; flex-direction: column; gap: 6px; }
     .total-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
     .total-row.grand { font-weight: 700; font-size: 16px; border-bottom: none; border-top: 2px solid #1976d2; padding-top: 10px; margin-top: 4px; }
@@ -756,19 +756,19 @@ import { ActivityTimelineComponent } from '../../shared/components/activity-time
     .approval-returned { background: #fff8e1; color: #f57f17; }
     .approval-body { flex: 1; }
     .approval-meta { display: flex; gap: 8px; align-items: center; margin: 4px 0; }
-    .approval-comment { font-size: 12px; color: #555; font-style: italic; background: #f5f5f5; padding: 6px 10px; border-radius: 4px; margin-top: 4px; }
+    .approval-comment { font-size: 12px; color: var(--text-2); font-style: italic; background: #f5f5f5; padding: 6px 10px; border-radius: 4px; margin-top: 4px; }
     .attachment-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
     .invoice-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f0f0f0; cursor:pointer; transition:background .12s; border-radius:6px; }
     .invoice-row:last-child { border-bottom:none; }
-    .invoice-row:hover { background:#f8faff; padding-left:6px; }
-    .inv-status { display:inline-block; padding:2px 8px; border-radius:99px; font-size:10px; font-weight:700; text-transform:capitalize; }
+    .invoice-row:hover { background:#faf9f6; padding-left:6px; }
+    .inv-status { display:inline-block; padding:2px 8px; border-radius:99px; font-size: 11px; font-weight:700; text-transform:capitalize; }
     .inv-status--pending  { background:#fff7ed; color:#c2410c; }
     .inv-status--approved { background:#ecfdf5; color:#065f46; }
     .inv-status--rejected { background:#fef2f2; color:#b91c1c; }
     .status-invoiced { background:#fef9c3 !important; color:#92400e !important; }
     .diag-row { display:flex; justify-content:space-between; gap:8px; padding:4px 0; border-bottom:1px solid var(--border); font-size:13px; }
-    .diag-cfg { padding:4px 0; color:#475569; border-bottom:1px solid #f8f8f8; }
-    .diag-type { display:inline-block; font-size:9px; font-weight:700; padding:1px 5px; border-radius:3px; background:#e2e8f0; color:#475569; margin-right:4px; }
+    .diag-cfg { padding:4px 0; color: var(--text-2); border-bottom:1px solid #f8f8f8; }
+    .diag-type { display:inline-block; font-size: 11px; font-weight:700; padding:1px 5px; border-radius:3px; background:#e8e7e2; color: var(--text-2); margin-right:4px; }
     .diag-type.diag-po { background:#c2410c; color:#fff; }
     .mat-column-description { flex: 3.5 !important; min-width: 260px !important; }
     .mat-column-sno { flex: 0.4 !important; min-width: 35px !important; }
@@ -1156,10 +1156,10 @@ export class PoDetailComponent implements OnInit {
       pdfWin.document.write(
         '<html><head><title>Loading PDF…</title></head>' +
         '<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;">' +
-        '<div style="text-align:center;color:#555;">' +
+        '<div style="text-align:center;color: var(--text-2);">' +
         '<div style="font-size:32px;margin-bottom:16px;">📄</div>' +
         '<div style="font-size:18px;font-weight:600;">Generating PDF…</div>' +
-        '<div style="font-size:13px;margin-top:8px;color:#888;">Please wait, this may take a few seconds.</div>' +
+        '<div style="font-size:13px;margin-top:8px;color: var(--text-3);">Please wait, this may take a few seconds.</div>' +
         '</div></body></html>'
       );
     }

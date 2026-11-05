@@ -478,7 +478,7 @@ export interface FormTemplate {
       font-size: 48px;
       width: 48px;
       height: 48px;
-      color: #cbd5e1;
+      color: var(--text-3);
     }
 
     .templates-grid {
@@ -489,7 +489,7 @@ export interface FormTemplate {
 
     .template-card {
       background: var(--surface, #ffffff);
-      border: 1px solid var(--border, #e2e8f0);
+      border: 1px solid var(--border, #e8e7e2);
       border-radius: 12px;
       padding: 20px;
       display: flex;
@@ -500,7 +500,7 @@ export interface FormTemplate {
     }
     .template-card:hover {
       box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-      border-color: #cbd5e1;
+      border-color: #d6d4cc;
       transform: translateY(-2px);
     }
 
@@ -543,8 +543,8 @@ export interface FormTemplate {
       font-weight: 600;
       padding: 3px 8px;
       border-radius: 6px;
-      background: #f1f5f9;
-      color: #475569;
+      background: #f3f2ed;
+      color: var(--text-2);
     }
 
     .template-title {
@@ -568,7 +568,7 @@ export interface FormTemplate {
     .card-stats {
       display: flex;
       align-items: center;
-      background: #f8fafc;
+      background: #faf9f6;
       border-radius: 8px;
       padding: 10px 14px;
       margin-bottom: 16px;
@@ -588,7 +588,7 @@ export interface FormTemplate {
     }
 
     .stat-lbl {
-      font-size: 10.5px;
+      font-size: 11px;
       color: var(--text-3, #64748b);
       text-transform: uppercase;
       letter-spacing: 0.04em;
@@ -597,14 +597,14 @@ export interface FormTemplate {
     .stat-divider {
       width: 1px;
       height: 24px;
-      background: #e2e8f0;
+      background: #e8e7e2;
     }
 
     .card-actions {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      border-top: 1px solid #f1f5f9;
+      border-top: 1px solid #f3f2ed;
       padding-top: 12px;
       margin-top: auto;
     }
@@ -612,7 +612,7 @@ export interface FormTemplate {
     .action-btn {
       font-size: 12px !important;
       font-weight: 600 !important;
-      color: #475569 !important;
+      color: var(--text-2) !important;
       padding: 0 8px !important;
     }
     .action-btn mat-icon {
@@ -623,7 +623,7 @@ export interface FormTemplate {
     }
 
     .delete-btn {
-      color: #94a3b8;
+      color: var(--text-3);
     }
     .delete-btn:hover {
       color: #dc2626;
@@ -665,7 +665,7 @@ export interface FormTemplate {
 
     .modal-header {
       padding: 18px 24px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -674,12 +674,12 @@ export interface FormTemplate {
       margin: 0;
       font-size: 18px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .modal-header p {
       margin: 4px 0 0;
       font-size: 12.5px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .modal-content {
@@ -692,8 +692,8 @@ export interface FormTemplate {
 
     .modal-footer {
       padding: 14px 24px;
-      border-top: 1px solid #e2e8f0;
-      background: #f8fafc;
+      border-top: 1px solid #e8e7e2;
+      background: #faf9f6;
       display: flex;
       justify-content: flex-end;
       gap: 10px;
@@ -701,7 +701,7 @@ export interface FormTemplate {
 
     .section-box {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 10px;
       padding: 16px;
     }
@@ -709,7 +709,7 @@ export interface FormTemplate {
     .section-title {
       font-size: 14px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-1);
       margin: 0 0 12px;
     }
 
@@ -721,7 +721,7 @@ export interface FormTemplate {
     }
     .sub-lbl {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .form-row {
@@ -741,19 +741,19 @@ export interface FormTemplate {
     .form-group label {
       font-size: 12.5px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-2);
     }
     .req { color: #dc2626; }
 
     .custom-input {
       padding: 9px 12px;
       font-size: 13.5px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       outline: none;
       transition: border-color 0.2s;
       background: #ffffff;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .custom-input:focus {
       border-color: var(--brand);
@@ -762,7 +762,7 @@ export interface FormTemplate {
 
     .field-hint {
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
       line-height: 1.4;
     }
 
@@ -782,20 +782,20 @@ export interface FormTemplate {
       align-items: center;
       gap: 12px;
       padding: 10px 14px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       border-radius: 8px;
-      background: #f8fafc;
+      background: #faf9f6;
       transition: background 0.15s;
     }
     .field-item:hover {
       background: #ffffff;
-      border-color: #cbd5e1;
+      border-color: #d6d4cc;
     }
 
     .field-index {
       font-size: 11px;
       font-weight: 700;
-      color: #94a3b8;
+      color: var(--text-3);
       width: 24px;
     }
 
@@ -814,11 +814,11 @@ export interface FormTemplate {
     .field-name {
       font-size: 13.5px;
       font-weight: 700;
-      color: #1e293b;
+      color: var(--text-1);
     }
 
     .required-badge {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       background: #fee2e2;
       color: #b91c1c;
@@ -827,12 +827,12 @@ export interface FormTemplate {
     }
 
     .type-tag {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       padding: 1px 6px;
       border-radius: 4px;
-      background: #e2e8f0;
-      color: #334155;
+      background: #e8e7e2;
+      color: var(--text-2);
     }
     .type-tag--file {
       background: #fef3c7;
@@ -840,7 +840,7 @@ export interface FormTemplate {
     }
 
     .mapping-tag {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       background: #e0f2fe;
       color: #0369a1;
@@ -849,7 +849,7 @@ export interface FormTemplate {
     }
 
     .doc-tag {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       background: #fdf4ff;
       color: #a21caf;
@@ -859,7 +859,7 @@ export interface FormTemplate {
 
     .field-subline {
       font-size: 11.5px;
-      color: #64748b;
+      color: var(--text-3);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -871,10 +871,10 @@ export interface FormTemplate {
       background: #ffffff;
       padding: 0 4px;
       border-radius: 4px;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #e8e7e2;
       color: var(--brand-text);
     }
-    .dot { color: #cbd5e1; }
+    .dot { color: var(--text-3); }
 
     .field-actions {
       display: flex;
@@ -894,7 +894,7 @@ export interface FormTemplate {
 
     /* Live Preview Styles */
     .preview-badge {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       background: #dcfce7;
@@ -906,8 +906,8 @@ export interface FormTemplate {
     }
 
     .preview-card {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      background: #faf9f6;
+      border: 1px solid #e8e7e2;
       border-radius: 12px;
       padding: 24px;
     }
@@ -918,7 +918,7 @@ export interface FormTemplate {
       gap: 14px;
       padding-bottom: 16px;
       margin-bottom: 20px;
-      border-bottom: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e8e7e2;
     }
     .preview-head-banner mat-icon {
       font-size: 32px;
@@ -930,16 +930,16 @@ export interface FormTemplate {
       margin: 0;
       font-size: 17px;
       font-weight: 700;
-      color: #0f172a;
+      color: var(--text-1);
     }
     .preview-head-banner span {
       font-size: 12px;
-      color: #64748b;
+      color: var(--text-3);
     }
 
     .preview-fields-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
       gap: 16px;
     }
     .preview-field-box.full-width {
@@ -950,7 +950,7 @@ export interface FormTemplate {
       display: block;
       font-size: 12.5px;
       font-weight: 600;
-      color: #334155;
+      color: var(--text-2);
       margin-bottom: 6px;
     }
 
@@ -959,14 +959,14 @@ export interface FormTemplate {
       box-sizing: border-box;
       padding: 10px 12px;
       font-size: 13px;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #d6d4cc;
       border-radius: 8px;
       background: #ffffff;
-      color: #0f172a;
+      color: var(--text-1);
     }
 
     .preview-file-dropzone {
-      border: 2px dashed #cbd5e1;
+      border: 2px dashed #d6d4cc;
       border-radius: 8px;
       background: #ffffff;
       padding: 20px;
@@ -974,7 +974,7 @@ export interface FormTemplate {
       flex-direction: column;
       align-items: center;
       gap: 4px;
-      color: #64748b;
+      color: var(--text-3);
     }
     .preview-file-dropzone mat-icon {
       color: var(--brand-text);
@@ -984,7 +984,7 @@ export interface FormTemplate {
     }
     .file-help {
       font-size: 11px;
-      color: #94a3b8;
+      color: var(--text-3);
     }
 
     .preview-multiselect-wrap {
@@ -997,24 +997,24 @@ export interface FormTemplate {
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
+      background: #f3f2ed;
+      border: 1px solid #d6d4cc;
       padding: 4px 8px;
       border-radius: 6px;
       font-size: 11.5px;
-      color: #334155;
+      color: var(--text-2);
     }
     .preview-opt-pill mat-icon {
       font-size: 14px;
       width: 14px;
       height: 14px;
-      color: #94a3b8;
+      color: var(--text-3);
     }
 
     .preview-help {
       display: block;
       font-size: 11px;
-      color: #64748b;
+      color: var(--text-3);
       margin-top: 4px;
     }
   `]

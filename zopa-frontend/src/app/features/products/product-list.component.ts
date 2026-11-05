@@ -193,7 +193,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .filter-row { display:flex; gap:6px; margin-bottom:16px; }
 
     .full-width { width:100%; }
-    .hover-row:hover { background:#fafafa; }
+    .hover-row:hover { background:#faf9f6; }
 
     .name-cell { display:flex; align-items:center; gap:10px; padding:4px 0; }
     .avatar {
@@ -208,12 +208,12 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
 
     .mono-tag {
       font-family:monospace; font-size:12px; font-weight:600;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       padding:2px 8px; border-radius:5px;
     }
     .tag {
       display:inline-block; font-size:12px; font-weight:500;
-      background:#f1f5f9; color:var(--text-2);
+      background:#f3f2ed; color:var(--text-2);
       padding:2px 8px; border-radius:5px;
     }
     .tag.gst { background:#eff6ff; color:#2563eb; }
@@ -226,6 +226,7 @@ import { SearchFieldComponent } from '../../shared/components/search-field.compo
     .import-errors-head button { margin-left:auto; }
     .import-errors ul { margin:8px 0 0; padding-left:34px; }
     .import-errors li { font-size:12.5px; color:#7c2d12; margin:2px 0; }
+    @media (max-width: 600px) { .mat-column-unit, .mat-column-hsn_code, .mat-column-gst_rate, .mat-column-status { display: none; } .table-responsive table { min-width: 0; } }
   `],
 })
 export class ProductListComponent implements OnInit {
