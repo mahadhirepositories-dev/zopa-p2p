@@ -39,7 +39,7 @@ import { AuthService } from '../../core/auth/auth.service';
           <p>Generate executive operational reports, review pipeline TAT, and brief client approvers.</p>
         </div>
         <div class="header-actions">
-          @if (activeTab === 0 && !editingReport()) {
+          @if (activeTab === 0 && !editingReport() && auth.canDo('reports', 'create')) {
             <button mat-raised-button color="primary" (click)="startNewReport()" [disabled]="startingReport()">
               @if (startingReport()) {
                 <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
@@ -52,14 +52,16 @@ import { AuthService } from '../../core/auth/auth.service';
             <button mat-stroked-button (click)="closeEditor()">
               <mat-icon>arrow_back</mat-icon> Back to Reports List
             </button>
-            <button mat-stroked-button color="primary" (click)="saveReportDraft()" [disabled]="savingReport()">
-              @if (savingReport()) {
-                <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
-              } @else {
-                <mat-icon>save</mat-icon>
-              }
-              Save Draft
-            </button>
+            @if (auth.canDo('reports', 'edit')) {
+              <button mat-stroked-button color="primary" (click)="saveReportDraft()" [disabled]="savingReport()">
+                @if (savingReport()) {
+                  <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
+                } @else {
+                  <mat-icon>save</mat-icon>
+                }
+                Save Draft
+              </button>
+            }
             <button mat-stroked-button (click)="previewPdf(editingReport())" [disabled]="previewingPdf()">
               @if (previewingPdf()) {
                 <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
@@ -68,9 +70,11 @@ import { AuthService } from '../../core/auth/auth.service';
               }
               View PDF
             </button>
-            <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
-              <mat-icon>send</mat-icon> Send to Client
-            </button>
+            @if (auth.canDo('reports', 'edit')) {
+              <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
+                <mat-icon>send</mat-icon> Send to Client
+              </button>
+            }
           }
         </div>
       </div>
@@ -102,10 +106,12 @@ import { AuthService } from '../../core/auth/auth.service';
               <div class="empty-state">
                 <mat-icon>assessment</mat-icon>
                 <h3>No operational reports yet</h3>
-                <p>Click "Start Operational Report" to auto-fetch live PRs, approvals, and deliveries and create your first executive review.</p>
-                <button mat-raised-button color="primary" style="margin-top:12px;" (click)="startNewReport()">
-                  <mat-icon>add_chart</mat-icon> Start First Operational Report
-                </button>
+                @if (auth.canDo('reports', 'create')) {
+                  <p>Click "Start Operational Report" to auto-fetch live PRs, approvals, and deliveries and create your first executive review.</p>
+                  <button mat-raised-button color="primary" style="margin-top:12px;" (click)="startNewReport()">
+                    <mat-icon>add_chart</mat-icon> Start First Operational Report
+                  </button>
+                }
               </div>
             } @else {
               <div style="overflow-x:auto;">
@@ -162,10 +168,12 @@ import { AuthService } from '../../core/auth/auth.service';
                             <button mat-icon-button (click)="previewPdf(r)" matTooltip="View PDF">
                               <mat-icon>picture_as_pdf</mat-icon>
                             </button>
-                            <button mat-icon-button color="primary" (click)="openSendModal(r)" matTooltip="Send to client approver">
-                              <mat-icon>send</mat-icon>
-                            </button>
-                            @if (r.status === 'draft') {
+                            @if (auth.canDo('reports', 'edit')) {
+                              <button mat-icon-button color="primary" (click)="openSendModal(r)" matTooltip="Send to client approver">
+                                <mat-icon>send</mat-icon>
+                              </button>
+                            }
+                            @if (r.status === 'draft' && auth.canDo('reports', 'delete')) {
                               <button mat-icon-button color="warn" (click)="deleteReport(r)" matTooltip="Delete draft">
                                 <mat-icon>delete</mat-icon>
                               </button>
@@ -510,14 +518,16 @@ import { AuthService } from '../../core/auth/auth.service';
               <mat-icon>arrow_back</mat-icon> Back to Reports List
             </button>
             <div style="display:flex;gap:12px;">
-              <button mat-stroked-button color="primary" (click)="saveReportDraft()" [disabled]="savingReport()">
-                @if (savingReport()) {
-                  <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
-                } @else {
-                  <mat-icon>save</mat-icon>
-                }
-                Save Draft
-              </button>
+              @if (auth.canDo('reports', 'edit')) {
+                <button mat-stroked-button color="primary" (click)="saveReportDraft()" [disabled]="savingReport()">
+                  @if (savingReport()) {
+                    <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
+                  } @else {
+                    <mat-icon>save</mat-icon>
+                  }
+                  Save Draft
+                </button>
+              }
               <button mat-stroked-button (click)="previewPdf(editingReport())" [disabled]="previewingPdf()">
                 @if (previewingPdf()) {
                   <mat-spinner diameter="16" style="margin-right:6px;display:inline-block;" />
@@ -526,9 +536,11 @@ import { AuthService } from '../../core/auth/auth.service';
                 }
                 View PDF
               </button>
-              <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
-                <mat-icon>send</mat-icon> Send to Client
-              </button>
+              @if (auth.canDo('reports', 'edit')) {
+                <button mat-raised-button color="primary" (click)="openSendModal(editingReport())">
+                  <mat-icon>send</mat-icon> Send to Client
+                </button>
+              }
             </div>
           </div>
 
@@ -1169,7 +1181,7 @@ export class ReportsComponent implements OnInit {
 
     // If currently editing this report, save draft first to include latest edits
     const rep = this.editingReport();
-    if (rep && rep.id === report.id) {
+    if (rep && rep.id === report.id && this.auth.canDo('reports', 'edit')) {
       this.http.put<any>(`${environment.apiUrl}/operational-reports/${rep.id}`, rep).subscribe({
         next: (res) => {
           this.editingReport.set(res.report);

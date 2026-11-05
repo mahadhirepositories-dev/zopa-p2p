@@ -431,7 +431,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       <p><strong>🔒 Strict Organization Data Isolation:</strong></p>
       <ul>
         <li><strong>Organization Data Privacy Guarantee:</strong> All document records (PRs, POs, GRNs, Invoices), budgets, cost centers, and report analytics are strictly isolated per Organization (<code>tenant_id</code>).</li>
-        <li><strong>Organization Users:</strong> Organization Admins, Buyers, Requesters, and Approvers exclusively view their own Organization's Executive Summary Dashboard. Non-associated organization data is strictly inaccessible.</li>
+        <li><strong>Organization Users:</strong> Organization Admins, Buyers, and Approvers exclusively view their own Organization's Executive Summary Dashboard. PR and GRN users do not see it, because it reports Purchase Order values. Non-associated organization data is strictly inaccessible.</li>
         <li><strong>ZOPA Super Admins:</strong> Only platform Super Admins can access cross-organization aggregate stats or use the Organization Switcher picker.</li>
       </ul>
       <p><strong>18 Executive KPIs Tracked:</strong></p>

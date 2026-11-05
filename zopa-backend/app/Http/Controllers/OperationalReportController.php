@@ -12,6 +12,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\PdfService;
 use App\Mail\OperationalReportMail;
+use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -22,11 +23,22 @@ use Symfony\Component\HttpFoundation\Response;
 
 class OperationalReportController extends Controller
 {
+    use AuthorizesRoles;
+
+    /** Route binding finds any organization's report, so the tenant is checked alongside the matrix. */
+    private function authorizeReport(OperationalReport $report, string $action): void
+    {
+        $this->requirePermission('reports', $action);
+        abort_if($report->tenant_id !== app('currentTenant')->id, 403);
+    }
+
     /**
      * List past operational reports for the current tenant.
      */
     public function index(Request $request): JsonResponse
     {
+        $this->requirePermission('reports', 'view');
+
         $tenant = app('currentTenant');
         $reports = OperationalReport::with(['creator:id,name,email', 'sender:id,name,email'])
             ->where('tenant_id', $tenant->id)
@@ -41,6 +53,8 @@ class OperationalReportController extends Controller
      */
     public function clientApprovers(Request $request): JsonResponse
     {
+        $this->requirePermission('reports', 'view');
+
         $tenant = app('currentTenant');
 
         $approverUsers = User::whereHas('tenantRoles', function ($q) use ($tenant) {
@@ -64,6 +78,8 @@ class OperationalReportController extends Controller
      */
     public function start(Request $request): JsonResponse
     {
+        $this->requirePermission('reports', 'create');
+
         $tenant = app('currentTenant');
         $user   = auth()->user();
 
@@ -269,6 +285,8 @@ class OperationalReportController extends Controller
      */
     public function show(OperationalReport $operationalReport): JsonResponse
     {
+        $this->authorizeReport($operationalReport, 'view');
+
         $operationalReport->loadMissing(['creator:id,name,email', 'sender:id,name,email', 'tenant']);
         return response()->json($operationalReport);
     }
@@ -279,6 +297,8 @@ class OperationalReportController extends Controller
      */
     public function update(Request $request, OperationalReport $operationalReport): JsonResponse
     {
+        $this->authorizeReport($operationalReport, 'edit');
+
         $validated = $request->validate([
             'title'                 => 'sometimes|string|max:255',
             'period_start'          => 'nullable|date',
@@ -305,8 +325,8 @@ class OperationalReportController extends Controller
             ->toArray();
         $validated['cc_emails'] = $ccList;
 
-        // Synchronize corrected PR statuses directly to purchase_requisitions
-        if ($request->boolean('sync_to_live', true) && !empty($validated['open_prs_data'])) {
+        // Synchronize corrected PR statuses directly to purchase_requisitions, for roles that may edit PRs
+        if ($request->boolean('sync_to_live', true) && $this->can('purchase_requisitions', 'edit') && !empty($validated['open_prs_data'])) {
             foreach ($validated['open_prs_data'] as $prRow) {
                 if (!empty($prRow['id']) && !empty($prRow['status'])) {
                     $pr = PurchaseRequisition::where('tenant_id', $operationalReport->tenant_id)->find($prRow['id']);
@@ -333,6 +353,9 @@ class OperationalReportController extends Controller
      */
     public function pdf(OperationalReport $operationalReport)
     {
+        // Outside the try, whose catch would turn this 403 into a 500.
+        $this->authorizeReport($operationalReport, 'view');
+
         try {
             $operationalReport->loadMissing(['tenant', 'creator', 'sender']);
 
@@ -362,6 +385,8 @@ class OperationalReportController extends Controller
      */
     public function send(Request $request, OperationalReport $operationalReport): JsonResponse
     {
+        $this->authorizeReport($operationalReport, 'edit');
+
         $request->validate([
             'recipient_email' => 'required|email',
             'recipient_name'  => 'nullable|string|max:255',
@@ -427,6 +452,8 @@ class OperationalReportController extends Controller
      */
     public function destroy(OperationalReport $operationalReport): JsonResponse
     {
+        $this->authorizeReport($operationalReport, 'delete');
+
         $operationalReport->delete();
         return response()->json(['message' => 'Operational report deleted successfully.']);
     }

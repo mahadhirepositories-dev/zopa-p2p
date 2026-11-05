@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TatRecord;
+use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -10,11 +11,15 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
 {
+    use AuthorizesRoles;
+
     /**
      * TAT report: PR→PO Draft, PR→Approval, PR→Release, PR→Delivery, PR→Invoice
      */
     public function poTat(Request $request): JsonResponse|Response
     {
+        $this->requirePermission('reports', 'view');
+
         $tenant = app('currentTenant');
 
         $query = TatRecord::with([

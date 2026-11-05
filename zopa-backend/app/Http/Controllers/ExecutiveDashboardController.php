@@ -13,6 +13,7 @@ use App\Models\PurchaseRequisition;
 use App\Models\TatRecord;
 use App\Models\Tenant;
 use App\Models\Vendor;
+use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -22,6 +23,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExecutiveDashboardController extends Controller
 {
+    use AuthorizesRoles;
+
     /**
      * Get all 18 Executive KPIs for presentation and reporting.
      * ZOPA Admin can pass ?tenant_id=X (0 = All Entities).
@@ -29,6 +32,9 @@ class ExecutiveDashboardController extends Controller
      */
     public function stats(Request $request): JsonResponse
     {
+        // Outside the try, whose catch would turn this 403 into a 500.
+        $this->authorizeDashboard();
+
         try {
             $scope = $this->determineScope($request);
             $tenantId = $scope['tenant_id']; // 0 = all client tenants, >0 = specific tenant
@@ -44,6 +50,9 @@ class ExecutiveDashboardController extends Controller
               'tenant_id'     => $tenantId,
               'tenant_name'   => $scope['tenant_name'],
             ];
+            if (!$this->can('purchase_requisitions', 'view')) {
+                $kpis['pending_pr_tracking'] = [];
+            }
 
             return response()->json($kpis);
         } catch (\Throwable $e) {
@@ -65,6 +74,8 @@ class ExecutiveDashboardController extends Controller
      */
     public function export(Request $request): StreamedResponse
     {
+        $this->authorizeDashboard();
+
         $scope = $this->determineScope($request);
         $tenantId = $scope['tenant_id'];
         $orgName = $scope['tenant_name'];
@@ -158,6 +169,13 @@ class ExecutiveDashboardController extends Controller
     }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
+
+    /** executive_dashboard view is on for every role by default, and this page is built on PO values, so it takes PO view too. */
+    private function authorizeDashboard(): void
+    {
+        $this->requirePermission('executive_dashboard', 'view');
+        $this->requirePermission('purchase_orders', 'view');
+    }
 
     private function determineScope(Request $request): array
     {

@@ -111,8 +111,9 @@ trait AuthorizesRoles
         }
 
         // The Access Control matrix is AUTHORITATIVE and fail-closed:
-        // roleCanDo() returns false when no row grants the action, so a role
-        // can do exactly what the matrix says — no more, no less.
+        // roleCanDo() returns false when no row grants the action (bar the view
+        // default the matrix itself gives the two dashboards), so a role can do
+        // exactly what the matrix says — no more, no less.
         return app(\App\Services\PermissionService::class)->roleCanDo($role, $module, $action);
     }
 }

@@ -22,6 +22,9 @@ class PermissionService
     /** zopa_super_admin is always allowed to do everything. */
     private const SUPER_ADMIN = 'zopa_super_admin';
 
+    /** Modules every role may view until Access Control records otherwise. */
+    private const DEFAULT_VIEW_MODULES = ['dashboard', 'executive_dashboard'];
+
     /**
      * Check whether $role may perform $action on $module.
      *
@@ -46,7 +49,8 @@ class PermissionService
         );
 
         if (!$perm) {
-            return false;
+            // The same default buildMatrix() shows on the Access Control screen.
+            return $action === 'view' && in_array($module, self::DEFAULT_VIEW_MODULES, true);
         }
 
         return match ($action) {
@@ -100,7 +104,7 @@ class PermissionService
         foreach ($roles as $role) {
             foreach ($modules as $module) {
                 $matrix[$role][$module] = [
-                    'can_view'   => in_array($module, ['dashboard', 'executive_dashboard'], true),
+                    'can_view'   => in_array($module, self::DEFAULT_VIEW_MODULES, true),
                     'can_create' => false,
                     'can_edit'   => false,
                     'can_delete' => false,

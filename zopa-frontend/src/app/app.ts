@@ -75,7 +75,7 @@ import { filter } from 'rxjs/operators';
                     <mat-icon>dashboard</mat-icon><span>Dashboard</span>
                   </a>
                 }
-                @if (auth.canDo('executive_dashboard','view')) {
+                @if (auth.canDo('executive_dashboard','view') && auth.canDo('purchase_orders','view')) {
                   <a class="nav-link" routerLink="/executive-dashboard" routerLinkActive="nav-link--active">
                     <mat-icon>analytics</mat-icon><span>Executive Dashboard</span>
                   </a>
