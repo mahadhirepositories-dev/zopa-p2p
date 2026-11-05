@@ -59,7 +59,9 @@ class ResetPoToDraftTest extends TestCase
         // PO back to a clean draft.
         $po->refresh();
         $this->assertSame('draft', $po->status);
-        $this->assertNull($po->po_number);
+        // The issued number and date stay, so re-approval reuses them instead of burning a new number.
+        $this->assertSame('2605/03/ACME-PO-2026-0001', $po->po_number);
+        $this->assertNotNull($po->po_date);
         $this->assertNull($po->approved_at);
         $this->assertNull($po->released_at);
         $this->assertNull($po->delivered_at);

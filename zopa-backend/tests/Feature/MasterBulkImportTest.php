@@ -88,11 +88,13 @@ class MasterBulkImportTest extends TestCase
         $import = new BoqImport('po');
         $import->collection(collect([
             ['description' => 'Laptop', 'hsn_code' => '8471', 'qty' => 4, 'unit' => 'Nos', 'net_rate' => 55000, 'gst_rate' => 18, 'required_by' => '2026-07-15', 'warranty_months' => 12],
-            ['description' => 'Bad', 'qty' => 0, 'net_rate' => 100, 'gst_rate' => 18], // qty invalid
+            ['description' => 'Catalog row', 'qty' => 0, 'net_rate' => 100, 'gst_rate' => 18], // zero qty: skipped, not an error
+            ['description' => 'Bad', 'qty' => 'abc', 'net_rate' => 100, 'gst_rate' => 18], // qty invalid
             ['description' => ''], // skipped
         ]));
 
         $this->assertCount(1, $import->items);
+        $this->assertSame(['Catalog row'], $import->skippedZeroQty);
         $this->assertCount(1, $import->errors);
         $this->assertEquals(4.0, $import->items[0]['qty']);
         $this->assertEquals('2026-07-15', $import->items[0]['required_by']);
