@@ -29,19 +29,10 @@ class PdfService
             @mkdir($fontDir, 0775, true);
         }
 
-        // For large POs (> 35 items), DomPDF struggles with memory and page breaks.
-        // wkhtmltopdf (Snappy) compiles C++ WebKit and renders 200+ items in < 1 second.
-        $itemCount = $po->items ? $po->items->count() : 0;
+        // Every PO goes through DomPDF: the server's wkhtmltopdf is unpatched Qt, which cannot
+        // repeat the PO number on each page. DomPDF renders 400 items in about 5s and 250MB.
         $binary = config('snappy.pdf.binary', '/usr/bin/wkhtmltopdf');
         $hasSnappy = static::binaryExists($binary);
-
-        if ($itemCount > 35 && $hasSnappy) {
-            try {
-                return static::generateWithSnappy('pdf.purchase-order', ['po' => $po], $binary);
-            } catch (\Throwable $e) {
-                Log::warning('[PdfService] Snappy failed for large PO, falling back to DomPDF: ' . $e->getMessage());
-            }
-        }
 
         try {
             return static::generateWithDomPdf('pdf.purchase-order', ['po' => $po]);

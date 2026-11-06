@@ -64,7 +64,8 @@ body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 9.5px; margin: 
 </style>
 </head>
 <body>
-  <div class="repeat-header">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>
+  {{-- wkhtmltopdf (fallback only) cannot repeat it and draws it over the title, so DomPDF only --}}
+  @if($is_dompdf ?? false)<div class="repeat-header">PO No: {{ $po->po_number ?? 'DRAFT' }}</div>@endif
 
   <style>
 /* ── Items table ─────────────────────────────────────── */
