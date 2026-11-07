@@ -182,41 +182,8 @@ const PO_STAGES = [
       @if (stats(); as s) {
         <div class="ui-stack" [class.refreshing]="loading()" [attr.aria-busy]="loading()">
 
-          <div class="ui-grid-lead dash-top">
-            <!-- First in the DOM so phones lead with what needs doing; wide layouts move it beside the hero. -->
-            <section class="ui-panel attention" aria-labelledby="attention-title">
-              <div class="ui-panel-head">
-                <h3 id="attention-title">Needs attention</h3>
-                <span class="ui-panel-note">Right now</span>
-              </div>
-              @if (attention().length) {
-                <ul class="attn-list">
-                  @for (a of attention(); track a.key) {
-                    <li>
-                      @if (a.link) {
-                        <a class="attn-row" [routerLink]="a.link" [queryParams]="a.status ? { status: a.status } : null">
-                          <ng-container [ngTemplateOutlet]="attnRow" [ngTemplateOutletContext]="{ $implicit: a }" />
-                        </a>
-                      } @else {
-                        <button class="attn-row" (click)="openTab(a.tab!)">
-                          <ng-container [ngTemplateOutlet]="attnRow" [ngTemplateOutletContext]="{ $implicit: a }" />
-                        </button>
-                      }
-                    </li>
-                  }
-                </ul>
-              } @else {
-                <div class="all-clear">
-                  <mat-icon>check_circle</mat-icon>
-                  <div>
-                    <strong>Nothing needs attention</strong>
-                    <span>Approvals, late deliveries and budget alerts will show here.</span>
-                  </div>
-                </div>
-              }
-            </section>
-
-            @if (canSeePos()) {
+          @if (canSeePos()) {
+            <div class="ui-grid-lead">
               <section class="ui-hero" aria-labelledby="hero-title">
                 <div class="ui-hero-head">
                   <h3 id="hero-title">PO value</h3>
@@ -252,11 +219,6 @@ const PO_STAGES = [
                   <p class="trend-empty">The monthly trend appears once POs are raised.</p>
                 }
               </section>
-            }
-          </div>
-
-          <div class="ui-grid-even">
-            @if (canSeePos()) {
               <section class="ui-panel" aria-labelledby="tat-title">
                 <div class="ui-panel-head">
                   <h3 id="tat-title">Turnaround time</h3>
@@ -285,7 +247,41 @@ const PO_STAGES = [
                   }
                 </ul>
               </section>
-            }
+            </div>
+          }
+
+          <div class="ui-grid-even">
+            <section class="ui-panel" aria-labelledby="attention-title">
+              <div class="ui-panel-head">
+                <h3 id="attention-title">Needs attention</h3>
+                <span class="ui-panel-note">Right now</span>
+              </div>
+              @if (attention().length) {
+                <ul class="attn-list">
+                  @for (a of attention(); track a.key) {
+                    <li>
+                      @if (a.link) {
+                        <a class="attn-row" [routerLink]="a.link" [queryParams]="a.status ? { status: a.status } : null">
+                          <ng-container [ngTemplateOutlet]="attnRow" [ngTemplateOutletContext]="{ $implicit: a }" />
+                        </a>
+                      } @else {
+                        <button class="attn-row" (click)="openTab(a.tab!)">
+                          <ng-container [ngTemplateOutlet]="attnRow" [ngTemplateOutletContext]="{ $implicit: a }" />
+                        </button>
+                      }
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <div class="all-clear">
+                  <mat-icon>check_circle</mat-icon>
+                  <div>
+                    <strong>Nothing needs attention</strong>
+                    <span>Approvals, late deliveries and budget alerts will show here.</span>
+                  </div>
+                </div>
+              }
+            </section>
 
             @if (auth.canDo('cost_centers', 'view')) {
               <section class="ui-panel" aria-labelledby="budget-title">
@@ -735,12 +731,6 @@ const PO_STAGES = [
     .refresh-error span { flex: 1; min-width: 0; }
     .refresh-error button { flex-shrink: 0; }
 
-
-    /* Phones lead with what needs doing; wide layouts move it beside the hero */
-    @container (min-width: 860px) {
-      .dash-top .attention { order: 2; }
-      .dash-top .attention:only-child { grid-column: 1 / -1; }
-    }
 
     /* ── Needs attention ── */
     .attn-list { list-style: none; margin: 0 -8px; padding: 0; }
