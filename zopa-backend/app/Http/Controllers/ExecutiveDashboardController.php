@@ -312,9 +312,10 @@ class ExecutiveDashboardController extends Controller
 
         // 7 to 10. Value share and savings by category, on issued POs.
         // A saving needs a PO line traced to a PR line with an estimated price; both rates are before GST.
+        // A PO line ordering more than its PR line counts in another unit (tablets against lots), so it is left out.
         $issuedPoIds = (clone $poBase)->whereNotIn('status', ['draft', 'cancelled'])->pluck('id');
         $poItems = PoItem::whereIn('po_id', $issuedPoIds)
-            ->with(['product.category', 'prItem:id,estimated_price'])
+            ->with(['product.category', 'prItem:id,qty,estimated_price'])
             ->get();
 
         $categorySpendGroup = [];
@@ -324,7 +325,7 @@ class ExecutiveDashboardController extends Controller
 
             $group['spend'] += (float) $item->amount;
             $estimatedPrice = (float) ($item->prItem?->estimated_price ?? 0);
-            if ($estimatedPrice > 0) {
+            if ($estimatedPrice > 0 && (float) $item->qty <= (float) $item->prItem->qty) {
                 $group['estimate'] += $estimatedPrice * (float) $item->qty;
                 $group['actual']   += (float) $item->net_rate * (float) $item->qty;
             }

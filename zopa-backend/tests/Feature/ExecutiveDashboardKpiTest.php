@@ -72,14 +72,14 @@ class ExecutiveDashboardKpiTest extends TestCase
         ]);
     }
 
-    /** A PO line priced at $netRate, optionally traced to a PR line estimated at $estimate. */
-    private function poLine(PurchaseOrder $po, float $netRate, float $qty, ?float $estimate = null): PoItem
+    /** A PO line priced at $netRate, optionally traced to a PR line of $prQty (default $qty) estimated at $estimate. */
+    private function poLine(PurchaseOrder $po, float $netRate, float $qty, ?float $estimate = null, ?float $prQty = null): PoItem
     {
         $prItemId = null;
         if ($estimate !== null) {
             $prItemId = PrItem::create([
                 'pr_id' => $this->pr()->id, 'sno' => 1, 'description' => 'Laptop',
-                'qty' => $qty, 'estimated_price' => $estimate,
+                'qty' => $prQty ?? $qty, 'estimated_price' => $estimate,
             ])->id;
         }
 
@@ -262,6 +262,20 @@ class ExecutiveDashboardKpiTest extends TestCase
 
         $this->assertEquals(-200, $stats['category_spend'][0]['savings']);
         $this->assertEquals(0, $stats['total_savings_realized']);
+    }
+
+    public function test_lines_ordering_more_than_the_pr_asked_for_are_left_out(): void
+    {
+        // As on TH/2026-27/73: the PR counted 3 lots at 10,500, the PO buys 21,000 tablets. The units differ.
+        $po = $this->po();
+        $this->poLine($po, netRate: 0.88, qty: 21000, estimate: 10500, prQty: 3);
+        $this->poLine($po, netRate: 100, qty: 10, estimate: 110);
+
+        $stats = $this->stats();
+
+        $this->assertEquals(1100, $stats['category_spend'][0]['estimated_budget']);
+        $this->assertEquals(100, $stats['total_savings_realized']);
+        $this->assertEquals(9.1, $stats['avg_savings_percentage']);
     }
 
     public function test_lines_without_a_pr_estimate_show_no_savings(): void

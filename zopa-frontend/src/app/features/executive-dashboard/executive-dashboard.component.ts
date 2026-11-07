@@ -126,7 +126,7 @@ const PERIODS = [
                   }
                 </div>
               </div>
-              <p class="exec-note">PO rates against PR estimates, only on lines with an estimated price.</p>
+              <p class="exec-note">PO rates against PR estimates, only on lines with an estimated price that order no more than the PR asked for.</p>
             </section>
           </div>
 
