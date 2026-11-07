@@ -880,7 +880,7 @@ export class DashboardComponent {
   expandedKpi = signal<number | null>(null);
   tabIndex    = signal(0);
 
-  selectedPeriod = signal<string>('all');
+  selectedPeriod = signal<string>('last_month');
   fromDate = signal<string>('');
   toDate   = signal<string>('');
 
