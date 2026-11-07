@@ -73,6 +73,7 @@ const PERIODS = [
   { key: 'today',      label: 'Today' },
   { key: 'this_week',  label: 'This Week' },
   { key: 'this_month', label: 'This Month' },
+  { key: 'last_month', label: 'Last Month' },
   { key: 'this_year',  label: 'This Year' },
   { key: 'custom',     label: 'Custom Range' },
 ];
@@ -81,6 +82,7 @@ const DELTA_LABEL: Record<string, string> = {
   today: 'vs this time yesterday',
   this_week: 'vs this point last week',
   this_month: 'vs this point last month',
+  last_month: 'vs the month before',
   this_year: 'vs this point last year',
 };
 

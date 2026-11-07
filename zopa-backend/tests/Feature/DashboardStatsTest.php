@@ -165,6 +165,25 @@ class DashboardStatsTest extends TestCase
         $this->assertNull($this->stats()['spend']['previous_value'], 'All time has nothing to compare with');
     }
 
+    public function test_last_month_covers_the_whole_previous_month(): void
+    {
+        Carbon::setTestNow('2026-03-15 12:00:00');
+
+        foreach ([['2026-02-28 23:59:59', 4, 300], ['2026-03-01 00:00:00', 2, 100], ['2026-01-31 23:59:59', 9, 50]] as [$createdAt, $days, $total]) {
+            $po = $this->po(['grand_total' => $total, 'created_at' => $createdAt]);
+            TatRecord::create(['po_id' => $po->id, 'po_created_at' => $createdAt, 'po_approved_at' => Carbon::parse($createdAt)->addDays($days)]);
+        }
+
+        $last = $this->stats(['period' => 'last_month']);
+        $this->assertEquals(4, $last['tat_summary']['avg_approval_days']);
+        $this->assertEquals(300, $last['spend']['value']);
+        $this->assertEquals(50, $last['spend']['previous_value'], 'A whole month compares with the whole month before');
+
+        $current = $this->stats(['period' => 'this_month']);
+        $this->assertEquals(2, $current['tat_summary']['avg_approval_days']);
+        $this->assertEquals(100, $current['spend']['value']);
+    }
+
     public function test_po_value_trend_covers_six_months_whatever_the_period(): void
     {
         Carbon::setTestNow('2026-03-15 12:00:00');

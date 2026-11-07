@@ -18,7 +18,7 @@ class AdminDashboardController extends Controller
 {
     /**
      * Consolidated stats across all tenants (or scoped to one if ?tenant_id= provided).
-     * Accepts period (all, today, this_week, this_month, this_year, custom) and optional from_date & to_date.
+     * Accepts period (all, today, this_week, this_month, last_month, this_year, custom) and optional from_date & to_date.
      */
     public function stats(Request $request): JsonResponse
     {
@@ -178,6 +178,7 @@ class AdminDashboardController extends Controller
             'today'      => $query->whereDate($column, now()->toDateString()),
             'this_week'  => $query->whereBetween($column, [now()->startOfWeek(), now()->endOfWeek()]),
             'this_month' => $query->whereBetween($column, [now()->startOfMonth(), now()->endOfMonth()]),
+            'last_month' => $query->whereBetween($column, [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()]),
             'this_year'  => $query->whereBetween($column, [now()->startOfYear(), now()->endOfYear()]),
             'custom'     => ($fromDate && $toDate)
                             ? $query->whereBetween($column, [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])

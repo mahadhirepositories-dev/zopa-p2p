@@ -107,6 +107,24 @@ class AdminDashboardStatsTest extends TestCase
         }
     }
 
+    public function test_last_month_and_this_month_meet_at_the_month_boundary(): void
+    {
+        foreach ([[now()->startOfMonth()->subSecond(), 4], [now()->startOfMonth(), 2]] as [$createdAt, $days]) {
+            $po = $this->po(['created_at' => $createdAt]);
+            TatRecord::create(['po_id' => $po->id, 'po_created_at' => $createdAt, 'po_approved_at' => $createdAt->copy()->addDays($days)]);
+        }
+
+        foreach ($this->scopes() as $scope) {
+            $last = $this->stats($scope + ['period' => 'last_month']);
+            $this->assertEquals(4, $last['tat_summary']['avg_approval_days']);
+            $this->assertSame(1, $last['po']['total']);
+
+            $current = $this->stats($scope + ['period' => 'this_month']);
+            $this->assertEquals(2, $current['tat_summary']['avg_approval_days']);
+            $this->assertSame(1, $current['po']['total']);
+        }
+    }
+
     public function test_export_says_no_data_instead_of_zero_days(): void
     {
         $csv = $this->get('/api/admin/dashboard/export')->assertOk()->streamedContent();

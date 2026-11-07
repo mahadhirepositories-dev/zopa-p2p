@@ -41,6 +41,7 @@ class DashboardController extends Controller
                 'today'      => $query->whereDate($dateColumn, now()->toDateString()),
                 'this_week'  => $query->whereBetween($dateColumn, [now()->startOfWeek(), now()->endOfWeek()]),
                 'this_month' => $query->whereBetween($dateColumn, [now()->startOfMonth(), now()->endOfMonth()]),
+                'last_month' => $query->whereBetween($dateColumn, [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()]),
                 'this_year'  => $query->whereBetween($dateColumn, [now()->startOfYear(), now()->endOfYear()]),
                 'custom'     => ($fromDate && $toDate) 
                                 ? $query->whereBetween($dateColumn, [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
@@ -84,6 +85,7 @@ class DashboardController extends Controller
             'today'      => [now()->subDay()->startOfDay(), now()->subDay()],
             'this_week'  => [now()->subWeek()->startOfWeek(), now()->subWeek()],
             'this_month' => [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()],
+            'last_month' => [now()->subMonthsNoOverflow(2)->startOfMonth(), now()->subMonthsNoOverflow(2)->endOfMonth()],
             'this_year'  => [now()->subYear()->startOfYear(), now()->subYear()],
             default      => null,
         };
