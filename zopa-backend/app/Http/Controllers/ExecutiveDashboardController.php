@@ -255,6 +255,7 @@ class ExecutiveDashboardController extends Controller
             'today'      => $query->whereDate($column, now()->toDateString()),
             'this_week'  => $query->whereBetween($column, [now()->startOfWeek(), now()->endOfWeek()]),
             'this_month' => $query->whereBetween($column, [now()->startOfMonth(), now()->endOfMonth()]),
+            'last_month' => $query->whereBetween($column, [now()->subMonthNoOverflow()->startOfMonth(), now()->subMonthNoOverflow()->endOfMonth()]),
             'this_year'  => $query->whereBetween($column, [now()->startOfYear(), now()->endOfYear()]),
             'custom'     => ($fromDate && $toDate)
                             ? $query->whereBetween($column, [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
@@ -352,8 +353,8 @@ class ExecutiveDashboardController extends Controller
         $totalSavingsRealized = ($totalEstimate > 0) ? round(max(0, $totalEstimate - $totalActual), 2) : null;
         $avgSavingsPercentage = ($totalEstimate > 0) ? round(($totalSavingsRealized / $totalEstimate) * 100, 1) : null;
 
-        // 11. Average PR Net TAT (Excluding Clarification Pause Duration)
-        $prTats = TatRecord::whereHas('pr', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))
+        // 11. Average PR Net TAT (Excluding Clarification Pause Duration), for PRs created in the period
+        $prTats = TatRecord::whereHas('pr', fn($q) => $this->applyDateFilter($q->whereIn('tenant_id', $clientTenantIds), $period, $fromDate, $toDate))
             ->with('pr:id,total_clarification_duration_seconds')
             ->get();
         $avgPrTat = $prTats->filter(fn($t) => $t->pr_submitted_at && $t->po_created_at)
@@ -364,8 +365,8 @@ class ExecutiveDashboardController extends Controller
         $avgClarificationTatHours = round($prTats->filter(fn($t) => $t->clarification_requested_at && $t->clarification_provided_at)
             ->avg(fn($t) => $t->clarification_requested_at->diffInHours($t->clarification_provided_at)) ?? 0, 1);
 
-        // 12. Average PO Issue TAT
-        $poTats = TatRecord::whereHas('po', fn($q) => $q->whereIn('tenant_id', $clientTenantIds))->get();
+        // 12. Average PO Issue TAT, for POs created in the period
+        $poTats = TatRecord::whereHas('po', fn($q) => $this->applyDateFilter($q->whereIn('tenant_id', $clientTenantIds), $period, $fromDate, $toDate))->get();
         $avgPoIssueTat = $poTats->filter(fn($t) => $t->po_created_at && $t->po_released_at)
             ->avg(fn($t) => $t->po_created_at->diffInHours($t->po_released_at) / 24);
         $avgPoIssueTatDays = $avgPoIssueTat === null ? null : round($avgPoIssueTat, 1);

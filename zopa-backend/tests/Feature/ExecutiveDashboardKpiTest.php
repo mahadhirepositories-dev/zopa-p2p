@@ -37,10 +37,10 @@ class ExecutiveDashboardKpiTest extends TestCase
         Sanctum::actingAs($user);
     }
 
-    private function stats(): array
+    private function stats(string $period = 'all'): array
     {
         return $this->withHeaders(['X-Tenant-ID' => (string) $this->acme->id])
-            ->getJson('/api/executive-dashboard/stats')
+            ->getJson('/api/executive-dashboard/stats?period=' . $period)
             ->assertOk()
             ->json();
     }
@@ -126,6 +126,36 @@ class ExecutiveDashboardKpiTest extends TestCase
         ]);
 
         $this->assertEquals(3.5, $this->stats()['avg_pr_tat_days']);
+    }
+
+    public function test_tat_and_value_follow_this_month_and_last_month(): void
+    {
+        // One second either side of the month boundary, so the two periods meet with no gap or overlap.
+        foreach ([[now()->startOfMonth()->subSecond(), 4, 300], [now()->startOfMonth(), 2, 100]] as [$createdAt, $days, $total]) {
+            $pr = $this->pr();
+            $pr->created_at = $createdAt;
+            $pr->save();
+            $po = $this->po(['created_at' => $createdAt, 'grand_total' => $total]);
+            TatRecord::create([
+                'po_id' => $po->id, 'pr_id' => $pr->id, 'pr_submitted_at' => $createdAt,
+                'po_created_at' => $createdAt->copy()->addDays($days), 'po_released_at' => $createdAt->copy()->addDays($days * 2),
+            ]);
+        }
+
+        $last = $this->stats('last_month');
+        $this->assertSame('last_month', $last['period']);
+        $this->assertEquals(4, $last['avg_pr_tat_days']);
+        $this->assertEquals(4, $last['avg_po_issue_tat_days']);
+        $this->assertEquals(300, $last['total_value_managed']);
+
+        $current = $this->stats('this_month');
+        $this->assertEquals(2, $current['avg_pr_tat_days']);
+        $this->assertEquals(2, $current['avg_po_issue_tat_days']);
+        $this->assertEquals(100, $current['total_value_managed']);
+
+        $all = $this->stats();
+        $this->assertEquals(3, $all['avg_pr_tat_days']);
+        $this->assertEquals(400, $all['total_value_managed']);
     }
 
     public function test_clarification_stamps_are_stored(): void
