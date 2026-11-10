@@ -50,6 +50,7 @@ class RolePermissionsController extends Controller
         'invoices',
         'vendors',
         'products',
+        'rate_cards',
         'cost_centers',
         'org_masters',
         'approvals',

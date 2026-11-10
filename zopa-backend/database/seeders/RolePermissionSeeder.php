@@ -24,6 +24,7 @@ class RolePermissionSeeder extends Seeder
         'invoices',
         'vendors',
         'products',
+        'rate_cards',
         'cost_centers',
         'org_masters',
         'approvals',
@@ -64,6 +65,7 @@ class RolePermissionSeeder extends Seeder
         // create & edit masters (not just view).
         $p('zopa_buyer', 'vendors',               true,  true,  true,  false);
         $p('zopa_buyer', 'products',              true,  true,  true,  false);
+        $p('zopa_buyer', 'rate_cards',            true,  true,  true,  false);
         $p('zopa_buyer', 'cost_centers',          true,  true,  true,  false);
         $p('zopa_buyer', 'org_masters',           true,  true,  true,  false);
         $p('zopa_buyer', 'approvals',             true,  true,  true,  false);
@@ -78,6 +80,7 @@ class RolePermissionSeeder extends Seeder
             $p($role, 'invoices',              true,  false, false, false);
             $p($role, 'vendors',               true,  false, false, false);
             $p($role, 'products',              true,  false, false, false);
+            $p($role, 'rate_cards',            true,  false, false, false);
             $p($role, 'cost_centers',          true,  false, false, false);
             $p($role, 'org_masters',           true,  false, false, false);
             $p($role, 'approvals',             true,  true,  true,  false);
@@ -97,6 +100,7 @@ class RolePermissionSeeder extends Seeder
         $p('client_buyer', 'invoices',              true,  true,  true,  false);
         $p('client_buyer', 'vendors',               true,  true,  true,  false);
         $p('client_buyer', 'products',              true,  true,  true,  false);
+        $p('client_buyer', 'rate_cards',            true,  true,  true,  false);
         $p('client_buyer', 'cost_centers',          true,  true,  true,  false);
         $p('client_buyer', 'org_masters',           true,  true,  true,  false);
         $p('client_buyer', 'approvals',             true,  false, false, false);
@@ -111,6 +115,7 @@ class RolePermissionSeeder extends Seeder
             $p($role, 'invoices',              true,  false, false, false);
             $p($role, 'vendors',               true,  false, false, false);
             $p($role, 'products',              true,  false, false, false);
+            $p($role, 'rate_cards',            true,  false, false, false);
             $p($role, 'cost_centers',          true,  false, false, false);
             $p($role, 'org_masters',           true,  false, false, false);
             $p($role, 'approvals',             true,  true,  true,  false);

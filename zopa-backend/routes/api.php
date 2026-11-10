@@ -14,6 +14,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Master\CategoryController;
 use App\Http\Controllers\Master\OrgController;
 use App\Http\Controllers\Master\ProductController;
+use App\Http\Controllers\Master\RateCardController;
 use App\Http\Controllers\Master\VendorController;
 use App\Http\Controllers\AiController;
 use App\Http\Controllers\OperationalReportController;
@@ -246,6 +247,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('products/import', [ProductController::class, 'import']);
         Route::patch('products/{product}/toggle-active', [ProductController::class, 'toggleActive']);
         Route::apiResource('products', ProductController::class);
+
+        // Rate cards: a vendor's agreed rate per product, with a change log
+        Route::get('rate-cards/log', [RateCardController::class, 'log']);
+        Route::apiResource('rate-cards', RateCardController::class)->except(['show']);
 
         // Cost Centers & Budget
         Route::apiResource('cost-centers', CostCenterController::class);

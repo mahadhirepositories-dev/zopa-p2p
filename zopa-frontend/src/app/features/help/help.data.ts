@@ -50,6 +50,7 @@ export const MODULE_LABELS: Record<string, { label: string; icon: string }> = {
   approvals:             { label: 'Approvals',       icon: 'task_alt' },
   vendors:               { label: 'Vendors',         icon: 'business' },
   products:              { label: 'Products',        icon: 'inventory' },
+  rate_cards:            { label: 'Rate Cards',      icon: 'sell' },
   cost_centers:          { label: 'Cost Centers',    icon: 'account_balance_wallet' },
   org_masters:           { label: 'Org Masters',     icon: 'corporate_fare' },
   reports:               { label: 'Reports',         icon: 'bar_chart' },
@@ -102,7 +103,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
       <ul>
         <li><strong>Main</strong> — Dashboard, Help</li>
         <li><strong>Procurement</strong> — Requisitions, Purchase Orders, Approvals, Goods Receipt, Invoices, Reports</li>
-        <li><strong>Master Data</strong> — Vendors, Products, Categories, Cost Centers, Org Masters</li>
+        <li><strong>Master Data</strong> — Vendors, Products, Rate Cards, Categories, Cost Centers, Org Masters</li>
         <li><strong>Administration</strong> — staff / platform tools (depends on your role)</li>
       </ul>
       <p>Menu items you don't have permission to view are hidden automatically.</p>`,
@@ -363,6 +364,19 @@ export const HELP_ARTICLES: HelpArticle[] = [
     keywords: ['product', 'category', 'catalogue', 'hsn', 'gst rate', 'unit'],
     modules: ['products'],
     body: `<p><strong>Categories</strong> organise items into hierarchical groups. <strong>Products</strong> hold catalogue details (name, HSN code, GST %, unit, rate). Adding products speeds up PR and PO line entry.</p>`,
+  },
+  {
+    id: 'rate-cards',
+    title: 'Rate Cards',
+    category: 'Master Data',
+    icon: 'sell',
+    summary: "Fix a vendor's rate for a product.",
+    keywords: ['rate card', 'rate', 'price', 'vendor rate', 'locked', 'change log', 'history'],
+    modules: ['rate_cards'],
+    body: `<p>A <strong>Rate Card</strong> holds a vendor's agreed rate for a product in your organization. Open <strong>Rate Cards</strong> and choose <strong>New Rate Card</strong> to pick the vendor and product and enter the rate before GST.</p>
+      <p>On a PO for that vendor, a line with that product takes the rate card rate, and it can't be changed. With no rate card, the line takes the product's rate from <strong>Products</strong>, also fixed. Only products whose rate is zero, and lines without a product, let you type a rate.</p>
+      <p>A draft PO picks up a changed rate card rate when it is next opened and saved. Submitted POs keep their rates.</p>
+      <p>Every new rate card, rate change and deletion is recorded with the old rate, the new rate, who made it and when. See it under <strong>Change log</strong>, or use the history button on a row.</p>`,
   },
   {
     id: 'cost-centers',

@@ -56,6 +56,12 @@ export const routes: Routes = [
     loadChildren: () => import('./features/products/products.routes').then(m => m.productRoutes),
   },
   {
+    path: 'rate-cards',
+    canActivate: [authGuard, permissionGuard],
+    data: { module: 'rate_cards' },
+    loadChildren: () => import('./features/rate-cards/rate-cards.routes').then(m => m.rateCardRoutes),
+  },
+  {
     path: 'categories',
     canActivate: [authGuard, permissionGuard],
     data: { module: 'products' },

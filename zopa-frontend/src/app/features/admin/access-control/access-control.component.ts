@@ -46,6 +46,7 @@ const MODULE_META: ModuleMeta[] = [
   { key: 'approvals',             label: 'Approvals',             icon: 'task_alt',               description: 'Approve, return or reject documents',   group: 'procurement' },
   { key: 'vendors',               label: 'Vendors',               icon: 'business',               description: 'Manage vendor master records',          group: 'master'      },
   { key: 'products',              label: 'Products & Catalogue',  icon: 'inventory',              description: 'Product catalogue, HSN codes, rates',   group: 'master'      },
+  { key: 'rate_cards',            label: 'Rate Cards',            icon: 'sell',                   description: 'Vendor rates per product, locked on POs', group: 'master'    },
   { key: 'cost_centers',          label: 'Cost Centers & Budget', icon: 'account_balance_wallet', description: 'Budget limits, approval configs',       group: 'master'      },
   { key: 'org_masters',           label: 'Org Masters',           icon: 'corporate_fare',         description: 'Departments, projects, locations',      group: 'master'      },
   { key: 'reports',               label: 'Reports',               icon: 'bar_chart',              description: 'Analytics and TAT reports',             group: 'admin'       },

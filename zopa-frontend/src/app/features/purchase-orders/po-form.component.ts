@@ -460,7 +460,13 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                     <mat-label>Net Rate *</mat-label>
                     <span matPrefix>₹&nbsp;</span>
                     <input matInput type="number" formControlName="net_rate"
-                           min="0" (input)="recalcItem(itemObj.index)" />
+                           min="0" (input)="recalcItem(itemObj.index)"
+                           [readonly]="!!rateLock(itemObj.index)" />
+                    @if (rateLock(itemObj.index); as lock) {
+                      <mat-hint [matTooltip]="lock.source === 'rate_card' ? 'Fixed by the rate card for this vendor' : 'Fixed by the product master rate'">
+                        <mat-icon class="lock-icon">lock</mat-icon>{{ lock.source === 'rate_card' ? 'Rate card' : 'Product rate' }}
+                      </mat-hint>
+                    }
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="field-xs">
@@ -732,6 +738,8 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     .field-product { flex: 1.5; min-width: 160px; }
     .field-xs { width: 90px; min-width: 90px; }
     .field-rate { width: 140px; min-width: 120px; }
+    .field-rate input[readonly] { color: var(--text-2); cursor: not-allowed; }
+    .lock-icon { font-size: 12px; width: 12px; height: 12px; vertical-align: -2px; margin-right: 2px; }
     .field-date { width: 150px; min-width: 140px; }
 
     .item-calc { text-align: center; min-width: 90px; padding: 6px 4px; }
@@ -837,6 +845,10 @@ export class PoFormComponent implements OnInit {
 
   // Master data lookup maps for O(1) instant rendering
   productMap = computed(() => new Map(this.products().map(p => [p.id, p])));
+  /** Master rate of every product, inactive ones too, since the backend locks those as well. */
+  masterRates = signal<Map<number, number>>(new Map());
+  /** The selected vendor's rate card rates, by product id. */
+  rateCards = signal<Map<number, number>>(new Map());
   categoryMap = computed(() => new Map(this.flatCategories().map(c => [c.id, c])));
 
   // Line items pagination, search, and lazy dropdown states
@@ -1087,7 +1099,9 @@ export class PoFormComponent implements OnInit {
     }).subscribe({
       next: res => {
         this.vendors.set(((res.vendors.data ?? res.vendors) as Vendor[]).filter(v => v.is_active));
-        this.products.set(((res.products.data ?? res.products) as Product[]).filter(p => p.is_active));
+        const allProducts = (res.products.data ?? res.products) as Product[];
+        this.masterRates.set(new Map(allProducts.map(p => [p.id, +(p.net_rate ?? 0)])));
+        this.products.set(allProducts.filter(p => p.is_active));
         this.costCenters.set(res.costCenters.data ?? res.costCenters);
         this.locations.set(res.locations.data ?? res.locations);
         this.categories.set(res.categories.data ?? res.categories);
@@ -1153,6 +1167,8 @@ export class PoFormComponent implements OnInit {
     this.items.updateValueAndValidity({ emitEvent: false });
     this.itemsVersion.update(v => v + 1);
     this.currentPage.set(1);
+    // A draft takes the current rate card rates, which its next save must carry.
+    if (['draft', 'returned'].includes(po.status)) this.loadRateCards(po.vendor_id ?? null);
 
     while (this.paymentTerms.length > 0) this.paymentTerms.removeAt(0);
     if (po.payment_terms_json?.length) {
@@ -1218,7 +1234,7 @@ export class PoFormComponent implements OnInit {
       this.items.updateValueAndValidity({ emitEvent: false });
       this.itemsVersion.update(v => v + 1);
       this.currentPage.set(1);
-      this.recalc();
+      this.applyLockedRates();   // locked rates replace the PR estimate on product lines
     }
     // Also store pr_id for backend to link TAT
     (this.headerForm as any)._prId = pr.id;
@@ -1289,7 +1305,7 @@ export class PoFormComponent implements OnInit {
         this.items.updateValueAndValidity({ emitEvent: false });
         this.itemsVersion.update(v => v + 1);
         this.currentPage.set(1);
-        this.recalc();
+        this.applyLockedRates();   // locked rates replace the PR estimate on product lines
       },
       error: () => this.notify.error('Could not load purchase requisitions.')
     });
@@ -1303,6 +1319,44 @@ export class PoFormComponent implements OnInit {
     this.vendorAddresses.set([]);
     this.headerForm.patchValue({ vendor_address_id: null });
     if (vid) this.loadVendorAddresses(vid);
+    this.loadRateCards(vid ?? null);
+  }
+
+  // ─── Rate lock ─────────────────────────────────────────────────────────
+  /** The rate a product line must use: the vendor's rate card, else the product
+   *  master rate above zero. Same rule as RateCard::lockedRates on the backend. */
+  lockedRate(productId: number | null | undefined): { rate: number; source: 'rate_card' | 'product' } | null {
+    if (!productId) return null;
+    const card = this.rateCards().get(productId);
+    if (card != null) return { rate: card, source: 'rate_card' };
+    const master = this.masterRates().get(productId) ?? 0;
+    return master > 0 ? { rate: master, source: 'product' } : null;
+  }
+
+  rateLock(i: number) {
+    return this.lockedRate((this.items.at(i)?.value as any)?.product_id);
+  }
+
+  private loadRateCards(vendorId: number | null) {
+    if (!vendorId) { this.rateCards.set(new Map()); this.applyLockedRates(); return; }
+    this.http.get<{ product_id: number; net_rate: string }[]>(`${environment.apiUrl}/rate-cards`, { params: { vendor_id: vendorId } })
+      .subscribe({
+        next: cards => {
+          if (this.headerForm.value.vendor_id !== vendorId) return;   // vendor changed meanwhile
+          this.rateCards.set(new Map(cards.map(c => [c.product_id, +c.net_rate])));
+          this.applyLockedRates();
+        },
+        error: () => this.notify.error("Could not load this vendor's rate cards. Saving will show any rate that must change."),
+      });
+  }
+
+  /** Put the locked rate on every product line. */
+  private applyLockedRates() {
+    this.items.controls.forEach(ctrl => {
+      const lock = this.lockedRate((ctrl.value as any).product_id);
+      if (lock && +(ctrl.value as any).net_rate !== lock.rate) ctrl.patchValue({ net_rate: lock.rate }, { emitEvent: false });
+    });
+    this.recalc();
   }
 
   onVendorAddressChange() {
@@ -1473,7 +1527,7 @@ export class PoFormComponent implements OnInit {
 
     ctrl.patchValue({
       description:     desc,
-      net_rate:        product.net_rate != null ? +product.net_rate : 0,
+      net_rate:        this.lockedRate(productId)?.rate ?? (product.net_rate != null ? +product.net_rate : 0),
       gst_rate:        product.gst_rate != null ? +product.gst_rate : 0,
       category_id:     product.category_id ?? null,
       warranty_months: product.warranty_months != null ? +product.warranty_months : 0,

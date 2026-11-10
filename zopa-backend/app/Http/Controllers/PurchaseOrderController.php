@@ -6,6 +6,7 @@ use App\Models\CostCenter;
 use App\Models\PoAttachment;
 use App\Models\PoItem;
 use App\Models\PurchaseOrder;
+use App\Models\RateCard;
 use App\Services\ActivityLogService;
 use App\Services\ApprovalService;
 use App\Services\BudgetService;
@@ -21,6 +22,7 @@ use App\Mail\PurchaseOrderIssuedMail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class PurchaseOrderController extends Controller
 {
@@ -163,6 +165,8 @@ class PurchaseOrderController extends Controller
         if (!$costCenter) {
             return response()->json(['error' => 'Selected cost center not found.'], 422);
         }
+
+        $this->enforceLockedRates($request->items, $request->integer('vendor_id'), $costCenter->tenant_id ?? $tenant->id);
 
         // NOTE: Budget check is intentionally deferred to submit().
         // Saving as draft is always allowed even if over budget;
@@ -323,6 +327,12 @@ class PurchaseOrderController extends Controller
             'discount' => 'nullable|numeric|min:0',
         ]);
 
+        $this->enforceLockedRates(
+            $request->items,
+            $request->filled('vendor_id') ? $request->integer('vendor_id') : $purchaseOrder->vendor_id,
+            $purchaseOrder->tenant_id,
+        );
+
         try {
             $po = DB::transaction(function () use ($request, $purchaseOrder) {
                 // Recompute totals from the edited lines (IGST vs CGST+SGST by state)
@@ -479,6 +489,31 @@ class PurchaseOrderController extends Controller
         }
 
         return response()->json($po);
+    }
+
+    /**
+     * A line with a product must use the vendor's rate card rate, else the product
+     * master rate when that is above zero. The form shows these read-only; this
+     * stops the same change being made through the API.
+     */
+    private function enforceLockedRates(array $items, ?int $vendorId, int $tenantId): void
+    {
+        $locked = RateCard::lockedRates($tenantId, $vendorId, array_column($items, 'product_id'));
+        $errors = [];
+        foreach ($items as $i => $item) {
+            $lock = $locked[(int) ($item['product_id'] ?? 0)] ?? null;
+            if ($lock && abs((float) $item['net_rate'] - $lock['rate']) >= 0.005) {
+                $errors["items.$i.net_rate"] = sprintf(
+                    'Line %d: the rate is fixed at %s by %s.',
+                    $i + 1,
+                    number_format($lock['rate'], 2),
+                    $lock['source'] === 'rate_card' ? "this vendor's rate card" : 'the product master',
+                );
+            }
+        }
+        if ($errors) {
+            throw ValidationException::withMessages($errors);
+        }
     }
 
     public function submit(PurchaseOrder $purchaseOrder): JsonResponse

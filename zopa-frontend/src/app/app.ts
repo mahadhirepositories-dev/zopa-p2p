@@ -129,7 +129,7 @@ import { filter } from 'rxjs/operators';
               </div>
             }
 
-            @if (auth.canDo('vendors','view') || auth.canDo('products','view') ||
+            @if (auth.canDo('vendors','view') || auth.canDo('products','view') || auth.canDo('rate_cards','view') ||
                  auth.canDo('cost_centers','view') || auth.canDo('org_masters','view')) {
               <div class="nav-section">
                 <span class="nav-section-label">Master Data</span>
@@ -141,6 +141,11 @@ import { filter } from 'rxjs/operators';
                 @if (auth.canDo('products','view')) {
                   <a class="nav-link" routerLink="/products" routerLinkActive="nav-link--active">
                     <mat-icon>inventory</mat-icon><span>Products</span>
+                  </a>
+                }
+                @if (auth.canDo('rate_cards','view')) {
+                  <a class="nav-link" routerLink="/rate-cards" routerLinkActive="nav-link--active">
+                    <mat-icon>sell</mat-icon><span>Rate Cards</span>
                   </a>
                 }
                 @if (auth.canDo('products','view')) {
