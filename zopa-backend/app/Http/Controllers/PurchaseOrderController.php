@@ -492,22 +492,45 @@ class PurchaseOrderController extends Controller
     }
 
     /**
-     * A line with a product must use the vendor's rate card rate, else the product
-     * master rate when that is above zero. The form shows these read-only; this
-     * stops the same change being made through the API.
+     * A line with a product must use the vendor's rate card rate and unit, else the
+     * product master rate when that is above zero. The PO's total quantity of a
+     * product must meet the rate card's MOQ. The form shows rate and unit read-only;
+     * this stops the same change being made through the API.
      */
     private function enforceLockedRates(array $items, ?int $vendorId, int $tenantId): void
     {
-        $locked = RateCard::lockedRates($tenantId, $vendorId, array_column($items, 'product_id'));
+        $locked = RateCard::lockedTerms($tenantId, $vendorId, array_column($items, 'product_id'));
         $errors = [];
+        $qtyByProduct = [];
+        $firstLine = [];
         foreach ($items as $i => $item) {
-            $lock = $locked[(int) ($item['product_id'] ?? 0)] ?? null;
-            if ($lock && abs((float) $item['net_rate'] - $lock['rate']) >= 0.005) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $lock = $locked[$productId] ?? null;
+            if (!$lock) {
+                continue;
+            }
+            $qtyByProduct[$productId] = ($qtyByProduct[$productId] ?? 0) + (float) $item['qty'];
+            $firstLine[$productId] ??= $i;
+
+            if (abs((float) $item['net_rate'] - $lock['rate']) >= 0.005) {
                 $errors["items.$i.net_rate"] = sprintf(
                     'Line %d: the rate is fixed at %s by %s.',
                     $i + 1,
                     number_format($lock['rate'], 2),
                     $lock['source'] === 'rate_card' ? "this vendor's rate card" : 'the product master',
+                );
+            }
+            if ($lock['uom'] !== null && strcasecmp(trim((string) ($item['unit'] ?? '')), $lock['uom']) !== 0) {
+                $errors["items.$i.unit"] = sprintf("Line %d: the unit is fixed at %s by this vendor's rate card.", $i + 1, $lock['uom']);
+            }
+        }
+        foreach ($qtyByProduct as $productId => $qty) {
+            $moq = $locked[$productId]['moq'];
+            if ($moq !== null && $qty + 0.0005 < $moq) {
+                $i = $firstLine[$productId];
+                $errors["items.$i.qty"] = sprintf(
+                    "Line %d: this vendor's minimum order is %s %s; this PO orders %s.",
+                    $i + 1, 0 + $moq, $locked[$productId]['uom'], 0 + $qty,
                 );
             }
         }

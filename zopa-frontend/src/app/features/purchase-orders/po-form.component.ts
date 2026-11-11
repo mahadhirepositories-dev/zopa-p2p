@@ -449,11 +449,19 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
                     <mat-label>Qty *</mat-label>
                     <input matInput type="number" formControlName="qty"
                            min="0.001" (input)="recalcItem(itemObj.index)" />
+                    @if (rateLock(itemObj.index)?.moq; as moq) {
+                      <mat-hint [class.moq-short]="belowMoq(itemObj.index)"
+                                matTooltip="Minimum order for this vendor, counted across all lines of this product">MOQ {{ moq }}</mat-hint>
+                    }
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="field-xs">
                     <mat-label>UOM</mat-label>
-                    <input matInput formControlName="unit" placeholder="Nos" maxlength="20" />
+                    <input matInput formControlName="unit" placeholder="Nos" maxlength="20"
+                           [readonly]="!!rateLock(itemObj.index)?.uom" />
+                    @if (rateLock(itemObj.index)?.uom) {
+                      <mat-hint matTooltip="Fixed by the rate card for this vendor"><mat-icon class="lock-icon">lock</mat-icon>Fixed</mat-hint>
+                    }
                   </mat-form-field>
 
                   <mat-form-field appearance="outline" class="field-rate">
@@ -738,7 +746,9 @@ import { RichTextEditorComponent } from '../../shared/components/rich-text-edito
     .field-product { flex: 1.5; min-width: 160px; }
     .field-xs { width: 90px; min-width: 90px; }
     .field-rate { width: 140px; min-width: 120px; }
-    .field-rate input[readonly] { color: var(--text-2); cursor: not-allowed; }
+    .field-rate input[readonly], .field-xs input[readonly] { color: var(--text-2); cursor: not-allowed; }
+    .moq-short { color: #b91c1c; font-weight: 600; }
+    .field-xs mat-hint { white-space: nowrap; }
     .lock-icon { font-size: 12px; width: 12px; height: 12px; vertical-align: -2px; margin-right: 2px; }
     .field-date { width: 150px; min-width: 140px; }
 
@@ -847,8 +857,8 @@ export class PoFormComponent implements OnInit {
   productMap = computed(() => new Map(this.products().map(p => [p.id, p])));
   /** Master rate of every product, inactive ones too, since the backend locks those as well. */
   masterRates = signal<Map<number, number>>(new Map());
-  /** The selected vendor's rate card rates, by product id. */
-  rateCards = signal<Map<number, number>>(new Map());
+  /** The selected vendor's rate card terms, by product id. */
+  rateCards = signal<Map<number, { rate: number; uom: string | null; moq: number | null; lead: number | null }>>(new Map());
   categoryMap = computed(() => new Map(this.flatCategories().map(c => [c.id, c])));
 
   // Line items pagination, search, and lazy dropdown states
@@ -1319,16 +1329,17 @@ export class PoFormComponent implements OnInit {
     this.vendorAddresses.set([]);
     this.headerForm.patchValue({ vendor_address_id: null });
     if (vid) this.loadVendorAddresses(vid);
-    this.loadRateCards(vid ?? null);
+    this.loadRateCards(vid ?? null, true);
   }
 
   // ─── Rate lock ─────────────────────────────────────────────────────────
-  /** The rate a product line must use: the vendor's rate card, else the product
-   *  master rate above zero. Same rule as RateCard::lockedRates on the backend. */
-  lockedRate(productId: number | null | undefined): { rate: number; source: 'rate_card' | 'product' } | null {
+  /** What a product line must follow: the vendor's rate card (rate, unit, MOQ),
+   *  else the product master rate above zero. Same rule as RateCard::lockedTerms. */
+  lockedRate(productId: number | null | undefined):
+    { rate: number; source: 'rate_card' | 'product'; uom?: string | null; moq?: number | null; lead?: number | null } | null {
     if (!productId) return null;
     const card = this.rateCards().get(productId);
-    if (card != null) return { rate: card, source: 'rate_card' };
+    if (card) return { ...card, source: 'rate_card' };
     const master = this.masterRates().get(productId) ?? 0;
     return master > 0 ? { rate: master, source: 'product' } : null;
   }
@@ -1337,26 +1348,54 @@ export class PoFormComponent implements OnInit {
     return this.lockedRate((this.items.at(i)?.value as any)?.product_id);
   }
 
-  private loadRateCards(vendorId: number | null) {
-    if (!vendorId) { this.rateCards.set(new Map()); this.applyLockedRates(); return; }
-    this.http.get<{ product_id: number; net_rate: string }[]>(`${environment.apiUrl}/rate-cards`, { params: { vendor_id: vendorId } })
-      .subscribe({
-        next: cards => {
-          if (this.headerForm.value.vendor_id !== vendorId) return;   // vendor changed meanwhile
-          this.rateCards.set(new Map(cards.map(c => [c.product_id, +c.net_rate])));
-          this.applyLockedRates();
-        },
-        error: () => this.notify.error("Could not load this vendor's rate cards. Saving will show any rate that must change."),
-      });
+  /** True when this PO orders less of the line's product than the vendor's MOQ. */
+  belowMoq(i: number): boolean {
+    const pid = (this.items.at(i)?.value as any)?.product_id;
+    const moq = this.lockedRate(pid)?.moq;
+    if (!moq) return false;
+    const total = this.items.controls
+      .filter(c => (c.value as any).product_id === pid)
+      .reduce((sum, c) => sum + (+(c.value as any).qty || 0), 0);
+    return total < moq;
   }
 
-  /** Put the locked rate on every product line. */
-  private applyLockedRates() {
+  private loadRateCards(vendorId: number | null, fillLeadTime = false) {
+    if (!vendorId) { this.rateCards.set(new Map()); this.applyLockedRates(); return; }
+    this.http.get<{ product_id: number; net_rate: string; uom: string | null; moq: string | null; lead_time_days: number | null }[]>(
+      `${environment.apiUrl}/rate-cards`, { params: { vendor_id: vendorId } },
+    ).subscribe({
+      next: cards => {
+        if (this.headerForm.value.vendor_id !== vendorId) return;   // vendor changed meanwhile
+        this.rateCards.set(new Map(cards.map(c => [c.product_id, {
+          rate: +c.net_rate, uom: c.uom, moq: c.moq != null ? +c.moq : null, lead: c.lead_time_days,
+        }])));
+        this.applyLockedRates(fillLeadTime);
+      },
+      error: () => this.notify.error("Could not load this vendor's rate cards. Saving will show any rate that must change."),
+    });
+  }
+
+  /** Put the locked rate and unit on every product line; optionally fill an empty
+   *  "Required by" from the rate card's lead time. */
+  private applyLockedRates(fillLeadTime = false) {
     this.items.controls.forEach(ctrl => {
-      const lock = this.lockedRate((ctrl.value as any).product_id);
-      if (lock && +(ctrl.value as any).net_rate !== lock.rate) ctrl.patchValue({ net_rate: lock.rate }, { emitEvent: false });
+      const v = ctrl.value as any;
+      const lock = this.lockedRate(v.product_id);
+      if (!lock) return;
+      const patch: any = {};
+      if (+v.net_rate !== lock.rate) patch.net_rate = lock.rate;
+      if (lock.uom && v.unit !== lock.uom) patch.unit = lock.uom;
+      if (fillLeadTime && !v.required_by && lock.lead != null) patch.required_by = this.daysFromToday(lock.lead);
+      ctrl.patchValue(patch, { emitEvent: false });
     });
     this.recalc();
+  }
+
+  private daysFromToday(days: number): Date {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + days);
+    return d;
   }
 
   onVendorAddressChange() {
@@ -1509,6 +1548,7 @@ export class PoFormComponent implements OnInit {
     }
     const product = this.productMap().get(productId);
     if (!product) return;
+    const lock = this.lockedRate(productId);
 
     let desc = product.name;
     if (product.description && product.description.trim()) {
@@ -1527,11 +1567,12 @@ export class PoFormComponent implements OnInit {
 
     ctrl.patchValue({
       description:     desc,
-      net_rate:        this.lockedRate(productId)?.rate ?? (product.net_rate != null ? +product.net_rate : 0),
+      net_rate:        lock?.rate ?? (product.net_rate != null ? +product.net_rate : 0),
       gst_rate:        product.gst_rate != null ? +product.gst_rate : 0,
       category_id:     product.category_id ?? null,
       warranty_months: product.warranty_months != null ? +product.warranty_months : 0,
-      unit:            product.unit ?? null,
+      unit:            lock?.uom ?? product.unit ?? null,
+      ...(lock?.lead != null && !(ctrl.value as any).required_by ? { required_by: this.daysFromToday(lock.lead) } : {}),
     });
     this.recalcItem(i);
   }

@@ -191,7 +191,7 @@ Before creating documents, an Admin or Buyer sets up the foundation. Menu: **Mas
 | **Cost Centers** | Budgets per department/project/location | Admins set the Annual Budget, which enforces spend limits. Buyers create with a budget of 0 and an admin adds funds through **Adjust Budget** |
 | **Categories** | Product categories & sub-categories | Hierarchical (parent → child) |
 | **Products** | Catalogue items (name, HSN, GST %, unit, rate) | Speeds up PR/PO line entry |
-| **Rate Cards** | A vendor's agreed rate for a product | Fixes that rate on the vendor's POs; every change is logged with the old and new rate, who and when |
+| **Rate Cards** | A vendor's terms for a product: UOM, MOQ, MRP (incl GST), Net Price (excl tax), Lead Time. Product Code and GST come from the item master; Gross Price is Net Price plus that GST | Fixes the Net Price and UOM on the vendor's POs, blocks POs below the MOQ, and fills an empty "Required by" from the lead time. A rate card can't be saved with its Gross Price above its MRP. Every change is logged field by field with the old and new value, who and when |
 | **Vendors** | Suppliers (codes, PAN/GST, bank, addresses, documents) | Pincode auto-fills city/state; upload PAN/GST/cheque docs |
 
 **Locations** now record structured address fields: **Address, City, State, State Code,
@@ -237,10 +237,11 @@ PR statuses: *Draft → Submitted → (RFQ Created → RFQ Approved) → Convert
    - As you pick Bill-to / Ship-to, a **preview shows the exact address that will print** on the PO.
 3. Add line items (auto-fills from products) — or use **BOQ upload** (below). The system computes
    **GST** (IGST vs CGST+SGST based on locations) and totals.
-   - A line with a product takes the vendor's **rate card** rate, or the product's rate when there
-     is no rate card. That rate is fixed (shown with a lock). Only products with a zero rate, and
-     lines without a product, let you type a rate. A draft takes a changed rate card rate the next
-     time it is saved.
+   - A line with a product takes the vendor's **rate card** Net Price and UOM, or the product's rate
+     when there is no rate card. These are fixed (shown with a lock). Only products with a zero
+     rate, and lines without a product, let you type a rate. The PO can't be saved while it orders
+     less of a product than the rate card's MOQ. The rate card's lead time fills an empty
+     "Required by" date. A draft takes changed rate card terms the next time it is saved.
 4. Add **payment terms**, **freight**, **terms & conditions** (an AI helper can suggest terms).
 5. **Submit** → routes through the PO approval chain (respecting amount limits).
 6. On final approval, the PO gets a **PO number** and can be **Released**.

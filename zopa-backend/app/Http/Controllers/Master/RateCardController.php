@@ -4,20 +4,31 @@ namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Product;
 use App\Models\RateCard;
 use App\Traits\AuthorizesRoles;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
- * Per-organisation vendor rates for products. Every create, rate change and delete
- * is written to activity_logs (entity_type RATE_CARD) in the same transaction.
+ * Per-organisation vendor terms for products (unit, MOQ, MRP, net rate, lead time).
+ * Every create, change and delete is written to activity_logs (entity_type RATE_CARD)
+ * in the same transaction.
  */
 class RateCardController extends Controller
 {
     use AuthorizesRoles;
+
+    private const TERM_RULES = [
+        'uom'            => 'required|string|max:20',
+        'moq'            => 'nullable|numeric|gt:0|max:999999999999',
+        'mrp'            => 'nullable|numeric|gt:0|max:9999999999999',
+        'net_rate'       => 'required|numeric|gt:0|max:9999999999999',
+        'lead_time_days' => 'nullable|integer|min:0|max:3650',
+    ];
 
     public function index(Request $request): JsonResponse
     {
@@ -28,7 +39,7 @@ class RateCardController extends Controller
         );
 
         $query = RateCard::where('tenant_id', app('currentTenant')->id)
-            ->with(['vendor:id,name,global_vendor_code', 'product:id,code,name,unit,net_rate', 'updater:id,name']);
+            ->with(['vendor:id,name,global_vendor_code', 'product:id,code,name,unit,net_rate,gst_rate', 'updater:id,name']);
 
         foreach (['vendor_id', 'product_id'] as $filter) {
             if ($request->filled($filter)) {
@@ -48,14 +59,15 @@ class RateCardController extends Controller
             'vendor_id'  => ['required', 'integer', Rule::exists('vendors', 'id')->where('tenant_id', $tenantId)],
             'product_id' => ['required', 'integer', Rule::exists('products', 'id')->where('tenant_id', $tenantId),
                 Rule::unique('rate_cards')->where('tenant_id', $tenantId)->where('vendor_id', $request->integer('vendor_id'))],
-            'net_rate'   => 'required|numeric|gt:0|max:9999999999999',
+            ...self::TERM_RULES,
         ], [
             'product_id.unique' => 'This vendor already has a rate card for this product. Edit that one instead.',
         ]);
+        $this->assertWithinMrp(Product::findOrFail($data['product_id']), $data);
 
         $card = DB::transaction(function () use ($data, $tenantId) {
             $card = RateCard::create([...$data, 'tenant_id' => $tenantId, 'updated_by' => auth()->id()]);
-            $this->logChange($card, 'created', null, $card->net_rate);
+            $this->logChange($card, 'created', $this->diff([], $card));
             return $card;
         });
 
@@ -67,14 +79,16 @@ class RateCardController extends Controller
         $this->requirePermission('rate_cards', 'edit');
         $this->authorizeRateCard($rateCard);
 
-        $data = $request->validate(['net_rate' => 'required|numeric|gt:0|max:9999999999999']);
+        $data = $request->validate(self::TERM_RULES);
+        $this->assertWithinMrp($rateCard->product, $data);
 
         DB::transaction(function () use ($rateCard, $data) {
-            $old = $rateCard->net_rate;
-            $rateCard->fill([...$data, 'updated_by' => auth()->id()]);
-            if ($rateCard->isDirty('net_rate')) {
-                $rateCard->save();
-                $this->logChange($rateCard, 'updated', $old, $rateCard->net_rate);
+            $before = $rateCard->only(RateCard::TERMS);
+            $rateCard->fill($data);
+            if ($rateCard->isDirty(RateCard::TERMS)) {
+                $changes = $this->diff($before, $rateCard, onlyDirty: true);
+                $rateCard->fill(['updated_by' => auth()->id()])->save();
+                $this->logChange($rateCard, 'updated', $changes);
             }
         });
 
@@ -87,7 +101,13 @@ class RateCardController extends Controller
         $this->authorizeRateCard($rateCard);
 
         DB::transaction(function () use ($rateCard) {
-            $this->logChange($rateCard, 'deleted', $rateCard->net_rate, null);
+            $changes = [];
+            foreach (RateCard::TERMS as $field) {
+                if ($rateCard->$field !== null) {
+                    $changes[$field] = ['old' => self::logValue($field, $rateCard->$field), 'new' => null];
+                }
+            }
+            $this->logChange($rateCard, 'deleted', $changes);
             $rateCard->delete();
         });
 
@@ -118,12 +138,55 @@ class RateCardController extends Controller
         abort_if($rateCard->tenant_id !== app('currentTenant')->id, 403);
     }
 
+    /** Gross price (net plus the item master's GST) may not exceed the card's MRP. */
+    private function assertWithinMrp(Product $product, array $data): void
+    {
+        if (empty($data['mrp'])) {
+            return;
+        }
+        $gross = round((float) $data['net_rate'] * (1 + (float) $product->gst_rate / 100), 2);
+        if ($gross > round((float) $data['mrp'], 2)) {
+            throw ValidationException::withMessages(['mrp' => sprintf(
+                'The gross price %s (net %s + %s%% GST from the item master) is above the MRP %s.',
+                number_format($gross, 2),
+                number_format((float) $data['net_rate'], 2),
+                0 + (float) $product->gst_rate,
+                number_format((float) $data['mrp'], 2),
+            )]);
+        }
+    }
+
+    /** Old and new value of each term that changed (or, for a new card, is set). */
+    private function diff(array $before, RateCard $card, bool $onlyDirty = false): array
+    {
+        $changes = [];
+        foreach (RateCard::TERMS as $field) {
+            if ($onlyDirty ? $card->isDirty($field) : $card->$field !== null) {
+                $changes[$field] = [
+                    'old' => self::logValue($field, $before[$field] ?? null),
+                    'new' => self::logValue($field, $card->$field),
+                ];
+            }
+        }
+        return $changes;
+    }
+
+    private static function logValue(string $field, $value): string|int|float|null
+    {
+        return match (true) {
+            $value === null             => null,
+            $field === 'uom'            => (string) $value,
+            $field === 'lead_time_days' => (int) $value,
+            default                     => (float) $value,
+        };
+    }
+
     /**
      * Written directly rather than through ActivityLogService, which swallows
-     * failures: a rate change must not save without its log entry.
+     * failures: a rate card change must not save without its log entry.
      * Names are copied in so an entry stays readable after its card is deleted.
      */
-    private function logChange(RateCard $card, string $action, $old, $new): void
+    private function logChange(RateCard $card, string $action, array $changes): void
     {
         $card->loadMissing(['vendor:id,name', 'product:id,code,name']);
 
@@ -140,10 +203,7 @@ class RateCardController extends Controller
                 'product_id'   => $card->product_id,
                 'product'      => $card->product?->name,
                 'product_code' => $card->product?->code,
-                'changes'      => ['net_rate' => [
-                    'old' => $old === null ? null : (float) $old,
-                    'new' => $new === null ? null : (float) $new,
-                ]],
+                'changes'      => $changes,
             ],
         ]);
     }

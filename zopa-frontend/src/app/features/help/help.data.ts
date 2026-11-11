@@ -370,13 +370,21 @@ export const HELP_ARTICLES: HelpArticle[] = [
     title: 'Rate Cards',
     category: 'Master Data',
     icon: 'sell',
-    summary: "Fix a vendor's rate for a product.",
-    keywords: ['rate card', 'rate', 'price', 'vendor rate', 'locked', 'change log', 'history'],
+    summary: "Fix a vendor's price, unit and minimum order for a product.",
+    keywords: ['rate card', 'rate', 'price', 'vendor rate', 'locked', 'change log', 'history', 'moq', 'mrp', 'lead time', 'uom'],
     modules: ['rate_cards'],
-    body: `<p>A <strong>Rate Card</strong> holds a vendor's agreed rate for a product in your organization. Open <strong>Rate Cards</strong> and choose <strong>New Rate Card</strong> to pick the vendor and product and enter the rate before GST.</p>
-      <p>On a PO for that vendor, a line with that product takes the rate card rate, and it can't be changed. With no rate card, the line takes the product's rate from <strong>Products</strong>, also fixed. Only products whose rate is zero, and lines without a product, let you type a rate.</p>
-      <p>A draft PO picks up a changed rate card rate when it is next opened and saved. Submitted POs keep their rates.</p>
-      <p>Every new rate card, rate change and deletion is recorded with the old rate, the new rate, who made it and when. See it under <strong>Change log</strong>, or use the history button on a row.</p>`,
+    body: `<p>A <strong>Rate Card</strong> holds a vendor's agreed terms for a product in your organization. Open <strong>Rate Cards</strong> and choose <strong>New Rate Card</strong> to pick the vendor and product, then enter:</p>
+      <ul>
+        <li><strong>UOM</strong>: the vendor's unit. It starts as the product's unit.</li>
+        <li><strong>MOQ</strong>: the least a PO may order of the product, counted across all its lines.</li>
+        <li><strong>MRP (incl GST)</strong>: the rate card can't be saved if the Gross Price is above it.</li>
+        <li><strong>Net Price (excl tax)</strong>: the price POs must use.</li>
+        <li><strong>Lead Time</strong> in days: fills an empty <strong>Required by</strong> date on the vendor's PO lines.</li>
+      </ul>
+      <p>The <strong>Product Code</strong> and the GST rate come from <strong>Products</strong>. <strong>Gross Price (incl tax)</strong> is the Net Price plus that GST.</p>
+      <p>On a PO for that vendor, a line with that product takes the rate card's Net Price and UOM, and neither can be changed. A PO below the MOQ can't be saved. With no rate card, the line takes the product's rate from <strong>Products</strong>, also fixed. Only products whose rate is zero, and lines without a product, let you type a rate.</p>
+      <p>A draft PO picks up changed rate card terms when it is next opened and saved. Submitted POs keep theirs.</p>
+      <p>Every new rate card, change and deletion is recorded with the old and new value of each field, who made it and when. See it under <strong>Change log</strong>, or use the history button on a row.</p>`,
   },
   {
     id: 'cost-centers',
